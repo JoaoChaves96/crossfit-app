@@ -1,0 +1,11 @@
+{
+  "mcpServers": {
+    "project-docs": {
+      "type": "stdio",
+      "command": "node",
+      "args": [
+        "mcp/docs.mcp.json"
+      ]
+    }
+  }
+}
