@@ -1,0 +1,51 @@
+# Quick Reference for Local Development
+
+## Start Everything (1 command)
+bash scripts/dev-up.sh
+
+## Start Manually (3 terminals)
+# T1: Database
+bash scripts/dev-db-up.sh && bash scripts/dev-db-reset.sh
+
+# T2: Backend
+cd backend && npm run start:dev
+
+# T3: Frontend
+cd frontend && npm start
+
+## Test Users
+Athlete:  athlete@example.com
+Coach:    coach@example.com
+Owner:    owner@example.com
+
+Note: IDs are UUIDs. Get them from database:
+  docker-compose exec postgres psql -U postgres -d crossfit_box_dev \
+    -c "SELECT email, id FROM users;"
+
+## Database
+Host:     localhost
+Port:     5432
+Username: postgres
+Password: postgres
+Database: crossfit_box_dev
+
+## API Base URL
+http://localhost:3000
+
+## Database Access
+docker-compose exec postgres psql -U postgres -d crossfit_box_dev
+
+## Reset Database
+bash scripts/dev-db-reset.sh
+
+## Check Setup
+bash scripts/validate-setup.sh
+
+## Documentation
+- Quick start:      QUICKSTART.md
+- Comprehensive:    docs/LOCAL_DEV.md
+- Technical details: SETUP_SUMMARY.md
+- Delivery summary: DELIVERY.md
+
+## Stop Everything
+Ctrl+C (in dev-up.sh foreground process)
