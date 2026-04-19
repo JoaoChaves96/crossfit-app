@@ -1,9 +1,10 @@
 import React, { useEffect, useState } from 'react';
-import { View, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator, Text, Alert } from 'react-native';
+import { View, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator, Text } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useAuth } from '@/hooks/useAuth';
 import { useGym } from '@/hooks/useGym';
 import { createApiClient } from '@/utils/api-client';
+import { showConfirm, showError } from '@/utils/alert';
 
 interface ClassDetailsItem {
   id: string;
@@ -31,8 +32,8 @@ type BookingStatus = 'booked' | 'waitlisted' | 'open' | 'full';
 
 export default function ClassDetailsScreen() {
   const router = useRouter();
-  const { userId } = useAuth();
-  const { currentGymId } = useGym();
+  const { userId, isLoading: authLoading } = useAuth();
+  const { currentGymId, isLoading: gymLoading } = useGym();
   const { classId } = useLocalSearchParams();
 
   const [classData, setClassData] = useState<ClassDetailsItem | null>(null);
@@ -50,7 +51,7 @@ export default function ClassDetailsScreen() {
 
       // Fetch both schedule and bookings
       const [scheduleResponse, bookingsResponse] = await Promise.all([
-        client.get<{ classes: ClassDetailsItem[] }>(`/api/gyms/${gymId}/classes`),
+        client.get<{ classes: ClassDetailsItem[] }>(`/api/gyms/${currentGymId}/classes`),
         client.get<GetUserBookingsResponse>('/api/me/bookings'),
       ]);
 
@@ -83,14 +84,14 @@ export default function ClassDetailsScreen() {
   };
 
   useEffect(() => {
-    if (!userId || !currentGymId || !classId) {
+    if (authLoading || gymLoading || !userId || !currentGymId || !classId) {
       setIsLoading(false);
       return;
     }
 
     const client = createApiClient({ userId, gymId: currentGymId });
     fetchData(client);
-  }, [userId, currentGymId, classId]);
+  }, [authLoading, gymLoading, userId, currentGymId, classId]);
 
   const handleBookClass = async () => {
     if (!userId || !currentGymId || !classId) return;
@@ -102,9 +103,9 @@ export default function ClassDetailsScreen() {
       const client = createApiClient({ userId, gymId: currentGymId });
 
       // Call booking endpoint
-      await client.post(`/api/gyms/${gymId}/classes/${classId}/bookings`, {
+      await client.post(`/api/gyms/${currentGymId}/classes/${classId}/bookings`, {
         classId,
-        gymId,
+        gymId: currentGymId,
       });
 
       // Re-fetch bookings to update UI
@@ -117,29 +118,32 @@ export default function ClassDetailsScreen() {
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Failed to book class';
       setMutationError(message);
-      Alert.alert('Booking Error', message);
+      showError('Booking Error', message);
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  const handleCancelBooking = async () => {
-    if (!userId || !currentGymId || !userBookingId) return;
-
-    Alert.alert(
+  const handleCancelBooking = () => {
+    showConfirm(
       'Cancel Booking',
       'Are you sure you want to cancel this booking?',
       [
-        { text: 'Keep Booking', style: 'cancel' },
+        { text: 'Keep Booking', style: 'cancel', onPress: () => {} },
         {
           text: 'Cancel Booking',
           style: 'destructive',
           onPress: async () => {
+            if (!userId || !currentGymId || !userBookingId) {
+              showError('Error', 'Missing required information for cancellation');
+              return;
+            }
+
             try {
               setIsSubmitting(true);
               setMutationError(null);
 
-              const client = createApiClient({ userId: userId!, gymId: currentGymId! });
+              const client = createApiClient({ userId, gymId: currentGymId });
 
               // Call cancellation endpoint
               await client.delete(`/api/gyms/${currentGymId}/classes/bookings/${userBookingId}`);
@@ -163,7 +167,7 @@ export default function ClassDetailsScreen() {
             } catch (err) {
               const message = err instanceof Error ? err.message : 'Failed to cancel booking';
               setMutationError(message);
-              Alert.alert('Cancellation Error', message);
+              showError('Cancellation Error', message);
             } finally {
               setIsSubmitting(false);
             }

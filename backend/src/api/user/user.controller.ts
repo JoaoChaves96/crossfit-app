@@ -2,6 +2,7 @@ import { Controller, Get, UseGuards } from '@nestjs/common';
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../../auth/guards/roles.guard';
 import { Role } from '../../auth/decorators/role.decorator';
+import { UserScoped } from '../../auth/decorators/user-scoped.decorator';
 import { CurrentUser } from '../../auth/decorators/current-user.decorator';
 import { ApiTags, ApiBearerAuth, ApiOperation } from '@nestjs/swagger';
 import { UserBookingsService } from '../../queries/booking/user-bookings.service';
@@ -27,10 +28,11 @@ export class UserController {
    */
   @Get('/bookings')
   @Role('athlete')
+  @UserScoped()
   @ApiOperation({
     summary: 'Get authenticated user bookings',
     description:
-      'Retrieve all active bookings for the authenticated athlete. Used to determine booking status in class schedules.',
+      'Retrieve all active bookings for the authenticated athlete. Crosses all gyms (user-scoped endpoint).',
   })
   async getUserBookings(
     @CurrentUser() userId: string,

@@ -1,9 +1,10 @@
 import React, { useEffect, useState } from 'react';
-import { View, StyleSheet, FlatList, TouchableOpacity, ActivityIndicator, Text, Alert } from 'react-native';
+import { View, StyleSheet, FlatList, TouchableOpacity, ActivityIndicator, Text } from 'react-native';
 import { useRouter, useFocusEffect } from 'expo-router';
 import { useAuth } from '@/hooks/useAuth';
 import { useGym } from '@/hooks/useGym';
 import { createApiClient } from '@/utils/api-client';
+import { showConfirm, showError } from '@/utils/alert';
 import { useCallback } from 'react';
 
 interface ClassScheduleItem {
@@ -41,8 +42,8 @@ interface EnrichedClass extends ClassScheduleItem {
 
 export default function ScheduleScreen() {
   const router = useRouter();
-  const { token, userId } = useAuth();
-  const { currentGymId } = useGym();
+  const { token, userId, isLoading: authLoading } = useAuth();
+  const { currentGymId, isLoading: gymLoading } = useGym();
 
   const [classes, setClasses] = useState<EnrichedClass[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -50,7 +51,7 @@ export default function ScheduleScreen() {
   const [cancellingBookingId, setCancellingBookingId] = useState<string | null>(null);
 
   const fetchData = useCallback(async () => {
-    if (!token || !currentGymId || !userId) {
+    if (authLoading || gymLoading || !token || !currentGymId || !userId) {
       setIsLoading(false);
       return;
     }
@@ -102,7 +103,7 @@ export default function ScheduleScreen() {
     } finally {
       setIsLoading(false);
     }
-  }, [token, userId, currentGymId]);
+  }, [authLoading, gymLoading, token, userId, currentGymId]);
 
   useEffect(() => {
     fetchData();
@@ -130,11 +131,11 @@ export default function ScheduleScreen() {
   ) => {
     event.stopPropagation();
 
-    Alert.alert(
+    showConfirm(
       'Cancel Booking',
       'Are you sure you want to cancel this booking?',
       [
-        { text: 'Keep Booking', style: 'cancel' },
+        { text: 'Keep Booking', style: 'cancel', onPress: () => {} },
         {
           text: 'Cancel Booking',
           style: 'destructive',
@@ -151,7 +152,7 @@ export default function ScheduleScreen() {
               await fetchData();
             } catch (err) {
               const message = err instanceof Error ? err.message : 'Failed to cancel booking';
-              Alert.alert('Cancellation Error', message);
+              showError('Cancellation Error', message);
             } finally {
               setCancellingBookingId(null);
             }

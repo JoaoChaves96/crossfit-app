@@ -6,12 +6,12 @@ import {
   TouchableOpacity,
   Text,
   ScrollView,
-  Alert,
   ActivityIndicator,
 } from "react-native";
 import { useRouter } from "expo-router";
 import { useAuth } from "@/hooks/useAuth";
 import { useGym } from "@/hooks/useGym";
+import { showAlert } from "@/utils/alert";
 
 // DEV-ONLY: This screen is for local development testing
 if (!__DEV__) {
@@ -23,28 +23,31 @@ export default function DevBootstrapScreen() {
   const { setAuth } = useAuth();
   const { setCurrentGymId } = useGym();
 
-  const [userIdInput, setUserIdInput] = useState("");
-  const [gymIdInput, setGymIdInput] = useState("");
+  const [userIdInput, setUserIdInput] = useState(
+    "550e8400-e29b-41d4-a716-446655440001",
+  );
+  const [gymIdInput, setGymIdInput] = useState(
+    "550e8400-e29b-41d4-a716-446655440010",
+  );
   const [isLoading, setIsLoading] = useState(false);
 
   // Quick-fill with test data from seed script
   const quickFillAthlete = () => {
     // Query the database to get actual UUIDs, but provide placeholder for now
-    Alert.alert(
+    showAlert(
       "Quick Fill: Athlete",
-      "To use quick-fill, run this in your terminal:\n\ndocker-compose exec postgres psql -U postgres -d crossfit_box_dev -c \"SELECT id FROM users WHERE email = 'athlete@example.com'; SELECT id FROM gyms LIMIT 1;\"",
-      [{ text: "Got it", onPress: () => {} }],
+      "To use quick-fill, run this in your terminal:\n\ndocker-compose exec postgres psql -U postgres -d crossfit_box_dev -c \"SELECT id FROM users WHERE email = 'athlete@example.com'; SELECT id FROM gyms LIMIT 1;\""
     );
   };
 
   const handleSetAuth = async () => {
     if (!userIdInput.trim()) {
-      Alert.alert("Error", "Please enter a user ID");
+      showAlert("Error", "Please enter a user ID");
       return;
     }
 
     if (!gymIdInput.trim()) {
-      Alert.alert("Error", "Please enter a gym ID");
+      showAlert("Error", "Please enter a gym ID");
       return;
     }
 
@@ -57,13 +60,13 @@ export default function DevBootstrapScreen() {
 
       // Set auth and gym context
       await setAuth(placeholderToken, userId);
-      setCurrentGymId(gymId);
+      await setCurrentGymId(gymId);
 
       // Navigate immediately (context state is now set)
       router.replace("/(tabs)/schedule");
     } catch (error) {
       const message = error instanceof Error ? error.message : "Unknown error";
-      Alert.alert("Error", message);
+      showAlert("Error", message);
     } finally {
       setIsLoading(false);
     }
@@ -72,7 +75,7 @@ export default function DevBootstrapScreen() {
   const handleClearAuth = async () => {
     setUserIdInput("");
     setGymIdInput("");
-    Alert.alert("Cleared", "Auth inputs cleared");
+    showAlert("Cleared", "Auth inputs cleared");
   };
 
   return (
@@ -145,12 +148,12 @@ export default function DevBootstrapScreen() {
             1. Start the backend and database with: bash scripts/dev-up.sh
           </Text>
           <Text style={styles.infoText}>
-            2. Query your user and gym IDs from the database (or tap "How to get
-            IDs")
+            2. Query your user and gym IDs from the database (or tap &quot;How
+            to get IDs&quot;)
           </Text>
           <Text style={styles.infoText}>3. Enter both IDs above</Text>
           <Text style={styles.infoText}>
-            4. Tap "Set Auth & Go to Schedule"
+            4. Tap &quot;Set Auth & Go to Schedule&quot;
           </Text>
           <Text style={styles.infoText}>
             5. Your session persists until app restart or manual clear
@@ -161,8 +164,8 @@ export default function DevBootstrapScreen() {
           <Text style={styles.codeTitle}>Quick: Get test user IDs</Text>
           <Text style={styles.codeText}>
             docker-compose exec postgres psql -U postgres -d crossfit_box_dev -c
-            "SELECT id FROM users WHERE email = 'athlete@example.com'; SELECT id
-            FROM gyms LIMIT 1;"
+            &quot;SELECT id FROM users WHERE email =
+            &apos;athlete@example.com&apos;; SELECT id FROM gyms LIMIT 1;&rdquo;
           </Text>
         </View>
 

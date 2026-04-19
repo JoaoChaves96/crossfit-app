@@ -118,12 +118,44 @@ export class ClassScheduleService {
   }
 
   /**
-   * Format a Date object to YYYY-MM-DD string
+   * Format a date value to YYYY-MM-DD string.
+   * Accepts Date, ISO string, or millisecond timestamp.
+   * Normalizes the input to a Date instance before formatting.
+   *
+   * @param date - Date object, ISO string, or millisecond timestamp
+   * @returns Formatted date string (YYYY-MM-DD)
+   * @throws TypeError if the value cannot be converted to a Date
    */
-  private formatDate(date: Date): string {
-    const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    const day = String(date.getDate()).padStart(2, '0');
+  private formatDate(date: Date | string | number): string {
+    // Normalize input to a Date instance
+    let dateInstance: Date;
+
+    if (date instanceof Date) {
+      dateInstance = date;
+    } else if (typeof date === 'string') {
+      // Try parsing as ISO string (common for DB drivers returning strings)
+      dateInstance = new Date(date);
+    } else if (typeof date === 'number') {
+      // Treat as millisecond timestamp
+      dateInstance = new Date(date);
+    } else {
+      throw new TypeError(
+        `Cannot format date: received ${typeof date}. Expected Date, string, or number.`,
+      );
+    }
+
+    // Validate the Date is valid
+    if (Number.isNaN(dateInstance.getTime())) {
+      const dateStr = String(date);
+      throw new TypeError(
+        `Cannot format date: invalid date value "${dateStr}". Expected valid Date, ISO string, or millisecond timestamp.`,
+      );
+    }
+
+    // Format after normalization
+    const year = dateInstance.getFullYear();
+    const month = String(dateInstance.getMonth() + 1).padStart(2, '0');
+    const day = String(dateInstance.getDate()).padStart(2, '0');
     return `${year}-${month}-${day}`;
   }
 }

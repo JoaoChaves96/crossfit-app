@@ -22,7 +22,6 @@ import { CreateClassResponseDto } from '../../commands/class/dto/create-class-re
 import { BookClassDto } from '../../commands/class/dto/book-class.dto';
 import { BookClassCommand } from '../../commands/class/book-class.command';
 import { BookClassResponseDto } from '../../commands/class/dto/book-class-response.dto';
-import { CancelBookingDto } from '../../commands/class/dto/cancel-booking.dto';
 import { CancelBookingCommand } from '../../commands/class/cancel-booking.command';
 import { CancelBookingResponseDto } from '../../commands/class/dto/cancel-booking-response.dto';
 import { MarkAttendanceDto } from '../../commands/class/dto/mark-attendance.dto';
@@ -213,18 +212,12 @@ export class ClassController {
   async cancelBooking(
     @Param('gymId') gymId: string,
     @Param('bookingId') bookingId: string,
-    @Body(ValidationPipe) cancelBookingDto: CancelBookingDto,
     @CurrentUser() userId: string,
     @CurrentGym() currentGymId: string,
   ): Promise<CancelBookingResponseDto> {
     // Verify the param gymId matches the current gym context
     if (gymId !== currentGymId) {
       throw new Error('Gym ID mismatch');
-    }
-
-    // Verify the bookingId in DTO matches the param
-    if (cancelBookingDto.bookingId !== bookingId) {
-      throw new Error('Booking ID mismatch');
     }
 
     const command = new CancelBookingCommand(userId, bookingId, gymId);

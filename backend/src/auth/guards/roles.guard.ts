@@ -8,6 +8,7 @@ import {
 import type { Request } from 'express';
 import { Reflector } from '@nestjs/core';
 import { ROLE_KEY } from '../decorators/role.decorator';
+import { USER_SCOPED_KEY } from '../decorators/user-scoped.decorator';
 import { GymStaffService } from '../../domain/gym-staff/gym-staff.service';
 import { GymMembershipRepository } from '../../repositories/gym-membership.repository';
 
@@ -43,6 +44,12 @@ export class RolesGuard implements CanActivate {
       return true;
     }
 
+    // Check if endpoint is user-scoped (does not require gym context)
+    const isUserScoped = this.reflector.get<boolean | undefined>(
+      USER_SCOPED_KEY,
+      context.getHandler(),
+    );
+
     // Extract request context
     const request = context
       .switchToHttp()
@@ -54,6 +61,13 @@ export class RolesGuard implements CanActivate {
       throw new ForbiddenException('User not authenticated');
     }
 
+    // For user-scoped endpoints, gym context is not required from route params
+    // User-scoped 'athlete' role validates user is authenticated; no gym membership check
+    if (isUserScoped && requiredRole === 'athlete') {
+      return true;
+    }
+
+    // For gym-scoped endpoints, require gymId in route params
     if (!gymId) {
       throw new ForbiddenException('Gym context required');
     }

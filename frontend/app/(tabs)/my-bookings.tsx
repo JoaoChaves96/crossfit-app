@@ -1,9 +1,10 @@
 import React, { useEffect, useState, useCallback } from 'react';
-import { View, StyleSheet, FlatList, TouchableOpacity, ActivityIndicator, Text, Alert } from 'react-native';
+import { View, StyleSheet, FlatList, TouchableOpacity, ActivityIndicator, Text } from 'react-native';
 import { useRouter, useFocusEffect } from 'expo-router';
 import { useAuth } from '@/hooks/useAuth';
 import { useGym } from '@/hooks/useGym';
 import { createApiClient } from '@/utils/api-client';
+import { showConfirm, showError } from '@/utils/alert';
 
 interface ClassScheduleItem {
   id: string;
@@ -38,8 +39,8 @@ interface BookingWithClassDetails extends ClassScheduleItem {
 
 export default function MyBookingsScreen() {
   const router = useRouter();
-  const { userId } = useAuth();
-  const { currentGymId } = useGym();
+  const { userId, isLoading: authLoading } = useAuth();
+  const { currentGymId, isLoading: gymLoading } = useGym();
 
   const [bookings, setBookings] = useState<BookingWithClassDetails[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -47,7 +48,7 @@ export default function MyBookingsScreen() {
   const [cancellingBookingId, setCancellingBookingId] = useState<string | null>(null);
 
   const fetchData = useCallback(async () => {
-    if (!userId || !currentGymId) {
+    if (authLoading || gymLoading || !userId || !currentGymId) {
       setIsLoading(false);
       return;
     }
@@ -92,7 +93,7 @@ export default function MyBookingsScreen() {
     } finally {
       setIsLoading(false);
     }
-  }, [userId, currentGymId]);
+  }, [authLoading, gymLoading, userId, currentGymId]);
 
   useEffect(() => {
     fetchData();
@@ -114,11 +115,11 @@ export default function MyBookingsScreen() {
   };
 
   const handleCancelBooking = (booking: BookingWithClassDetails) => {
-    Alert.alert(
+    showConfirm(
       'Cancel Booking',
       `Cancel booking for ${booking.classTypeName} on ${booking.scheduledDate}?`,
       [
-        { text: 'Keep Booking', style: 'cancel' },
+        { text: 'Keep Booking', style: 'cancel', onPress: () => {} },
         {
           text: 'Cancel Booking',
           style: 'destructive',
@@ -135,7 +136,7 @@ export default function MyBookingsScreen() {
               await fetchData();
             } catch (err) {
               const message = err instanceof Error ? err.message : 'Failed to cancel booking';
-              Alert.alert('Cancellation Error', message);
+              showError('Cancellation Error', message);
             } finally {
               setCancellingBookingId(null);
             }
@@ -180,7 +181,7 @@ export default function MyBookingsScreen() {
         <Text style={styles.coach}>Coach: {item.coachName}</Text>
       </View>
 
-      <View style={styles.actionContainer}>
+      <View style={styles.actionContainer} pointerEvents="box-none">
         <TouchableOpacity
           style={[
             styles.cancelButton,
@@ -198,7 +199,7 @@ export default function MyBookingsScreen() {
     </TouchableOpacity>
   );
 
-  if (!token || !currentGymId) {
+  if (!userId || !currentGymId) {
     return (
       <View style={styles.container}>
         <Text style={styles.errorText}>
