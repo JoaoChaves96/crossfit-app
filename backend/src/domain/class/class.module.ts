@@ -21,6 +21,7 @@ import { AddOrEditProgrammingHandler } from '../../commands/class/handlers/add-o
 import { ToggleLoggableStatusHandler } from '../../commands/class/handlers/toggle-loggable-status.handler';
 import { ManuallyTransitionClassStateHandler } from '../../commands/class/handlers/manually-transition-class-state.handler';
 import { UpdateClassStructureHandler } from '../../commands/class/handlers/update-class-structure.handler';
+import { ClassScheduleService } from '../../queries/class/class-schedule.service';
 import { GymModule } from '../gym/gym.module';
 import { GymStaffModule } from '../gym-staff/gym-staff.module';
 import { SpaceModule } from '../space/space.module';
@@ -64,6 +65,7 @@ const CommandHandlers = [
     AttendanceRepository,
     ResultRepository,
     ProgrammingRepository,
+    ClassScheduleService,
     ...CommandHandlers,
   ],
   exports: [
@@ -72,6 +74,7 @@ const CommandHandlers = [
     AttendanceRepository,
     ResultRepository,
     ProgrammingRepository,
+    ClassScheduleService,
   ],
 })
 export class ClassModule {}

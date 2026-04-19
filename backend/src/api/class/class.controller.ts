@@ -1,5 +1,6 @@
 import {
   Controller,
+  Get,
   Post,
   Delete,
   Patch,
@@ -49,13 +50,45 @@ import { UpdateClassStructureDto } from '../../commands/class/dto/update-class-s
 import { UpdateClassStructureCommand } from '../../commands/class/update-class-structure.command';
 import { UpdateClassStructureResponseDto } from '../../commands/class/dto/update-class-structure-response.dto';
 import { ApiTags, ApiBearerAuth, ApiOperation } from '@nestjs/swagger';
+import { ClassScheduleService } from '../../queries/class/class-schedule.service';
+import { GetClassScheduleResponseDto } from '../../queries/class/dto/get-class-schedule-response.dto';
 
 @Controller('/api/gyms/:gymId/classes')
 @ApiTags('Classes')
 @ApiBearerAuth()
 @UseGuards(JwtAuthGuard, RolesGuard)
 export class ClassController {
-  constructor(@Inject(CommandBus) private readonly commandBus: CommandBus) {}
+  constructor(
+    @Inject(CommandBus) private readonly commandBus: CommandBus,
+    private readonly classScheduleService: ClassScheduleService,
+  ) {}
+
+  /**
+   * Get eligible classes for an athlete (Athlete)
+   *
+   * **Visibility Rules (enforced):**
+   * - Athlete must have active gym membership in this gym
+   * - Athlete must have active membership plan
+   * - Athlete's plan must include the class type
+   * - Only non-archived classes are shown
+   *
+   * **Response:**
+   * - List of eligible classes sorted by date/time
+   * - Includes class type, coach, capacity, and booking count
+   */
+  @Get()
+  @Role('athlete')
+  @ApiOperation({
+    summary: 'Get class schedule for athlete',
+    description:
+      'Retrieve all classes eligible for the authenticated athlete in a gym. Classes are filtered by gym membership and membership plan visibility. Athletes only.',
+  })
+  async getClassSchedule(
+    @Param('gymId') gymId: string,
+    @CurrentUser() userId: string,
+  ): Promise<GetClassScheduleResponseDto> {
+    return this.classScheduleService.getClassScheduleForAthlete(gymId, userId);
+  }
 
   /**
    * Create a new class (Gym Owner only)
