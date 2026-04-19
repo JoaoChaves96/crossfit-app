@@ -111,4 +111,17 @@ export class BookingRepository {
       where: { classId, status: 'waitlisted' },
     });
   }
+
+  /**
+   * Retrieve all active bookings (booked or waitlisted) for a specific user
+   */
+  async getActiveBookingsByUser(userId: string): Promise<BookingEntity[]> {
+    return this.bookingRepository.find({
+      where: [
+        { userId, status: 'booked' },
+        { userId, status: 'waitlisted' },
+      ],
+      order: { createdAt: 'DESC' },
+    });
+  }
 }

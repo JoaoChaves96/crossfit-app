@@ -11,3 +11,4 @@
  */
 
 export { ClassController } from './class/class.controller';
+export { UserController } from './user/user.controller';

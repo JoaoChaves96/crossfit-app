@@ -6,6 +6,9 @@ import { GymStaffModule } from '../domain/gym-staff/gym-staff.module';
 import { GymConfigurationModule } from '../domain/gym-configuration/gym-configuration.module';
 import { GymConfigurationController } from '../api/gym-configuration/gym-configuration.controller';
 import { RolesGuard } from '../auth/guards/roles.guard';
+import { UserController } from '../api/user/user.controller';
+import { UserBookingsService } from '../queries/booking/user-bookings.service';
+import { BookingRepository } from '../repositories/booking.repository';
 
 /**
  * HttpModule: Registers all HTTP controllers
@@ -19,7 +22,7 @@ import { RolesGuard } from '../auth/guards/roles.guard';
  */
 @Module({
   imports: [CqrsModule, ClassModule, GymStaffModule, GymConfigurationModule],
-  controllers: [ClassController, GymConfigurationController],
-  providers: [RolesGuard],
+  controllers: [ClassController, GymConfigurationController, UserController],
+  providers: [RolesGuard, UserBookingsService, BookingRepository],
 })
 export class HttpModule {}
