@@ -1,0 +1,2655 @@
+{
+  "version": "2.11",
+  "children": [
+    {
+      "type": "frame",
+      "id": "IvoJn",
+      "x": 0,
+      "y": 0,
+      "name": "Athlete My Bookings",
+      "width": 390,
+      "height": 844,
+      "fill": "$--bg",
+      "layout": "vertical",
+      "children": [
+        {
+          "type": "frame",
+          "id": "IapY1",
+          "name": "statusBar",
+          "width": "fill_container",
+          "height": 62,
+          "padding": [
+            0,
+            20
+          ],
+          "justifyContent": "space_between",
+          "alignItems": "center",
+          "children": [
+            {
+              "type": "text",
+              "id": "pWIQ9",
+              "name": "timeLabel",
+              "fill": "$--font-primary",
+              "content": "9:41",
+              "fontFamily": "Inter",
+              "fontSize": 15,
+              "fontWeight": "600"
+            },
+            {
+              "type": "frame",
+              "id": "iuuWl",
+              "name": "statusIcons",
+              "gap": 6,
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "icon_font",
+                  "id": "sMgTY",
+                  "name": "signal",
+                  "width": 16,
+                  "height": 16,
+                  "iconFontName": "signal",
+                  "iconFontFamily": "lucide",
+                  "fill": "$--font-primary"
+                },
+                {
+                  "type": "icon_font",
+                  "id": "FqIAd",
+                  "name": "wifi",
+                  "width": 16,
+                  "height": 16,
+                  "iconFontName": "wifi",
+                  "iconFontFamily": "lucide",
+                  "fill": "$--font-primary"
+                },
+                {
+                  "type": "icon_font",
+                  "id": "CMz1I",
+                  "name": "battery",
+                  "width": 16,
+                  "height": 16,
+                  "iconFontName": "battery-full",
+                  "iconFontFamily": "lucide",
+                  "fill": "$--font-primary"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "frame",
+          "id": "p6gjW",
+          "name": "contentWrap",
+          "clip": true,
+          "width": "fill_container",
+          "height": "fill_container",
+          "layout": "vertical",
+          "gap": 20,
+          "padding": [
+            8,
+            20,
+            20,
+            20
+          ],
+          "children": [
+            {
+              "type": "frame",
+              "id": "gJ8FA",
+              "name": "header",
+              "width": "fill_container",
+              "justifyContent": "space_between",
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "text",
+                  "id": "uQpsl",
+                  "name": "headerTitle",
+                  "fill": "$--font-primary",
+                  "content": "My Bookings",
+                  "fontFamily": "Inter",
+                  "fontSize": 24,
+                  "fontWeight": "700"
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "AyvQd",
+              "name": "filterRow",
+              "width": "fill_container",
+              "height": 40,
+              "fill": "$--accent-light",
+              "cornerRadius": 20,
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "NCoI4",
+                  "name": "filterUpcoming",
+                  "width": "fill_container",
+                  "height": "fill_container",
+                  "fill": "$--accent",
+                  "cornerRadius": 20,
+                  "justifyContent": "center",
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "xYpSb",
+                      "name": "filterUpcomingLabel",
+                      "fill": "$--white",
+                      "content": "Upcoming",
+                      "fontFamily": "Inter",
+                      "fontSize": 14,
+                      "fontWeight": "600"
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "wrd0d",
+                  "name": "filterPast",
+                  "width": "fill_container",
+                  "height": "fill_container",
+                  "cornerRadius": 20,
+                  "justifyContent": "center",
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "RFEpG",
+                      "name": "filterPastLabel",
+                      "fill": "$--font-secondary",
+                      "content": "Past",
+                      "fontFamily": "Inter",
+                      "fontSize": 14,
+                      "fontWeight": "500"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "zLtM9",
+              "name": "card1",
+              "width": "fill_container",
+              "cornerRadius": 12,
+              "stroke": {
+                "align": "inside",
+                "thickness": 1,
+                "fill": "$--border"
+              },
+              "layout": "vertical",
+              "gap": 12,
+              "padding": 16,
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "OlFff",
+                  "name": "card1Top",
+                  "width": "fill_container",
+                  "justifyContent": "space_between",
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "wnkSa",
+                      "name": "card1Title",
+                      "fill": "$--font-primary",
+                      "content": "CrossFit WOD",
+                      "fontFamily": "Inter",
+                      "fontSize": 16,
+                      "fontWeight": "600"
+                    },
+                    {
+                      "type": "frame",
+                      "id": "rtVSr",
+                      "name": "card1Badge",
+                      "fill": "$--badge-booked-bg",
+                      "cornerRadius": 12,
+                      "gap": 4,
+                      "padding": [
+                        4,
+                        10
+                      ],
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "icon_font",
+                          "id": "KSzJK",
+                          "name": "card1BadgeIcon",
+                          "width": 12,
+                          "height": 12,
+                          "iconFontName": "check",
+                          "iconFontFamily": "lucide",
+                          "fill": "$--badge-booked"
+                        },
+                        {
+                          "type": "text",
+                          "id": "mRSxq",
+                          "name": "card1BadgeLabel",
+                          "fill": "$--badge-booked",
+                          "content": "BOOKED",
+                          "fontFamily": "Inter",
+                          "fontSize": 10,
+                          "fontWeight": "600",
+                          "letterSpacing": 0.5
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "ZGAoW",
+                  "name": "card1Details",
+                  "width": "fill_container",
+                  "layout": "vertical",
+                  "gap": 6,
+                  "children": [
+                    {
+                      "type": "frame",
+                      "id": "15OPp",
+                      "name": "card1Date",
+                      "gap": 6,
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "icon_font",
+                          "id": "R1LGz",
+                          "name": "card1DateIcon",
+                          "width": 14,
+                          "height": 14,
+                          "iconFontName": "calendar",
+                          "iconFontFamily": "lucide",
+                          "fill": "$--font-secondary"
+                        },
+                        {
+                          "type": "text",
+                          "id": "LOVAo",
+                          "name": "card1DateText",
+                          "fill": "$--font-secondary",
+                          "content": "Mon, Apr 21 · 06:00 AM",
+                          "fontFamily": "Inter",
+                          "fontSize": 13,
+                          "fontWeight": "normal"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "r8YB5",
+                      "name": "card1Loc",
+                      "gap": 6,
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "icon_font",
+                          "id": "G4mxS",
+                          "name": "card1LocIcon",
+                          "width": 14,
+                          "height": 14,
+                          "iconFontName": "map-pin",
+                          "iconFontFamily": "lucide",
+                          "fill": "$--font-secondary"
+                        },
+                        {
+                          "type": "text",
+                          "id": "XvbWf",
+                          "name": "card1LocText",
+                          "fill": "$--font-secondary",
+                          "content": "Main Box · Coach Sarah",
+                          "fontFamily": "Inter",
+                          "fontSize": 13,
+                          "fontWeight": "normal"
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "dgLTJ",
+                  "name": "card1Actions",
+                  "width": "fill_container",
+                  "gap": 8,
+                  "children": [
+                    {
+                      "type": "frame",
+                      "id": "UQyIr",
+                      "name": "card1View",
+                      "width": "fill_container",
+                      "height": 36,
+                      "fill": "$--accent-light",
+                      "cornerRadius": 8,
+                      "justifyContent": "center",
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "text",
+                          "id": "tehBR",
+                          "name": "card1ViewLabel",
+                          "fill": "$--font-primary",
+                          "content": "View Details",
+                          "fontFamily": "Inter",
+                          "fontSize": 13,
+                          "fontWeight": "500"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "xnl6Z",
+                      "name": "card1Cancel",
+                      "width": "fill_container",
+                      "height": 36,
+                      "cornerRadius": 8,
+                      "stroke": {
+                        "align": "inside",
+                        "thickness": 1,
+                        "fill": "$--border"
+                      },
+                      "justifyContent": "center",
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "text",
+                          "id": "MEnak",
+                          "name": "card1CancelLabel",
+                          "fill": "$--danger",
+                          "content": "Cancel",
+                          "fontFamily": "Inter",
+                          "fontSize": 13,
+                          "fontWeight": "500"
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "vcZJX",
+              "name": "card2",
+              "width": "fill_container",
+              "cornerRadius": 12,
+              "stroke": {
+                "align": "inside",
+                "thickness": 1,
+                "fill": "$--border"
+              },
+              "layout": "vertical",
+              "gap": 12,
+              "padding": 16,
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "XNLJ5",
+                  "name": "card2Top",
+                  "width": "fill_container",
+                  "justifyContent": "space_between",
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "cKV8L",
+                      "name": "card2Title",
+                      "fill": "$--font-primary",
+                      "content": "Gymnastics",
+                      "fontFamily": "Inter",
+                      "fontSize": 16,
+                      "fontWeight": "600"
+                    },
+                    {
+                      "type": "frame",
+                      "id": "DvkUp",
+                      "name": "card2Badge",
+                      "fill": "$--badge-waitlisted-bg",
+                      "cornerRadius": 12,
+                      "gap": 4,
+                      "padding": [
+                        4,
+                        10
+                      ],
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "icon_font",
+                          "id": "zWcqB",
+                          "name": "card2BadgeIcon",
+                          "width": 12,
+                          "height": 12,
+                          "iconFontName": "hourglass",
+                          "iconFontFamily": "lucide",
+                          "fill": "$--badge-waitlisted"
+                        },
+                        {
+                          "type": "text",
+                          "id": "j3SNB",
+                          "name": "card2BadgeLabel",
+                          "fill": "$--badge-waitlisted",
+                          "content": "WAITLISTED #2",
+                          "fontFamily": "Inter",
+                          "fontSize": 10,
+                          "fontWeight": "600",
+                          "letterSpacing": 0.5
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "rlNoU",
+                  "name": "card2Details",
+                  "width": "fill_container",
+                  "layout": "vertical",
+                  "gap": 6,
+                  "children": [
+                    {
+                      "type": "frame",
+                      "id": "TVDCr",
+                      "name": "card2Date",
+                      "gap": 6,
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "icon_font",
+                          "id": "hBqXO",
+                          "name": "card2DateIcon",
+                          "width": 14,
+                          "height": 14,
+                          "iconFontName": "calendar",
+                          "iconFontFamily": "lucide",
+                          "fill": "$--font-secondary"
+                        },
+                        {
+                          "type": "text",
+                          "id": "r9QrY",
+                          "name": "card2DateText",
+                          "fill": "$--font-secondary",
+                          "content": "Tue, Apr 22 · 07:30 AM",
+                          "fontFamily": "Inter",
+                          "fontSize": 13,
+                          "fontWeight": "normal"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "tBp1d",
+                      "name": "card2Loc",
+                      "gap": 6,
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "icon_font",
+                          "id": "I4Ixk",
+                          "name": "card2LocIcon",
+                          "width": 14,
+                          "height": 14,
+                          "iconFontName": "map-pin",
+                          "iconFontFamily": "lucide",
+                          "fill": "$--font-secondary"
+                        },
+                        {
+                          "type": "text",
+                          "id": "HU7dZ",
+                          "name": "card2LocText",
+                          "fill": "$--font-secondary",
+                          "content": "Room B · Coach Mike",
+                          "fontFamily": "Inter",
+                          "fontSize": 13,
+                          "fontWeight": "normal"
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "39eSX",
+                  "name": "card2Actions",
+                  "width": "fill_container",
+                  "gap": 8,
+                  "children": [
+                    {
+                      "type": "frame",
+                      "id": "yub3P",
+                      "name": "card2View",
+                      "width": "fill_container",
+                      "height": 36,
+                      "fill": "$--accent-light",
+                      "cornerRadius": 8,
+                      "justifyContent": "center",
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "text",
+                          "id": "FRC4N",
+                          "name": "card2ViewLabel",
+                          "fill": "$--font-primary",
+                          "content": "View Details",
+                          "fontFamily": "Inter",
+                          "fontSize": 13,
+                          "fontWeight": "500"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "stByD",
+                      "name": "card2Cancel",
+                      "width": "fill_container",
+                      "height": 36,
+                      "cornerRadius": 8,
+                      "stroke": {
+                        "align": "inside",
+                        "thickness": 1,
+                        "fill": "$--border"
+                      },
+                      "justifyContent": "center",
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "text",
+                          "id": "Ly0tG",
+                          "name": "card2CancelLabel",
+                          "fill": "$--danger",
+                          "content": "Cancel",
+                          "fontFamily": "Inter",
+                          "fontSize": 13,
+                          "fontWeight": "500"
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "1tobC",
+              "name": "card3",
+              "width": "fill_container",
+              "cornerRadius": 12,
+              "stroke": {
+                "align": "inside",
+                "thickness": 1,
+                "fill": "$--border"
+              },
+              "layout": "vertical",
+              "gap": 12,
+              "padding": 16,
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "tGKHX",
+                  "name": "card3Top",
+                  "width": "fill_container",
+                  "justifyContent": "space_between",
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "5tfxG",
+                      "name": "card3Title",
+                      "fill": "$--font-primary",
+                      "content": "Hyrox Training",
+                      "fontFamily": "Inter",
+                      "fontSize": 16,
+                      "fontWeight": "600"
+                    },
+                    {
+                      "type": "frame",
+                      "id": "nXmwp",
+                      "name": "card3Badge",
+                      "fill": "$--badge-inprogress-bg",
+                      "cornerRadius": 12,
+                      "gap": 4,
+                      "padding": [
+                        4,
+                        10
+                      ],
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "icon_font",
+                          "id": "BR2ZG",
+                          "name": "card3BadgeIcon",
+                          "width": 12,
+                          "height": 12,
+                          "iconFontName": "circle",
+                          "iconFontFamily": "lucide",
+                          "fill": "$--badge-inprogress"
+                        },
+                        {
+                          "type": "text",
+                          "id": "fYUtp",
+                          "name": "card3BadgeLabel",
+                          "fill": "$--badge-inprogress",
+                          "content": "IN PROGRESS",
+                          "fontFamily": "Inter",
+                          "fontSize": 10,
+                          "fontWeight": "600",
+                          "letterSpacing": 0.5
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "TruoZ",
+                  "name": "card3Details",
+                  "width": "fill_container",
+                  "layout": "vertical",
+                  "gap": 6,
+                  "children": [
+                    {
+                      "type": "frame",
+                      "id": "6tmnx",
+                      "name": "card3Date",
+                      "gap": 6,
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "icon_font",
+                          "id": "8rB28",
+                          "name": "card3DateIcon",
+                          "width": 14,
+                          "height": 14,
+                          "iconFontName": "calendar",
+                          "iconFontFamily": "lucide",
+                          "fill": "$--font-secondary"
+                        },
+                        {
+                          "type": "text",
+                          "id": "XRfWy",
+                          "name": "card3DateText",
+                          "fill": "$--font-secondary",
+                          "content": "Today · 08:00 AM – 09:00 AM",
+                          "fontFamily": "Inter",
+                          "fontSize": 13,
+                          "fontWeight": "normal"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "n3cWA",
+                      "name": "card3Loc",
+                      "gap": 6,
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "icon_font",
+                          "id": "ISWyr",
+                          "name": "card3LocIcon",
+                          "width": 14,
+                          "height": 14,
+                          "iconFontName": "map-pin",
+                          "iconFontFamily": "lucide",
+                          "fill": "$--font-secondary"
+                        },
+                        {
+                          "type": "text",
+                          "id": "tQ07E",
+                          "name": "card3LocText",
+                          "fill": "$--font-secondary",
+                          "content": "Main Box · Coach Alex",
+                          "fontFamily": "Inter",
+                          "fontSize": 13,
+                          "fontWeight": "normal"
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "T0pbB",
+                  "name": "card3Actions",
+                  "width": "fill_container",
+                  "gap": 8,
+                  "children": [
+                    {
+                      "type": "frame",
+                      "id": "LP6Fz",
+                      "name": "card3View",
+                      "width": "fill_container",
+                      "height": 36,
+                      "fill": "$--accent-light",
+                      "cornerRadius": 8,
+                      "justifyContent": "center",
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "text",
+                          "id": "ySGWn",
+                          "name": "card3ViewLabel",
+                          "fill": "$--font-primary",
+                          "content": "View Details",
+                          "fontFamily": "Inter",
+                          "fontSize": 13,
+                          "fontWeight": "500"
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "frame",
+          "id": "kWPNj",
+          "name": "tabBarContainer",
+          "width": "fill_container",
+          "padding": [
+            12,
+            21,
+            21,
+            21
+          ],
+          "justifyContent": "center",
+          "children": [
+            {
+              "type": "frame",
+              "id": "q9tCm",
+              "name": "pill",
+              "width": "fill_container",
+              "height": 62,
+              "fill": "$--white",
+              "cornerRadius": 36,
+              "stroke": {
+                "align": "inside",
+                "thickness": 1,
+                "fill": "$--border"
+              },
+              "padding": 4,
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "XpnM3",
+                  "name": "tab1",
+                  "width": "fill_container",
+                  "height": "fill_container",
+                  "cornerRadius": 26,
+                  "layout": "vertical",
+                  "gap": 4,
+                  "justifyContent": "center",
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "icon_font",
+                      "id": "OgBVH",
+                      "name": "tab1Icon",
+                      "width": 18,
+                      "height": 18,
+                      "iconFontName": "house",
+                      "iconFontFamily": "lucide",
+                      "fill": "$--tab-inactive"
+                    },
+                    {
+                      "type": "text",
+                      "id": "HLn2t",
+                      "name": "tab1Label",
+                      "fill": "$--tab-inactive",
+                      "content": "HOME",
+                      "fontFamily": "Inter",
+                      "fontSize": 10,
+                      "fontWeight": "600",
+                      "letterSpacing": 0.5
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "s3CNF",
+                  "name": "tab2",
+                  "width": "fill_container",
+                  "height": "fill_container",
+                  "cornerRadius": 26,
+                  "layout": "vertical",
+                  "gap": 4,
+                  "justifyContent": "center",
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "icon_font",
+                      "id": "uqm7a",
+                      "name": "tab2Icon",
+                      "width": 18,
+                      "height": 18,
+                      "iconFontName": "calendar",
+                      "iconFontFamily": "lucide",
+                      "fill": "$--tab-inactive"
+                    },
+                    {
+                      "type": "text",
+                      "id": "h5err",
+                      "name": "tab2Label",
+                      "fill": "$--tab-inactive",
+                      "content": "SCHEDULE",
+                      "fontFamily": "Inter",
+                      "fontSize": 10,
+                      "fontWeight": "600",
+                      "letterSpacing": 0.5
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "hkXWt",
+                  "name": "tab3",
+                  "width": "fill_container",
+                  "height": "fill_container",
+                  "fill": "$--tab-active",
+                  "cornerRadius": 26,
+                  "layout": "vertical",
+                  "gap": 4,
+                  "justifyContent": "center",
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "icon_font",
+                      "id": "trhKy",
+                      "name": "tab3Icon",
+                      "width": 18,
+                      "height": 18,
+                      "iconFontName": "bookmark",
+                      "iconFontFamily": "lucide",
+                      "fill": "$--white"
+                    },
+                    {
+                      "type": "text",
+                      "id": "aR2Lr",
+                      "name": "tab3Label",
+                      "fill": "$--white",
+                      "content": "BOOKINGS",
+                      "fontFamily": "Inter",
+                      "fontSize": 10,
+                      "fontWeight": "600",
+                      "letterSpacing": 0.5
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "PQuKE",
+                  "name": "tab4",
+                  "width": "fill_container",
+                  "height": "fill_container",
+                  "cornerRadius": 26,
+                  "layout": "vertical",
+                  "gap": 4,
+                  "justifyContent": "center",
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "icon_font",
+                      "id": "6y65J",
+                      "name": "tab4Icon",
+                      "width": 18,
+                      "height": 18,
+                      "iconFontName": "chart-bar",
+                      "iconFontFamily": "lucide",
+                      "fill": "$--tab-inactive"
+                    },
+                    {
+                      "type": "text",
+                      "id": "Wl4xn",
+                      "name": "tab4Label",
+                      "fill": "$--tab-inactive",
+                      "content": "HISTORY",
+                      "fontFamily": "Inter",
+                      "fontSize": 10,
+                      "fontWeight": "600",
+                      "letterSpacing": 0.5
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "w20X2",
+                  "name": "tab5",
+                  "width": "fill_container",
+                  "height": "fill_container",
+                  "cornerRadius": 26,
+                  "layout": "vertical",
+                  "gap": 4,
+                  "justifyContent": "center",
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "icon_font",
+                      "id": "Ap0Hm",
+                      "name": "tab5Icon",
+                      "width": 18,
+                      "height": 18,
+                      "iconFontName": "user",
+                      "iconFontFamily": "lucide",
+                      "fill": "$--tab-inactive"
+                    },
+                    {
+                      "type": "text",
+                      "id": "7B84d",
+                      "name": "tab5Label",
+                      "fill": "$--tab-inactive",
+                      "content": "PROFILE",
+                      "fontFamily": "Inter",
+                      "fontSize": 10,
+                      "fontWeight": "600",
+                      "letterSpacing": 0.5
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "frame",
+      "id": "ywUzu",
+      "x": 450,
+      "y": 0,
+      "name": "Athlete My Bookings – Past",
+      "width": 390,
+      "height": 844,
+      "fill": "$--bg",
+      "layout": "vertical",
+      "children": [
+        {
+          "type": "frame",
+          "id": "6ANHC",
+          "name": "statusBar",
+          "width": "fill_container",
+          "height": 62,
+          "padding": [
+            0,
+            20
+          ],
+          "justifyContent": "space_between",
+          "alignItems": "center",
+          "children": [
+            {
+              "type": "text",
+              "id": "Utk17",
+              "name": "timeLabel",
+              "fill": "$--font-primary",
+              "content": "9:41",
+              "fontFamily": "Inter",
+              "fontSize": 15,
+              "fontWeight": "600"
+            },
+            {
+              "type": "frame",
+              "id": "C9qNN",
+              "name": "statusIcons",
+              "gap": 6,
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "icon_font",
+                  "id": "5qI5z",
+                  "name": "signal",
+                  "width": 16,
+                  "height": 16,
+                  "iconFontName": "signal",
+                  "iconFontFamily": "lucide",
+                  "fill": "$--font-primary"
+                },
+                {
+                  "type": "icon_font",
+                  "id": "E9NmQ",
+                  "name": "wifi",
+                  "width": 16,
+                  "height": 16,
+                  "iconFontName": "wifi",
+                  "iconFontFamily": "lucide",
+                  "fill": "$--font-primary"
+                },
+                {
+                  "type": "icon_font",
+                  "id": "wWN7J",
+                  "name": "battery",
+                  "width": 16,
+                  "height": 16,
+                  "iconFontName": "battery-full",
+                  "iconFontFamily": "lucide",
+                  "fill": "$--font-primary"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "frame",
+          "id": "WM3Pn",
+          "name": "contentWrap",
+          "clip": true,
+          "width": "fill_container",
+          "height": "fill_container",
+          "layout": "vertical",
+          "gap": 20,
+          "padding": [
+            8,
+            20,
+            20,
+            20
+          ],
+          "children": [
+            {
+              "type": "frame",
+              "id": "9Hvp4",
+              "name": "header",
+              "width": "fill_container",
+              "justifyContent": "space_between",
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "text",
+                  "id": "8ad4u",
+                  "name": "headerTitle",
+                  "fill": "$--font-primary",
+                  "content": "My Bookings",
+                  "fontFamily": "Inter",
+                  "fontSize": 24,
+                  "fontWeight": "700"
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "2oeps",
+              "name": "filterRow",
+              "width": "fill_container",
+              "height": 40,
+              "fill": "$--accent-light",
+              "cornerRadius": 20,
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "CXxms",
+                  "name": "filterUpcoming",
+                  "width": "fill_container",
+                  "height": "fill_container",
+                  "fill": "#00000000",
+                  "cornerRadius": 20,
+                  "justifyContent": "center",
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "2fwJO",
+                      "name": "filterUpcomingLabel",
+                      "fill": "$--font-secondary",
+                      "content": "Upcoming",
+                      "fontFamily": "Inter",
+                      "fontSize": 14,
+                      "fontWeight": "500"
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "jnTLq",
+                  "name": "filterPast",
+                  "width": "fill_container",
+                  "height": "fill_container",
+                  "fill": "$--accent",
+                  "cornerRadius": 20,
+                  "justifyContent": "center",
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "fatL7",
+                      "name": "filterPastLabel",
+                      "fill": "$--white",
+                      "content": "Past",
+                      "fontFamily": "Inter",
+                      "fontSize": 14,
+                      "fontWeight": "600"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "KwSgJ",
+              "name": "pastCard1",
+              "width": "fill_container",
+              "cornerRadius": 12,
+              "stroke": {
+                "align": "inside",
+                "thickness": 1,
+                "fill": "$--border"
+              },
+              "layout": "vertical",
+              "gap": 12,
+              "padding": 16,
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "y7ZqA",
+                  "name": "pc1Top",
+                  "width": "fill_container",
+                  "justifyContent": "space_between",
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "JVOGh",
+                      "name": "pc1Title",
+                      "fill": "$--font-primary",
+                      "content": "CrossFit WOD",
+                      "fontFamily": "Inter",
+                      "fontSize": 16,
+                      "fontWeight": "600"
+                    },
+                    {
+                      "type": "frame",
+                      "id": "jzg4b",
+                      "name": "pc1Badge",
+                      "fill": "$--badge-booked-bg",
+                      "cornerRadius": 12,
+                      "gap": 4,
+                      "padding": [
+                        4,
+                        10
+                      ],
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "icon_font",
+                          "id": "qZ3xU",
+                          "name": "pc1BadgeIcon",
+                          "width": 12,
+                          "height": 12,
+                          "iconFontName": "check",
+                          "iconFontFamily": "lucide",
+                          "fill": "$--badge-booked"
+                        },
+                        {
+                          "type": "text",
+                          "id": "88aAw",
+                          "name": "pc1BadgeLabel",
+                          "fill": "$--badge-booked",
+                          "content": "COMPLETED",
+                          "fontFamily": "Inter",
+                          "fontSize": 10,
+                          "fontWeight": "600",
+                          "letterSpacing": 0.5
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "bDjAm",
+                  "name": "pc1Details",
+                  "width": "fill_container",
+                  "layout": "vertical",
+                  "gap": 6,
+                  "children": [
+                    {
+                      "type": "frame",
+                      "id": "aX5yF",
+                      "name": "pc1Date",
+                      "gap": 6,
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "icon_font",
+                          "id": "LI2eS",
+                          "name": "pc1DateIcon",
+                          "width": 14,
+                          "height": 14,
+                          "iconFontName": "calendar",
+                          "iconFontFamily": "lucide",
+                          "fill": "$--font-secondary"
+                        },
+                        {
+                          "type": "text",
+                          "id": "Qz95l",
+                          "name": "pc1DateText",
+                          "fill": "$--font-secondary",
+                          "content": "Fri, Apr 18 · 06:00 AM",
+                          "fontFamily": "Inter",
+                          "fontSize": 13,
+                          "fontWeight": "normal"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "gH0OF",
+                      "name": "pc1Loc",
+                      "gap": 6,
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "icon_font",
+                          "id": "3f9FV",
+                          "name": "pc1LocIcon",
+                          "width": 14,
+                          "height": 14,
+                          "iconFontName": "map-pin",
+                          "iconFontFamily": "lucide",
+                          "fill": "$--font-secondary"
+                        },
+                        {
+                          "type": "text",
+                          "id": "Pl8oe",
+                          "name": "pc1LocText",
+                          "fill": "$--font-secondary",
+                          "content": "Main Box · Coach Sarah",
+                          "fontFamily": "Inter",
+                          "fontSize": 13,
+                          "fontWeight": "normal"
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "gwr5g",
+                  "name": "pc1Attended",
+                  "width": "fill_container",
+                  "gap": 6,
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "icon_font",
+                      "id": "Ak7HB",
+                      "name": "pc1AttIcon",
+                      "width": 16,
+                      "height": 16,
+                      "iconFontName": "circle-check",
+                      "iconFontFamily": "lucide",
+                      "fill": "$--badge-booked"
+                    },
+                    {
+                      "type": "text",
+                      "id": "lZvgk",
+                      "name": "pc1AttText",
+                      "fill": "$--badge-booked",
+                      "content": "You attended",
+                      "fontFamily": "Inter",
+                      "fontSize": 13,
+                      "fontWeight": "500"
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "RslYj",
+                  "name": "pc1LogBtn",
+                  "width": "fill_container",
+                  "height": 36,
+                  "fill": "$--accent",
+                  "cornerRadius": 8,
+                  "gap": 6,
+                  "justifyContent": "center",
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "icon_font",
+                      "id": "ARuvA",
+                      "name": "pc1LogIcon",
+                      "width": 14,
+                      "height": 14,
+                      "iconFontName": "pencil",
+                      "iconFontFamily": "lucide",
+                      "fill": "$--white"
+                    },
+                    {
+                      "type": "text",
+                      "id": "ZE8A8",
+                      "name": "pc1LogLabel",
+                      "fill": "$--white",
+                      "content": "Log Results",
+                      "fontFamily": "Inter",
+                      "fontSize": 13,
+                      "fontWeight": "600"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "CRsM3",
+              "name": "pastCard2",
+              "width": "fill_container",
+              "cornerRadius": 12,
+              "stroke": {
+                "align": "inside",
+                "thickness": 1,
+                "fill": "$--border"
+              },
+              "layout": "vertical",
+              "gap": 12,
+              "padding": 16,
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "NKfOF",
+                  "name": "pc2Top",
+                  "width": "fill_container",
+                  "justifyContent": "space_between",
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "VLTZD",
+                      "name": "pc2Title",
+                      "fill": "$--font-primary",
+                      "content": "Hyrox Training",
+                      "fontFamily": "Inter",
+                      "fontSize": 16,
+                      "fontWeight": "600"
+                    },
+                    {
+                      "type": "frame",
+                      "id": "THra2",
+                      "name": "pc2Badge",
+                      "fill": "$--badge-booked-bg",
+                      "cornerRadius": 12,
+                      "gap": 4,
+                      "padding": [
+                        4,
+                        10
+                      ],
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "icon_font",
+                          "id": "KbO9m",
+                          "name": "pc2BadgeIcon",
+                          "width": 12,
+                          "height": 12,
+                          "iconFontName": "check",
+                          "iconFontFamily": "lucide",
+                          "fill": "$--badge-booked"
+                        },
+                        {
+                          "type": "text",
+                          "id": "50zjn",
+                          "name": "pc2BadgeLabel",
+                          "fill": "$--badge-booked",
+                          "content": "COMPLETED",
+                          "fontFamily": "Inter",
+                          "fontSize": 10,
+                          "fontWeight": "600",
+                          "letterSpacing": 0.5
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "4wyJ0",
+                  "name": "pc2Details",
+                  "width": "fill_container",
+                  "layout": "vertical",
+                  "gap": 6,
+                  "children": [
+                    {
+                      "type": "frame",
+                      "id": "MGV8z",
+                      "name": "pc2Date",
+                      "gap": 6,
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "icon_font",
+                          "id": "vwxLY",
+                          "name": "pc2DateIcon",
+                          "width": 14,
+                          "height": 14,
+                          "iconFontName": "calendar",
+                          "iconFontFamily": "lucide",
+                          "fill": "$--font-secondary"
+                        },
+                        {
+                          "type": "text",
+                          "id": "mFnjk",
+                          "name": "pc2DateText",
+                          "fill": "$--font-secondary",
+                          "content": "Wed, Apr 16 · 07:00 AM",
+                          "fontFamily": "Inter",
+                          "fontSize": 13,
+                          "fontWeight": "normal"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "m0aOJ",
+                      "name": "pc2Loc",
+                      "gap": 6,
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "icon_font",
+                          "id": "qcWd8",
+                          "name": "pc2LocIcon",
+                          "width": 14,
+                          "height": 14,
+                          "iconFontName": "map-pin",
+                          "iconFontFamily": "lucide",
+                          "fill": "$--font-secondary"
+                        },
+                        {
+                          "type": "text",
+                          "id": "nzg80",
+                          "name": "pc2LocText",
+                          "fill": "$--font-secondary",
+                          "content": "Main Box · Coach Alex",
+                          "fontFamily": "Inter",
+                          "fontSize": 13,
+                          "fontWeight": "normal"
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "xHX54",
+                  "name": "pc2Attended",
+                  "width": "fill_container",
+                  "gap": 6,
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "icon_font",
+                      "id": "GKa6e",
+                      "name": "pc2AttIcon",
+                      "width": 16,
+                      "height": 16,
+                      "iconFontName": "circle-check",
+                      "iconFontFamily": "lucide",
+                      "fill": "$--badge-booked"
+                    },
+                    {
+                      "type": "text",
+                      "id": "FyJtk",
+                      "name": "pc2AttText",
+                      "fill": "$--badge-booked",
+                      "content": "You attended",
+                      "fontFamily": "Inter",
+                      "fontSize": 13,
+                      "fontWeight": "500"
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "M9fgP",
+                  "name": "pc2Result",
+                  "width": "fill_container",
+                  "fill": "$--accent-light",
+                  "cornerRadius": 8,
+                  "padding": [
+                    10,
+                    12
+                  ],
+                  "justifyContent": "space_between",
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "frame",
+                      "id": "n8jZt",
+                      "name": "pc2ResultInfo",
+                      "layout": "vertical",
+                      "gap": 2,
+                      "children": [
+                        {
+                          "type": "text",
+                          "id": "mzSq5",
+                          "name": "pc2ResultLabel",
+                          "fill": "$--font-tertiary",
+                          "content": "Your Result",
+                          "fontFamily": "Inter",
+                          "fontSize": 11,
+                          "fontWeight": "500"
+                        },
+                        {
+                          "type": "text",
+                          "id": "CrcJP",
+                          "name": "pc2ResultValue",
+                          "fill": "$--font-primary",
+                          "content": "12:45 Rx · 135 lb",
+                          "fontFamily": "Inter",
+                          "fontSize": 14,
+                          "fontWeight": "600"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "icon_font",
+                      "id": "5q2rx",
+                      "name": "pc2EditIcon",
+                      "width": 16,
+                      "height": 16,
+                      "iconFontName": "pencil",
+                      "iconFontFamily": "lucide",
+                      "fill": "$--font-secondary"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "c76t9",
+              "name": "pastCard3",
+              "width": "fill_container",
+              "cornerRadius": 12,
+              "stroke": {
+                "align": "inside",
+                "thickness": 1,
+                "fill": "$--border"
+              },
+              "layout": "vertical",
+              "gap": 12,
+              "padding": 16,
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "whqF7",
+                  "name": "pc3Top",
+                  "width": "fill_container",
+                  "justifyContent": "space_between",
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "xmEzp",
+                      "name": "pc3Title",
+                      "fill": "$--font-primary",
+                      "content": "Open Gym",
+                      "fontFamily": "Inter",
+                      "fontSize": 16,
+                      "fontWeight": "600"
+                    },
+                    {
+                      "type": "frame",
+                      "id": "EVJ79",
+                      "name": "pc3Badge",
+                      "fill": "$--badge-booked-bg",
+                      "cornerRadius": 12,
+                      "gap": 4,
+                      "padding": [
+                        4,
+                        10
+                      ],
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "icon_font",
+                          "id": "uwBHN",
+                          "name": "pc3BadgeIcon",
+                          "width": 12,
+                          "height": 12,
+                          "iconFontName": "check",
+                          "iconFontFamily": "lucide",
+                          "fill": "$--badge-booked"
+                        },
+                        {
+                          "type": "text",
+                          "id": "AJlW3",
+                          "name": "pc3BadgeLabel",
+                          "fill": "$--badge-booked",
+                          "content": "COMPLETED",
+                          "fontFamily": "Inter",
+                          "fontSize": 10,
+                          "fontWeight": "600",
+                          "letterSpacing": 0.5
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "hwnKQ",
+                  "name": "pc3Details",
+                  "width": "fill_container",
+                  "layout": "vertical",
+                  "gap": 6,
+                  "children": [
+                    {
+                      "type": "frame",
+                      "id": "LLf07",
+                      "name": "pc3Date",
+                      "gap": 6,
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "icon_font",
+                          "id": "CSatl",
+                          "name": "pc3DateIcon",
+                          "width": 14,
+                          "height": 14,
+                          "iconFontName": "calendar",
+                          "iconFontFamily": "lucide",
+                          "fill": "$--font-secondary"
+                        },
+                        {
+                          "type": "text",
+                          "id": "Tbum2",
+                          "name": "pc3DateText",
+                          "fill": "$--font-secondary",
+                          "content": "Mon, Apr 14 · 05:30 PM",
+                          "fontFamily": "Inter",
+                          "fontSize": 13,
+                          "fontWeight": "normal"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "golYs",
+                      "name": "pc3Loc",
+                      "gap": 6,
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "icon_font",
+                          "id": "lFKwj",
+                          "name": "pc3LocIcon",
+                          "width": 14,
+                          "height": 14,
+                          "iconFontName": "map-pin",
+                          "iconFontFamily": "lucide",
+                          "fill": "$--font-secondary"
+                        },
+                        {
+                          "type": "text",
+                          "id": "h0BB0",
+                          "name": "pc3LocText",
+                          "fill": "$--font-secondary",
+                          "content": "Main Box · Coach Sarah",
+                          "fontFamily": "Inter",
+                          "fontSize": 13,
+                          "fontWeight": "normal"
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "OqkX1",
+                  "name": "pc3NotAttended",
+                  "width": "fill_container",
+                  "gap": 6,
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "icon_font",
+                      "id": "qXJ8O",
+                      "name": "pc3NotIcon",
+                      "width": 16,
+                      "height": 16,
+                      "iconFontName": "circle-x",
+                      "iconFontFamily": "lucide",
+                      "fill": "$--font-tertiary"
+                    },
+                    {
+                      "type": "text",
+                      "id": "PCU7k",
+                      "name": "pc3NotText",
+                      "fill": "$--font-tertiary",
+                      "content": "You did not attend",
+                      "fontFamily": "Inter",
+                      "fontSize": 13,
+                      "fontWeight": "500"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "qjGU7",
+              "name": "pastCard4",
+              "opacity": 0.7,
+              "width": "fill_container",
+              "fill": "$--badge-cancelled-bg",
+              "cornerRadius": 12,
+              "stroke": {
+                "align": "inside",
+                "thickness": 1,
+                "fill": "$--border"
+              },
+              "layout": "vertical",
+              "gap": 12,
+              "padding": 16,
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "zlHp4",
+                  "name": "pc4Top",
+                  "width": "fill_container",
+                  "justifyContent": "space_between",
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "PsPHv",
+                      "name": "pc4Title",
+                      "fill": "$--font-tertiary",
+                      "content": "Gymnastics",
+                      "fontFamily": "Inter",
+                      "fontSize": 16,
+                      "fontWeight": "600"
+                    },
+                    {
+                      "type": "frame",
+                      "id": "n4rOn",
+                      "name": "pc4Badge",
+                      "fill": "$--border",
+                      "cornerRadius": 12,
+                      "gap": 4,
+                      "padding": [
+                        4,
+                        10
+                      ],
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "icon_font",
+                          "id": "nEXVE",
+                          "name": "pc4BadgeIcon",
+                          "width": 12,
+                          "height": 12,
+                          "iconFontName": "x",
+                          "iconFontFamily": "lucide",
+                          "fill": "$--badge-cancelled"
+                        },
+                        {
+                          "type": "text",
+                          "id": "YIB7f",
+                          "name": "pc4BadgeLabel",
+                          "fill": "$--badge-cancelled",
+                          "content": "CANCELLED",
+                          "fontFamily": "Inter",
+                          "fontSize": 10,
+                          "fontWeight": "600",
+                          "letterSpacing": 0.5
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "j4x9Q",
+                  "name": "pc4Details",
+                  "width": "fill_container",
+                  "layout": "vertical",
+                  "gap": 6,
+                  "children": [
+                    {
+                      "type": "frame",
+                      "id": "VGkja",
+                      "name": "pc4Date",
+                      "gap": 6,
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "icon_font",
+                          "id": "EX0cF",
+                          "name": "pc4DateIcon",
+                          "width": 14,
+                          "height": 14,
+                          "iconFontName": "calendar",
+                          "iconFontFamily": "lucide",
+                          "fill": "$--font-tertiary"
+                        },
+                        {
+                          "type": "text",
+                          "id": "T5wVz",
+                          "name": "pc4DateText",
+                          "fill": "$--font-tertiary",
+                          "content": "Sat, Apr 12 · 09:00 AM",
+                          "fontFamily": "Inter",
+                          "fontSize": 13,
+                          "fontWeight": "normal"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "ifTJw",
+                      "name": "pc4Loc",
+                      "gap": 6,
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "icon_font",
+                          "id": "wljBO",
+                          "name": "pc4LocIcon",
+                          "width": 14,
+                          "height": 14,
+                          "iconFontName": "map-pin",
+                          "iconFontFamily": "lucide",
+                          "fill": "$--font-tertiary"
+                        },
+                        {
+                          "type": "text",
+                          "id": "LAcST",
+                          "name": "pc4LocText",
+                          "fill": "$--font-tertiary",
+                          "content": "Room B · Coach Mike",
+                          "fontFamily": "Inter",
+                          "fontSize": 13,
+                          "fontWeight": "normal"
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "Ne1aQ",
+                  "name": "pc4Status",
+                  "width": "fill_container",
+                  "gap": 6,
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "Ljt3n",
+                      "name": "pc4StatusText",
+                      "fill": "$--font-tertiary",
+                      "content": "You cancelled this booking",
+                      "fontFamily": "Inter",
+                      "fontSize": 13,
+                      "fontWeight": "500"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "frame",
+          "id": "blnAC",
+          "name": "tabBarContainer",
+          "width": "fill_container",
+          "padding": [
+            12,
+            21,
+            21,
+            21
+          ],
+          "justifyContent": "center",
+          "children": [
+            {
+              "type": "frame",
+              "id": "bSQfq",
+              "name": "pill",
+              "width": "fill_container",
+              "height": 62,
+              "fill": "$--white",
+              "cornerRadius": 36,
+              "stroke": {
+                "align": "inside",
+                "thickness": 1,
+                "fill": "$--border"
+              },
+              "padding": 4,
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "Gb1TU",
+                  "name": "tab1",
+                  "width": "fill_container",
+                  "height": "fill_container",
+                  "cornerRadius": 26,
+                  "layout": "vertical",
+                  "gap": 4,
+                  "justifyContent": "center",
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "icon_font",
+                      "id": "2aFbt",
+                      "name": "tab1Icon",
+                      "width": 18,
+                      "height": 18,
+                      "iconFontName": "house",
+                      "iconFontFamily": "lucide",
+                      "fill": "$--tab-inactive"
+                    },
+                    {
+                      "type": "text",
+                      "id": "t4aZn",
+                      "name": "tab1Label",
+                      "fill": "$--tab-inactive",
+                      "content": "HOME",
+                      "fontFamily": "Inter",
+                      "fontSize": 10,
+                      "fontWeight": "600",
+                      "letterSpacing": 0.5
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "QbBRe",
+                  "name": "tab2",
+                  "width": "fill_container",
+                  "height": "fill_container",
+                  "cornerRadius": 26,
+                  "layout": "vertical",
+                  "gap": 4,
+                  "justifyContent": "center",
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "icon_font",
+                      "id": "BUteG",
+                      "name": "tab2Icon",
+                      "width": 18,
+                      "height": 18,
+                      "iconFontName": "calendar",
+                      "iconFontFamily": "lucide",
+                      "fill": "$--tab-inactive"
+                    },
+                    {
+                      "type": "text",
+                      "id": "O79BF",
+                      "name": "tab2Label",
+                      "fill": "$--tab-inactive",
+                      "content": "SCHEDULE",
+                      "fontFamily": "Inter",
+                      "fontSize": 10,
+                      "fontWeight": "600",
+                      "letterSpacing": 0.5
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "k13xG",
+                  "name": "tab3",
+                  "width": "fill_container",
+                  "height": "fill_container",
+                  "fill": "$--tab-active",
+                  "cornerRadius": 26,
+                  "layout": "vertical",
+                  "gap": 4,
+                  "justifyContent": "center",
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "icon_font",
+                      "id": "7vQDb",
+                      "name": "tab3Icon",
+                      "width": 18,
+                      "height": 18,
+                      "iconFontName": "bookmark",
+                      "iconFontFamily": "lucide",
+                      "fill": "$--white"
+                    },
+                    {
+                      "type": "text",
+                      "id": "PrDLW",
+                      "name": "tab3Label",
+                      "fill": "$--white",
+                      "content": "BOOKINGS",
+                      "fontFamily": "Inter",
+                      "fontSize": 10,
+                      "fontWeight": "600",
+                      "letterSpacing": 0.5
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "N32Zd",
+                  "name": "tab4",
+                  "width": "fill_container",
+                  "height": "fill_container",
+                  "cornerRadius": 26,
+                  "layout": "vertical",
+                  "gap": 4,
+                  "justifyContent": "center",
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "icon_font",
+                      "id": "zEgrT",
+                      "name": "tab4Icon",
+                      "width": 18,
+                      "height": 18,
+                      "iconFontName": "chart-bar",
+                      "iconFontFamily": "lucide",
+                      "fill": "$--tab-inactive"
+                    },
+                    {
+                      "type": "text",
+                      "id": "jPdri",
+                      "name": "tab4Label",
+                      "fill": "$--tab-inactive",
+                      "content": "HISTORY",
+                      "fontFamily": "Inter",
+                      "fontSize": 10,
+                      "fontWeight": "600",
+                      "letterSpacing": 0.5
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "EDlJW",
+                  "name": "tab5",
+                  "width": "fill_container",
+                  "height": "fill_container",
+                  "cornerRadius": 26,
+                  "layout": "vertical",
+                  "gap": 4,
+                  "justifyContent": "center",
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "icon_font",
+                      "id": "jjMcK",
+                      "name": "tab5Icon",
+                      "width": 18,
+                      "height": 18,
+                      "iconFontName": "user",
+                      "iconFontFamily": "lucide",
+                      "fill": "$--tab-inactive"
+                    },
+                    {
+                      "type": "text",
+                      "id": "6hSHv",
+                      "name": "tab5Label",
+                      "fill": "$--tab-inactive",
+                      "content": "PROFILE",
+                      "fontFamily": "Inter",
+                      "fontSize": 10,
+                      "fontWeight": "600",
+                      "letterSpacing": 0.5
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "frame",
+      "id": "FwGrs",
+      "x": 900,
+      "y": 0,
+      "name": "Athlete My Bookings – Empty State",
+      "width": 390,
+      "height": 844,
+      "fill": "$--bg",
+      "layout": "vertical",
+      "children": [
+        {
+          "type": "frame",
+          "id": "xtqLp",
+          "name": "statusBar",
+          "width": "fill_container",
+          "height": 62,
+          "padding": [
+            0,
+            20
+          ],
+          "justifyContent": "space_between",
+          "alignItems": "center",
+          "children": [
+            {
+              "type": "text",
+              "id": "rcmh1",
+              "name": "timeLabel",
+              "fill": "$--font-primary",
+              "content": "9:41",
+              "fontFamily": "Inter",
+              "fontSize": 15,
+              "fontWeight": "600"
+            },
+            {
+              "type": "frame",
+              "id": "jBA6A",
+              "name": "statusIcons",
+              "gap": 6,
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "icon_font",
+                  "id": "7ypuP",
+                  "name": "signal",
+                  "width": 16,
+                  "height": 16,
+                  "iconFontName": "signal",
+                  "iconFontFamily": "lucide",
+                  "fill": "$--font-primary"
+                },
+                {
+                  "type": "icon_font",
+                  "id": "Epu58",
+                  "name": "wifi",
+                  "width": 16,
+                  "height": 16,
+                  "iconFontName": "wifi",
+                  "iconFontFamily": "lucide",
+                  "fill": "$--font-primary"
+                },
+                {
+                  "type": "icon_font",
+                  "id": "DwpnP",
+                  "name": "battery",
+                  "width": 16,
+                  "height": 16,
+                  "iconFontName": "battery-full",
+                  "iconFontFamily": "lucide",
+                  "fill": "$--font-primary"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "frame",
+          "id": "zeV60",
+          "name": "contentWrap",
+          "clip": true,
+          "width": "fill_container",
+          "height": "fill_container",
+          "layout": "vertical",
+          "gap": 20,
+          "padding": [
+            8,
+            20,
+            20,
+            20
+          ],
+          "children": [
+            {
+              "type": "frame",
+              "id": "vA5Hs",
+              "name": "header",
+              "width": "fill_container",
+              "justifyContent": "space_between",
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "text",
+                  "id": "ZaZ9g",
+                  "name": "headerTitle",
+                  "fill": "$--font-primary",
+                  "content": "My Bookings",
+                  "fontFamily": "Inter",
+                  "fontSize": 24,
+                  "fontWeight": "700"
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "DCtIy",
+              "name": "filterRow",
+              "width": "fill_container",
+              "height": 40,
+              "fill": "$--accent-light",
+              "cornerRadius": 20,
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "wHWHA",
+                  "name": "filterUpcoming",
+                  "width": "fill_container",
+                  "height": "fill_container",
+                  "fill": "$--accent",
+                  "cornerRadius": 20,
+                  "justifyContent": "center",
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "gTgVE",
+                      "name": "filterUpcomingLabel",
+                      "fill": "$--white",
+                      "content": "Upcoming",
+                      "fontFamily": "Inter",
+                      "fontSize": 14,
+                      "fontWeight": "600"
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "lz4GX",
+                  "name": "filterPast",
+                  "width": "fill_container",
+                  "height": "fill_container",
+                  "cornerRadius": 20,
+                  "justifyContent": "center",
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "G60vV",
+                      "name": "filterPastLabel",
+                      "fill": "$--font-secondary",
+                      "content": "Past",
+                      "fontFamily": "Inter",
+                      "fontSize": 14,
+                      "fontWeight": "500"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "baRlX",
+              "name": "emptyContainer",
+              "width": "fill_container",
+              "height": "fill_container",
+              "layout": "vertical",
+              "gap": 16,
+              "padding": [
+                0,
+                20
+              ],
+              "justifyContent": "center",
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "icon_font",
+                  "id": "WS6BB",
+                  "name": "emptyIcon",
+                  "width": 56,
+                  "height": 56,
+                  "iconFontName": "calendar-x",
+                  "iconFontFamily": "lucide",
+                  "fill": "$--border"
+                },
+                {
+                  "type": "text",
+                  "id": "mCFVN",
+                  "name": "emptyTitle",
+                  "fill": "$--font-primary",
+                  "content": "No upcoming bookings",
+                  "textAlign": "center",
+                  "fontFamily": "Inter",
+                  "fontSize": 18,
+                  "fontWeight": "600"
+                },
+                {
+                  "type": "text",
+                  "id": "DaHOZ",
+                  "name": "emptyDesc",
+                  "fill": "$--font-secondary",
+                  "textGrowth": "fixed-width",
+                  "width": 220,
+                  "content": "Browse the schedule to book a class!",
+                  "textAlign": "center",
+                  "fontFamily": "Inter",
+                  "fontSize": 14,
+                  "fontWeight": "normal"
+                },
+                {
+                  "type": "frame",
+                  "id": "WxY8x",
+                  "name": "emptyBtn",
+                  "height": 44,
+                  "fill": "$--accent",
+                  "cornerRadius": 22,
+                  "gap": 8,
+                  "padding": [
+                    0,
+                    24
+                  ],
+                  "justifyContent": "center",
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "icon_font",
+                      "id": "0u1kG",
+                      "name": "emptyBtnIcon",
+                      "width": 16,
+                      "height": 16,
+                      "iconFontName": "search",
+                      "iconFontFamily": "lucide",
+                      "fill": "$--white"
+                    },
+                    {
+                      "type": "text",
+                      "id": "imNew",
+                      "name": "emptyBtnLabel",
+                      "fill": "$--white",
+                      "content": "Browse Schedule",
+                      "fontFamily": "Inter",
+                      "fontSize": 14,
+                      "fontWeight": "600"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "frame",
+          "id": "wzMRI",
+          "name": "tabBarContainer",
+          "width": "fill_container",
+          "padding": [
+            12,
+            21,
+            21,
+            21
+          ],
+          "justifyContent": "center",
+          "children": [
+            {
+              "type": "frame",
+              "id": "xs2hS",
+              "name": "pill",
+              "width": "fill_container",
+              "height": 62,
+              "fill": "$--white",
+              "cornerRadius": 36,
+              "stroke": {
+                "align": "inside",
+                "thickness": 1,
+                "fill": "$--border"
+              },
+              "padding": 4,
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "93wMk",
+                  "name": "tab1",
+                  "width": "fill_container",
+                  "height": "fill_container",
+                  "cornerRadius": 26,
+                  "layout": "vertical",
+                  "gap": 4,
+                  "justifyContent": "center",
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "icon_font",
+                      "id": "ao7My",
+                      "name": "tab1Icon",
+                      "width": 18,
+                      "height": 18,
+                      "iconFontName": "house",
+                      "iconFontFamily": "lucide",
+                      "fill": "$--tab-inactive"
+                    },
+                    {
+                      "type": "text",
+                      "id": "Ed1PZ",
+                      "name": "tab1Label",
+                      "fill": "$--tab-inactive",
+                      "content": "HOME",
+                      "fontFamily": "Inter",
+                      "fontSize": 10,
+                      "fontWeight": "600",
+                      "letterSpacing": 0.5
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "uOVPw",
+                  "name": "tab2",
+                  "width": "fill_container",
+                  "height": "fill_container",
+                  "cornerRadius": 26,
+                  "layout": "vertical",
+                  "gap": 4,
+                  "justifyContent": "center",
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "icon_font",
+                      "id": "WiKTR",
+                      "name": "tab2Icon",
+                      "width": 18,
+                      "height": 18,
+                      "iconFontName": "calendar",
+                      "iconFontFamily": "lucide",
+                      "fill": "$--tab-inactive"
+                    },
+                    {
+                      "type": "text",
+                      "id": "UQckR",
+                      "name": "tab2Label",
+                      "fill": "$--tab-inactive",
+                      "content": "SCHEDULE",
+                      "fontFamily": "Inter",
+                      "fontSize": 10,
+                      "fontWeight": "600",
+                      "letterSpacing": 0.5
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "HfjTS",
+                  "name": "tab3",
+                  "width": "fill_container",
+                  "height": "fill_container",
+                  "fill": "$--tab-active",
+                  "cornerRadius": 26,
+                  "layout": "vertical",
+                  "gap": 4,
+                  "justifyContent": "center",
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "icon_font",
+                      "id": "1G5Zo",
+                      "name": "tab3Icon",
+                      "width": 18,
+                      "height": 18,
+                      "iconFontName": "bookmark",
+                      "iconFontFamily": "lucide",
+                      "fill": "$--white"
+                    },
+                    {
+                      "type": "text",
+                      "id": "V5GO4",
+                      "name": "tab3Label",
+                      "fill": "$--white",
+                      "content": "BOOKINGS",
+                      "fontFamily": "Inter",
+                      "fontSize": 10,
+                      "fontWeight": "600",
+                      "letterSpacing": 0.5
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "aoB11",
+                  "name": "tab4",
+                  "width": "fill_container",
+                  "height": "fill_container",
+                  "cornerRadius": 26,
+                  "layout": "vertical",
+                  "gap": 4,
+                  "justifyContent": "center",
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "icon_font",
+                      "id": "nrod4",
+                      "name": "tab4Icon",
+                      "width": 18,
+                      "height": 18,
+                      "iconFontName": "chart-bar",
+                      "iconFontFamily": "lucide",
+                      "fill": "$--tab-inactive"
+                    },
+                    {
+                      "type": "text",
+                      "id": "TxtMO",
+                      "name": "tab4Label",
+                      "fill": "$--tab-inactive",
+                      "content": "HISTORY",
+                      "fontFamily": "Inter",
+                      "fontSize": 10,
+                      "fontWeight": "600",
+                      "letterSpacing": 0.5
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "alljb",
+                  "name": "tab5",
+                  "width": "fill_container",
+                  "height": "fill_container",
+                  "cornerRadius": 26,
+                  "layout": "vertical",
+                  "gap": 4,
+                  "justifyContent": "center",
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "icon_font",
+                      "id": "jUgnU",
+                      "name": "tab5Icon",
+                      "width": 18,
+                      "height": 18,
+                      "iconFontName": "user",
+                      "iconFontFamily": "lucide",
+                      "fill": "$--tab-inactive"
+                    },
+                    {
+                      "type": "text",
+                      "id": "FkEYw",
+                      "name": "tab5Label",
+                      "fill": "$--tab-inactive",
+                      "content": "PROFILE",
+                      "fontFamily": "Inter",
+                      "fontSize": 10,
+                      "fontWeight": "600",
+                      "letterSpacing": 0.5
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "variables": {
+    "--accent": {
+      "type": "color",
+      "value": "#333333"
+    },
+    "--accent-light": {
+      "type": "color",
+      "value": "#F0F0F0"
+    },
+    "--badge-booked": {
+      "type": "color",
+      "value": "#2E7D32"
+    },
+    "--badge-booked-bg": {
+      "type": "color",
+      "value": "#E8F5E9"
+    },
+    "--badge-cancelled": {
+      "type": "color",
+      "value": "#999999"
+    },
+    "--badge-cancelled-bg": {
+      "type": "color",
+      "value": "#F5F5F5"
+    },
+    "--badge-inprogress": {
+      "type": "color",
+      "value": "#1565C0"
+    },
+    "--badge-inprogress-bg": {
+      "type": "color",
+      "value": "#E3F2FD"
+    },
+    "--badge-waitlisted": {
+      "type": "color",
+      "value": "#E65100"
+    },
+    "--badge-waitlisted-bg": {
+      "type": "color",
+      "value": "#FFF3E0"
+    },
+    "--bg": {
+      "type": "color",
+      "value": "#FFFFFF"
+    },
+    "--bg-card": {
+      "type": "color",
+      "value": "#FFFFFF"
+    },
+    "--bg-secondary": {
+      "type": "color",
+      "value": "#F5F5F5"
+    },
+    "--border": {
+      "type": "color",
+      "value": "#E0E0E0"
+    },
+    "--danger": {
+      "type": "color",
+      "value": "#D32F2F"
+    },
+    "--font-primary": {
+      "type": "color",
+      "value": "#1A1A1A"
+    },
+    "--font-secondary": {
+      "type": "color",
+      "value": "#666666"
+    },
+    "--font-tertiary": {
+      "type": "color",
+      "value": "#999999"
+    },
+    "--tab-active": {
+      "type": "color",
+      "value": "#1A1A1A"
+    },
+    "--tab-inactive": {
+      "type": "color",
+      "value": "#999999"
+    },
+    "--white": {
+      "type": "color",
+      "value": "#FFFFFF"
+    }
+  }
+}
