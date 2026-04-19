@@ -1,9 +1,10 @@
 import React, { useEffect, useState } from 'react';
-import { View, StyleSheet, FlatList, TouchableOpacity, ActivityIndicator, Text } from 'react-native';
-import { useRouter } from 'expo-router';
+import { View, StyleSheet, FlatList, TouchableOpacity, ActivityIndicator, Text, Alert } from 'react-native';
+import { useRouter, useFocusEffect } from 'expo-router';
 import { useAuth } from '@/hooks/useAuth';
 import { useGym } from '@/hooks/useGym';
 import { createApiClient } from '@/utils/api-client';
+import { useCallback } from 'react';
 
 interface ClassScheduleItem {
   id: string;
@@ -35,6 +36,7 @@ type BookingStatus = 'booked' | 'waitlisted' | 'open' | 'full';
 
 interface EnrichedClass extends ClassScheduleItem {
   userBookingStatus: BookingStatus;
+  userBookingId?: string;
 }
 
 export default function ScheduleScreen() {
@@ -45,64 +47,73 @@ export default function ScheduleScreen() {
   const [classes, setClasses] = useState<EnrichedClass[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [cancellingBookingId, setCancellingBookingId] = useState<string | null>(null);
 
-  useEffect(() => {
+  const fetchData = useCallback(async () => {
     if (!token || !currentGymId) {
       setIsLoading(false);
       return;
     }
 
-    const fetchData = async () => {
-      try {
-        setIsLoading(true);
-        setError(null);
+    try {
+      setIsLoading(true);
+      setError(null);
 
-        const client = createApiClient({ token });
+      const client = createApiClient({ token });
 
-        // Fetch both schedule and bookings in parallel
-        const [scheduleResponse, bookingsResponse] = await Promise.all([
-          client.get<GetClassScheduleResponse>(`/api/gyms/${currentGymId}/classes`),
-          client.get<GetUserBookingsResponse>('/api/me/bookings'),
-        ]);
+      // Fetch both schedule and bookings in parallel
+      const [scheduleResponse, bookingsResponse] = await Promise.all([
+        client.get<GetClassScheduleResponse>(`/api/gyms/${currentGymId}/classes`),
+        client.get<GetUserBookingsResponse>('/api/me/bookings'),
+      ]);
 
-        // Create a Map of classId -> booking status for O(1) lookups
-        const bookingMap = new Map<string, 'booked' | 'waitlisted'>();
-        bookingsResponse.bookings.forEach((booking) => {
-          bookingMap.set(booking.classId, booking.status);
-        });
+      // Create a Map of classId -> booking for O(1) lookups
+      const bookingMap = new Map<string, UserBookingItem>();
+      bookingsResponse.bookings.forEach((booking) => {
+        bookingMap.set(booking.classId, booking);
+      });
 
-        // Merge booking state into classes
-        const enrichedClasses: EnrichedClass[] = scheduleResponse.classes.map((cls) => {
-          let userBookingStatus: BookingStatus;
+      // Merge booking state into classes
+      const enrichedClasses: EnrichedClass[] = scheduleResponse.classes.map((cls) => {
+        const booking = bookingMap.get(cls.id);
+        let userBookingStatus: BookingStatus;
+        let userBookingId: string | undefined;
 
-          if (bookingMap.has(cls.id)) {
-            // User has a booking for this class
-            userBookingStatus = bookingMap.get(cls.id)!;
-          } else if (cls.bookedCount >= cls.capacity) {
-            // Class is full and user hasn't booked
-            userBookingStatus = 'full';
-          } else {
-            // Class is open and user hasn't booked
-            userBookingStatus = 'open';
-          }
+        if (booking) {
+          userBookingStatus = booking.status;
+          userBookingId = booking.id;
+        } else if (cls.bookedCount >= cls.capacity) {
+          userBookingStatus = 'full';
+        } else {
+          userBookingStatus = 'open';
+        }
 
-          return {
-            ...cls,
-            userBookingStatus,
-          };
-        });
+        return {
+          ...cls,
+          userBookingStatus,
+          userBookingId,
+        };
+      });
 
-        setClasses(enrichedClasses);
-      } catch (err) {
-        const message = err instanceof Error ? err.message : 'Failed to load classes';
-        setError(message);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchData();
+      setClasses(enrichedClasses);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Failed to load classes';
+      setError(message);
+    } finally {
+      setIsLoading(false);
+    }
   }, [token, currentGymId]);
+
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
+
+  // Refresh on screen focus
+  useFocusEffect(
+    useCallback(() => {
+      fetchData();
+    }, [fetchData])
+  );
 
   const handleClassPress = (classId: string) => {
     if (!currentGymId) return;
@@ -110,6 +121,44 @@ export default function ScheduleScreen() {
       pathname: '/class-details',
       params: { gymId: currentGymId, classId },
     });
+  };
+
+  const handleCancelBooking = async (
+    event: React.TouchEvent,
+    classId: string,
+    bookingId: string
+  ) => {
+    event.stopPropagation();
+
+    Alert.alert(
+      'Cancel Booking',
+      'Are you sure you want to cancel this booking?',
+      [
+        { text: 'Keep Booking', style: 'cancel' },
+        {
+          text: 'Cancel Booking',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              setCancellingBookingId(bookingId);
+
+              const client = createApiClient({ token });
+
+              // Call cancellation endpoint
+              await client.delete(`/api/gyms/${currentGymId}/classes/bookings/${bookingId}`);
+
+              // Re-fetch data to update UI
+              await fetchData();
+            } catch (err) {
+              const message = err instanceof Error ? err.message : 'Failed to cancel booking';
+              Alert.alert('Cancellation Error', message);
+            } finally {
+              setCancellingBookingId(null);
+            }
+          },
+        },
+      ]
+    );
   };
 
   const getAvailabilityText = (bookedCount: number, capacity: number): string => {
@@ -123,13 +172,13 @@ export default function ScheduleScreen() {
   const getStatusBadgeColor = (status: BookingStatus): string => {
     switch (status) {
       case 'booked':
-        return '#4caf50'; // Green
+        return '#4caf50';
       case 'waitlisted':
-        return '#ff9800'; // Orange
+        return '#ff9800';
       case 'full':
-        return '#f44336'; // Red
+        return '#f44336';
       case 'open':
-        return '#2196f3'; // Blue
+        return '#2196f3';
       default:
         return '#999';
     }
@@ -156,7 +205,9 @@ export default function ScheduleScreen() {
       onPress={() => handleClassPress(item.id)}
       activeOpacity={0.7}>
       <View style={styles.classHeader}>
-        <Text style={styles.classType}>{item.classTypeName}</Text>
+        <View style={styles.classTypeContainer}>
+          <Text style={styles.classType}>{item.classTypeName}</Text>
+        </View>
         <View
           style={[
             styles.statusBadge,
@@ -183,6 +234,20 @@ export default function ScheduleScreen() {
           <Text style={styles.bookedIndicatorText}>
             ✓ You are {item.userBookingStatus === 'booked' ? 'booked' : 'on the waitlist'}
           </Text>
+          {!cancellingBookingId && (
+            <TouchableOpacity
+              style={styles.quickCancelButton}
+              onPress={(e: any) =>
+                handleCancelBooking(e, item.id, item.userBookingId!)
+              }>
+              <Text style={styles.quickCancelText}>Cancel</Text>
+            </TouchableOpacity>
+          )}
+          {cancellingBookingId === item.userBookingId && (
+            <View style={styles.cancelLoadingContainer}>
+              <ActivityIndicator size="small" color="#f44336" />
+            </View>
+          )}
         </View>
       )}
     </TouchableOpacity>
@@ -269,11 +334,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 8,
   },
+  classTypeContainer: {
+    flex: 1,
+  },
   classType: {
     fontSize: 16,
     fontWeight: '600',
     color: '#000',
-    flex: 1,
   },
   statusBadge: {
     paddingHorizontal: 8,
@@ -310,11 +377,29 @@ const styles = StyleSheet.create({
     borderRadius: 4,
     borderLeftWidth: 3,
     borderLeftColor: '#4caf50',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
   },
   bookedIndicatorText: {
     fontSize: 13,
     color: '#2e7d32',
     fontWeight: '500',
+    flex: 1,
+  },
+  quickCancelButton: {
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    backgroundColor: '#f44336',
+    borderRadius: 3,
+  },
+  quickCancelText: {
+    fontSize: 11,
+    fontWeight: '600',
+    color: '#fff',
+  },
+  cancelLoadingContainer: {
+    paddingHorizontal: 8,
   },
   errorText: {
     fontSize: 16,

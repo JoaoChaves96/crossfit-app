@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { View, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator, Text } from 'react-native';
+import { View, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator, Text, Alert } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useAuth } from '@/hooks/useAuth';
 import { createApiClient } from '@/utils/api-client';
@@ -35,8 +35,50 @@ export default function ClassDetailsScreen() {
 
   const [classData, setClassData] = useState<ClassDetailsItem | null>(null);
   const [userBookingStatus, setUserBookingStatus] = useState<BookingStatus>('open');
+  const [userBookingId, setUserBookingId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [mutationError, setMutationError] = useState<string | null>(null);
+
+  const fetchData = async (client: ReturnType<typeof createApiClient>) => {
+    try {
+      setIsLoading(true);
+      setError(null);
+
+      // Fetch both schedule and bookings
+      const [scheduleResponse, bookingsResponse] = await Promise.all([
+        client.get<{ classes: ClassDetailsItem[] }>(`/api/gyms/${gymId}/classes`),
+        client.get<GetUserBookingsResponse>('/api/me/bookings'),
+      ]);
+
+      const found = scheduleResponse.classes.find((c) => c.id === classId);
+      if (!found) {
+        setError('Class not found');
+        return;
+      }
+
+      setClassData(found);
+
+      // Determine booking status
+      const booking = bookingsResponse.bookings.find((b) => b.classId === classId);
+      if (booking) {
+        setUserBookingStatus(booking.status);
+        setUserBookingId(booking.id);
+      } else if (found.bookedCount >= found.capacity) {
+        setUserBookingStatus('full');
+        setUserBookingId(null);
+      } else {
+        setUserBookingStatus('open');
+        setUserBookingId(null);
+      }
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Failed to load class details';
+      setError(message);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   useEffect(() => {
     if (!token || !gymId || !classId) {
@@ -44,50 +86,89 @@ export default function ClassDetailsScreen() {
       return;
     }
 
-    const fetchData = async () => {
-      try {
-        setIsLoading(true);
-        setError(null);
-
-        const client = createApiClient({ token });
-
-        // Fetch both schedule and bookings
-        const [scheduleResponse, bookingsResponse] = await Promise.all([
-          client.get<{ classes: ClassDetailsItem[] }>(`/api/gyms/${gymId}/classes`),
-          client.get<GetUserBookingsResponse>('/api/me/bookings'),
-        ]);
-
-        const found = scheduleResponse.classes.find((c) => c.id === classId);
-        if (!found) {
-          setError('Class not found');
-          return;
-        }
-
-        setClassData(found);
-
-        // Determine booking status
-        const booking = bookingsResponse.bookings.find((b) => b.classId === classId);
-        if (booking) {
-          setUserBookingStatus(booking.status);
-        } else if (found.bookedCount >= found.capacity) {
-          setUserBookingStatus('full');
-        } else {
-          setUserBookingStatus('open');
-        }
-      } catch (err) {
-        const message = err instanceof Error ? err.message : 'Failed to load class details';
-        setError(message);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchData();
+    const client = createApiClient({ token });
+    fetchData(client);
   }, [token, gymId, classId]);
 
-  const handleBookClass = () => {
-    // Booking action will be implemented in the next phase
-    alert('Booking feature coming soon');
+  const handleBookClass = async () => {
+    if (!token || !gymId || !classId) return;
+
+    try {
+      setIsSubmitting(true);
+      setMutationError(null);
+
+      const client = createApiClient({ token });
+
+      // Call booking endpoint
+      await client.post(`/api/gyms/${gymId}/classes/${classId}/bookings`, {
+        classId,
+        gymId,
+      });
+
+      // Re-fetch bookings to update UI
+      const bookingsResponse = await client.get<GetUserBookingsResponse>('/api/me/bookings');
+      const booking = bookingsResponse.bookings.find((b) => b.classId === classId);
+      if (booking) {
+        setUserBookingStatus(booking.status);
+        setUserBookingId(booking.id);
+      }
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Failed to book class';
+      setMutationError(message);
+      Alert.alert('Booking Error', message);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleCancelBooking = async () => {
+    if (!token || !gymId || !userBookingId) return;
+
+    Alert.alert(
+      'Cancel Booking',
+      'Are you sure you want to cancel this booking?',
+      [
+        { text: 'Keep Booking', style: 'cancel' },
+        {
+          text: 'Cancel Booking',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              setIsSubmitting(true);
+              setMutationError(null);
+
+              const client = createApiClient({ token });
+
+              // Call cancellation endpoint
+              await client.delete(`/api/gyms/${gymId}/classes/bookings/${userBookingId}`);
+
+              // Re-fetch bookings to update UI
+              const bookingsResponse = await client.get<GetUserBookingsResponse>('/api/me/bookings');
+              const booking = bookingsResponse.bookings.find((b) => b.classId === classId);
+              if (booking) {
+                setUserBookingStatus(booking.status);
+                setUserBookingId(booking.id);
+              } else {
+                // No more bookings for this class
+                const currentClass = classData;
+                if (currentClass && currentClass.bookedCount >= currentClass.capacity) {
+                  setUserBookingStatus('full');
+                } else {
+                  setUserBookingStatus('open');
+                }
+                setUserBookingId(null);
+              }
+            } catch (err) {
+              const message = err instanceof Error ? err.message : 'Failed to cancel booking';
+              setMutationError(message);
+              Alert.alert('Cancellation Error', message);
+            } finally {
+              setIsSubmitting(false);
+            }
+          },
+        },
+      ]
+    );
   };
 
   const getStatusColor = (status: BookingStatus): string => {
@@ -126,7 +207,8 @@ export default function ClassDetailsScreen() {
     classData?.state === 'booking_closed' ||
     classData?.state === 'in_progress' ||
     classData?.state === 'completed' ||
-    classData?.state === 'archived';
+    classData?.state === 'archived' ||
+    isSubmitting;
 
   const getBookButtonText = (): string => {
     if (userBookingStatus === 'booked') return 'Already Booked';
@@ -148,9 +230,7 @@ export default function ClassDetailsScreen() {
     return (
       <View style={[styles.container, styles.centerContent]}>
         <Text style={styles.errorText}>Error: {error || 'Class not found'}</Text>
-        <TouchableOpacity
-          style={styles.backButton}
-          onPress={() => router.back()}>
+        <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
           <Text style={styles.backButtonText}>Go Back</Text>
         </TouchableOpacity>
       </View>
@@ -191,6 +271,12 @@ export default function ClassDetailsScreen() {
         </View>
       )}
 
+      {mutationError && (
+        <View style={styles.errorCard}>
+          <Text style={styles.errorCardText}>{mutationError}</Text>
+        </View>
+      )}
+
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>Date & Time</Text>
         <Text style={styles.sectionContent}>
@@ -222,7 +308,24 @@ export default function ClassDetailsScreen() {
           style={[styles.bookButton, isBookingDisabled && styles.bookButtonDisabled]}
           onPress={handleBookClass}
           disabled={isBookingDisabled}>
-          <Text style={styles.bookButtonText}>{getBookButtonText()}</Text>
+          {isSubmitting && userBookingStatus !== 'booked' && userBookingStatus !== 'waitlisted' ? (
+            <ActivityIndicator color="#fff" size="small" />
+          ) : (
+            <Text style={styles.bookButtonText}>{getBookButtonText()}</Text>
+          )}
+        </TouchableOpacity>
+      )}
+
+      {(userBookingStatus === 'booked' || userBookingStatus === 'waitlisted') && (
+        <TouchableOpacity
+          style={[styles.cancelButton, isSubmitting && styles.cancelButtonDisabled]}
+          onPress={handleCancelBooking}
+          disabled={isSubmitting}>
+          {isSubmitting ? (
+            <ActivityIndicator color="#fff" size="small" />
+          ) : (
+            <Text style={styles.cancelButtonText}>Cancel Booking</Text>
+          )}
         </TouchableOpacity>
       )}
 
@@ -280,6 +383,19 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '500',
   },
+  errorCard: {
+    backgroundColor: '#ffebee',
+    borderLeftWidth: 4,
+    borderLeftColor: '#d32f2f',
+    padding: 12,
+    borderRadius: 6,
+    marginBottom: 16,
+  },
+  errorCardText: {
+    fontSize: 14,
+    color: '#c62828',
+    fontWeight: '500',
+  },
   section: {
     marginBottom: 20,
   },
@@ -299,12 +415,31 @@ const styles = StyleSheet.create({
     paddingVertical: 14,
     borderRadius: 8,
     alignItems: 'center',
-    marginVertical: 16,
+    marginVertical: 12,
+    justifyContent: 'center',
+    minHeight: 48,
   },
   bookButtonDisabled: {
     backgroundColor: '#ccc',
   },
   bookButtonText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#fff',
+  },
+  cancelButton: {
+    backgroundColor: '#f44336',
+    paddingVertical: 14,
+    borderRadius: 8,
+    alignItems: 'center',
+    marginBottom: 12,
+    justifyContent: 'center',
+    minHeight: 48,
+  },
+  cancelButtonDisabled: {
+    backgroundColor: '#ffb3b3',
+  },
+  cancelButtonText: {
     fontSize: 16,
     fontWeight: '600',
     color: '#fff',
