@@ -9,7 +9,8 @@ import { AthleteMembershipPlanEntity } from '../athlete-membership-plan/entities
 import { GymStaffEntity } from '../gym-staff/entities/gym-staff.entity';
 import { UserEntity } from '../user/entities/user.entity';
 import { ClassEntity } from '../class/entities/class.entity';
-import { GymService } from '../gym/gym.service';
+import { BookingEntity } from '../booking/entities/booking.entity';
+import { GymModule } from '../gym/gym.module';
 import { GymStaffService } from '../gym-staff/gym-staff.service';
 import { SpaceService } from '../space/space.service';
 import { ClassTypeService } from '../class-type/class-type.service';
@@ -39,6 +40,7 @@ import { ChangeCoachStatusHandler } from '../../commands/gym-configuration/handl
 @Module({
   imports: [
     CqrsModule,
+    GymModule,
     TypeOrmModule.forFeature([
       SpaceEntity,
       ClassTypeEntity,
@@ -48,11 +50,11 @@ import { ChangeCoachStatusHandler } from '../../commands/gym-configuration/handl
       GymStaffEntity,
       UserEntity,
       ClassEntity,
+      BookingEntity,
     ]),
   ],
   providers: [
     // Domain services
-    GymService,
     GymStaffService,
     SpaceService,
     ClassTypeService,
@@ -70,6 +72,6 @@ import { ChangeCoachStatusHandler } from '../../commands/gym-configuration/handl
     InviteCoachHandler,
     ChangeCoachStatusHandler,
   ],
-  exports: [GymService, GymStaffService, SpaceService, ClassTypeService],
+  exports: [GymStaffService, SpaceService, ClassTypeService],
 })
 export class GymConfigurationModule {}

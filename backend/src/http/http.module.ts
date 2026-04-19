@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { CqrsModule } from '@nestjs/cqrs';
+import { TypeOrmModule } from '@nestjs/typeorm';
 import { ClassController } from '../api/class/class.controller';
 import { ClassModule } from '../domain/class/class.module';
 import { GymStaffModule } from '../domain/gym-staff/gym-staff.module';
@@ -9,6 +10,9 @@ import { RolesGuard } from '../auth/guards/roles.guard';
 import { UserController } from '../api/user/user.controller';
 import { UserBookingsService } from '../queries/booking/user-bookings.service';
 import { BookingRepository } from '../repositories/booking.repository';
+import { GymMembershipRepository } from '../repositories/gym-membership.repository';
+import { GymMembershipEntity } from '../domain/gym-membership/entities/gym-membership.entity';
+import { BookingEntity } from '../domain/booking/entities/booking.entity';
 
 /**
  * HttpModule: Registers all HTTP controllers
@@ -21,8 +25,14 @@ import { BookingRepository } from '../repositories/booking.repository';
  * - Makes controllers available to AppModule
  */
 @Module({
-  imports: [CqrsModule, ClassModule, GymStaffModule, GymConfigurationModule],
+  imports: [
+    CqrsModule,
+    ClassModule,
+    GymStaffModule,
+    GymConfigurationModule,
+    TypeOrmModule.forFeature([GymMembershipEntity, BookingEntity]),
+  ],
   controllers: [ClassController, GymConfigurationController, UserController],
-  providers: [RolesGuard, UserBookingsService, BookingRepository],
+  providers: [RolesGuard, UserBookingsService, BookingRepository, GymMembershipRepository],
 })
 export class HttpModule {}
