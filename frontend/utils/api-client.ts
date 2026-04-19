@@ -1,22 +1,29 @@
 /**
  * API Client utility.
- * Automatically attaches Authorization header with JWT token.
- * Token is passed as parameter (via hooks in components).
+ * Attaches x-user-id and x-gym-id headers for header-based authentication.
  */
 
 export interface ApiClientOptions {
-  token: string;
+  token?: string; // Legacy support (not used with header-based auth)
+  userId?: string | null;
+  gymId?: string | null;
   baseUrl?: string;
 }
 
 export function createApiClient(options: ApiClientOptions) {
-  const baseUrl = options.baseUrl || (typeof window !== 'undefined' ? 'http://localhost:3000' : 'http://localhost:3000');
-  const token = options.token;
+  const baseUrl = options.baseUrl || 'http://localhost:3000';
 
-  const headers = {
+  const headers: Record<string, string> = {
     'Content-Type': 'application/json',
-    ...(token && { Authorization: `Bearer ${token}` }),
   };
+
+  // Add header-based auth headers
+  if (options.userId) {
+    headers['x-user-id'] = options.userId;
+  }
+  if (options.gymId) {
+    headers['x-gym-id'] = options.gymId;
+  }
 
   return {
     async get<T>(url: string): Promise<T> {

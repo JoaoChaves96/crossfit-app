@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { View, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator, Text, Alert } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useAuth } from '@/hooks/useAuth';
+import { useGym } from '@/hooks/useGym';
 import { createApiClient } from '@/utils/api-client';
 
 interface ClassDetailsItem {
@@ -30,8 +31,9 @@ type BookingStatus = 'booked' | 'waitlisted' | 'open' | 'full';
 
 export default function ClassDetailsScreen() {
   const router = useRouter();
-  const { token } = useAuth();
-  const { gymId, classId } = useLocalSearchParams();
+  const { userId } = useAuth();
+  const { currentGymId } = useGym();
+  const { classId } = useLocalSearchParams();
 
   const [classData, setClassData] = useState<ClassDetailsItem | null>(null);
   const [userBookingStatus, setUserBookingStatus] = useState<BookingStatus>('open');
@@ -81,23 +83,23 @@ export default function ClassDetailsScreen() {
   };
 
   useEffect(() => {
-    if (!token || !gymId || !classId) {
+    if (!userId || !currentGymId || !classId) {
       setIsLoading(false);
       return;
     }
 
-    const client = createApiClient({ token });
+    const client = createApiClient({ userId, gymId: currentGymId });
     fetchData(client);
-  }, [token, gymId, classId]);
+  }, [userId, currentGymId, classId]);
 
   const handleBookClass = async () => {
-    if (!token || !gymId || !classId) return;
+    if (!userId || !currentGymId || !classId) return;
 
     try {
       setIsSubmitting(true);
       setMutationError(null);
 
-      const client = createApiClient({ token });
+      const client = createApiClient({ userId, gymId: currentGymId });
 
       // Call booking endpoint
       await client.post(`/api/gyms/${gymId}/classes/${classId}/bookings`, {
@@ -122,7 +124,7 @@ export default function ClassDetailsScreen() {
   };
 
   const handleCancelBooking = async () => {
-    if (!token || !gymId || !userBookingId) return;
+    if (!userId || !currentGymId || !userBookingId) return;
 
     Alert.alert(
       'Cancel Booking',
@@ -137,10 +139,10 @@ export default function ClassDetailsScreen() {
               setIsSubmitting(true);
               setMutationError(null);
 
-              const client = createApiClient({ token });
+              const client = createApiClient({ userId: userId!, gymId: currentGymId! });
 
               // Call cancellation endpoint
-              await client.delete(`/api/gyms/${gymId}/classes/bookings/${userBookingId}`);
+              await client.delete(`/api/gyms/${currentGymId}/classes/bookings/${userBookingId}`);
 
               // Re-fetch bookings to update UI
               const bookingsResponse = await client.get<GetUserBookingsResponse>('/api/me/bookings');

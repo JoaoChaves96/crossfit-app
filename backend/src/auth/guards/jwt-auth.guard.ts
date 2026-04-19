@@ -1,18 +1,33 @@
 import { Injectable } from '@nestjs/common';
 import { CanActivate, ExecutionContext } from '@nestjs/common';
+import type { Request } from 'express';
 
 /**
- * JwtAuthGuard: Placeholder for JWT authentication
+ * JwtAuthGuard: Extracts x-user-id and x-gym-id headers for header-based auth
  *
- * In MVP, this is minimal - just allows requests through.
- * In production, implement proper JWT validation here.
+ * For local dev with header-based authentication:
+ * - Reads x-user-id header and populates request.user
+ * - Reads x-gym-id header and populates request.gymId
+ * - Allows all requests through (MVP)
  */
 @Injectable()
 export class JwtAuthGuard implements CanActivate {
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  canActivate(_context: ExecutionContext): boolean {
-    // TODO: Implement JWT validation
-    // For MVP, allow all requests
+  canActivate(context: ExecutionContext): boolean {
+    const request = context.switchToHttp().getRequest<Request>();
+
+    // Extract user ID from x-user-id header
+    const userId = request.headers['x-user-id'];
+    if (userId) {
+      (request as any).user = { id: userId };
+    }
+
+    // Extract gym ID from x-gym-id header
+    const gymId = request.headers['x-gym-id'];
+    if (gymId) {
+      (request as any).gymId = gymId;
+    }
+
+    // Allow all requests (JWT validation not yet implemented)
     return true;
   }
 }
