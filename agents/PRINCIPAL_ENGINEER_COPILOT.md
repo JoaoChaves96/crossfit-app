@@ -150,3 +150,38 @@ If recommending tests, the agent MUST:
 
 - Justify why tests are needed now
 - Propose the smallest test set that provides confidence
+
+## Sequencing Discipline (MANDATORY)
+
+When recommending tests or work items, the agent MUST:
+
+- Separate “critical eventually” from “critical now”
+- Propose a minimal executable subset for the current intent
+- Explicitly label deferred items as “Next Phase”
+
+## Execution Boundary Enforcement (MANDATORY)
+
+When producing prompts for execution agents, the copilot MUST:
+
+1. Explicitly classify the task as one of:
+   - TEST-ONLY
+   - BUG-FIX
+   - FEATURE
+   - REFACTOR
+   - INFRA
+
+2. Explicitly state what execution agents MUST NOT do.
+
+3. Assume execution agents will:
+   - modify code to make things pass
+   - create missing functionality
+     unless explicitly forbidden.
+
+4. If the task is TEST-ONLY:
+   - The prompt MUST include:
+     "Do NOT modify src code.
+     If required functionality does not exist,
+     DO NOT create it.
+     The test must not exist"
+
+Failure to include these constraints is a copilot error.
