@@ -1,14 +1,14 @@
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
-import { Inject } from '@nestjs/common';
+import {
+  BadRequestException,
+  ForbiddenException,
+  Inject,
+  NotFoundException,
+} from '@nestjs/common';
 import { InviteCoachCommand } from '../invite-coach.command';
 import { GymService } from '../../../domain/gym/gym.service';
 import { GymStaffService } from '../../../domain/gym-staff/gym-staff.service';
 import { InviteCoachResponseDto } from '../dto/invite-coach-response.dto';
-import {
-  BadRequestException,
-  ForbiddenException,
-  NotFoundException,
-} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { GymStaffEntity } from '../../../domain/gym-staff/entities/gym-staff.entity';
@@ -57,12 +57,19 @@ export class InviteCoachHandler implements ICommandHandler<InviteCoachCommand> {
     }
 
     // Precondition 3: Verify coach email is valid (basic email format check done by DTO validator)
-    // Require that the user exists (pre-registration required)
-    const coachUser = await this.userRepository.findOne({
+    // Find existing user or create a new one for the invited coach
+    let coachUser = await this.userRepository.findOne({
       where: { email: command.coachEmail },
     });
     if (!coachUser) {
-      throw new NotFoundException('User with this email was not found');
+      const newUser = new UserEntity();
+      newUser.id = uuid();
+      newUser.email = command.coachEmail;
+      newUser.name = command.coachEmail;
+      newUser.passwordHash = null;
+      newUser.socialLoginId = null;
+      newUser.status = 'active';
+      coachUser = await this.userRepository.save(newUser);
     }
 
     // Precondition 4: Verify coach is not already a GymStaff member

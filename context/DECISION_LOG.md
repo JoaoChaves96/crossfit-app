@@ -41,3 +41,24 @@
 - Skip: Member management, billing, analytics (Phase 3)
 
 **No refactoring risk:** Frontend screens are isolated; backend API contract already established.
+
+---
+
+## Security Audit Results (2026-04-21)
+
+**Status:** CRITICAL findings require fixes before frontend work proceeds.
+
+**Summary:**
+- 2 CRITICAL issues (no auth, no role guard on gym creation)
+- 3 HIGH issues (auto-created users, data leakage, transaction safety)
+- 3 MEDIUM/LOW issues (input validation, error handling, test coverage)
+
+**Full audit:** Run security-review agent on backend/src/api/gym/ and backend/src/commands/gym/
+
+**CRITICAL Issues:**
+1. `JwtAuthGuard` accepts any `x-user-id` header + hardcoded fallback `'user-123'` → no auth
+2. `POST /api/gyms` has no `RolesGuard` → any user becomes gym owner (privilege escalation)
+
+**Blocker Decision:** Frontend cannot safely integrate until gym creation endpoint has real auth and role guard.
+
+**Recommended Action:** Fix CRITICAL + HIGH issues before spawning frontend developers (1-2 day effort estimated).

@@ -6,6 +6,8 @@ import { ClassModule } from '../domain/class/class.module';
 import { GymStaffModule } from '../domain/gym-staff/gym-staff.module';
 import { GymConfigurationModule } from '../domain/gym-configuration/gym-configuration.module';
 import { GymConfigurationController } from '../api/gym-configuration/gym-configuration.controller';
+import { GymFeatureModule } from '../domain/gym/gym-feature.module';
+import { GymController } from '../api/gym/gym.controller';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { UserController } from '../api/user/user.controller';
 import { UserBookingsService } from '../queries/booking/user-bookings.service';
@@ -30,9 +32,10 @@ import { BookingEntity } from '../domain/booking/entities/booking.entity';
     ClassModule,
     GymStaffModule,
     GymConfigurationModule,
+    GymFeatureModule,
     TypeOrmModule.forFeature([GymMembershipEntity, BookingEntity]),
   ],
-  controllers: [ClassController, GymConfigurationController, UserController],
+  controllers: [ClassController, GymConfigurationController, UserController, GymController],
   providers: [RolesGuard, UserBookingsService, BookingRepository, GymMembershipRepository],
 })
 export class HttpModule {}
