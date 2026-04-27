@@ -1,3 +1,5 @@
+import { ApiProperty } from '@nestjs/swagger';
+
 /**
  * ClassScheduleItemDto: A single class in the athlete's schedule
  *
@@ -6,31 +8,31 @@
  * needed for rendering the schedule view.
  */
 export class ClassScheduleItemDto {
-  /** Unique identifier for the class */
+  @ApiProperty({ example: 'uuid-class-id', description: 'Unique identifier for the class' })
   id: string;
 
-  /** The type of class (e.g., CrossFit, Gymnastics) */
+  @ApiProperty({ example: 'uuid-class-type-id', description: 'The type of class (e.g., CrossFit, Gymnastics)' })
   classTypeId: string;
 
-  /** Human-readable name of the class type */
+  @ApiProperty({ example: 'CrossFit', description: 'Human-readable name of the class type' })
   classTypeName: string;
 
-  /** Date the class is scheduled, YYYY-MM-DD format */
+  @ApiProperty({ example: '2024-06-15', description: 'Date the class is scheduled, YYYY-MM-DD format' })
   scheduledDate: string;
 
-  /** Time the class starts, HH:mm format */
+  @ApiProperty({ example: '07:00', description: 'Time the class starts, HH:mm format' })
   scheduledTime: string;
 
-  /** Full name of the coach leading the class */
+  @ApiProperty({ example: 'John Doe', description: 'Full name of the coach leading the class' })
   coachName: string;
 
-  /** Total capacity of the class */
+  @ApiProperty({ example: 20, description: 'Total capacity of the class' })
   capacity: number;
 
-  /** Number of booked (confirmed) spots */
+  @ApiProperty({ example: 12, description: 'Number of booked (confirmed) spots' })
   bookedCount: number;
 
-  /** Current state of the class in its lifecycle */
+  @ApiProperty({ enum: ['published', 'booking_closed', 'in_progress', 'completed', 'archived'], example: 'published', description: 'Current state of the class in its lifecycle' })
   state:
     | 'published'
     | 'booking_closed'

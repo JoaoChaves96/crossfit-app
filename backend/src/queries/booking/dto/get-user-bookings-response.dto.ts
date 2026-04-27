@@ -1,3 +1,4 @@
+import { ApiProperty } from '@nestjs/swagger';
 import { UserBookingItemDto } from './user-booking-item.dto';
 
 /**
@@ -7,6 +8,6 @@ import { UserBookingItemDto } from './user-booking-item.dto';
  * across all gyms.
  */
 export class GetUserBookingsResponseDto {
-  /** List of the user's active bookings */
+  @ApiProperty({ type: [UserBookingItemDto], description: "List of the user's active bookings" })
   bookings: UserBookingItemDto[];
 }

@@ -38,6 +38,30 @@ If no TASK TYPE is present, the agent MUST stop and ask for clarification.
 
 ---
 
+## Swagger/OpenAPI Schema (MANDATORY for API changes)
+
+**When any task modifies, creates, or deletes HTTP endpoints:**
+
+- Update all `@Api*` decorators in the controller:
+  - `@ApiOperation({ summary: '...' })`
+  - `@ApiResponse({ status: 200, description: '...', type: ResponseDto })`
+  - `@ApiResponse({ status: 400, description: '...' })` for error cases
+  - `@ApiParam`, `@ApiBody` for request parameters and bodies
+
+- Update all `@ApiProperty` decorators in request and response DTOs:
+  - All fields in request DTOs
+  - All fields in response DTOs
+  - Include descriptions where useful
+
+**Why:** Swagger schema (`/api-docs`) is the single source of truth for API contracts. Frontend agents and clients depend on accurate schema.
+
+**Verification:**
+- Backend builds without errors
+- Swagger schema is accurate at http://localhost:3000/api-docs
+- All new/modified endpoints appear with correct types and descriptions
+
+---
+
 ## Behavior by TASK TYPE
 
 ### TEST_ONLY
@@ -117,6 +141,7 @@ When code changes ARE allowed by TASK TYPE:
 - Linting rules must pass
 - No commented‑out code
 - No TODOs unless explicitly requested
+- **For API changes:** Swagger decorators are updated and schema is accurate
 
 Failure to meet these requirements is a task failure.
 

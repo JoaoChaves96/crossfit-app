@@ -7,7 +7,7 @@ import {
   Inject,
 } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
-import { ApiTags, ApiBearerAuth, ApiOperation } from '@nestjs/swagger';
+import { ApiTags, ApiBearerAuth, ApiOperation, ApiResponse, ApiBody } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { CurrentUser } from '../../auth/decorators/current-user.decorator';
 import { CreateGymCommand } from '../../commands/gym/create-gym.command';
@@ -38,6 +38,9 @@ export class GymController {
     description:
       'Register a new gym. The authenticated user becomes the gym owner.',
   })
+  @ApiBody({ type: CreateGymDto })
+  @ApiResponse({ status: 201, description: 'Gym created successfully', type: CreateGymResponseDto })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
   async createGym(
     @Body(ValidationPipe) createGymDto: CreateGymDto,
     @CurrentUser() userId: string,

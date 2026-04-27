@@ -4,7 +4,7 @@ import { RolesGuard } from '../../auth/guards/roles.guard';
 import { Role } from '../../auth/decorators/role.decorator';
 import { UserScoped } from '../../auth/decorators/user-scoped.decorator';
 import { CurrentUser } from '../../auth/decorators/current-user.decorator';
-import { ApiTags, ApiBearerAuth, ApiOperation } from '@nestjs/swagger';
+import { ApiTags, ApiBearerAuth, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { UserBookingsService } from '../../queries/booking/user-bookings.service';
 import { GetUserBookingsResponseDto } from '../../queries/booking/dto/get-user-bookings-response.dto';
 
@@ -34,6 +34,9 @@ export class UserController {
     description:
       'Retrieve all active bookings for the authenticated athlete. Crosses all gyms (user-scoped endpoint).',
   })
+  @ApiResponse({ status: 200, description: 'User bookings returned', type: GetUserBookingsResponseDto })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiResponse({ status: 403, description: 'Forbidden - Athlete role required' })
   async getUserBookings(
     @CurrentUser() userId: string,
   ): Promise<GetUserBookingsResponseDto> {

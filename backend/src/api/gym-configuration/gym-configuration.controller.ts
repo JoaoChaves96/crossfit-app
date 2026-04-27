@@ -15,7 +15,7 @@ import { RolesGuard } from '../../auth/guards/roles.guard';
 import { Role } from '../../auth/decorators/role.decorator';
 import { CurrentUser } from '../../auth/decorators/current-user.decorator';
 import { CurrentGym } from '../../auth/decorators/current-gym.decorator';
-import { ApiTags, ApiBearerAuth, ApiOperation } from '@nestjs/swagger';
+import { ApiTags, ApiBearerAuth, ApiOperation, ApiResponse, ApiParam, ApiBody } from '@nestjs/swagger';
 
 // Space Commands
 import { CreateSpaceCommand } from '../../commands/gym-configuration/create-space.command';
@@ -83,6 +83,11 @@ export class GymConfigurationController {
     description:
       'Define a physical training location in the gym. Gym owners only.',
   })
+  @ApiParam({ name: 'gymId', description: 'Gym ID' })
+  @ApiBody({ type: CreateSpaceDto })
+  @ApiResponse({ status: 201, description: 'Space created', type: CreateSpaceResponseDto })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiResponse({ status: 403, description: 'Forbidden - Owner role required' })
   async createSpace(
     @Param('gymId') gymId: string,
     @Body(ValidationPipe) createSpaceDto: CreateSpaceDto,
@@ -122,6 +127,12 @@ export class GymConfigurationController {
     summary: 'Update a space',
     description: 'Modify space details. Gym owners only.',
   })
+  @ApiParam({ name: 'gymId', description: 'Gym ID' })
+  @ApiParam({ name: 'spaceId', description: 'Space ID' })
+  @ApiBody({ type: UpdateSpaceDto })
+  @ApiResponse({ status: 200, description: 'Space updated', type: UpdateSpaceResponseDto })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiResponse({ status: 403, description: 'Forbidden - Owner role required' })
   async updateSpace(
     @Param('gymId') gymId: string,
     @Param('spaceId') spaceId: string,
@@ -161,6 +172,11 @@ export class GymConfigurationController {
     description:
       'Remove a training space. Cannot delete spaces with active classes. Gym owners only.',
   })
+  @ApiParam({ name: 'gymId', description: 'Gym ID' })
+  @ApiParam({ name: 'spaceId', description: 'Space ID' })
+  @ApiResponse({ status: 200, description: 'Space deleted', type: DeleteSpaceResponseDto })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiResponse({ status: 403, description: 'Forbidden - Owner role required' })
   async deleteSpace(
     @Param('gymId') gymId: string,
     @Param('spaceId') spaceId: string,
@@ -197,6 +213,11 @@ export class GymConfigurationController {
     description:
       'Create, update, or delete class types (e.g., CrossFit, Gymnastics). Gym owners only.',
   })
+  @ApiParam({ name: 'gymId', description: 'Gym ID' })
+  @ApiBody({ type: ConfigureClassTypesDto })
+  @ApiResponse({ status: 201, description: 'Class type configured', type: ConfigureClassTypesResponseDto })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiResponse({ status: 403, description: 'Forbidden - Owner role required' })
   async configureClassTypes(
     @Param('gymId') gymId: string,
     @Body(ValidationPipe) configureClassTypesDto: ConfigureClassTypesDto,
@@ -243,6 +264,11 @@ export class GymConfigurationController {
     description:
       'Define a subscription tier with pricing and class access. Gym owners only.',
   })
+  @ApiParam({ name: 'gymId', description: 'Gym ID' })
+  @ApiBody({ type: CreateMembershipPlanDto })
+  @ApiResponse({ status: 201, description: 'Membership plan created', type: CreateMembershipPlanResponseDto })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiResponse({ status: 403, description: 'Forbidden - Owner role required' })
   async createMembershipPlan(
     @Param('gymId') gymId: string,
     @Body(ValidationPipe) createMembershipPlanDto: CreateMembershipPlanDto,
@@ -285,6 +311,12 @@ export class GymConfigurationController {
     description:
       'Modify plan pricing, billing cycle, or class access. Gym owners only.',
   })
+  @ApiParam({ name: 'gymId', description: 'Gym ID' })
+  @ApiParam({ name: 'membershipPlanId', description: 'Membership Plan ID' })
+  @ApiBody({ type: UpdateMembershipPlanDto })
+  @ApiResponse({ status: 200, description: 'Membership plan updated', type: UpdateMembershipPlanResponseDto })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiResponse({ status: 403, description: 'Forbidden - Owner role required' })
   async updateMembershipPlan(
     @Param('gymId') gymId: string,
     @Param('membershipPlanId') membershipPlanId: string,
@@ -328,6 +360,11 @@ export class GymConfigurationController {
     description:
       'Retire a plan. Existing athletes retain access; new athletes cannot purchase. Gym owners only.',
   })
+  @ApiParam({ name: 'gymId', description: 'Gym ID' })
+  @ApiParam({ name: 'membershipPlanId', description: 'Membership Plan ID' })
+  @ApiResponse({ status: 201, description: 'Membership plan archived', type: ArchiveMembershipPlanResponseDto })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiResponse({ status: 403, description: 'Forbidden - Owner role required' })
   async archiveMembershipPlan(
     @Param('gymId') gymId: string,
     @Param('membershipPlanId') membershipPlanId: string,
@@ -366,6 +403,12 @@ export class GymConfigurationController {
     summary: 'Purchase a membership plan',
     description: 'Subscribe to a plan to gain class access. Athletes only.',
   })
+  @ApiParam({ name: 'gymId', description: 'Gym ID' })
+  @ApiParam({ name: 'membershipPlanId', description: 'Membership Plan ID' })
+  @ApiBody({ type: PurchaseMembershipPlanDto })
+  @ApiResponse({ status: 201, description: 'Membership plan purchased', type: PurchaseMembershipPlanResponseDto })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiResponse({ status: 403, description: 'Forbidden - Athlete role required' })
   async purchaseMembershipPlan(
     @Param('gymId') gymId: string,
     @Param('membershipPlanId') membershipPlanId: string,
@@ -417,6 +460,11 @@ export class GymConfigurationController {
     description:
       'Enroll an athlete without requiring an invite code. Gym owners only.',
   })
+  @ApiParam({ name: 'gymId', description: 'Gym ID' })
+  @ApiBody({ type: ManuallyAddMemberDto })
+  @ApiResponse({ status: 201, description: 'Member added', type: ManuallyAddMemberResponseDto })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiResponse({ status: 403, description: 'Forbidden - Owner role required' })
   async manuallyAddMember(
     @Param('gymId') gymId: string,
     @Body(ValidationPipe) manuallyAddMemberDto: ManuallyAddMemberDto,
@@ -457,6 +505,11 @@ export class GymConfigurationController {
     description:
       'Send an invitation to a user to become a coach. Gym owners only.',
   })
+  @ApiParam({ name: 'gymId', description: 'Gym ID' })
+  @ApiBody({ type: InviteCoachDto })
+  @ApiResponse({ status: 201, description: 'Coach invited', type: InviteCoachResponseDto })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiResponse({ status: 403, description: 'Forbidden - Owner role required' })
   async inviteCoach(
     @Param('gymId') gymId: string,
     @Body(ValidationPipe) inviteCoachDto: InviteCoachDto,
@@ -495,6 +548,11 @@ export class GymConfigurationController {
     description:
       'Enable or disable a coach. Inactive coaches are hidden from new assignments. Gym owners only.',
   })
+  @ApiParam({ name: 'gymId', description: 'Gym ID' })
+  @ApiParam({ name: 'coachUserId', description: 'Coach User ID' })
+  @ApiResponse({ status: 200, description: 'Coach status updated', type: ChangeCoachStatusResponseDto })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiResponse({ status: 403, description: 'Forbidden - Owner role required' })
   async changeCoachStatus(
     @Param('gymId') gymId: string,
     @Param('coachUserId') coachUserId: string,

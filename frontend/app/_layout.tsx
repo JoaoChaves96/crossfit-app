@@ -21,6 +21,14 @@ export default function RootLayout() {
           <Stack>
             <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
             <Stack.Screen name="modal" options={{ presentation: 'modal', title: 'Modal' }} />
+            <Stack.Screen
+              name="gym-setup"
+              options={{ title: 'Create Your Gym', headerShown: true }}
+            />
+            <Stack.Screen
+              name="schedule-dashboard"
+              options={{ title: 'Schedule Dashboard', headerShown: false }}
+            />
             {__DEV__ && (
               <Stack.Screen
                 name="dev-bootstrap"

@@ -118,6 +118,54 @@ export class ClassScheduleService {
   }
 
   /**
+   * Get all non-archived classes for a gym, without membership filtering.
+   * Intended for gym owner schedule management.
+   *
+   * @param gymId - The gym to fetch classes from
+   * @returns All non-archived classes in the gym sorted by date/time
+   */
+  async getClassScheduleForOwner(
+    gymId: string,
+  ): Promise<GetClassScheduleResponseDto> {
+    // Fetch all non-archived classes in the gym
+    const allClasses = await this.classRepository.getClassesByGym(gymId);
+
+    const nonArchivedClasses = allClasses.filter(
+      (cls) => cls.state !== 'archived',
+    );
+
+    const classItems: ClassScheduleItemDto[] = await Promise.all(
+      nonArchivedClasses.map(async (cls) => {
+        const bookedCount = await this.bookingRepository.countBookedBookings(
+          cls.id,
+        );
+
+        return {
+          id: cls.id,
+          classTypeId: cls.classTypeId,
+          classTypeName: cls.classType?.name || 'Unknown',
+          scheduledDate: this.formatDate(cls.scheduledDate),
+          scheduledTime: cls.scheduledTime,
+          coachName: cls.coach?.name || 'Unknown Coach',
+          capacity: cls.capacity,
+          bookedCount,
+          state: cls.state,
+        };
+      }),
+    );
+
+    classItems.sort((a, b) => {
+      const dateCompare = a.scheduledDate.localeCompare(b.scheduledDate);
+      if (dateCompare !== 0) return dateCompare;
+      return a.scheduledTime.localeCompare(b.scheduledTime);
+    });
+
+    return {
+      classes: classItems,
+    };
+  }
+
+  /**
    * Format a date value to YYYY-MM-DD string.
    * Accepts Date, ISO string, or millisecond timestamp.
    * Normalizes the input to a Date instance before formatting.
