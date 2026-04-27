@@ -174,7 +174,43 @@ describe('Gym Creation (e2e)', () => {
     });
   });
 
-  describe('Test 3: Authentication check', () => {
+  describe('Test 3: Max-length validation', () => {
+    it('POST /api/gyms with name exceeding 100 chars → 400', async () => {
+      await request(app.getHttpServer())
+        .post('/api/gyms')
+        .set('x-user-id', userId)
+        .send({
+          name: 'A'.repeat(101),
+          location: 'Lisbon, Portugal',
+        })
+        .expect(400);
+    });
+
+    it('POST /api/gyms with location exceeding 200 chars → 400', async () => {
+      await request(app.getHttpServer())
+        .post('/api/gyms')
+        .set('x-user-id', userId)
+        .send({
+          name: 'My Gym',
+          location: 'B'.repeat(201),
+        })
+        .expect(400);
+    });
+
+    it('POST /api/gyms with description exceeding 1000 chars → 400', async () => {
+      await request(app.getHttpServer())
+        .post('/api/gyms')
+        .set('x-user-id', userId)
+        .send({
+          name: 'My Gym',
+          location: 'Lisbon, Portugal',
+          description: 'C'.repeat(1001),
+        })
+        .expect(400);
+    });
+  });
+
+  describe('Test 4: Authentication check', () => {
     it('POST /api/gyms with unknown user id → 404', async () => {
       const unknownUserId = uuidv4();
 

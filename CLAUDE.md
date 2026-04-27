@@ -240,6 +240,7 @@ Athletes may see a class only if:
 
 When work is ready for execution, Claude SHOULD help produce prompts that:
 
+- Are based on the prompts structure in PROMPTS.md
 - Explicitly specify TASK TYPE
 - Explicitly state allowed actions
 - Explicitly state forbidden actions

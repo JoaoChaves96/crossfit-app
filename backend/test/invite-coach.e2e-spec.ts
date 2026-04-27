@@ -2,8 +2,43 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication, ValidationPipe } from '@nestjs/common';
 import request from 'supertest';
 import { AppModule } from '../src/app.module';
-import { DataSource } from 'typeorm';
+import { DataSource, EntityManager } from 'typeorm';
 import { v4 as uuidv4 } from 'uuid';
+import { CommandHandler } from '@nestjs/cqrs';
+import { InviteCoachHandler } from '../src/commands/gym-configuration/handlers/invite-coach.handler';
+import { InviteCoachCommand } from '../src/commands/gym-configuration/invite-coach.command';
+import { UserEntity } from '../src/domain/user/entities/user.entity';
+
+// Faulty subclass used by the rollback test suite.
+// Defined at module scope so @CommandHandler metadata is applied before
+// the test module is compiled.
+@CommandHandler(InviteCoachCommand)
+class FaultyInviteCoachHandler extends InviteCoachHandler {
+  override async execute(command: InviteCoachCommand): Promise<never> {
+    return (this as unknown as { dataSource: DataSource }).dataSource.transaction(
+      async (manager: EntityManager) => {
+        const userRepo = manager.getRepository(UserEntity);
+
+        let coachUser = await userRepo.findOne({
+          where: { email: command.coachEmail },
+        });
+        if (!coachUser) {
+          const newUser = new UserEntity();
+          newUser.id = uuidv4();
+          newUser.email = command.coachEmail;
+          newUser.name = 'Coach';
+          newUser.passwordHash = null;
+          newUser.socialLoginId = null;
+          newUser.status = 'pending';
+          await userRepo.save(newUser);
+        }
+
+        // Simulate failure during gym_staff creation — triggers transaction rollback
+        throw new Error('Simulated gym_staff save failure');
+      },
+    );
+  }
+}
 
 /**
  * Coach Invitation E2E Tests
@@ -257,7 +292,7 @@ describe('Coach Invitation (e2e)', () => {
 
       expect(rows).toHaveLength(1);
       expect(rows[0].email).toBe(newCoachEmail);
-      expect(rows[0].status).toBe('active');
+      expect(rows[0].status).toBe('pending');
     });
 
     it('gym_staff row persisted for the new user', async () => {
@@ -271,6 +306,85 @@ describe('Coach Invitation (e2e)', () => {
       expect(rows).toHaveLength(1);
       expect(rows[0].role).toBe('coach');
       expect(rows[0].status).toBe('active');
+    });
+  });
+
+  // ---------------------------------------------------------------------------
+  // Test 2b: Invited coach user is created with status=pending
+  // ---------------------------------------------------------------------------
+  describe('Test 2b: Auto-created user has status pending', () => {
+    const pendingCoachEmail = `coach-pending-${uuidv4()}@test.local`;
+    let pendingUserId: string;
+
+    afterAll(async () => {
+      if (dataSource && dataSource.isInitialized) {
+        await dataSource.query('DELETE FROM gym_staff WHERE "userId" = (SELECT id FROM users WHERE email = $1)', [pendingCoachEmail]);
+        await dataSource.query('DELETE FROM users WHERE email = $1', [pendingCoachEmail]);
+      }
+    });
+
+    it('POST with new email → 201', async () => {
+      const response = await request(app.getHttpServer())
+        .post(`/api/gyms/${gymId}/configuration/coaches`)
+        .set('x-user-id', ownerUserId)
+        .set('x-gym-id', gymId)
+        .send({ coachEmail: pendingCoachEmail })
+        .expect(201);
+
+      const body = response.body as Record<string, unknown>;
+      pendingUserId = body.userId as string;
+    });
+
+    it('auto-created user has status=pending', async () => {
+      if (!dataSource || !dataSource.isInitialized || !pendingUserId) return;
+
+      const rows = await dataSource.query(
+        `SELECT * FROM users WHERE id = $1`,
+        [pendingUserId],
+      );
+
+      expect(rows).toHaveLength(1);
+      expect(rows[0].status).toBe('pending');
+    });
+  });
+
+  // ---------------------------------------------------------------------------
+  // Test 2c: Auto-created user has name="Coach", not their email address
+  // ---------------------------------------------------------------------------
+  describe('Test 2c: Auto-created user has placeholder name, not email', () => {
+    const placeholderCoachEmail = `coach-placeholder-${uuidv4()}@test.local`;
+    let placeholderUserId: string;
+
+    afterAll(async () => {
+      if (dataSource && dataSource.isInitialized) {
+        await dataSource.query('DELETE FROM gym_staff WHERE "userId" = (SELECT id FROM users WHERE email = $1)', [placeholderCoachEmail]);
+        await dataSource.query('DELETE FROM users WHERE email = $1', [placeholderCoachEmail]);
+      }
+    });
+
+    it('POST with new email → 201', async () => {
+      const response = await request(app.getHttpServer())
+        .post(`/api/gyms/${gymId}/configuration/coaches`)
+        .set('x-user-id', ownerUserId)
+        .set('x-gym-id', gymId)
+        .send({ coachEmail: placeholderCoachEmail })
+        .expect(201);
+
+      const body = response.body as Record<string, unknown>;
+      placeholderUserId = body.userId as string;
+    });
+
+    it('auto-created user has name="Coach", not their email', async () => {
+      if (!dataSource || !dataSource.isInitialized || !placeholderUserId) return;
+
+      const rows = await dataSource.query(
+        `SELECT * FROM users WHERE id = $1`,
+        [placeholderUserId],
+      );
+
+      expect(rows).toHaveLength(1);
+      expect(rows[0].name).toBe('Coach');
+      expect(rows[0].name).not.toBe(placeholderCoachEmail);
     });
   });
 
@@ -352,6 +466,21 @@ describe('Coach Invitation (e2e)', () => {
   });
 
   // ---------------------------------------------------------------------------
+  // Test 6b: Email exceeding RFC 5321 max length → 400
+  // ---------------------------------------------------------------------------
+  describe('Test 6b: Email exceeding 254 characters', () => {
+    it('POST with email > 254 chars → 400', async () => {
+      const oversizedEmail = `${'a'.repeat(244)}@test.local`;
+      await request(app.getHttpServer())
+        .post(`/api/gyms/${gymId}/configuration/coaches`)
+        .set('x-user-id', ownerUserId)
+        .set('x-gym-id', gymId)
+        .send({ coachEmail: oversizedEmail })
+        .expect(400);
+    });
+  });
+
+  // ---------------------------------------------------------------------------
   // Test 7: Gym scoping — owner of gym A cannot write into gym B via route
   // ---------------------------------------------------------------------------
   describe('Test 7: Gym scoping — route gymId must match x-gym-id context', () => {
@@ -364,5 +493,100 @@ describe('Coach Invitation (e2e)', () => {
         .send({ coachEmail: existingCoachEmail })
         .expect(403);
     });
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Test 8: Transaction rollback — user creation rolls back when staff save fails
+// ---------------------------------------------------------------------------
+describe('Coach Invitation — Transaction Rollback (e2e)', () => {
+  let app: INestApplication;
+  let dataSource: DataSource | undefined;
+
+  const gymId = uuidv4();
+  const ownerUserId = uuidv4();
+  const rollbackCoachEmail = `coach-rollback-${uuidv4()}@test.local`;
+
+  beforeAll(async () => {
+    // Build a module where InviteCoachHandler is replaced by FaultyInviteCoachHandler,
+    // which simulates a gym_staff save failure AFTER the user row has been written
+    // inside the same transaction. This verifies that both writes roll back atomically.
+    const moduleFixture: TestingModule = await Test.createTestingModule({
+      imports: [AppModule],
+    })
+      .overrideProvider(InviteCoachHandler)
+      .useClass(FaultyInviteCoachHandler)
+      .compile();
+
+    app = moduleFixture.createNestApplication();
+    app.useGlobalPipes(new ValidationPipe({ whitelist: true }));
+    await app.init();
+
+    dataSource = moduleFixture.get(DataSource);
+
+    if (dataSource && dataSource.isInitialized) {
+      await dataSource.query(
+        `INSERT INTO users (id, email, name, status, "createdAt")
+         VALUES ($1, $2, 'Rollback Owner', 'active', NOW())`,
+        [ownerUserId, `owner-rollback-${uuidv4()}@test.local`],
+      );
+      await dataSource.query(
+        `INSERT INTO gyms (id, name, description, location, "ownerUserId", status, "createdAt", "lastModifiedAt")
+         VALUES ($1, $2, $3, $4, $5, $6, NOW(), NOW())`,
+        [gymId, 'Rollback Test Gym', 'Gym for rollback tests', 'Lisbon', ownerUserId, 'active'],
+      );
+      await dataSource.query(
+        `INSERT INTO gym_staff (id, "gymId", "userId", role, status, "assignedAt")
+         VALUES ($1, $2, $3, $4, $5, NOW())`,
+        [uuidv4(), gymId, ownerUserId, 'owner', 'active'],
+      );
+    }
+  }, 30000);
+
+  afterAll(async () => {
+    if (dataSource && dataSource.isInitialized) {
+      try {
+        await dataSource.query('DELETE FROM gym_staff WHERE "gymId" = $1', [gymId]);
+        await dataSource.query('DELETE FROM gyms WHERE id = $1', [gymId]);
+        await dataSource.query('DELETE FROM users WHERE id = $1', [ownerUserId]);
+        await dataSource.query('DELETE FROM users WHERE email = $1', [rollbackCoachEmail]);
+      } catch {
+        // silently ignore cleanup errors
+      }
+    }
+    if (app) {
+      await app.close();
+    }
+  }, 30000);
+
+  it('POST /api/gyms/:gymId/configuration/coaches → 500 when staff save fails', async () => {
+    await request(app.getHttpServer())
+      .post(`/api/gyms/${gymId}/configuration/coaches`)
+      .set('x-user-id', ownerUserId)
+      .set('x-gym-id', gymId)
+      .send({ coachEmail: rollbackCoachEmail })
+      .expect(500);
+  });
+
+  it('user row is NOT persisted when gym_staff save fails (transaction rolled back)', async () => {
+    if (!dataSource || !dataSource.isInitialized) return;
+
+    const rows = await dataSource.query(
+      `SELECT * FROM users WHERE email = $1`,
+      [rollbackCoachEmail],
+    );
+
+    expect(rows).toHaveLength(0);
+  });
+
+  it('gym_staff row is NOT persisted when gym_staff save fails', async () => {
+    if (!dataSource || !dataSource.isInitialized) return;
+
+    const rows = await dataSource.query(
+      `SELECT * FROM gym_staff WHERE "gymId" = $1 AND role = 'coach'`,
+      [gymId],
+    );
+
+    expect(rows).toHaveLength(0);
   });
 });

@@ -6,19 +6,20 @@
 
 Crossfit class booking application.
 
-## Current Phase (2026-04-21)
+## Current Phase (2026-04-22)
 
 **EPIC:** Minimal Gym Owner MVP
 
-**Status:** Backend complete, security audit in progress, frontend design ready
+**Status:** Backend complete, frontend unblocked, Task #5 prompt ready to execute
 
 - ✅ Backend: Gym creation endpoint (Task #1)
 - ✅ Backend: Gym config endpoints verified (Task #2)
 - ✅ Backend: Class creation endpoint verified (Task #3)
 - ✅ Backend: Coach invitation endpoint verified + fixed (Task #4, #10)
 - ✅ Design: 10 low-fidelity wireframes created (designs/ folder)
-- ⏳ Security: Audit complete, CRITICAL findings require fixes before frontend
-- 🚫 Frontend: Blocked pending security hardening (auth guard, role guards)
+- ✅ Security: Audit complete — CRITICAL findings deliberately deferred to pre-prod (see PRE_PROD_CHECKLIST.md)
+- ✅ Planning: Task #5 (Gym creation wizard) fully scoped and prompt ready
+- 🚫 Frontend: Not yet started — Task #5 prompt ready to hand off to frontend-developer agent
 
 ## Verified Working Flows (Athlete MVP)
 
@@ -47,12 +48,18 @@ Crossfit class booking application.
 
 ## Known Blockers
 
-- **CRITICAL:** `JwtAuthGuard` is a stub; accepts any header value + hardcoded fallback 'user-123'
-- **CRITICAL:** Gym creation endpoint has no role guard (any user → gym owner)
-- **HIGH:** Auth/authz incomplete; security review flagged 8 issues (see DECISION_LOG.md)
+None — frontend is unblocked.
+
+## Deferred to Pre-Prod
+
+Security hardening items (JwtAuthGuard, role guards, user state, transaction safety) are deliberately deferred. Full list in `context/PRE_PROD_CHECKLIST.md`. Header-based auth is intentional for MVP.
 
 ## Known Non-Goals (for now)
 
-- No production auth until security fixes complete
+- No production auth (deferred, documented)
 - No payments
 - No automated E2E tests (manual verification only)
+
+## Next Action
+
+Hand Task #5 prompt to frontend-developer agent. Prompt is defined and ready — see this session's conversation context.
