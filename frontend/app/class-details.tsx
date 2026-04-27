@@ -5,28 +5,12 @@ import { useAuth } from '@/hooks/useAuth';
 import { useGym } from '@/hooks/useGym';
 import { createApiClient } from '@/utils/api-client';
 import { showConfirm, showError } from '@/utils/alert';
+import { components } from '@/types/api.gen';
 
-interface ClassDetailsItem {
-  id: string;
-  classTypeId: string;
-  classTypeName: string;
-  scheduledDate: string;
-  scheduledTime: string;
-  coachName: string;
-  capacity: number;
-  bookedCount: number;
-  state: 'published' | 'booking_closed' | 'in_progress' | 'completed' | 'archived';
-}
-
-interface UserBookingItem {
-  id: string;
-  classId: string;
-  status: 'booked' | 'waitlisted';
-}
-
-interface GetUserBookingsResponse {
-  bookings: UserBookingItem[];
-}
+type ClassDetailsItem = components['schemas']['ClassScheduleItemDto'];
+type UserBookingItem = components['schemas']['UserBookingItemDto'];
+type GetUserBookingsResponse = components['schemas']['GetUserBookingsResponseDto'];
+type GetClassScheduleResponse = components['schemas']['GetClassScheduleResponseDto'];
 
 type BookingStatus = 'booked' | 'waitlisted' | 'open' | 'full';
 
@@ -51,7 +35,7 @@ export default function ClassDetailsScreen() {
 
       // Fetch both schedule and bookings
       const [scheduleResponse, bookingsResponse] = await Promise.all([
-        client.get<{ classes: ClassDetailsItem[] }>(`/api/gyms/${currentGymId}/classes`),
+        client.get<GetClassScheduleResponse>(`/api/gyms/${currentGymId}/classes`),
         client.get<GetUserBookingsResponse>('/api/me/bookings'),
       ]);
 
