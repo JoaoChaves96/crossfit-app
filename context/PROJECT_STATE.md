@@ -1,6 +1,7 @@
 # Project State
 
-**→ See `GYM_OWNER_EPIC.md` for completed epic details**
+**→ See `GYM_OWNER_EPIC.md` for completed epic details**  
+**→ See `COACH_MVP_EPIC.md` for current epic details**
 
 ## Product
 
@@ -8,9 +9,9 @@ Crossfit class booking application.
 
 ## Current Phase (2026-04-29)
 
-**EPIC:** Minimal Gym Owner MVP — ✅ COMPLETE
+**EPIC:** Coach MVP — 🔄 IN PROGRESS
 
-All tasks delivered and manually verified in browser.
+**Previous:** Minimal Gym Owner MVP — ✅ COMPLETE (2026-04-29)
 
 ## Verified Working Flows (Athlete MVP)
 
@@ -61,7 +62,6 @@ Security hardening items (JwtAuthGuard, role guards, user state, transaction saf
 
 ## Next Action
 
-Gym Owner MVP is shipped. Next epic TBD — candidates:
-- Coach MVP (assigned classes, programming, attendance)
-- Pre-prod security hardening
-- Member management UI
+Coach MVP is active. Start with backend Task #1 (GET assigned classes endpoint) — this is the only missing backend piece before frontend can begin.
+
+See `context/COACH_MVP_EPIC.md` for full task breakdown.

@@ -160,6 +160,7 @@ The intended workflow is:
    - Tasks are mapped to:
      - backend-developer
      - frontend-developer
+     - ux-designer
      - security-review
 
 4. **Execution**
@@ -274,6 +275,18 @@ When implementing from designs:
 **Why:** Prevents design→code drift. Designs are the specification, not suggestions.
 
 **Documentation:** `docs/FRONTEND_WORKFLOW.md` and `frontend-developer.md`
+
+#### Design Pre-Check (MANDATORY when planning a new epic)
+
+Before creating any frontend tasks for a new epic:
+
+1. Check `/designs/` for existing `.pen` files covering the screens in scope
+2. If `.pen` files are missing for any screen, the **first task must be a `ux-designer` agent run** to create them
+3. Frontend tasks MUST NOT be started until the corresponding `.pen` files exist
+
+The `ux-designer` agent is defined in `.claude/agents/ux-designer.md`. Every prompt to it must include: epic file path, list of screens to design, a style reference `.pen` file, and the output path.
+
+**Why:** The frontend-developer agent implements from designs. Without a `.pen` file, it makes layout and UX decisions it should not be making.
 
 ### 2. Swagger/OpenAPI as Authoritative API Contract
 
