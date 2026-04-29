@@ -1,6 +1,6 @@
 # EPIC: Minimal Gym Owner MVP
 
-**Status:** 🔴 BLOCKED (Security audit findings)  
+**Status:** 🟢 IN PROGRESS (Tasks 5-6 complete, Task 7 ready to start)  
 **Start Date:** 2026-04-21  
 **Target Completion:** 2026-05-05 (estimated)  
 **Owner:** Backend + Frontend team
@@ -52,12 +52,12 @@ This unblocks all downstream features (Coach, Athlete complete flow) and enables
 - [ ] CRITICAL issues must be fixed before frontend work
 - [ ] Issues documented in DECISION_LOG.md
 
-### Frontend: BLOCKED 🚫
-- [ ] Task #5: Gym creation wizard UI (BLOCKED on security fixes)
-- [ ] Task #6: Class scheduling screen (BLOCKED on Task #5)
-- [ ] Task #7: Coach invitation modal (BLOCKED on security fixes)
-- [ ] Task #8: Navigation & routing (BLOCKED on Tasks #5-7)
-- [ ] Task #9: E2E tests (BLOCKED on all above)
+### Frontend: IN PROGRESS ✅
+- [x] Task #5: Gym creation wizard UI (DONE - 2026-04-27)
+- [x] Task #6: Class scheduling screen / Schedule Dashboard for Gym Owner (DONE - 2026-04-27)
+- [ ] Task #7: Coach invitation modal (READY TO START)
+- [ ] Task #8: Navigation & routing (READY TO START)
+- [ ] Task #9: E2E tests (READY TO START)
 
 ---
 

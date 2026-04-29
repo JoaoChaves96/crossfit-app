@@ -236,6 +236,78 @@ Athletes may see a class only if:
 
 ---
 
+## Documentation Synchronization (MANDATORY)
+
+When any work is completed—tasks, features, endpoints, fixes, or milestones—Claude **MUST** immediately update the relevant project documentation to reflect progress.
+
+**Which files to update:**
+- Epics or feature tracking docs (e.g., `context/*_EPIC.md`)
+- Project state docs (e.g., `context/PROJECT_STATE.md`)
+- Any `.md` file in `context/` or `docs/` that documents work, blockers, or progress
+- Backend/frontend checklists
+- Decision logs
+
+**Process:**
+1. When work completes, identify which `.md` file tracks it
+2. Mark the work as done (✅, update dates, change status)
+3. Update any related blockers or dependencies
+4. Do NOT let documentation drift from actual progress
+
+**Why:** Documentation is the source of truth between sessions. Stale docs cause duplicated work, missed priorities, and forgotten tasks. The next session starts from the docs, not from memory.
+
+---
+
+## Established Development Workflows
+
+These patterns are mandatory and enforced through agent instructions.
+
+### 1. Design-to-Code Workflow (Frontend)
+
+Frontend FEATURE tasks **must** reference Pencil design files (`.pen` files in `/designs`).
+
+When implementing from designs:
+- Use Pencil MCP tools to extract specs (batch_get, get_variables, snapshot_layout)
+- Extract layout properties, design tokens, and component hierarchy
+- Implement React code matching extracted specs exactly
+- Verification: Code compiles, layout matches design, TypeScript strict mode passes
+
+**Why:** Prevents design→code drift. Designs are the specification, not suggestions.
+
+**Documentation:** `docs/FRONTEND_WORKFLOW.md` and `frontend-developer.md`
+
+### 2. Swagger/OpenAPI as Authoritative API Contract
+
+All HTTP API changes **must** update the Swagger schema.
+
+When modifying or creating endpoints:
+- Update all `@Api*` decorators (operation, response, param, body)
+- Update all `@ApiProperty` decorators in request/response DTOs
+- Verify schema accuracy at http://localhost:3000/api-docs
+- Schema is the source of truth for frontend integration
+
+**Why:** Frontend must sync with backend. Manual specs cause contract mismatches.
+
+**Enforcement:** Required in `backend-developer.md`
+
+### 3. Frontend Types Generated from Swagger
+
+All API response types in frontend **must** come from generated types, never manually defined.
+
+Workflow:
+- Backend must have accurate Swagger schema with all decorators
+- Frontend runs: `npm run generate:api-types`
+- Output: `@/types/api.gen` contains all generated schemas and operations
+- Frontend components import from generated types: `type X = components['schemas']['YDto']`
+- If a type doesn't exist in generated file, the endpoint is not implemented in backend
+
+**Why:** Guarantees type sync. Manual types become stale and cause bugs.
+
+**Enforcement:** Required in `frontend-developer.md` (API Type Safety section)
+
+**Current State:** All existing components migrated to generated types (schedule-dashboard, (tabs)/schedule, (tabs)/my-bookings, class-details)
+
+---
+
 ## Handoff to Execution Agents
 
 When work is ready for execution, Claude SHOULD help produce prompts that:

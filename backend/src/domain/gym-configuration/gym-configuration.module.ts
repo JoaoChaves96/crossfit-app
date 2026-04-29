@@ -27,6 +27,7 @@ import { PurchaseMembershipPlanHandler } from '../../commands/gym-configuration/
 import { ManuallyAddMemberHandler } from '../../commands/gym-configuration/handlers/manually-add-member.handler';
 import { InviteCoachHandler } from '../../commands/gym-configuration/handlers/invite-coach.handler';
 import { ChangeCoachStatusHandler } from '../../commands/gym-configuration/handlers/change-coach-status.handler';
+import { CoachesQueryService } from '../../queries/gym-configuration/coaches.service';
 
 /**
  * GymConfigurationModule: Wires gym configuration and monetization commands
@@ -71,7 +72,10 @@ import { ChangeCoachStatusHandler } from '../../commands/gym-configuration/handl
     ManuallyAddMemberHandler,
     InviteCoachHandler,
     ChangeCoachStatusHandler,
+
+    // Query services
+    CoachesQueryService,
   ],
-  exports: [GymStaffService, SpaceService, ClassTypeService],
+  exports: [GymStaffService, SpaceService, ClassTypeService, CoachesQueryService],
 })
 export class GymConfigurationModule {}
