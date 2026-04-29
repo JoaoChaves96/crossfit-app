@@ -379,7 +379,11 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get?: never;
+        /**
+         * List coaches
+         * @description Returns all coaches (active and inactive) for the gym. Gym owners only.
+         */
+        get: operations["GymConfigurationController_getCoaches"];
         put?: never;
         /**
          * Invite a coach
@@ -1202,6 +1206,45 @@ export interface components {
             joinedAt: string;
             /** @example uuid-athlete-membership-plan-id */
             athleteMembershipPlanId?: string;
+        };
+        CoachListItemDto: {
+            /**
+             * @description Unique identifier for the gym staff record
+             * @example uuid-staff-id
+             */
+            id: string;
+            /**
+             * @description User ID of the coach
+             * @example uuid-user-id
+             */
+            userId: string;
+            /**
+             * @description Email address of the coach
+             * @example coach@example.com
+             */
+            email: string;
+            /**
+             * @description Role of the staff member in the gym
+             * @example coach
+             * @enum {string}
+             */
+            role: "owner" | "coach";
+            /**
+             * @description Current status of the coach in the gym
+             * @example active
+             * @enum {string}
+             */
+            status: "active" | "inactive";
+            /**
+             * Format: date-time
+             * @description Date and time the coach was assigned to the gym
+             * @example 2024-01-15T10:00:00.000Z
+             */
+            assignedAt: string;
+        };
+        GetCoachesResponseDto: {
+            /** @description List of coaches for the gym */
+            coaches: components["schemas"]["CoachListItemDto"][];
         };
         InviteCoachDto: {
             /** @example coach@example.com */
@@ -2123,6 +2166,43 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ManuallyAddMemberResponseDto"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Forbidden - Owner role required */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    GymConfigurationController_getCoaches: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Gym ID */
+                gymId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Coaches list returned */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GetCoachesResponseDto"];
                 };
             };
             /** @description Unauthorized */
