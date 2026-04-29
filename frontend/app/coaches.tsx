@@ -165,7 +165,7 @@ function CoachRow({ coach }: CoachRowProps) {
 interface InviteModalProps {
   visible: boolean;
   onClose: () => void;
-  onSuccess: (coach: InviteCoachResponse) => void;
+  onSuccess: () => void;
   gymId: string;
   userId: string | null | undefined;
 }
@@ -200,7 +200,7 @@ function InviteModal({ visible, onClose, onSuccess, gymId, userId }: InviteModal
         body as Record<string, unknown>,
       );
       setEmail('');
-      onSuccess(result);
+      onSuccess();
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'Failed to invite coach.';
       setError(msg);
@@ -304,17 +304,9 @@ export default function CoachesScreen() {
     fetchCoaches();
   }, [fetchCoaches]);
 
-  function handleInviteSuccess(invited: InviteCoachResponse) {
-    const newItem: CoachListItem = {
-      id: invited.id,
-      userId: invited.userId,
-      email: '',
-      role: invited.role,
-      status: invited.status,
-      assignedAt: invited.assignedAt,
-    };
-    setCoaches((prev) => [...prev, newItem]);
+  function handleInviteSuccess() {
     setModalVisible(false);
+    fetchCoaches();
   }
 
   return (

@@ -319,6 +319,25 @@ When work is ready for execution, Claude SHOULD help produce prompts that:
 
 Claude MUST NOT execute backend, frontend, or security tasks itself.
 
+### Execution Prompt Calibration (MANDATORY)
+
+Execution agents (`frontend-developer`, `backend-developer`) are senior engineers.
+They read the codebase themselves. Claude MUST NOT over-specify implementation details.
+
+**A good prompt contains:**
+- **What** needs to be done and **why** (the goal or bug)
+- **Where** to look (file path, not line numbers)
+- **Constraints** (what not to touch)
+- **Done when** (clear acceptance criteria)
+
+**A good prompt does NOT contain:**
+- Exact function signatures or code snippets to copy-paste
+- Line numbers
+- Step-by-step implementation instructions
+- Architectural decisions the agent should make itself
+
+The agent figures out the **how**. Claude figures out the **what** and **why**.
+
 ---
 
 ## Guiding Principle
