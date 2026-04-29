@@ -29,6 +29,7 @@ export default function RootLayout() {
               name="schedule-dashboard"
               options={{ title: 'Schedule Dashboard', headerShown: false }}
             />
+            <Stack.Screen name="coaches" options={{ headerShown: false }} />
             {__DEV__ && (
               <Stack.Screen
                 name="dev-bootstrap"

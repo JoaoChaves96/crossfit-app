@@ -105,18 +105,19 @@ const DAY_LABELS = ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN'];
 
 interface SidebarProps {
   activeItem: string;
+  onNavigate: (key: string) => void;
 }
 
-const NAV_ITEMS = [
-  { label: 'Dashboard', key: 'dashboard' },
-  { label: 'Schedule', key: 'schedule' },
-  { label: 'Classes', key: 'classes' },
-  { label: 'Athletes', key: 'athletes' },
-  { label: 'Coaches', key: 'coaches' },
-  { label: 'Settings', key: 'settings' },
+const NAV_ITEMS: { label: string; key: string; enabled: boolean }[] = [
+  { label: 'Dashboard', key: 'dashboard', enabled: false },
+  { label: 'Schedule', key: 'schedule', enabled: true },
+  { label: 'Classes', key: 'classes', enabled: false },
+  { label: 'Athletes', key: 'athletes', enabled: false },
+  { label: 'Coaches', key: 'coaches', enabled: true },
+  { label: 'Settings', key: 'settings', enabled: false },
 ];
 
-function Sidebar({ activeItem }: SidebarProps) {
+function Sidebar({ activeItem, onNavigate }: SidebarProps) {
   return (
     <View style={styles.sidebar}>
       <View style={styles.sidebarLogo}>
@@ -126,24 +127,34 @@ function Sidebar({ activeItem }: SidebarProps) {
       <View style={styles.navGroup}>
         {NAV_ITEMS.map((item) => {
           const isActive = item.key === activeItem;
+          const isDisabled = !item.enabled;
           return (
-            <View
+            <TouchableOpacity
               key={item.key}
-              style={[styles.navItem, isActive && styles.navItemActive]}>
+              style={[
+                styles.navItem,
+                isActive && styles.navItemActive,
+                isDisabled && styles.navItemDisabled,
+              ]}
+              onPress={isDisabled ? undefined : () => onNavigate(item.key)}
+              disabled={isDisabled}
+              activeOpacity={isDisabled ? 1 : 0.7}>
               <View
                 style={[
                   styles.navIcon,
                   isActive ? styles.navIconActive : styles.navIconInactive,
+                  isDisabled && styles.navIconDisabled,
                 ]}
               />
               <Text
                 style={[
                   styles.navLabel,
                   isActive ? styles.navLabelActive : styles.navLabelInactive,
+                  isDisabled && styles.navLabelDisabled,
                 ]}>
                 {item.label}
               </Text>
-            </View>
+            </TouchableOpacity>
           );
         })}
       </View>
@@ -305,7 +316,12 @@ export default function ScheduleDashboard() {
 
   return (
     <View style={styles.root}>
-      <Sidebar activeItem="schedule" />
+      <Sidebar
+        activeItem="schedule"
+        onNavigate={(key) => {
+          if (key === 'coaches') router.push('/coaches');
+        }}
+      />
 
       <View style={styles.main}>
         {/* Header */}
@@ -478,6 +494,15 @@ const styles = StyleSheet.create({
   navLabelInactive: {
     fontWeight: '400',
     color: COLOR.inactiveNavText,
+  },
+  navItemDisabled: {
+    opacity: 0.4,
+  },
+  navIconDisabled: {
+    backgroundColor: '#9CA3AF',
+  },
+  navLabelDisabled: {
+    color: COLOR.mutedText,
   },
 
   // Main area
