@@ -50,12 +50,20 @@ export class MarkAttendanceHandler implements ICommandHandler<MarkAttendanceComm
   async execute(
     command: MarkAttendanceCommand,
   ): Promise<MarkAttendanceResponseDto> {
-    // Precondition 1: Verify coach is assigned to the class
+    // Precondition 1: Verify class exists and belongs to the gym in the route
     const classEntity = await this.classRepository.getClassById(
       command.classId,
+      command.gymId,
     );
     if (!classEntity) {
       throw new NotFoundException('Class not found');
+    }
+
+    // Ownership guard: class must belong to the gym supplied in the command
+    if (classEntity.gymId !== command.gymId) {
+      throw new ForbiddenException(
+        'Class does not belong to the specified gym',
+      );
     }
 
     // Verify the coach is assigned to this specific class

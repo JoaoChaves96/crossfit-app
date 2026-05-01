@@ -6,7 +6,16 @@ export class ManuallyTransitionClassStateDto {
   @IsUUID()
   classId: string;
 
-  @ApiProperty({ enum: ['published', 'booking_closed', 'in_progress', 'completed', 'archived'], example: 'booking_closed' })
+  @ApiProperty({
+    enum: [
+      'published',
+      'booking_closed',
+      'in_progress',
+      'completed',
+      'archived',
+    ],
+    example: 'booking_closed',
+  })
   @IsEnum([
     'published',
     'booking_closed',

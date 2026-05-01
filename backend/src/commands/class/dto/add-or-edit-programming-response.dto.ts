@@ -7,7 +7,9 @@ export class AddOrEditProgrammingResponseDto {
   @ApiProperty({ example: 'uuid-class-id' })
   classId: string;
 
-  @ApiProperty({ example: '5 rounds: 20 box jumps, 15 pull-ups, 10 burpees. For time.' })
+  @ApiProperty({
+    example: '5 rounds: 20 box jumps, 15 pull-ups, 10 burpees. For time.',
+  })
   content: string;
 
   @ApiProperty({ example: 'uuid-coach-user-id' })

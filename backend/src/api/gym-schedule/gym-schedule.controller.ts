@@ -1,5 +1,11 @@
 import { Controller, Get, Param, UseGuards } from '@nestjs/common';
-import { ApiTags, ApiBearerAuth, ApiOperation, ApiResponse, ApiParam } from '@nestjs/swagger';
+import {
+  ApiTags,
+  ApiBearerAuth,
+  ApiOperation,
+  ApiResponse,
+  ApiParam,
+} from '@nestjs/swagger';
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../../auth/guards/roles.guard';
 import { Role } from '../../auth/decorators/role.decorator';
@@ -32,7 +38,11 @@ export class GymScheduleController {
       'Retrieve all classes in gym schedule for owner management. No membership filtering applied. Gym owners only.',
   })
   @ApiParam({ name: 'gymId', description: 'Gym ID' })
-  @ApiResponse({ status: 200, description: 'Gym schedule returned', type: GetClassScheduleResponseDto })
+  @ApiResponse({
+    status: 200,
+    description: 'Gym schedule returned',
+    type: GetClassScheduleResponseDto,
+  })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   @ApiResponse({ status: 403, description: 'Forbidden - Owner role required' })
   async getGymScheduleForOwner(

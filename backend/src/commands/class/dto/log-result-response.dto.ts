@@ -10,13 +10,19 @@ export class LogResultResponseDto {
   @ApiProperty({ example: 'uuid-user-id' })
   userId: string;
 
-  @ApiProperty({ enum: ['time', 'reps', 'weight', 'rounds', 'note'], example: 'time' })
+  @ApiProperty({
+    enum: ['time', 'reps', 'weight', 'rounds', 'note'],
+    example: 'time',
+  })
   metricType: 'time' | 'reps' | 'weight' | 'rounds' | 'note';
 
   @ApiProperty({ example: '300' })
   value: string;
 
-  @ApiProperty({ enum: ['seconds', 'minutes', 'reps', 'kg', 'lb', 'rounds', 'none'], example: 'seconds' })
+  @ApiProperty({
+    enum: ['seconds', 'minutes', 'reps', 'kg', 'lb', 'rounds', 'none'],
+    example: 'seconds',
+  })
   unit: 'seconds' | 'minutes' | 'reps' | 'kg' | 'lb' | 'rounds' | 'none';
 
   @ApiProperty({ example: 'Felt strong today', nullable: true })

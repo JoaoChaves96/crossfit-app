@@ -22,7 +22,10 @@ export class CreateClassDto {
   @IsString()
   spaceId: string;
 
-  @ApiProperty({ example: '2024-06-15', description: 'ISO date string (YYYY-MM-DD)' })
+  @ApiProperty({
+    example: '2024-06-15',
+    description: 'ISO date string (YYYY-MM-DD)',
+  })
   @IsDateString()
   scheduledDate: string;
 

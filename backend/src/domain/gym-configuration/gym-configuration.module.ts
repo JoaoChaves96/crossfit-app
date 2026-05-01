@@ -76,6 +76,11 @@ import { CoachesQueryService } from '../../queries/gym-configuration/coaches.ser
     // Query services
     CoachesQueryService,
   ],
-  exports: [GymStaffService, SpaceService, ClassTypeService, CoachesQueryService],
+  exports: [
+    GymStaffService,
+    SpaceService,
+    ClassTypeService,
+    CoachesQueryService,
+  ],
 })
 export class GymConfigurationModule {}

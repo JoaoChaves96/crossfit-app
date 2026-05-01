@@ -15,28 +15,28 @@ import { UserEntity } from '../src/domain/user/entities/user.entity';
 @CommandHandler(InviteCoachCommand)
 class FaultyInviteCoachHandler extends InviteCoachHandler {
   override async execute(command: InviteCoachCommand): Promise<never> {
-    return (this as unknown as { dataSource: DataSource }).dataSource.transaction(
-      async (manager: EntityManager) => {
-        const userRepo = manager.getRepository(UserEntity);
+    return (
+      this as unknown as { dataSource: DataSource }
+    ).dataSource.transaction(async (manager: EntityManager) => {
+      const userRepo = manager.getRepository(UserEntity);
 
-        let coachUser = await userRepo.findOne({
-          where: { email: command.coachEmail },
-        });
-        if (!coachUser) {
-          const newUser = new UserEntity();
-          newUser.id = uuidv4();
-          newUser.email = command.coachEmail;
-          newUser.name = 'Coach';
-          newUser.passwordHash = null;
-          newUser.socialLoginId = null;
-          newUser.status = 'pending';
-          await userRepo.save(newUser);
-        }
+      const coachUser = await userRepo.findOne({
+        where: { email: command.coachEmail },
+      });
+      if (!coachUser) {
+        const newUser = new UserEntity();
+        newUser.id = uuidv4();
+        newUser.email = command.coachEmail;
+        newUser.name = 'Coach';
+        newUser.passwordHash = null;
+        newUser.socialLoginId = null;
+        newUser.status = 'pending';
+        await userRepo.save(newUser);
+      }
 
-        // Simulate failure during gym_staff creation — triggers transaction rollback
-        throw new Error('Simulated gym_staff save failure');
-      },
-    );
+      // Simulate failure during gym_staff creation — triggers transaction rollback
+      throw new Error('Simulated gym_staff save failure');
+    });
   }
 }
 
@@ -152,7 +152,14 @@ describe('Coach Invitation (e2e)', () => {
       INSERT INTO gyms (id, name, description, location, "ownerUserId", status, "createdAt", "lastModifiedAt")
       VALUES ($1, $2, $3, $4, $5, $6, NOW(), NOW())
       `,
-      [gymId, 'Primary Test Gym', 'Gym for coach invitation tests', 'Lisbon', ownerUserId, 'active'],
+      [
+        gymId,
+        'Primary Test Gym',
+        'Gym for coach invitation tests',
+        'Lisbon',
+        ownerUserId,
+        'active',
+      ],
     );
 
     // Other gym
@@ -161,7 +168,14 @@ describe('Coach Invitation (e2e)', () => {
       INSERT INTO gyms (id, name, description, location, "ownerUserId", status, "createdAt", "lastModifiedAt")
       VALUES ($1, $2, $3, $4, $5, $6, NOW(), NOW())
       `,
-      [otherGymId, 'Other Test Gym', 'Second gym for scoping tests', 'Porto', otherOwnerUserId, 'active'],
+      [
+        otherGymId,
+        'Other Test Gym',
+        'Second gym for scoping tests',
+        'Porto',
+        otherOwnerUserId,
+        'active',
+      ],
     );
 
     // gym_staff: primary owner in primary gym
@@ -197,15 +211,28 @@ describe('Coach Invitation (e2e)', () => {
 
     try {
       // Remove all gym_staff rows for the test gyms
-      await dataSource.query('DELETE FROM gym_staff WHERE "gymId" IN ($1, $2)', [gymId, otherGymId]);
-      await dataSource.query('DELETE FROM gym_memberships WHERE "gymId" IN ($1, $2)', [gymId, otherGymId]);
-      await dataSource.query('DELETE FROM gyms WHERE id IN ($1, $2)', [gymId, otherGymId]);
       await dataSource.query(
-        'DELETE FROM users WHERE id IN ($1, $2, $3, $4)',
-        [ownerUserId, otherOwnerUserId, existingCoachUserId, athleteUserId],
+        'DELETE FROM gym_staff WHERE "gymId" IN ($1, $2)',
+        [gymId, otherGymId],
       );
+      await dataSource.query(
+        'DELETE FROM gym_memberships WHERE "gymId" IN ($1, $2)',
+        [gymId, otherGymId],
+      );
+      await dataSource.query('DELETE FROM gyms WHERE id IN ($1, $2)', [
+        gymId,
+        otherGymId,
+      ]);
+      await dataSource.query('DELETE FROM users WHERE id IN ($1, $2, $3, $4)', [
+        ownerUserId,
+        otherOwnerUserId,
+        existingCoachUserId,
+        athleteUserId,
+      ]);
       // Clean up auto-created user for newCoachEmail if it exists
-      await dataSource.query('DELETE FROM users WHERE email = $1', [newCoachEmail]);
+      await dataSource.query('DELETE FROM users WHERE email = $1', [
+        newCoachEmail,
+      ]);
     } catch {
       // silently ignore cleanup errors
     }
@@ -285,10 +312,9 @@ describe('Coach Invitation (e2e)', () => {
     it('new user row created in users table', async () => {
       if (!dataSource || !dataSource.isInitialized || !newUserId) return;
 
-      const rows = await dataSource.query(
-        `SELECT * FROM users WHERE id = $1`,
-        [newUserId],
-      );
+      const rows = await dataSource.query(`SELECT * FROM users WHERE id = $1`, [
+        newUserId,
+      ]);
 
       expect(rows).toHaveLength(1);
       expect(rows[0].email).toBe(newCoachEmail);
@@ -318,8 +344,13 @@ describe('Coach Invitation (e2e)', () => {
 
     afterAll(async () => {
       if (dataSource && dataSource.isInitialized) {
-        await dataSource.query('DELETE FROM gym_staff WHERE "userId" = (SELECT id FROM users WHERE email = $1)', [pendingCoachEmail]);
-        await dataSource.query('DELETE FROM users WHERE email = $1', [pendingCoachEmail]);
+        await dataSource.query(
+          'DELETE FROM gym_staff WHERE "userId" = (SELECT id FROM users WHERE email = $1)',
+          [pendingCoachEmail],
+        );
+        await dataSource.query('DELETE FROM users WHERE email = $1', [
+          pendingCoachEmail,
+        ]);
       }
     });
 
@@ -338,10 +369,9 @@ describe('Coach Invitation (e2e)', () => {
     it('auto-created user has status=pending', async () => {
       if (!dataSource || !dataSource.isInitialized || !pendingUserId) return;
 
-      const rows = await dataSource.query(
-        `SELECT * FROM users WHERE id = $1`,
-        [pendingUserId],
-      );
+      const rows = await dataSource.query(`SELECT * FROM users WHERE id = $1`, [
+        pendingUserId,
+      ]);
 
       expect(rows).toHaveLength(1);
       expect(rows[0].status).toBe('pending');
@@ -357,8 +387,13 @@ describe('Coach Invitation (e2e)', () => {
 
     afterAll(async () => {
       if (dataSource && dataSource.isInitialized) {
-        await dataSource.query('DELETE FROM gym_staff WHERE "userId" = (SELECT id FROM users WHERE email = $1)', [placeholderCoachEmail]);
-        await dataSource.query('DELETE FROM users WHERE email = $1', [placeholderCoachEmail]);
+        await dataSource.query(
+          'DELETE FROM gym_staff WHERE "userId" = (SELECT id FROM users WHERE email = $1)',
+          [placeholderCoachEmail],
+        );
+        await dataSource.query('DELETE FROM users WHERE email = $1', [
+          placeholderCoachEmail,
+        ]);
       }
     });
 
@@ -375,12 +410,12 @@ describe('Coach Invitation (e2e)', () => {
     });
 
     it('auto-created user has name="Coach", not their email', async () => {
-      if (!dataSource || !dataSource.isInitialized || !placeholderUserId) return;
+      if (!dataSource || !dataSource.isInitialized || !placeholderUserId)
+        return;
 
-      const rows = await dataSource.query(
-        `SELECT * FROM users WHERE id = $1`,
-        [placeholderUserId],
-      );
+      const rows = await dataSource.query(`SELECT * FROM users WHERE id = $1`, [
+        placeholderUserId,
+      ]);
 
       expect(rows).toHaveLength(1);
       expect(rows[0].name).toBe('Coach');
@@ -533,7 +568,14 @@ describe('Coach Invitation — Transaction Rollback (e2e)', () => {
       await dataSource.query(
         `INSERT INTO gyms (id, name, description, location, "ownerUserId", status, "createdAt", "lastModifiedAt")
          VALUES ($1, $2, $3, $4, $5, $6, NOW(), NOW())`,
-        [gymId, 'Rollback Test Gym', 'Gym for rollback tests', 'Lisbon', ownerUserId, 'active'],
+        [
+          gymId,
+          'Rollback Test Gym',
+          'Gym for rollback tests',
+          'Lisbon',
+          ownerUserId,
+          'active',
+        ],
       );
       await dataSource.query(
         `INSERT INTO gym_staff (id, "gymId", "userId", role, status, "assignedAt")
@@ -546,10 +588,16 @@ describe('Coach Invitation — Transaction Rollback (e2e)', () => {
   afterAll(async () => {
     if (dataSource && dataSource.isInitialized) {
       try {
-        await dataSource.query('DELETE FROM gym_staff WHERE "gymId" = $1', [gymId]);
+        await dataSource.query('DELETE FROM gym_staff WHERE "gymId" = $1', [
+          gymId,
+        ]);
         await dataSource.query('DELETE FROM gyms WHERE id = $1', [gymId]);
-        await dataSource.query('DELETE FROM users WHERE id = $1', [ownerUserId]);
-        await dataSource.query('DELETE FROM users WHERE email = $1', [rollbackCoachEmail]);
+        await dataSource.query('DELETE FROM users WHERE id = $1', [
+          ownerUserId,
+        ]);
+        await dataSource.query('DELETE FROM users WHERE email = $1', [
+          rollbackCoachEmail,
+        ]);
       } catch {
         // silently ignore cleanup errors
       }

@@ -22,7 +22,10 @@ export class CreateMembershipPlanDto {
   @IsEnum(['monthly', 'annual'])
   billingCycle: 'monthly' | 'annual';
 
-  @ApiProperty({ example: ['uuid-class-type-id-1', 'uuid-class-type-id-2'], type: [String] })
+  @ApiProperty({
+    example: ['uuid-class-type-id-1', 'uuid-class-type-id-2'],
+    type: [String],
+  })
   @IsArray()
   @ArrayMinSize(1)
   @IsString({ each: true })

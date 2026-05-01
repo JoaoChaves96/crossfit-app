@@ -16,6 +16,7 @@ import { GymMembershipRepository } from '../repositories/gym-membership.reposito
 import { GymMembershipEntity } from '../domain/gym-membership/entities/gym-membership.entity';
 import { BookingEntity } from '../domain/booking/entities/booking.entity';
 import { GymScheduleController } from '../api/gym-schedule/gym-schedule.controller';
+import { CoachClassesController } from '../api/coach/coach-classes.controller';
 
 /**
  * HttpModule: Registers all HTTP controllers
@@ -36,7 +37,19 @@ import { GymScheduleController } from '../api/gym-schedule/gym-schedule.controll
     GymFeatureModule,
     TypeOrmModule.forFeature([GymMembershipEntity, BookingEntity]),
   ],
-  controllers: [ClassController, GymConfigurationController, UserController, GymController, GymScheduleController],
-  providers: [RolesGuard, UserBookingsService, BookingRepository, GymMembershipRepository],
+  controllers: [
+    ClassController,
+    GymConfigurationController,
+    UserController,
+    GymController,
+    GymScheduleController,
+    CoachClassesController,
+  ],
+  providers: [
+    RolesGuard,
+    UserBookingsService,
+    BookingRepository,
+    GymMembershipRepository,
+  ],
 })
 export class HttpModule {}

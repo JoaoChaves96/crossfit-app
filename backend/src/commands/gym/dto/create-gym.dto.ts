@@ -14,7 +14,11 @@ export class CreateGymDto {
   @MaxLength(200)
   location: string;
 
-  @ApiProperty({ example: 'A premium CrossFit gym in the city center.', maxLength: 1000, required: false })
+  @ApiProperty({
+    example: 'A premium CrossFit gym in the city center.',
+    maxLength: 1000,
+    required: false,
+  })
   @IsString()
   @IsOptional()
   @MaxLength(1000)

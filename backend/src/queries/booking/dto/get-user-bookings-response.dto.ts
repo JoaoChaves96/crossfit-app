@@ -8,6 +8,9 @@ import { UserBookingItemDto } from './user-booking-item.dto';
  * across all gyms.
  */
 export class GetUserBookingsResponseDto {
-  @ApiProperty({ type: [UserBookingItemDto], description: "List of the user's active bookings" })
+  @ApiProperty({
+    type: [UserBookingItemDto],
+    description: "List of the user's active bookings",
+  })
   bookings: UserBookingItemDto[];
 }

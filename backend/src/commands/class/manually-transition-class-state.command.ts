@@ -4,6 +4,7 @@ export class ManuallyTransitionClassStateCommand implements ICommand {
   constructor(
     readonly userId: string,
     readonly classId: string,
+    readonly gymId: string,
     readonly targetState:
       | 'published'
       | 'booking_closed'

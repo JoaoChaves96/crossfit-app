@@ -3,8 +3,11 @@ import { ClassRepository } from '../../repositories/class.repository';
 import { BookingRepository } from '../../repositories/booking.repository';
 import { GymMembershipRepository } from '../../repositories/gym-membership.repository';
 import { AthleteMembershipPlanRepository } from '../../repositories/athlete-membership-plan.repository';
+import { GymStaffService } from '../../domain/gym-staff/gym-staff.service';
 import { ClassScheduleItemDto } from './dto/class-schedule-item.dto';
 import { GetClassScheduleResponseDto } from './dto/get-class-schedule-response.dto';
+import { CoachClassItemDto } from './dto/coach-class-item.dto';
+import { GetCoachClassesResponseDto } from './dto/get-coach-classes-response.dto';
 
 /**
  * ClassScheduleService: Query handler for athlete class schedules
@@ -29,6 +32,7 @@ export class ClassScheduleService {
     private readonly bookingRepository: BookingRepository,
     private readonly gymMembershipRepository: GymMembershipRepository,
     private readonly athleteMembershipPlanRepository: AthleteMembershipPlanRepository,
+    private readonly gymStaffService: GymStaffService,
   ) {}
 
   /**
@@ -163,6 +167,54 @@ export class ClassScheduleService {
     return {
       classes: classItems,
     };
+  }
+
+  /**
+   * Get all non-archived classes assigned to the authenticated coach in the given gym.
+   * Enforces both gym scoping (gymId) and coach scoping (coachUserId = requesting user).
+   *
+   * @param gymId - The gym to fetch classes from
+   * @param coachUserId - The coach requesting their assigned classes
+   * @returns Non-archived classes assigned to the coach, sorted by date/time
+   * @throws ForbiddenException if user is not an active coach in this gym
+   */
+  async getCoachClasses(
+    gymId: string,
+    coachUserId: string,
+  ): Promise<GetCoachClassesResponseDto> {
+    const isCoach = await this.gymStaffService.isCoach(coachUserId, gymId);
+    if (!isCoach) {
+      throw new ForbiddenException('User is not an active coach in this gym');
+    }
+
+    const classes = await this.classRepository.getClassesByGymAndCoach(
+      gymId,
+      coachUserId,
+    );
+    const nonArchivedClasses = classes.filter(
+      (cls) => cls.state !== 'archived',
+    );
+
+    const classItems: CoachClassItemDto[] = await Promise.all(
+      nonArchivedClasses.map(async (cls) => {
+        const bookedCount = await this.bookingRepository.countBookedBookings(
+          cls.id,
+        );
+
+        return {
+          id: cls.id,
+          scheduledDate: this.formatDate(cls.scheduledDate),
+          scheduledTime: cls.scheduledTime,
+          spaceName: cls.space?.name || 'Unknown Space',
+          classTypeName: cls.classType?.name || 'Unknown',
+          capacity: cls.capacity,
+          bookedCount,
+          state: cls.state,
+        };
+      }),
+    );
+
+    return { classes: classItems };
   }
 
   /**

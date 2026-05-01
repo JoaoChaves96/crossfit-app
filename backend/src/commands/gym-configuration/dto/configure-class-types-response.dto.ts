@@ -13,7 +13,10 @@ export class ConfigureClassTypesResponseDto {
   @ApiProperty({ example: true })
   loggable: boolean;
 
-  @ApiProperty({ enum: ['time', 'reps', 'weight', 'rounds', 'none'], example: 'time' })
+  @ApiProperty({
+    enum: ['time', 'reps', 'weight', 'rounds', 'none'],
+    example: 'time',
+  })
   resultMetrics: 'time' | 'reps' | 'weight' | 'rounds' | 'none';
 
   @ApiProperty({ example: null, nullable: true })

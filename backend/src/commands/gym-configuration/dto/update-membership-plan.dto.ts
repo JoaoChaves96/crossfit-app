@@ -20,12 +20,20 @@ export class UpdateMembershipPlanDto {
   @Min(1)
   pricing?: number;
 
-  @ApiProperty({ enum: ['monthly', 'annual'], example: 'annual', required: false })
+  @ApiProperty({
+    enum: ['monthly', 'annual'],
+    example: 'annual',
+    required: false,
+  })
   @IsOptional()
   @IsEnum(['monthly', 'annual'])
   billingCycle?: 'monthly' | 'annual';
 
-  @ApiProperty({ example: ['uuid-class-type-id-1'], type: [String], required: false })
+  @ApiProperty({
+    example: ['uuid-class-type-id-1'],
+    type: [String],
+    required: false,
+  })
   @IsOptional()
   @IsArray()
   @IsString({ each: true })

@@ -108,11 +108,16 @@ describe('Class Creation (e2e)', () => {
         ($7,  $8,  'Outside Coach',      'active', NOW()),
         ($9,  $10, 'Other Gym Owner',    'active', NOW())`,
       [
-        ownerUserId, `owner-${uuidv4()}@test.local`,
-        coachUserId, `coach-${uuidv4()}@test.local`,
-        athleteUserId, `athlete-${uuidv4()}@test.local`,
-        outsideCoachUserId, `outside-coach-${uuidv4()}@test.local`,
-        otherGymOwnerUserId, `other-owner-${uuidv4()}@test.local`,
+        ownerUserId,
+        `owner-${uuidv4()}@test.local`,
+        coachUserId,
+        `coach-${uuidv4()}@test.local`,
+        athleteUserId,
+        `athlete-${uuidv4()}@test.local`,
+        outsideCoachUserId,
+        `outside-coach-${uuidv4()}@test.local`,
+        otherGymOwnerUserId,
+        `other-owner-${uuidv4()}@test.local`,
       ],
     );
 
@@ -127,7 +132,14 @@ describe('Class Creation (e2e)', () => {
     await dataSource.query(
       `INSERT INTO gyms (id, name, description, location, "ownerUserId", status, "createdAt", "lastModifiedAt")
        VALUES ($1, $2, $3, $4, $5, $6, NOW(), NOW())`,
-      [otherGymId, 'Other Gym', 'Cross-gym test', 'Porto', otherGymOwnerUserId, 'active'],
+      [
+        otherGymId,
+        'Other Gym',
+        'Cross-gym test',
+        'Porto',
+        otherGymOwnerUserId,
+        'active',
+      ],
     );
 
     // 4. Create gym_staff: owner (primary gym)
@@ -195,14 +207,34 @@ describe('Class Creation (e2e)', () => {
           await dataSource.query('DELETE FROM classes WHERE id = $1', [id]);
         }
       }
-      await dataSource.query('DELETE FROM class_types WHERE "gymId" IN ($1, $2)', [gymId, otherGymId]);
-      await dataSource.query('DELETE FROM spaces WHERE "gymId" IN ($1, $2)', [gymId, otherGymId]);
-      await dataSource.query('DELETE FROM gym_memberships WHERE "gymId" = $1', [gymId]);
-      await dataSource.query('DELETE FROM gym_staff WHERE "gymId" IN ($1, $2)', [gymId, otherGymId]);
-      await dataSource.query('DELETE FROM gyms WHERE id IN ($1, $2)', [gymId, otherGymId]);
+      await dataSource.query(
+        'DELETE FROM class_types WHERE "gymId" IN ($1, $2)',
+        [gymId, otherGymId],
+      );
+      await dataSource.query('DELETE FROM spaces WHERE "gymId" IN ($1, $2)', [
+        gymId,
+        otherGymId,
+      ]);
+      await dataSource.query('DELETE FROM gym_memberships WHERE "gymId" = $1', [
+        gymId,
+      ]);
+      await dataSource.query(
+        'DELETE FROM gym_staff WHERE "gymId" IN ($1, $2)',
+        [gymId, otherGymId],
+      );
+      await dataSource.query('DELETE FROM gyms WHERE id IN ($1, $2)', [
+        gymId,
+        otherGymId,
+      ]);
       await dataSource.query(
         'DELETE FROM users WHERE id IN ($1, $2, $3, $4, $5)',
-        [ownerUserId, coachUserId, athleteUserId, outsideCoachUserId, otherGymOwnerUserId],
+        [
+          ownerUserId,
+          coachUserId,
+          athleteUserId,
+          outsideCoachUserId,
+          otherGymOwnerUserId,
+        ],
       );
     } catch {
       // silently ignore cleanup errors

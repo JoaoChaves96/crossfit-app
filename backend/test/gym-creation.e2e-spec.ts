@@ -46,10 +46,9 @@ describe('Gym Creation (e2e)', () => {
     if (dataSource && dataSource.isInitialized) {
       for (const gymId of createdGymIds) {
         try {
-          await dataSource.query(
-            'DELETE FROM gym_staff WHERE "gymId" = $1',
-            [gymId],
-          );
+          await dataSource.query('DELETE FROM gym_staff WHERE "gymId" = $1', [
+            gymId,
+          ]);
           await dataSource.query('DELETE FROM gyms WHERE id = $1', [gymId]);
         } catch {
           // silently ignore cleanup errors

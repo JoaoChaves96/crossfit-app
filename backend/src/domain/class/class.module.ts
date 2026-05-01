@@ -22,6 +22,7 @@ import { ToggleLoggableStatusHandler } from '../../commands/class/handlers/toggl
 import { ManuallyTransitionClassStateHandler } from '../../commands/class/handlers/manually-transition-class-state.handler';
 import { UpdateClassStructureHandler } from '../../commands/class/handlers/update-class-structure.handler';
 import { ClassScheduleService } from '../../queries/class/class-schedule.service';
+import { GetClassResultsService } from '../../queries/class/get-class-results.service';
 import { GymModule } from '../gym/gym.module';
 import { GymStaffModule } from '../gym-staff/gym-staff.module';
 import { SpaceModule } from '../space/space.module';
@@ -66,6 +67,7 @@ const CommandHandlers = [
     ResultRepository,
     ProgrammingRepository,
     ClassScheduleService,
+    GetClassResultsService,
     ...CommandHandlers,
   ],
   exports: [
@@ -75,6 +77,7 @@ const CommandHandlers = [
     ResultRepository,
     ProgrammingRepository,
     ClassScheduleService,
+    GetClassResultsService,
   ],
 })
 export class ClassModule {}

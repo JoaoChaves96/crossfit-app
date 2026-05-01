@@ -48,9 +48,18 @@ import { ManuallyTransitionClassStateResponseDto } from '../../commands/class/dt
 import { UpdateClassStructureDto } from '../../commands/class/dto/update-class-structure.dto';
 import { UpdateClassStructureCommand } from '../../commands/class/update-class-structure.command';
 import { UpdateClassStructureResponseDto } from '../../commands/class/dto/update-class-structure-response.dto';
-import { ApiTags, ApiBearerAuth, ApiOperation, ApiResponse, ApiParam, ApiBody } from '@nestjs/swagger';
+import {
+  ApiTags,
+  ApiBearerAuth,
+  ApiOperation,
+  ApiResponse,
+  ApiParam,
+  ApiBody,
+} from '@nestjs/swagger';
 import { ClassScheduleService } from '../../queries/class/class-schedule.service';
 import { GetClassScheduleResponseDto } from '../../queries/class/dto/get-class-schedule-response.dto';
+import { GetClassResultsService } from '../../queries/class/get-class-results.service';
+import { GetClassResultsResponseDto } from '../../queries/class/dto/get-class-results-response.dto';
 
 @Controller('/api/gyms/:gymId/classes')
 @ApiTags('Classes')
@@ -60,6 +69,7 @@ export class ClassController {
   constructor(
     @Inject(CommandBus) private readonly commandBus: CommandBus,
     private readonly classScheduleService: ClassScheduleService,
+    private readonly getClassResultsService: GetClassResultsService,
   ) {}
 
   /**
@@ -83,9 +93,16 @@ export class ClassController {
       'Retrieve all classes eligible for the authenticated athlete in a gym. Classes are filtered by gym membership and membership plan visibility. Athletes only.',
   })
   @ApiParam({ name: 'gymId', description: 'Gym ID' })
-  @ApiResponse({ status: 200, description: 'Class schedule returned', type: GetClassScheduleResponseDto })
+  @ApiResponse({
+    status: 200,
+    description: 'Class schedule returned',
+    type: GetClassScheduleResponseDto,
+  })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
-  @ApiResponse({ status: 403, description: 'Forbidden - Athlete role required' })
+  @ApiResponse({
+    status: 403,
+    description: 'Forbidden - Athlete role required',
+  })
   async getClassSchedule(
     @Param('gymId') gymId: string,
     @CurrentUser() userId: string,
@@ -117,7 +134,11 @@ export class ClassController {
   })
   @ApiParam({ name: 'gymId', description: 'Gym ID' })
   @ApiBody({ type: CreateClassDto })
-  @ApiResponse({ status: 201, description: 'Class created', type: CreateClassResponseDto })
+  @ApiResponse({
+    status: 201,
+    description: 'Class created',
+    type: CreateClassResponseDto,
+  })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   @ApiResponse({ status: 403, description: 'Forbidden - Owner role required' })
   async createClass(
@@ -172,9 +193,16 @@ export class ClassController {
   @ApiParam({ name: 'gymId', description: 'Gym ID' })
   @ApiParam({ name: 'classId', description: 'Class ID' })
   @ApiBody({ type: BookClassDto })
-  @ApiResponse({ status: 201, description: 'Class booked or waitlisted', type: BookClassResponseDto })
+  @ApiResponse({
+    status: 201,
+    description: 'Class booked or waitlisted',
+    type: BookClassResponseDto,
+  })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
-  @ApiResponse({ status: 403, description: 'Forbidden - Athlete role required' })
+  @ApiResponse({
+    status: 403,
+    description: 'Forbidden - Athlete role required',
+  })
   async bookClass(
     @Param('gymId') gymId: string,
     @Param('classId') classId: string,
@@ -226,9 +254,16 @@ export class ClassController {
   })
   @ApiParam({ name: 'gymId', description: 'Gym ID' })
   @ApiParam({ name: 'bookingId', description: 'Booking ID' })
-  @ApiResponse({ status: 200, description: 'Booking cancelled', type: CancelBookingResponseDto })
+  @ApiResponse({
+    status: 200,
+    description: 'Booking cancelled',
+    type: CancelBookingResponseDto,
+  })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
-  @ApiResponse({ status: 403, description: 'Forbidden - Athlete role required' })
+  @ApiResponse({
+    status: 403,
+    description: 'Forbidden - Athlete role required',
+  })
   async cancelBooking(
     @Param('gymId') gymId: string,
     @Param('bookingId') bookingId: string,
@@ -269,7 +304,11 @@ export class ClassController {
   @ApiParam({ name: 'gymId', description: 'Gym ID' })
   @ApiParam({ name: 'classId', description: 'Class ID' })
   @ApiBody({ type: MarkAttendanceDto })
-  @ApiResponse({ status: 201, description: 'Attendance recorded', type: MarkAttendanceResponseDto })
+  @ApiResponse({
+    status: 201,
+    description: 'Attendance recorded',
+    type: MarkAttendanceResponseDto,
+  })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   @ApiResponse({ status: 403, description: 'Forbidden - Coach role required' })
   async markAttendance(
@@ -299,6 +338,7 @@ export class ClassController {
     const command = new MarkAttendanceCommand(
       userId,
       classId,
+      gymId,
       attendanceRecords,
     );
 
@@ -328,7 +368,11 @@ export class ClassController {
   @ApiParam({ name: 'gymId', description: 'Gym ID' })
   @ApiParam({ name: 'classId', description: 'Class ID' })
   @ApiBody({ type: AddOrEditProgrammingDto })
-  @ApiResponse({ status: 201, description: 'Programming saved', type: AddOrEditProgrammingResponseDto })
+  @ApiResponse({
+    status: 201,
+    description: 'Programming saved',
+    type: AddOrEditProgrammingResponseDto,
+  })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   @ApiResponse({ status: 403, description: 'Forbidden - Coach role required' })
   async addOrEditProgramming(
@@ -351,6 +395,7 @@ export class ClassController {
     const command = new AddOrEditProgrammingCommand(
       userId,
       classId,
+      gymId,
       addOrEditProgrammingDto.content,
       addOrEditProgrammingDto.loggable,
     );
@@ -379,7 +424,11 @@ export class ClassController {
   @ApiParam({ name: 'gymId', description: 'Gym ID' })
   @ApiParam({ name: 'classId', description: 'Class ID' })
   @ApiBody({ type: ToggleLoggableStatusDto })
-  @ApiResponse({ status: 201, description: 'Loggable status toggled', type: ToggleLoggableStatusResponseDto })
+  @ApiResponse({
+    status: 201,
+    description: 'Loggable status toggled',
+    type: ToggleLoggableStatusResponseDto,
+  })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   @ApiResponse({ status: 403, description: 'Forbidden - Coach role required' })
   async toggleLoggableStatus(
@@ -426,7 +475,11 @@ export class ClassController {
   @ApiParam({ name: 'gymId', description: 'Gym ID' })
   @ApiParam({ name: 'classId', description: 'Class ID' })
   @ApiBody({ type: ManuallyTransitionClassStateDto })
-  @ApiResponse({ status: 201, description: 'Class state transitioned', type: ManuallyTransitionClassStateResponseDto })
+  @ApiResponse({
+    status: 201,
+    description: 'Class state transitioned',
+    type: ManuallyTransitionClassStateResponseDto,
+  })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   @ApiResponse({ status: 403, description: 'Forbidden - Coach role required' })
   async manuallyTransitionClassState(
@@ -450,6 +503,7 @@ export class ClassController {
     const command = new ManuallyTransitionClassStateCommand(
       userId,
       classId,
+      gymId,
       manuallyTransitionClassStateDto.targetState,
     );
 
@@ -480,7 +534,11 @@ export class ClassController {
   @ApiParam({ name: 'gymId', description: 'Gym ID' })
   @ApiParam({ name: 'classId', description: 'Class ID' })
   @ApiBody({ type: UpdateClassStructureDto })
-  @ApiResponse({ status: 200, description: 'Class structure updated', type: UpdateClassStructureResponseDto })
+  @ApiResponse({
+    status: 200,
+    description: 'Class structure updated',
+    type: UpdateClassStructureResponseDto,
+  })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   @ApiResponse({ status: 403, description: 'Forbidden - Coach role required' })
   async updateClassStructure(
@@ -525,6 +583,44 @@ export class ClassController {
    * - Result created with logged_at = now, edited_at = null
    * - Athlete can later edit the result until class is archived
    */
+  /**
+   * Get class results (Coach assigned to class or Gym Owner)
+   *
+   * **Preconditions:**
+   * - User must be authenticated
+   * - User must be either the coach assigned to the class or a gym owner of the gym
+   * - Class must belong to the gym specified in the route (gymId scoping enforced)
+   *
+   * **Postconditions:**
+   * - Returns all athlete results logged for the class
+   */
+  @Get('/:classId/results')
+  @ApiOperation({
+    summary: 'Get athlete results for a class',
+    description:
+      'Retrieve all athlete results for a given class. Accessible by the assigned coach or the gym owner. gymId is validated against the class.',
+  })
+  @ApiParam({ name: 'gymId', description: 'Gym ID' })
+  @ApiParam({ name: 'classId', description: 'Class ID' })
+  @ApiResponse({
+    status: 200,
+    description: 'Results returned',
+    type: GetClassResultsResponseDto,
+  })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiResponse({
+    status: 403,
+    description: 'Forbidden - Assigned coach or gym owner required',
+  })
+  @ApiResponse({ status: 404, description: 'Class not found in gym' })
+  async getClassResults(
+    @Param('gymId') gymId: string,
+    @Param('classId') classId: string,
+    @CurrentUser() userId: string,
+  ): Promise<GetClassResultsResponseDto> {
+    return this.getClassResultsService.getClassResults(gymId, classId, userId);
+  }
+
   @Post('/:classId/results')
   @Role('athlete')
   @ApiOperation({
@@ -535,9 +631,16 @@ export class ClassController {
   @ApiParam({ name: 'gymId', description: 'Gym ID' })
   @ApiParam({ name: 'classId', description: 'Class ID' })
   @ApiBody({ type: LogResultDto })
-  @ApiResponse({ status: 201, description: 'Result logged', type: LogResultResponseDto })
+  @ApiResponse({
+    status: 201,
+    description: 'Result logged',
+    type: LogResultResponseDto,
+  })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
-  @ApiResponse({ status: 403, description: 'Forbidden - Athlete role required' })
+  @ApiResponse({
+    status: 403,
+    description: 'Forbidden - Athlete role required',
+  })
   async logResult(
     @Param('gymId') gymId: string,
     @Param('classId') classId: string,
@@ -592,9 +695,16 @@ export class ClassController {
   @ApiParam({ name: 'gymId', description: 'Gym ID' })
   @ApiParam({ name: 'resultId', description: 'Result ID' })
   @ApiBody({ type: EditResultDto })
-  @ApiResponse({ status: 200, description: 'Result updated', type: EditResultResponseDto })
+  @ApiResponse({
+    status: 200,
+    description: 'Result updated',
+    type: EditResultResponseDto,
+  })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
-  @ApiResponse({ status: 403, description: 'Forbidden - Athlete role required' })
+  @ApiResponse({
+    status: 403,
+    description: 'Forbidden - Athlete role required',
+  })
   async editResult(
     @Param('gymId') gymId: string,
     @Param('resultId') resultId: string,

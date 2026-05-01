@@ -1,30 +1,11 @@
 import { ApiProperty } from '@nestjs/swagger';
 
-/**
- * ClassScheduleItemDto: A single class in the athlete's schedule
- *
- * This DTO represents class data as presented to an athlete
- * in the "Class Schedule" screen. It includes only the fields
- * needed for rendering the schedule view.
- */
-export class ClassScheduleItemDto {
+export class CoachClassItemDto {
   @ApiProperty({
     example: 'uuid-class-id',
     description: 'Unique identifier for the class',
   })
   id: string;
-
-  @ApiProperty({
-    example: 'uuid-class-type-id',
-    description: 'The type of class (e.g., CrossFit, Gymnastics)',
-  })
-  classTypeId: string;
-
-  @ApiProperty({
-    example: 'CrossFit',
-    description: 'Human-readable name of the class type',
-  })
-  classTypeName: string;
 
   @ApiProperty({
     example: '2024-06-15',
@@ -39,10 +20,16 @@ export class ClassScheduleItemDto {
   scheduledTime: string;
 
   @ApiProperty({
-    example: 'John Doe',
-    description: 'Full name of the coach leading the class',
+    example: 'Main Box',
+    description: 'Name of the space where the class takes place',
   })
-  coachName: string;
+  spaceName: string;
+
+  @ApiProperty({
+    example: 'CrossFit',
+    description: 'Human-readable name of the class type',
+  })
+  classTypeName: string;
 
   @ApiProperty({ example: 20, description: 'Total capacity of the class' })
   capacity: number;

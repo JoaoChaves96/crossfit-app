@@ -25,7 +25,16 @@ export class CreateClassResponseDto {
   @ApiProperty({ example: 20 })
   capacity: number;
 
-  @ApiProperty({ example: 'published', enum: ['published', 'booking_closed', 'in_progress', 'completed', 'archived'] })
+  @ApiProperty({
+    example: 'published',
+    enum: [
+      'published',
+      'booking_closed',
+      'in_progress',
+      'completed',
+      'archived',
+    ],
+  })
   state: string;
 
   @ApiProperty({ example: '2024-01-01T00:00:00.000Z' })

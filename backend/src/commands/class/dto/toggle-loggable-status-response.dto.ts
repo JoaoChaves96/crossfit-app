@@ -28,7 +28,16 @@ export class ToggleLoggableStatusResponseDto {
   @ApiProperty({ example: false })
   loggable: boolean;
 
-  @ApiProperty({ example: 'published', enum: ['published', 'booking_closed', 'in_progress', 'completed', 'archived'] })
+  @ApiProperty({
+    example: 'published',
+    enum: [
+      'published',
+      'booking_closed',
+      'in_progress',
+      'completed',
+      'archived',
+    ],
+  })
   state: string;
 
   @ApiProperty({ example: '2024-01-01T00:00:00.000Z' })

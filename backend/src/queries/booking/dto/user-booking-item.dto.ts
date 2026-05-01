@@ -7,12 +7,22 @@ import { ApiProperty } from '@nestjs/swagger';
  * It includes only the fields needed for frontend logic to determine booking status.
  */
 export class UserBookingItemDto {
-  @ApiProperty({ example: 'uuid-booking-id', description: 'Unique identifier for the booking' })
+  @ApiProperty({
+    example: 'uuid-booking-id',
+    description: 'Unique identifier for the booking',
+  })
   id: string;
 
-  @ApiProperty({ example: 'uuid-class-id', description: 'The class being booked' })
+  @ApiProperty({
+    example: 'uuid-class-id',
+    description: 'The class being booked',
+  })
   classId: string;
 
-  @ApiProperty({ enum: ['booked', 'waitlisted'], example: 'booked', description: 'Current status of the booking' })
+  @ApiProperty({
+    enum: ['booked', 'waitlisted'],
+    example: 'booked',
+    description: 'Current status of the booking',
+  })
   status: 'booked' | 'waitlisted';
 }

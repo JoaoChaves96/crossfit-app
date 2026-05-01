@@ -8,6 +8,9 @@ import { ClassScheduleItemDto } from './class-schedule-item.dto';
  * filtered by membership and plan entitlement.
  */
 export class GetClassScheduleResponseDto {
-  @ApiProperty({ type: [ClassScheduleItemDto], description: 'List of classes the athlete is eligible to see and book' })
+  @ApiProperty({
+    type: [ClassScheduleItemDto],
+    description: 'List of classes the athlete is eligible to see and book',
+  })
   classes: ClassScheduleItemDto[];
 }

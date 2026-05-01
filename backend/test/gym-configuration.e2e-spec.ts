@@ -188,8 +188,14 @@ describe('Gym Configuration — Spaces & Class Types (e2e)', () => {
           [createdClassTypeIds],
         );
       }
-      await dataSource.query(`DELETE FROM gym_staff WHERE "gymId" IN ($1, $2)`, [gymId, otherGymId]);
-      await dataSource.query(`DELETE FROM gyms WHERE id IN ($1, $2)`, [gymId, otherGymId]);
+      await dataSource.query(
+        `DELETE FROM gym_staff WHERE "gymId" IN ($1, $2)`,
+        [gymId, otherGymId],
+      );
+      await dataSource.query(`DELETE FROM gyms WHERE id IN ($1, $2)`, [
+        gymId,
+        otherGymId,
+      ]);
       await dataSource.query(`DELETE FROM users WHERE id IN ($1, $2, $3)`, [
         ownerUserId,
         otherOwnerUserId,
@@ -261,7 +267,9 @@ describe('Gym Configuration — Spaces & Class Types (e2e)', () => {
           .send({ name: 'Duplicate Space', baseCapacity: 5 })
           .expect(201);
 
-        createdSpaceIds.push((first.body as Record<string, unknown>).id as string);
+        createdSpaceIds.push(
+          (first.body as Record<string, unknown>).id as string,
+        );
 
         // Second with same name must be rejected
         await request(app.getHttpServer())
@@ -556,7 +564,9 @@ describe('Gym Configuration — Spaces & Class Types (e2e)', () => {
           .send({ operation: 'create', name })
           .expect(201);
 
-        createdClassTypeIds.push((first.body as Record<string, unknown>).id as string);
+        createdClassTypeIds.push(
+          (first.body as Record<string, unknown>).id as string,
+        );
 
         await request(app.getHttpServer())
           .post(`/api/gyms/${gymId}/configuration/class-types`)
@@ -571,7 +581,11 @@ describe('Gym Configuration — Spaces & Class Types (e2e)', () => {
           .post(`/api/gyms/${gymId}/configuration/class-types`)
           .set('x-user-id', ownerUserId)
           .set('x-gym-id', gymId)
-          .send({ operation: 'create', name: 'BadMetrics', resultMetrics: 'invalid' })
+          .send({
+            operation: 'create',
+            name: 'BadMetrics',
+            resultMetrics: 'invalid',
+          })
           .expect(400);
       });
 
@@ -593,7 +607,12 @@ describe('Gym Configuration — Spaces & Class Types (e2e)', () => {
           .post(`/api/gyms/${gymId}/configuration/class-types`)
           .set('x-user-id', ownerUserId)
           .set('x-gym-id', gymId)
-          .send({ operation: 'create', name: `UpdateTarget-${uuidv4()}`, loggable: false, resultMetrics: 'none' })
+          .send({
+            operation: 'create',
+            name: `UpdateTarget-${uuidv4()}`,
+            loggable: false,
+            resultMetrics: 'none',
+          })
           .expect(201);
 
         classTypeId = (response.body as Record<string, unknown>).id as string;
@@ -620,7 +639,12 @@ describe('Gym Configuration — Spaces & Class Types (e2e)', () => {
           .post(`/api/gyms/${gymId}/configuration/class-types`)
           .set('x-user-id', ownerUserId)
           .set('x-gym-id', gymId)
-          .send({ operation: 'update', classTypeId, loggable: true, resultMetrics: 'time' })
+          .send({
+            operation: 'update',
+            classTypeId,
+            loggable: true,
+            resultMetrics: 'time',
+          })
           .expect(201);
 
         const body = response.body as Record<string, unknown>;
@@ -655,7 +679,8 @@ describe('Gym Configuration — Spaces & Class Types (e2e)', () => {
           .send({ operation: 'create', name: `OtherGymType-${uuidv4()}` })
           .expect(201);
 
-        const otherClassTypeId = (otherResponse.body as Record<string, unknown>).id as string;
+        const otherClassTypeId = (otherResponse.body as Record<string, unknown>)
+          .id as string;
         createdClassTypeIds.push(otherClassTypeId);
 
         // Attempt to update it using gymId context
@@ -663,7 +688,11 @@ describe('Gym Configuration — Spaces & Class Types (e2e)', () => {
           .post(`/api/gyms/${gymId}/configuration/class-types`)
           .set('x-user-id', ownerUserId)
           .set('x-gym-id', gymId)
-          .send({ operation: 'update', classTypeId: otherClassTypeId, name: 'CrossGymHack' })
+          .send({
+            operation: 'update',
+            classTypeId: otherClassTypeId,
+            name: 'CrossGymHack',
+          })
           .expect(400);
       });
     });
@@ -678,7 +707,8 @@ describe('Gym Configuration — Spaces & Class Types (e2e)', () => {
           .send({ operation: 'create', name: `DeleteTarget-${uuidv4()}` })
           .expect(201);
 
-        const targetId = (createResponse.body as Record<string, unknown>).id as string;
+        const targetId = (createResponse.body as Record<string, unknown>)
+          .id as string;
         createdClassTypeIds.push(targetId);
 
         const response = await request(app.getHttpServer())

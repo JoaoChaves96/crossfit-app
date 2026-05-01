@@ -10,7 +10,10 @@ export class BookClassResponseDto {
   @ApiProperty({ example: 'uuid-user-id' })
   userId: string;
 
-  @ApiProperty({ enum: ['booked', 'waitlisted', 'cancelled'], example: 'booked' })
+  @ApiProperty({
+    enum: ['booked', 'waitlisted', 'cancelled'],
+    example: 'booked',
+  })
   status: 'booked' | 'waitlisted' | 'cancelled';
 
   @ApiProperty({ example: 1, nullable: true })

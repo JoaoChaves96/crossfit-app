@@ -35,12 +35,20 @@ export class ManuallyTransitionClassStateHandler implements ICommandHandler<Manu
   async execute(
     command: ManuallyTransitionClassStateCommand,
   ): Promise<ManuallyTransitionClassStateResponseDto> {
-    // Precondition 1: Verify class exists
+    // Precondition 1: Verify class exists and belongs to the gym in the route
     const classEntity = await this.classRepository.getClassById(
       command.classId,
+      command.gymId,
     );
     if (!classEntity) {
       throw new NotFoundException('Class not found');
+    }
+
+    // Ownership guard: class must belong to the gym supplied in the command
+    if (classEntity.gymId !== command.gymId) {
+      throw new ForbiddenException(
+        'Class does not belong to the specified gym',
+      );
     }
 
     // Precondition 2: Verify coach is assigned to the class

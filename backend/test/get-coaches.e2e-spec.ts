@@ -225,7 +225,14 @@ describe('GET /api/gyms/:gymId/configuration/coaches', () => {
         );
 
         // No extra unexpected top-level keys (exact shape)
-        const allowedKeys = ['id', 'userId', 'email', 'role', 'status', 'assignedAt'];
+        const allowedKeys = [
+          'id',
+          'userId',
+          'email',
+          'role',
+          'status',
+          'assignedAt',
+        ];
         const coachKeys = Object.keys(coach);
         for (const key of coachKeys) {
           expect(allowedKeys).toContain(key);
