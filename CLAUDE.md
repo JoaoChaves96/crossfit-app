@@ -278,15 +278,20 @@ When implementing from designs:
 
 #### Design Pre-Check (MANDATORY when planning a new epic)
 
+Designs live in three role-level files in `/designs/`, one frame per screen:
+- `athlete-screens.pen`
+- `gym-owner-screens.pen`
+- `coach-screens.pen`
+
 Before creating any frontend tasks for a new epic:
 
-1. Check `/designs/` for existing `.pen` files covering the screens in scope
-2. If `.pen` files are missing for any screen, the **first task must be a `ux-designer` agent run** to create them
-3. Frontend tasks MUST NOT be started until the corresponding `.pen` files exist
+1. Open the relevant role file in Pencil and check whether frames exist for all screens in scope
+2. If any screen frame is missing, the **first task must be a `ux-designer` agent run** to add the missing frames
+3. Frontend tasks MUST NOT be started until the corresponding frames exist in the role file
 
-The `ux-designer` agent is defined in `.claude/agents/ux-designer.md`. Every prompt to it must include: epic file path, list of screens to design, a style reference `.pen` file, and the output path.
+The `ux-designer` agent is defined in `.claude/agents/ux-designer.md`. Every prompt to it must include: epic file path, list of screens to design, a style reference `.pen` file, and the **role file** (e.g. `designs/coach-screens.pen`).
 
-**Why:** The frontend-developer agent implements from designs. Without a `.pen` file, it makes layout and UX decisions it should not be making.
+**Why:** The frontend-developer agent implements from designs. Without a frame in the role file, it makes layout and UX decisions it should not be making.
 
 ### 2. Swagger/OpenAPI as Authoritative API Contract
 

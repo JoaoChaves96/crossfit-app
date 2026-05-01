@@ -14,9 +14,13 @@ This document describes how frontend development works in this project:
 
 ### Step 1: Design File (Pencil)
 
-- Designer creates the screen in Pencil (`.pen` file)
-- Saved to `/designs/` folder
-- Contains:
+- Designer creates each screen as a named **frame** inside a role-level `.pen` file
+- Three role files live in `/designs/`:
+  - `athlete-screens.pen` — all athlete screens
+  - `gym-owner-screens.pen` — all gym owner screens
+  - `coach-screens.pen` — all coach screens
+- Each file contains:
+  - One top-level frame per screen (frame name = screen name)
   - Layout hierarchy (frames, components, groups)
   - Design tokens (colors, typography, spacing via variables)
   - Component instances and customizations
@@ -27,10 +31,10 @@ This document describes how frontend development works in this project:
 Frontend agent uses **Pencil MCP tools** to read the design:
 
 ```
-1. mcp__pencil__open_document("/designs/screen-name.pen")
-2. mcp__pencil__batch_get(patterns or nodeIds) — extract design structure
+1. mcp__pencil__open_document("/designs/<role>-screens.pen")
+2. mcp__pencil__batch_get() — list top-level frames, locate the target screen by frame name
 3. mcp__pencil__get_variables() — extract design tokens (colors, fonts, spacing)
-4. mcp__pencil__snapshot_layout(parentId) — understand layout structure
+4. mcp__pencil__snapshot_layout(frameId) — understand layout structure of target frame
 ```
 
 **Output:** Design specs in structured format:
@@ -93,14 +97,14 @@ Frontend agent:
 ## Example: Schedule Dashboard
 
 ### Design File
-- `/designs/class-management.pen` contains the Schedule Dashboard screen
+- `designs/gym-owner-screens.pen`, frame: `Class Management`
 
 ### Extraction (Pencil MCP)
 ```
-open → class-management.pen
-batch_get(nodeIds: ["schedule-dashboard"]) → returns frame hierarchy
+open → gym-owner-screens.pen
+batch_get() → list top-level frames, find "Class Management" frame
 get_variables() → returns color palette, typography, spacing tokens
-snapshot_layout("schedule-dashboard", maxDepth: 2) → returns layout structure
+snapshot_layout("class-management-frame-id", maxDepth: 2) → returns layout structure
 ```
 
 **Extracted Specs:**
@@ -162,13 +166,14 @@ export function ScheduleDashboard() {
 Every frontend task referencing a design includes:
 
 ```
-DESIGN REFERENCE: /designs/screen-name.pen
+DESIGN REFERENCE: designs/<role>-screens.pen — frame: "<Screen Name>"
 
 AGENT WORKFLOW:
-1. Open the .pen file using Pencil MCP
-2. Extract design specs (layout, colors, typography, components)
-3. Implement React/TypeScript code based on specs
-4. Register route and test locally
+1. Open the role-level .pen file using Pencil MCP
+2. Locate the target frame by name using batch_get()
+3. Extract design specs (layout, colors, typography, components)
+4. Implement React/TypeScript code based on specs
+5. Register route and test locally
 
 SPECS TO EXTRACT:
 - Layout structure and flexbox properties
@@ -194,7 +199,7 @@ SPECS TO EXTRACT:
 
 If a design is updated in Pencil:
 
-1. Designer updates `/designs/screen-name.pen`
+1. Designer updates the relevant frame inside `/designs/<role>-screens.pen`
 2. Frontend agent re-extracts specs via Pencil MCP
 3. Regenerates/updates React code based on new specs
 4. No manual design-to-code translation needed

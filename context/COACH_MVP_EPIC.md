@@ -33,13 +33,12 @@ This unblocks the full athlete booking loop (athletes can only log results if co
 ## Design Tasks
 
 ### Task #0: Create screen designs (ux-designer agent)
-**Status:** ❌ Not started — BLOCKS all frontend tasks
+**Status:** ✅ Done — frames added to `designs/coach-screens.pen`
 
-No `.pen` files exist for coach screens. Run the `ux-designer` agent with:
-- Epic: `context/COACH_MVP_EPIC.md`
-- Screens: My Assigned Classes, Class Details & Programming, Mark Attendance
-- Style reference: `designs/staff-management.pen` (closest existing gym-owner screen)
-- Output: `/designs/`
+Frames created:
+- `My Assigned Classes`
+- `Class Details & Programming`
+- `Mark Attendance`
 
 ---
 
