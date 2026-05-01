@@ -110,18 +110,24 @@ Unless explicitly overridden in the prompt:
 
 ## Design-to-Code Workflow (FEATURE tasks with `.pen` files)
 
-When a FEATURE task references a Pencil design file (`/designs/*.pen`):
+Designs live in role-level files — one file per user role, each screen as a named frame inside it:
 
-1. **Use Pencil MCP tools** to extract design specs:
-   - `mcp__pencil__open_document()` — open the design file
-   - `mcp__pencil__batch_get()` — extract layout hierarchy and components
+- `designs/athlete-screens.pen`
+- `designs/gym-owner-screens.pen`
+- `designs/coach-screens.pen`
+
+When a FEATURE task references a screen design:
+
+1. **Open the role file and locate the screen frame:**
+   - `mcp__pencil__open_document(roleFilePath)` — open the role-level file
+   - `mcp__pencil__batch_get()` — list top-level frames and find the one matching the screen name
    - `mcp__pencil__get_variables()` — extract design tokens (colors, fonts, spacing)
-   - `mcp__pencil__snapshot_layout()` — understand layout structure
+   - `mcp__pencil__snapshot_layout()` — understand the layout structure of the target frame
 
 2. **Implement React code** based on extracted specs:
    - Use extracted layout properties (flexbox, gaps, padding)
    - Use extracted design tokens (colors, font sizes, spacing)
-   - Match component hierarchy from design
+   - Match component hierarchy from the target frame
    - Keep code idiomatic to Expo/React Native/TypeScript
 
 3. **Verification:**
