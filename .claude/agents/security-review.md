@@ -94,6 +94,12 @@ The agent MUST evaluate only the following dimensions:
 - No mass‑assignment or unchecked spreading
 - Untrusted input not propagated to domain entities
 
+### Query Safety
+
+- No N+1 query patterns — database calls must not exist inside loops over result sets
+- No raw string interpolation in queries — parameterized queries or ORM methods only
+- No hardcoded IDs or gym identifiers in query predicates
+
 ---
 
 ## Severity Classification (MANDATORY)

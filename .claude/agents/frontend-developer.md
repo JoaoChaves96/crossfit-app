@@ -181,6 +181,32 @@ If the task appears ambiguous, the agent MUST ask a **single, concrete clarifica
 
 ---
 
+## Code Principles (MANDATORY)
+
+These apply to every code change regardless of TASK TYPE:
+
+### Design
+- **SOLID**: Single Responsibility per component — one component renders one logical unit. A screen does not contain reusable business logic; extract it to a hook or utility.
+- **DRY**: No duplicated component logic. Extract repeated patterns into shared hooks, components, or utilities.
+- **KISS**: Components must do one thing. No multi-purpose screens. If a component needs a long comment to explain its structure, simplify it.
+- **YAGNI**: Implement only what the design and epic define. No extra props, states, or flows "for later".
+
+### Error and Loading States
+- Every API call must handle three states explicitly: loading, success, and error.
+- Never silently fail on API errors — always surface feedback to the user as defined in the design.
+- Never assume an API response will always succeed.
+
+### Constants
+- No hardcoded strings, colours, or numeric values in component code — use constants or design tokens.
+- Route paths must come from a central constants file, not be inlined as strings.
+
+### Tests (TEST_ONLY tasks)
+- Structure every test as **Arrange → Act → Assert** with a clear boundary between phases.
+- One behaviour per test — a test that asserts multiple things at once is not one test.
+- Use factory functions or builders for test data — never construct raw objects inline across multiple tests.
+
+---
+
 ## Code Quality Requirements
 
 When code changes ARE allowed by TASK TYPE:

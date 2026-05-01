@@ -130,6 +130,28 @@ If the task appears ambiguous, the agent MUST ask a **single, concrete clarifica
 
 ---
 
+## Code Principles (MANDATORY)
+
+These apply to every code change regardless of TASK TYPE:
+
+### Design
+- **SOLID**: Single Responsibility per class/service — a service that handles users does not handle emails or reports. Open/Closed — extend behaviour without modifying existing logic. Dependency Inversion — depend on abstractions, not concrete implementations.
+- **DRY**: No duplicated business logic. Extract shared behaviour into a service, utility, or base class.
+- **KISS**: Implementations must be simple and explicit. No clever abstractions. If it needs a comment to be understood, simplify it first.
+- **YAGNI**: Implement only what the task requires. No hooks for future phases, no optional parameters "just in case".
+
+### Error Handling
+- Use domain-specific typed errors — never throw generic `new Error('...')` from a service or command handler.
+- Errors must carry enough context for the caller to act on them.
+- Never silently swallow exceptions.
+
+### Database
+- Never query inside a loop over a result set — resolve N+1 patterns with joins, `IN` clauses, or batch loaders.
+- Always use parameterized queries or ORM methods — never interpolate user input into query strings.
+- No hardcoded IDs, limits, or configuration values — use constants or environment config.
+
+---
+
 ## Code Quality Requirements
 
 When code changes ARE allowed by TASK TYPE:
