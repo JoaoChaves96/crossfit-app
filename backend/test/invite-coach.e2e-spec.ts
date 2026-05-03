@@ -5,6 +5,7 @@ import { AppModule } from '../src/app.module';
 import { DataSource, EntityManager } from 'typeorm';
 import { v4 as uuidv4 } from 'uuid';
 import { CommandHandler } from '@nestjs/cqrs';
+import { generateTestToken } from './helpers/jwt.helper';
 import { InviteCoachHandler } from '../src/commands/gym-configuration/handlers/invite-coach.handler';
 import { InviteCoachCommand } from '../src/commands/gym-configuration/invite-coach.command';
 import { UserEntity } from '../src/domain/user/entities/user.entity';
@@ -95,6 +96,26 @@ describe('Coach Invitation (e2e)', () => {
 
   // Tracks gym_staff rows created during tests so cleanup is reliable
   const createdStaffIds: string[] = [];
+
+  // JWTs for each actor
+  const ownerToken = generateTestToken({
+    id: ownerUserId,
+    email: 'owner-primary@invite-coach.test',
+    gymId,
+    role: 'owner',
+  });
+  const otherOwnerToken = generateTestToken({
+    id: otherOwnerUserId,
+    email: 'owner-other@invite-coach.test',
+    gymId: otherGymId,
+    role: 'owner',
+  });
+  const athleteToken = generateTestToken({
+    id: athleteUserId,
+    email: 'athlete@invite-coach.test',
+    gymId,
+    role: 'athlete',
+  });
 
   beforeAll(async () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
@@ -247,8 +268,7 @@ describe('Coach Invitation (e2e)', () => {
     it('POST /api/gyms/:gymId/configuration/coaches → 201', async () => {
       const response = await request(app.getHttpServer())
         .post(`/api/gyms/${gymId}/configuration/coaches`)
-        .set('x-user-id', ownerUserId)
-        .set('x-gym-id', gymId)
+        .set('Authorization', `Bearer ${ownerToken}`)
         .send({ coachEmail: existingCoachEmail })
         .expect(201);
 
@@ -291,8 +311,7 @@ describe('Coach Invitation (e2e)', () => {
     it('POST with unknown email → 201', async () => {
       const response = await request(app.getHttpServer())
         .post(`/api/gyms/${gymId}/configuration/coaches`)
-        .set('x-user-id', ownerUserId)
-        .set('x-gym-id', gymId)
+        .set('Authorization', `Bearer ${ownerToken}`)
         .send({ coachEmail: newCoachEmail })
         .expect(201);
 
@@ -357,8 +376,7 @@ describe('Coach Invitation (e2e)', () => {
     it('POST with new email → 201', async () => {
       const response = await request(app.getHttpServer())
         .post(`/api/gyms/${gymId}/configuration/coaches`)
-        .set('x-user-id', ownerUserId)
-        .set('x-gym-id', gymId)
+        .set('Authorization', `Bearer ${ownerToken}`)
         .send({ coachEmail: pendingCoachEmail })
         .expect(201);
 
@@ -400,8 +418,7 @@ describe('Coach Invitation (e2e)', () => {
     it('POST with new email → 201', async () => {
       const response = await request(app.getHttpServer())
         .post(`/api/gyms/${gymId}/configuration/coaches`)
-        .set('x-user-id', ownerUserId)
-        .set('x-gym-id', gymId)
+        .set('Authorization', `Bearer ${ownerToken}`)
         .send({ coachEmail: placeholderCoachEmail })
         .expect(201);
 
@@ -431,8 +448,7 @@ describe('Coach Invitation (e2e)', () => {
       // existingCoachEmail was already invited in Test 1
       await request(app.getHttpServer())
         .post(`/api/gyms/${gymId}/configuration/coaches`)
-        .set('x-user-id', ownerUserId)
-        .set('x-gym-id', gymId)
+        .set('Authorization', `Bearer ${ownerToken}`)
         .send({ coachEmail: existingCoachEmail })
         .expect(400);
     });
@@ -441,8 +457,7 @@ describe('Coach Invitation (e2e)', () => {
       // newCoachEmail was already invited in Test 2
       await request(app.getHttpServer())
         .post(`/api/gyms/${gymId}/configuration/coaches`)
-        .set('x-user-id', ownerUserId)
-        .set('x-gym-id', gymId)
+        .set('Authorization', `Bearer ${ownerToken}`)
         .send({ coachEmail: newCoachEmail })
         .expect(400);
     });
@@ -455,8 +470,7 @@ describe('Coach Invitation (e2e)', () => {
     it('POST by athlete user → 403', async () => {
       await request(app.getHttpServer())
         .post(`/api/gyms/${gymId}/configuration/coaches`)
-        .set('x-user-id', athleteUserId)
-        .set('x-gym-id', gymId)
+        .set('Authorization', `Bearer ${athleteToken}`)
         .send({ coachEmail: existingCoachEmail })
         .expect(403);
     });
@@ -465,8 +479,7 @@ describe('Coach Invitation (e2e)', () => {
       // otherOwnerUserId is owner of otherGymId but not gymId
       await request(app.getHttpServer())
         .post(`/api/gyms/${gymId}/configuration/coaches`)
-        .set('x-user-id', otherOwnerUserId)
-        .set('x-gym-id', gymId)
+        .set('Authorization', `Bearer ${otherOwnerToken}`)
         .send({ coachEmail: existingCoachEmail })
         .expect(403);
     });
@@ -479,8 +492,7 @@ describe('Coach Invitation (e2e)', () => {
     it('POST without coachEmail → 400', async () => {
       await request(app.getHttpServer())
         .post(`/api/gyms/${gymId}/configuration/coaches`)
-        .set('x-user-id', ownerUserId)
-        .set('x-gym-id', gymId)
+        .set('Authorization', `Bearer ${ownerToken}`)
         .send({})
         .expect(400);
     });
@@ -493,8 +505,7 @@ describe('Coach Invitation (e2e)', () => {
     it('POST with non-email string → 400', async () => {
       await request(app.getHttpServer())
         .post(`/api/gyms/${gymId}/configuration/coaches`)
-        .set('x-user-id', ownerUserId)
-        .set('x-gym-id', gymId)
+        .set('Authorization', `Bearer ${ownerToken}`)
         .send({ coachEmail: 'not-an-email' })
         .expect(400);
     });
@@ -508,8 +519,7 @@ describe('Coach Invitation (e2e)', () => {
       const oversizedEmail = `${'a'.repeat(244)}@test.local`;
       await request(app.getHttpServer())
         .post(`/api/gyms/${gymId}/configuration/coaches`)
-        .set('x-user-id', ownerUserId)
-        .set('x-gym-id', gymId)
+        .set('Authorization', `Bearer ${ownerToken}`)
         .send({ coachEmail: oversizedEmail })
         .expect(400);
     });
@@ -521,10 +531,15 @@ describe('Coach Invitation (e2e)', () => {
   describe('Test 7: Gym scoping — route gymId must match x-gym-id context', () => {
     it('POST to otherGymId with ownerUserId (not owner there) → 403', async () => {
       // ownerUserId is owner of gymId but not otherGymId
+      const ownerScopedToOtherGymToken = generateTestToken({
+        id: ownerUserId,
+        email: 'owner-primary@invite-coach.test',
+        gymId: otherGymId,
+        role: 'owner',
+      });
       await request(app.getHttpServer())
         .post(`/api/gyms/${otherGymId}/configuration/coaches`)
-        .set('x-user-id', ownerUserId)
-        .set('x-gym-id', otherGymId)
+        .set('Authorization', `Bearer ${ownerScopedToOtherGymToken}`)
         .send({ coachEmail: existingCoachEmail })
         .expect(403);
     });
@@ -541,6 +556,13 @@ describe('Coach Invitation — Transaction Rollback (e2e)', () => {
   const gymId = uuidv4();
   const ownerUserId = uuidv4();
   const rollbackCoachEmail = `coach-rollback-${uuidv4()}@test.local`;
+
+  const rollbackOwnerToken = generateTestToken({
+    id: ownerUserId,
+    email: 'owner-rollback@invite-coach.test',
+    gymId,
+    role: 'owner',
+  });
 
   beforeAll(async () => {
     // Build a module where InviteCoachHandler is replaced by FaultyInviteCoachHandler,
@@ -610,8 +632,7 @@ describe('Coach Invitation — Transaction Rollback (e2e)', () => {
   it('POST /api/gyms/:gymId/configuration/coaches → 500 when staff save fails', async () => {
     await request(app.getHttpServer())
       .post(`/api/gyms/${gymId}/configuration/coaches`)
-      .set('x-user-id', ownerUserId)
-      .set('x-gym-id', gymId)
+      .set('Authorization', `Bearer ${rollbackOwnerToken}`)
       .send({ coachEmail: rollbackCoachEmail })
       .expect(500);
   });

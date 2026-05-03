@@ -4,6 +4,7 @@ import request from 'supertest';
 import { AppModule } from '../src/app.module';
 import { DataSource } from 'typeorm';
 import { v4 as uuidv4 } from 'uuid';
+import { generateTestToken } from './helpers/jwt.helper';
 
 /**
  * Gym Creation E2E Tests
@@ -21,6 +22,15 @@ describe('Gym Creation (e2e)', () => {
 
   const userId = uuidv4();
   const createdGymIds: string[] = [];
+
+  // JWT for the user (gym creation endpoint doesn't require a gymId in the token
+  // since the gym doesn't exist yet; use an empty string for gymId)
+  const userToken = generateTestToken({
+    id: userId,
+    email: 'owner@gym-creation.test',
+    gymId: '',
+    role: 'owner',
+  });
 
   beforeAll(async () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
@@ -70,7 +80,7 @@ describe('Gym Creation (e2e)', () => {
     it('POST /api/gyms → 201 with gym data and ownerId', async () => {
       const response = await request(app.getHttpServer())
         .post('/api/gyms')
-        .set('x-user-id', userId)
+        .set('Authorization', `Bearer ${userToken}`)
         .send({
           name: 'CrossFit Box Alpha',
           location: 'Lisbon, Portugal',
@@ -94,7 +104,7 @@ describe('Gym Creation (e2e)', () => {
     it('POST /api/gyms → 201 without optional description', async () => {
       const response = await request(app.getHttpServer())
         .post('/api/gyms')
-        .set('x-user-id', userId)
+        .set('Authorization', `Bearer ${userToken}`)
         .send({
           name: 'CrossFit Box Beta',
           location: 'Porto, Portugal',
@@ -133,7 +143,7 @@ describe('Gym Creation (e2e)', () => {
     it('POST /api/gyms without name → 400', async () => {
       await request(app.getHttpServer())
         .post('/api/gyms')
-        .set('x-user-id', userId)
+        .set('Authorization', `Bearer ${userToken}`)
         .send({
           location: 'Lisbon, Portugal',
         })
@@ -143,7 +153,7 @@ describe('Gym Creation (e2e)', () => {
     it('POST /api/gyms without location → 400', async () => {
       await request(app.getHttpServer())
         .post('/api/gyms')
-        .set('x-user-id', userId)
+        .set('Authorization', `Bearer ${userToken}`)
         .send({
           name: 'My Gym',
         })
@@ -153,7 +163,7 @@ describe('Gym Creation (e2e)', () => {
     it('POST /api/gyms with empty name → 400', async () => {
       await request(app.getHttpServer())
         .post('/api/gyms')
-        .set('x-user-id', userId)
+        .set('Authorization', `Bearer ${userToken}`)
         .send({
           name: '',
           location: 'Lisbon, Portugal',
@@ -164,7 +174,7 @@ describe('Gym Creation (e2e)', () => {
     it('POST /api/gyms with empty location → 400', async () => {
       await request(app.getHttpServer())
         .post('/api/gyms')
-        .set('x-user-id', userId)
+        .set('Authorization', `Bearer ${userToken}`)
         .send({
           name: 'My Gym',
           location: '',
@@ -177,7 +187,7 @@ describe('Gym Creation (e2e)', () => {
     it('POST /api/gyms with name exceeding 100 chars → 400', async () => {
       await request(app.getHttpServer())
         .post('/api/gyms')
-        .set('x-user-id', userId)
+        .set('Authorization', `Bearer ${userToken}`)
         .send({
           name: 'A'.repeat(101),
           location: 'Lisbon, Portugal',
@@ -188,7 +198,7 @@ describe('Gym Creation (e2e)', () => {
     it('POST /api/gyms with location exceeding 200 chars → 400', async () => {
       await request(app.getHttpServer())
         .post('/api/gyms')
-        .set('x-user-id', userId)
+        .set('Authorization', `Bearer ${userToken}`)
         .send({
           name: 'My Gym',
           location: 'B'.repeat(201),
@@ -199,7 +209,7 @@ describe('Gym Creation (e2e)', () => {
     it('POST /api/gyms with description exceeding 1000 chars → 400', async () => {
       await request(app.getHttpServer())
         .post('/api/gyms')
-        .set('x-user-id', userId)
+        .set('Authorization', `Bearer ${userToken}`)
         .send({
           name: 'My Gym',
           location: 'Lisbon, Portugal',
@@ -212,10 +222,16 @@ describe('Gym Creation (e2e)', () => {
   describe('Test 4: Authentication check', () => {
     it('POST /api/gyms with unknown user id → 404', async () => {
       const unknownUserId = uuidv4();
+      const unknownUserToken = generateTestToken({
+        id: unknownUserId,
+        email: 'ghost@gym-creation.test',
+        gymId: '',
+        role: 'owner',
+      });
 
       await request(app.getHttpServer())
         .post('/api/gyms')
-        .set('x-user-id', unknownUserId)
+        .set('Authorization', `Bearer ${unknownUserToken}`)
         .send({
           name: 'Ghost Gym',
           location: 'Nowhere',

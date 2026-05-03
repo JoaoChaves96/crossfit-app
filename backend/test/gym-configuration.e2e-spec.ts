@@ -4,6 +4,7 @@ import request from 'supertest';
 import { AppModule } from '../src/app.module';
 import { DataSource } from 'typeorm';
 import { v4 as uuidv4 } from 'uuid';
+import { generateTestToken } from './helpers/jwt.helper';
 
 /**
  * Gym Configuration E2E Tests — Spaces & Class Types
@@ -88,6 +89,34 @@ describe('Gym Configuration — Spaces & Class Types (e2e)', () => {
   // Tracked IDs for cleanup
   const createdSpaceIds: string[] = [];
   const createdClassTypeIds: string[] = [];
+
+  // JWTs for each actor
+  const ownerToken = generateTestToken({
+    id: ownerUserId,
+    email: 'owner@gym-config.test',
+    gymId,
+    role: 'owner',
+  });
+  const otherOwnerToken = generateTestToken({
+    id: otherOwnerUserId,
+    email: 'other-owner@gym-config.test',
+    gymId: otherGymId,
+    role: 'owner',
+  });
+  const athleteToken = generateTestToken({
+    id: athleteUserId,
+    email: 'athlete@gym-config.test',
+    gymId,
+    role: 'athlete',
+  });
+  // Token for the owner of gymId but scoped to otherGymId — used for the
+  // "gymId path does not match gym context" tests that expect 500.
+  const ownerWithOtherGymToken = generateTestToken({
+    id: ownerUserId,
+    email: 'owner@gym-config.test',
+    gymId: otherGymId,
+    role: 'owner',
+  });
 
   // ─── Setup ──────────────────────────────────────────────────────────────────
 
@@ -213,8 +242,7 @@ describe('Gym Configuration — Spaces & Class Types (e2e)', () => {
       it('201 — creates a space with valid name and baseCapacity', async () => {
         const response = await request(app.getHttpServer())
           .post(`/api/gyms/${gymId}/configuration/spaces`)
-          .set('x-user-id', ownerUserId)
-          .set('x-gym-id', gymId)
+          .set('Authorization', `Bearer ${ownerToken}`)
           .send({ name: 'Main Box', baseCapacity: 20 })
           .expect(201);
 
@@ -234,8 +262,7 @@ describe('Gym Configuration — Spaces & Class Types (e2e)', () => {
       it('400 — missing name', async () => {
         await request(app.getHttpServer())
           .post(`/api/gyms/${gymId}/configuration/spaces`)
-          .set('x-user-id', ownerUserId)
-          .set('x-gym-id', gymId)
+          .set('Authorization', `Bearer ${ownerToken}`)
           .send({ baseCapacity: 10 })
           .expect(400);
       });
@@ -243,8 +270,7 @@ describe('Gym Configuration — Spaces & Class Types (e2e)', () => {
       it('400 — missing baseCapacity', async () => {
         await request(app.getHttpServer())
           .post(`/api/gyms/${gymId}/configuration/spaces`)
-          .set('x-user-id', ownerUserId)
-          .set('x-gym-id', gymId)
+          .set('Authorization', `Bearer ${ownerToken}`)
           .send({ name: 'Room B' })
           .expect(400);
       });
@@ -252,8 +278,7 @@ describe('Gym Configuration — Spaces & Class Types (e2e)', () => {
       it('400 — baseCapacity of 0 is rejected', async () => {
         await request(app.getHttpServer())
           .post(`/api/gyms/${gymId}/configuration/spaces`)
-          .set('x-user-id', ownerUserId)
-          .set('x-gym-id', gymId)
+          .set('Authorization', `Bearer ${ownerToken}`)
           .send({ name: 'Zero Room', baseCapacity: 0 })
           .expect(400);
       });
@@ -262,8 +287,7 @@ describe('Gym Configuration — Spaces & Class Types (e2e)', () => {
         // First creation succeeds
         const first = await request(app.getHttpServer())
           .post(`/api/gyms/${gymId}/configuration/spaces`)
-          .set('x-user-id', ownerUserId)
-          .set('x-gym-id', gymId)
+          .set('Authorization', `Bearer ${ownerToken}`)
           .send({ name: 'Duplicate Space', baseCapacity: 5 })
           .expect(201);
 
@@ -274,8 +298,7 @@ describe('Gym Configuration — Spaces & Class Types (e2e)', () => {
         // Second with same name must be rejected
         await request(app.getHttpServer())
           .post(`/api/gyms/${gymId}/configuration/spaces`)
-          .set('x-user-id', ownerUserId)
-          .set('x-gym-id', gymId)
+          .set('Authorization', `Bearer ${ownerToken}`)
           .send({ name: 'Duplicate Space', baseCapacity: 5 })
           .expect(400);
       });
@@ -285,8 +308,7 @@ describe('Gym Configuration — Spaces & Class Types (e2e)', () => {
       it('403 — athlete cannot create a space', async () => {
         await request(app.getHttpServer())
           .post(`/api/gyms/${gymId}/configuration/spaces`)
-          .set('x-user-id', athleteUserId)
-          .set('x-gym-id', gymId)
+          .set('Authorization', `Bearer ${athleteToken}`)
           .send({ name: 'Athlete Room', baseCapacity: 10 })
           .expect(403);
       });
@@ -294,8 +316,7 @@ describe('Gym Configuration — Spaces & Class Types (e2e)', () => {
       it('403 — owner of another gym cannot create a space in this gym', async () => {
         await request(app.getHttpServer())
           .post(`/api/gyms/${gymId}/configuration/spaces`)
-          .set('x-user-id', otherOwnerUserId)
-          .set('x-gym-id', gymId)
+          .set('Authorization', `Bearer ${otherOwnerToken}`)
           .send({ name: 'Intruder Room', baseCapacity: 10 })
           .expect(403);
       });
@@ -305,8 +326,7 @@ describe('Gym Configuration — Spaces & Class Types (e2e)', () => {
         // This is a known behavior (not HTTP-mapped). Documented for frontend.
         await request(app.getHttpServer())
           .post(`/api/gyms/${gymId}/configuration/spaces`)
-          .set('x-user-id', ownerUserId)
-          .set('x-gym-id', otherGymId)
+          .set('Authorization', `Bearer ${ownerWithOtherGymToken}`)
           .send({ name: 'Mismatch Room', baseCapacity: 10 })
           .expect(500);
       });
@@ -322,8 +342,7 @@ describe('Gym Configuration — Spaces & Class Types (e2e)', () => {
       // Create a space to update
       const response = await request(app.getHttpServer())
         .post(`/api/gyms/${gymId}/configuration/spaces`)
-        .set('x-user-id', ownerUserId)
-        .set('x-gym-id', gymId)
+        .set('Authorization', `Bearer ${ownerToken}`)
         .send({ name: 'Update Target Space', baseCapacity: 15 })
         .expect(201);
 
@@ -335,8 +354,7 @@ describe('Gym Configuration — Spaces & Class Types (e2e)', () => {
       it('200 — update name only', async () => {
         const response = await request(app.getHttpServer())
           .patch(`/api/gyms/${gymId}/configuration/spaces/${spaceId}`)
-          .set('x-user-id', ownerUserId)
-          .set('x-gym-id', gymId)
+          .set('Authorization', `Bearer ${ownerToken}`)
           .send({ name: 'Renamed Space' })
           .expect(200);
 
@@ -351,8 +369,7 @@ describe('Gym Configuration — Spaces & Class Types (e2e)', () => {
       it('200 — update baseCapacity only', async () => {
         const response = await request(app.getHttpServer())
           .patch(`/api/gyms/${gymId}/configuration/spaces/${spaceId}`)
-          .set('x-user-id', ownerUserId)
-          .set('x-gym-id', gymId)
+          .set('Authorization', `Bearer ${ownerToken}`)
           .send({ baseCapacity: 30 })
           .expect(200);
 
@@ -363,8 +380,7 @@ describe('Gym Configuration — Spaces & Class Types (e2e)', () => {
       it('200 — update both name and baseCapacity', async () => {
         const response = await request(app.getHttpServer())
           .patch(`/api/gyms/${gymId}/configuration/spaces/${spaceId}`)
-          .set('x-user-id', ownerUserId)
-          .set('x-gym-id', gymId)
+          .set('Authorization', `Bearer ${ownerToken}`)
           .send({ name: 'Updated Space', baseCapacity: 25 })
           .expect(200);
 
@@ -378,8 +394,7 @@ describe('Gym Configuration — Spaces & Class Types (e2e)', () => {
       it('400 — baseCapacity of 0 is rejected', async () => {
         await request(app.getHttpServer())
           .patch(`/api/gyms/${gymId}/configuration/spaces/${spaceId}`)
-          .set('x-user-id', ownerUserId)
-          .set('x-gym-id', gymId)
+          .set('Authorization', `Bearer ${ownerToken}`)
           .send({ baseCapacity: 0 })
           .expect(400);
       });
@@ -389,8 +404,7 @@ describe('Gym Configuration — Spaces & Class Types (e2e)', () => {
       it('404 — non-existent spaceId', async () => {
         await request(app.getHttpServer())
           .patch(`/api/gyms/${gymId}/configuration/spaces/${uuidv4()}`)
-          .set('x-user-id', ownerUserId)
-          .set('x-gym-id', gymId)
+          .set('Authorization', `Bearer ${ownerToken}`)
           .send({ name: 'Ghost Space' })
           .expect(404);
       });
@@ -400,8 +414,7 @@ describe('Gym Configuration — Spaces & Class Types (e2e)', () => {
       it('403 — athlete cannot update a space', async () => {
         await request(app.getHttpServer())
           .patch(`/api/gyms/${gymId}/configuration/spaces/${spaceId}`)
-          .set('x-user-id', athleteUserId)
-          .set('x-gym-id', gymId)
+          .set('Authorization', `Bearer ${athleteToken}`)
           .send({ name: 'Athlete Update' })
           .expect(403);
       });
@@ -409,8 +422,7 @@ describe('Gym Configuration — Spaces & Class Types (e2e)', () => {
       it('403 — owner of another gym cannot update a space in this gym', async () => {
         await request(app.getHttpServer())
           .patch(`/api/gyms/${gymId}/configuration/spaces/${spaceId}`)
-          .set('x-user-id', otherOwnerUserId)
-          .set('x-gym-id', gymId)
+          .set('Authorization', `Bearer ${otherOwnerToken}`)
           .send({ name: 'Other Gym Update' })
           .expect(403);
       });
@@ -418,8 +430,7 @@ describe('Gym Configuration — Spaces & Class Types (e2e)', () => {
       it('500 — gymId path does not match x-gym-id header', async () => {
         await request(app.getHttpServer())
           .patch(`/api/gyms/${gymId}/configuration/spaces/${spaceId}`)
-          .set('x-user-id', ownerUserId)
-          .set('x-gym-id', otherGymId)
+          .set('Authorization', `Bearer ${ownerWithOtherGymToken}`)
           .send({ name: 'Mismatch Update' })
           .expect(500);
       });
@@ -435,8 +446,7 @@ describe('Gym Configuration — Spaces & Class Types (e2e)', () => {
       // Create a fresh space for each test
       const response = await request(app.getHttpServer())
         .post(`/api/gyms/${gymId}/configuration/spaces`)
-        .set('x-user-id', ownerUserId)
-        .set('x-gym-id', gymId)
+        .set('Authorization', `Bearer ${ownerToken}`)
         .send({ name: `Delete Target ${uuidv4()}`, baseCapacity: 10 })
         .expect(201);
 
@@ -448,8 +458,7 @@ describe('Gym Configuration — Spaces & Class Types (e2e)', () => {
       it('200 — soft-deletes the space; response includes deletedAt', async () => {
         const response = await request(app.getHttpServer())
           .delete(`/api/gyms/${gymId}/configuration/spaces/${spaceId}`)
-          .set('x-user-id', ownerUserId)
-          .set('x-gym-id', gymId)
+          .set('Authorization', `Bearer ${ownerToken}`)
           .expect(200);
 
         const body = response.body as Record<string, unknown>;
@@ -467,8 +476,7 @@ describe('Gym Configuration — Spaces & Class Types (e2e)', () => {
       it('404 — non-existent spaceId', async () => {
         await request(app.getHttpServer())
           .delete(`/api/gyms/${gymId}/configuration/spaces/${uuidv4()}`)
-          .set('x-user-id', ownerUserId)
-          .set('x-gym-id', gymId)
+          .set('Authorization', `Bearer ${ownerToken}`)
           .expect(404);
       });
     });
@@ -477,24 +485,21 @@ describe('Gym Configuration — Spaces & Class Types (e2e)', () => {
       it('403 — athlete cannot delete a space', async () => {
         await request(app.getHttpServer())
           .delete(`/api/gyms/${gymId}/configuration/spaces/${spaceId}`)
-          .set('x-user-id', athleteUserId)
-          .set('x-gym-id', gymId)
+          .set('Authorization', `Bearer ${athleteToken}`)
           .expect(403);
       });
 
       it('403 — owner of another gym cannot delete a space in this gym', async () => {
         await request(app.getHttpServer())
           .delete(`/api/gyms/${gymId}/configuration/spaces/${spaceId}`)
-          .set('x-user-id', otherOwnerUserId)
-          .set('x-gym-id', gymId)
+          .set('Authorization', `Bearer ${otherOwnerToken}`)
           .expect(403);
       });
 
       it('500 — gymId path does not match x-gym-id header', async () => {
         await request(app.getHttpServer())
           .delete(`/api/gyms/${gymId}/configuration/spaces/${spaceId}`)
-          .set('x-user-id', ownerUserId)
-          .set('x-gym-id', otherGymId)
+          .set('Authorization', `Bearer ${ownerWithOtherGymToken}`)
           .expect(500);
       });
     });
@@ -507,8 +512,7 @@ describe('Gym Configuration — Spaces & Class Types (e2e)', () => {
       it('201 — creates a class type with required fields only', async () => {
         const response = await request(app.getHttpServer())
           .post(`/api/gyms/${gymId}/configuration/class-types`)
-          .set('x-user-id', ownerUserId)
-          .set('x-gym-id', gymId)
+          .set('Authorization', `Bearer ${ownerToken}`)
           .send({ operation: 'create', name: 'CrossFit' })
           .expect(201);
 
@@ -527,8 +531,7 @@ describe('Gym Configuration — Spaces & Class Types (e2e)', () => {
       it('201 — creates a class type with all optional fields', async () => {
         const response = await request(app.getHttpServer())
           .post(`/api/gyms/${gymId}/configuration/class-types`)
-          .set('x-user-id', ownerUserId)
-          .set('x-gym-id', gymId)
+          .set('Authorization', `Bearer ${ownerToken}`)
           .send({
             operation: 'create',
             name: 'Weightlifting',
@@ -548,8 +551,7 @@ describe('Gym Configuration — Spaces & Class Types (e2e)', () => {
       it('400 — create with no name field', async () => {
         await request(app.getHttpServer())
           .post(`/api/gyms/${gymId}/configuration/class-types`)
-          .set('x-user-id', ownerUserId)
-          .set('x-gym-id', gymId)
+          .set('Authorization', `Bearer ${ownerToken}`)
           .send({ operation: 'create' })
           .expect(400);
       });
@@ -559,8 +561,7 @@ describe('Gym Configuration — Spaces & Class Types (e2e)', () => {
 
         const first = await request(app.getHttpServer())
           .post(`/api/gyms/${gymId}/configuration/class-types`)
-          .set('x-user-id', ownerUserId)
-          .set('x-gym-id', gymId)
+          .set('Authorization', `Bearer ${ownerToken}`)
           .send({ operation: 'create', name })
           .expect(201);
 
@@ -570,8 +571,7 @@ describe('Gym Configuration — Spaces & Class Types (e2e)', () => {
 
         await request(app.getHttpServer())
           .post(`/api/gyms/${gymId}/configuration/class-types`)
-          .set('x-user-id', ownerUserId)
-          .set('x-gym-id', gymId)
+          .set('Authorization', `Bearer ${ownerToken}`)
           .send({ operation: 'create', name })
           .expect(400);
       });
@@ -579,8 +579,7 @@ describe('Gym Configuration — Spaces & Class Types (e2e)', () => {
       it('400 — invalid resultMetrics value', async () => {
         await request(app.getHttpServer())
           .post(`/api/gyms/${gymId}/configuration/class-types`)
-          .set('x-user-id', ownerUserId)
-          .set('x-gym-id', gymId)
+          .set('Authorization', `Bearer ${ownerToken}`)
           .send({
             operation: 'create',
             name: 'BadMetrics',
@@ -592,8 +591,7 @@ describe('Gym Configuration — Spaces & Class Types (e2e)', () => {
       it('400 — invalid operation value', async () => {
         await request(app.getHttpServer())
           .post(`/api/gyms/${gymId}/configuration/class-types`)
-          .set('x-user-id', ownerUserId)
-          .set('x-gym-id', gymId)
+          .set('Authorization', `Bearer ${ownerToken}`)
           .send({ operation: 'unknown', name: 'Anything' })
           .expect(400);
       });
@@ -605,8 +603,7 @@ describe('Gym Configuration — Spaces & Class Types (e2e)', () => {
       beforeAll(async () => {
         const response = await request(app.getHttpServer())
           .post(`/api/gyms/${gymId}/configuration/class-types`)
-          .set('x-user-id', ownerUserId)
-          .set('x-gym-id', gymId)
+          .set('Authorization', `Bearer ${ownerToken}`)
           .send({
             operation: 'create',
             name: `UpdateTarget-${uuidv4()}`,
@@ -624,8 +621,7 @@ describe('Gym Configuration — Spaces & Class Types (e2e)', () => {
 
         const response = await request(app.getHttpServer())
           .post(`/api/gyms/${gymId}/configuration/class-types`)
-          .set('x-user-id', ownerUserId)
-          .set('x-gym-id', gymId)
+          .set('Authorization', `Bearer ${ownerToken}`)
           .send({ operation: 'update', classTypeId, name: newName })
           .expect(201);
 
@@ -637,8 +633,7 @@ describe('Gym Configuration — Spaces & Class Types (e2e)', () => {
       it('201 — updates loggable and resultMetrics', async () => {
         const response = await request(app.getHttpServer())
           .post(`/api/gyms/${gymId}/configuration/class-types`)
-          .set('x-user-id', ownerUserId)
-          .set('x-gym-id', gymId)
+          .set('Authorization', `Bearer ${ownerToken}`)
           .send({
             operation: 'update',
             classTypeId,
@@ -655,8 +650,7 @@ describe('Gym Configuration — Spaces & Class Types (e2e)', () => {
       it('400 — update without classTypeId', async () => {
         await request(app.getHttpServer())
           .post(`/api/gyms/${gymId}/configuration/class-types`)
-          .set('x-user-id', ownerUserId)
-          .set('x-gym-id', gymId)
+          .set('Authorization', `Bearer ${ownerToken}`)
           .send({ operation: 'update', name: 'No Id Provided' })
           .expect(400);
       });
@@ -664,8 +658,7 @@ describe('Gym Configuration — Spaces & Class Types (e2e)', () => {
       it('404 — update with non-existent classTypeId', async () => {
         await request(app.getHttpServer())
           .post(`/api/gyms/${gymId}/configuration/class-types`)
-          .set('x-user-id', ownerUserId)
-          .set('x-gym-id', gymId)
+          .set('Authorization', `Bearer ${ownerToken}`)
           .send({ operation: 'update', classTypeId: uuidv4(), name: 'Ghost' })
           .expect(404);
       });
@@ -674,8 +667,7 @@ describe('Gym Configuration — Spaces & Class Types (e2e)', () => {
         // Create a class type in the other gym
         const otherResponse = await request(app.getHttpServer())
           .post(`/api/gyms/${otherGymId}/configuration/class-types`)
-          .set('x-user-id', otherOwnerUserId)
-          .set('x-gym-id', otherGymId)
+          .set('Authorization', `Bearer ${otherOwnerToken}`)
           .send({ operation: 'create', name: `OtherGymType-${uuidv4()}` })
           .expect(201);
 
@@ -686,8 +678,7 @@ describe('Gym Configuration — Spaces & Class Types (e2e)', () => {
         // Attempt to update it using gymId context
         await request(app.getHttpServer())
           .post(`/api/gyms/${gymId}/configuration/class-types`)
-          .set('x-user-id', ownerUserId)
-          .set('x-gym-id', gymId)
+          .set('Authorization', `Bearer ${ownerToken}`)
           .send({
             operation: 'update',
             classTypeId: otherClassTypeId,
@@ -702,8 +693,7 @@ describe('Gym Configuration — Spaces & Class Types (e2e)', () => {
         // Create a class type to delete
         const createResponse = await request(app.getHttpServer())
           .post(`/api/gyms/${gymId}/configuration/class-types`)
-          .set('x-user-id', ownerUserId)
-          .set('x-gym-id', gymId)
+          .set('Authorization', `Bearer ${ownerToken}`)
           .send({ operation: 'create', name: `DeleteTarget-${uuidv4()}` })
           .expect(201);
 
@@ -713,8 +703,7 @@ describe('Gym Configuration — Spaces & Class Types (e2e)', () => {
 
         const response = await request(app.getHttpServer())
           .post(`/api/gyms/${gymId}/configuration/class-types`)
-          .set('x-user-id', ownerUserId)
-          .set('x-gym-id', gymId)
+          .set('Authorization', `Bearer ${ownerToken}`)
           .send({ operation: 'delete', classTypeId: targetId })
           .expect(201);
 
@@ -728,8 +717,7 @@ describe('Gym Configuration — Spaces & Class Types (e2e)', () => {
       it('400 — delete without classTypeId', async () => {
         await request(app.getHttpServer())
           .post(`/api/gyms/${gymId}/configuration/class-types`)
-          .set('x-user-id', ownerUserId)
-          .set('x-gym-id', gymId)
+          .set('Authorization', `Bearer ${ownerToken}`)
           .send({ operation: 'delete' })
           .expect(400);
       });
@@ -737,8 +725,7 @@ describe('Gym Configuration — Spaces & Class Types (e2e)', () => {
       it('404 — delete with non-existent classTypeId', async () => {
         await request(app.getHttpServer())
           .post(`/api/gyms/${gymId}/configuration/class-types`)
-          .set('x-user-id', ownerUserId)
-          .set('x-gym-id', gymId)
+          .set('Authorization', `Bearer ${ownerToken}`)
           .send({ operation: 'delete', classTypeId: uuidv4() })
           .expect(404);
       });
@@ -748,8 +735,7 @@ describe('Gym Configuration — Spaces & Class Types (e2e)', () => {
       it('403 — athlete cannot configure class types', async () => {
         await request(app.getHttpServer())
           .post(`/api/gyms/${gymId}/configuration/class-types`)
-          .set('x-user-id', athleteUserId)
-          .set('x-gym-id', gymId)
+          .set('Authorization', `Bearer ${athleteToken}`)
           .send({ operation: 'create', name: 'Athlete Type' })
           .expect(403);
       });
@@ -757,8 +743,7 @@ describe('Gym Configuration — Spaces & Class Types (e2e)', () => {
       it('403 — owner of another gym cannot configure class types in this gym', async () => {
         await request(app.getHttpServer())
           .post(`/api/gyms/${gymId}/configuration/class-types`)
-          .set('x-user-id', otherOwnerUserId)
-          .set('x-gym-id', gymId)
+          .set('Authorization', `Bearer ${otherOwnerToken}`)
           .send({ operation: 'create', name: 'Intruder Type' })
           .expect(403);
       });
@@ -766,8 +751,7 @@ describe('Gym Configuration — Spaces & Class Types (e2e)', () => {
       it('500 — gymId path does not match x-gym-id header', async () => {
         await request(app.getHttpServer())
           .post(`/api/gyms/${gymId}/configuration/class-types`)
-          .set('x-user-id', ownerUserId)
-          .set('x-gym-id', otherGymId)
+          .set('Authorization', `Bearer ${ownerWithOtherGymToken}`)
           .send({ operation: 'create', name: 'Mismatch Type' })
           .expect(500);
       });

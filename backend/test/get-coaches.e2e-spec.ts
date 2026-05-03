@@ -5,6 +5,7 @@ import { App } from 'supertest/types';
 import { AppModule } from '../src/app.module';
 import { DataSource } from 'typeorm';
 import { v4 as uuid } from 'uuid';
+import { generateTestToken } from './helpers/jwt.helper';
 
 /**
  * E2E tests for GET /api/gyms/:gymId/configuration/coaches
@@ -48,6 +49,32 @@ describe('GET /api/gyms/:gymId/configuration/coaches', () => {
   const emptyGymId = uuid();
   const emptyGymOwnerUserId = uuid();
   const emptyGymOwnerStaffId = uuid();
+
+  // JWTs for each actor
+  const ownerToken = generateTestToken({
+    id: ownerUserId,
+    email: 'owner@gym1.test',
+    gymId,
+    role: 'owner',
+  });
+  const otherOwnerToken = generateTestToken({
+    id: otherOwnerUserId,
+    email: 'owner@gym2.test',
+    gymId: otherGymId,
+    role: 'owner',
+  });
+  const athleteToken = generateTestToken({
+    id: athleteUserId,
+    email: 'athlete@gym1.test',
+    gymId,
+    role: 'athlete',
+  });
+  const emptyGymOwnerToken = generateTestToken({
+    id: emptyGymOwnerUserId,
+    email: 'owner@gymempty.test',
+    gymId: emptyGymId,
+    role: 'owner',
+  });
 
   beforeAll(async () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
@@ -128,8 +155,7 @@ describe('GET /api/gyms/:gymId/configuration/coaches', () => {
     it('should return 200 with a coaches array containing both active and inactive coaches', async () => {
       const response = await request(app.getHttpServer())
         .get(`/api/gyms/${gymId}/configuration/coaches`)
-        .set('x-user-id', ownerUserId)
-        .set('x-gym-id', gymId)
+        .set('Authorization', `Bearer ${ownerToken}`)
         .expect(200);
 
       expect(response.body).toHaveProperty('coaches');
@@ -154,8 +180,7 @@ describe('GET /api/gyms/:gymId/configuration/coaches', () => {
     it('should return 200 with an empty coaches array for a gym with no coaches', async () => {
       const response = await request(app.getHttpServer())
         .get(`/api/gyms/${emptyGymId}/configuration/coaches`)
-        .set('x-user-id', emptyGymOwnerUserId)
-        .set('x-gym-id', emptyGymId)
+        .set('Authorization', `Bearer ${emptyGymOwnerToken}`)
         .expect(200);
 
       expect(response.body).toHaveProperty('coaches');
@@ -168,8 +193,7 @@ describe('GET /api/gyms/:gymId/configuration/coaches', () => {
     it('should return 403 when an athlete requests the coach list', async () => {
       await request(app.getHttpServer())
         .get(`/api/gyms/${gymId}/configuration/coaches`)
-        .set('x-user-id', athleteUserId)
-        .set('x-gym-id', gymId)
+        .set('Authorization', `Bearer ${athleteToken}`)
         .expect(403);
     });
   });
@@ -178,8 +202,7 @@ describe('GET /api/gyms/:gymId/configuration/coaches', () => {
     it('should return 403 when gym1 owner tries to access gym2 coach list', async () => {
       await request(app.getHttpServer())
         .get(`/api/gyms/${otherGymId}/configuration/coaches`)
-        .set('x-user-id', ownerUserId)
-        .set('x-gym-id', otherGymId)
+        .set('Authorization', `Bearer ${otherOwnerToken}`)
         .expect(403);
     });
   });
@@ -188,8 +211,7 @@ describe('GET /api/gyms/:gymId/configuration/coaches', () => {
     it('should return each coach item matching CoachListItemDto shape exactly', async () => {
       const response = await request(app.getHttpServer())
         .get(`/api/gyms/${gymId}/configuration/coaches`)
-        .set('x-user-id', ownerUserId)
-        .set('x-gym-id', gymId)
+        .set('Authorization', `Bearer ${ownerToken}`)
         .expect(200);
 
       const coaches: Array<Record<string, unknown>> = response.body.coaches;

@@ -4,6 +4,7 @@ import request from 'supertest';
 import { AppModule } from '../src/app.module';
 import { DataSource } from 'typeorm';
 import { v4 as uuidv4 } from 'uuid';
+import { generateTestToken } from './helpers/jwt.helper';
 
 /**
  * Class Creation E2E Tests
@@ -71,6 +72,26 @@ describe('Class Creation (e2e)', () => {
   const outsideCoachUserId = uuidv4();
 
   const createdClassIds: string[] = [];
+
+  // JWTs for each actor
+  const ownerToken = generateTestToken({
+    id: ownerUserId,
+    email: 'owner@class-creation.test',
+    gymId,
+    role: 'owner',
+  });
+  const athleteToken = generateTestToken({
+    id: athleteUserId,
+    email: 'athlete@class-creation.test',
+    gymId,
+    role: 'athlete',
+  });
+  const otherOwnerToken = generateTestToken({
+    id: otherGymOwnerUserId,
+    email: 'other-owner@class-creation.test',
+    gymId: otherGymId,
+    role: 'owner',
+  });
 
   beforeAll(async () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
@@ -257,8 +278,7 @@ describe('Class Creation (e2e)', () => {
     it('POST /api/gyms/:gymId/classes → 201 with valid payload', async () => {
       const response = await request(app.getHttpServer())
         .post(`/api/gyms/${gymId}/classes`)
-        .set('x-user-id', ownerUserId)
-        .set('x-gym-id', gymId)
+        .set('Authorization', `Bearer ${ownerToken}`)
         .send({
           classTypeId,
           coachUserId,
@@ -294,8 +314,7 @@ describe('Class Creation (e2e)', () => {
     it('POST /api/gyms/:gymId/classes → 201, capacity defaults to space.baseCapacity', async () => {
       const response = await request(app.getHttpServer())
         .post(`/api/gyms/${gymId}/classes`)
-        .set('x-user-id', ownerUserId)
-        .set('x-gym-id', gymId)
+        .set('Authorization', `Bearer ${ownerToken}`)
         .send({
           classTypeId,
           coachUserId,
@@ -324,8 +343,7 @@ describe('Class Creation (e2e)', () => {
     it('POST without classTypeId → 400', async () => {
       await request(app.getHttpServer())
         .post(`/api/gyms/${gymId}/classes`)
-        .set('x-user-id', ownerUserId)
-        .set('x-gym-id', gymId)
+        .set('Authorization', `Bearer ${ownerToken}`)
         .send({
           coachUserId,
           spaceId,
@@ -338,8 +356,7 @@ describe('Class Creation (e2e)', () => {
     it('POST without coachUserId → 400', async () => {
       await request(app.getHttpServer())
         .post(`/api/gyms/${gymId}/classes`)
-        .set('x-user-id', ownerUserId)
-        .set('x-gym-id', gymId)
+        .set('Authorization', `Bearer ${ownerToken}`)
         .send({
           classTypeId,
           spaceId,
@@ -352,8 +369,7 @@ describe('Class Creation (e2e)', () => {
     it('POST without spaceId → 400', async () => {
       await request(app.getHttpServer())
         .post(`/api/gyms/${gymId}/classes`)
-        .set('x-user-id', ownerUserId)
-        .set('x-gym-id', gymId)
+        .set('Authorization', `Bearer ${ownerToken}`)
         .send({
           classTypeId,
           coachUserId,
@@ -366,8 +382,7 @@ describe('Class Creation (e2e)', () => {
     it('POST without scheduledDate → 400', async () => {
       await request(app.getHttpServer())
         .post(`/api/gyms/${gymId}/classes`)
-        .set('x-user-id', ownerUserId)
-        .set('x-gym-id', gymId)
+        .set('Authorization', `Bearer ${ownerToken}`)
         .send({
           classTypeId,
           coachUserId,
@@ -380,8 +395,7 @@ describe('Class Creation (e2e)', () => {
     it('POST without scheduledTime → 400', async () => {
       await request(app.getHttpServer())
         .post(`/api/gyms/${gymId}/classes`)
-        .set('x-user-id', ownerUserId)
-        .set('x-gym-id', gymId)
+        .set('Authorization', `Bearer ${ownerToken}`)
         .send({
           classTypeId,
           coachUserId,
@@ -394,8 +408,7 @@ describe('Class Creation (e2e)', () => {
     it('POST with invalid scheduledTime format → 400', async () => {
       await request(app.getHttpServer())
         .post(`/api/gyms/${gymId}/classes`)
-        .set('x-user-id', ownerUserId)
-        .set('x-gym-id', gymId)
+        .set('Authorization', `Bearer ${ownerToken}`)
         .send({
           classTypeId,
           coachUserId,
@@ -414,8 +427,7 @@ describe('Class Creation (e2e)', () => {
     it('POST with coach not in gym → 404', async () => {
       await request(app.getHttpServer())
         .post(`/api/gyms/${gymId}/classes`)
-        .set('x-user-id', ownerUserId)
-        .set('x-gym-id', gymId)
+        .set('Authorization', `Bearer ${ownerToken}`)
         .send({
           classTypeId,
           coachUserId: outsideCoachUserId,
@@ -434,8 +446,7 @@ describe('Class Creation (e2e)', () => {
     it('POST with space from another gym → 400', async () => {
       await request(app.getHttpServer())
         .post(`/api/gyms/${gymId}/classes`)
-        .set('x-user-id', ownerUserId)
-        .set('x-gym-id', gymId)
+        .set('Authorization', `Bearer ${ownerToken}`)
         .send({
           classTypeId,
           coachUserId,
@@ -454,8 +465,7 @@ describe('Class Creation (e2e)', () => {
     it('POST with athlete user → 403', async () => {
       await request(app.getHttpServer())
         .post(`/api/gyms/${gymId}/classes`)
-        .set('x-user-id', athleteUserId)
-        .set('x-gym-id', gymId)
+        .set('Authorization', `Bearer ${athleteToken}`)
         .send({
           classTypeId,
           coachUserId,
@@ -474,8 +484,7 @@ describe('Class Creation (e2e)', () => {
     it('POST with classTypeId from another gym → 400', async () => {
       await request(app.getHttpServer())
         .post(`/api/gyms/${gymId}/classes`)
-        .set('x-user-id', ownerUserId)
-        .set('x-gym-id', gymId)
+        .set('Authorization', `Bearer ${ownerToken}`)
         .send({
           classTypeId: otherGymClassTypeId,
           coachUserId,

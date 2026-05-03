@@ -4,6 +4,7 @@ import request from 'supertest';
 import { AppModule } from '../src/app.module';
 import { DataSource } from 'typeorm';
 import { v4 as uuidv4 } from 'uuid';
+import { generateTestToken } from './helpers/jwt.helper';
 
 /**
  * Athlete Booking Lifecycle Integration Tests
@@ -29,6 +30,14 @@ describe('Athlete Booking Lifecycle (e2e)', () => {
   const membershipPlanId = uuidv4();
   let classId: string;
   let bookingId: string;
+
+  // JWT for the athlete user
+  const athleteToken = generateTestToken({
+    id: userId,
+    email: `athlete-booking@test.local`,
+    gymId,
+    role: 'athlete',
+  });
 
   beforeAll(async () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
@@ -241,8 +250,7 @@ describe('Athlete Booking Lifecycle (e2e)', () => {
     it('POST /api/gyms/:gymId/classes/:classId/bookings → 201 + bookingId', async () => {
       const response = await request(app!.getHttpServer())
         .post(`/api/gyms/${gymId}/classes/${classId}/bookings`)
-        .set('x-user-id', userId)
-        .set('x-gym-id', gymId)
+        .set('Authorization', `Bearer ${athleteToken}`)
         .send({
           gymId,
           classId,
@@ -264,8 +272,7 @@ describe('Athlete Booking Lifecycle (e2e)', () => {
     it('GET /api/me/bookings includes the booked class', async () => {
       const response = await request(app!.getHttpServer())
         .get('/api/me/bookings')
-        .set('x-user-id', userId)
-        .set('x-gym-id', gymId)
+        .set('Authorization', `Bearer ${athleteToken}`)
         .expect(200);
 
       expect(response.body).toHaveProperty('bookings');
@@ -287,8 +294,7 @@ describe('Athlete Booking Lifecycle (e2e)', () => {
     it('DELETE /api/gyms/:gymId/classes/bookings/:bookingId → 200', async () => {
       const response = await request(app!.getHttpServer())
         .delete(`/api/gyms/${gymId}/classes/bookings/${bookingId}`)
-        .set('x-user-id', userId)
-        .set('x-gym-id', gymId)
+        .set('Authorization', `Bearer ${athleteToken}`)
         .expect(200);
 
       // Verify booking is marked cancelled
@@ -300,8 +306,7 @@ describe('Athlete Booking Lifecycle (e2e)', () => {
     it('GET /api/me/bookings no longer includes cancelled booking', async () => {
       const response = await request(app!.getHttpServer())
         .get('/api/me/bookings')
-        .set('x-user-id', userId)
-        .set('x-gym-id', gymId)
+        .set('Authorization', `Bearer ${athleteToken}`)
         .expect(200);
 
       expect(
@@ -323,8 +328,7 @@ describe('Athlete Booking Lifecycle (e2e)', () => {
       // Book the class
       const bookResponse = await request(app!.getHttpServer())
         .post(`/api/gyms/${gymId}/classes/${classId}/bookings`)
-        .set('x-user-id', userId)
-        .set('x-gym-id', gymId)
+        .set('Authorization', `Bearer ${athleteToken}`)
         .send({
           gymId,
           classId,
@@ -340,8 +344,7 @@ describe('Athlete Booking Lifecycle (e2e)', () => {
       // Verify booking is in user's list
       const listResponse = await request(app!.getHttpServer())
         .get('/api/me/bookings')
-        .set('x-user-id', userId)
-        .set('x-gym-id', gymId)
+        .set('Authorization', `Bearer ${athleteToken}`)
         .expect(200);
 
       expect(
@@ -359,15 +362,13 @@ describe('Athlete Booking Lifecycle (e2e)', () => {
       // Cancel the booking
       await request(app!.getHttpServer())
         .delete(`/api/gyms/${gymId}/classes/bookings/${newBookingId}`)
-        .set('x-user-id', userId)
-        .set('x-gym-id', gymId)
+        .set('Authorization', `Bearer ${athleteToken}`)
         .expect(200);
 
       // Verify booking is removed from list
       const listResponse = await request(app!.getHttpServer())
         .get('/api/me/bookings')
-        .set('x-user-id', userId)
-        .set('x-gym-id', gymId)
+        .set('Authorization', `Bearer ${athleteToken}`)
         .expect(200);
 
       expect(

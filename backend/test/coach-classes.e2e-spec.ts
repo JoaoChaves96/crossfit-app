@@ -4,6 +4,7 @@ import request from 'supertest';
 import { AppModule } from '../src/app.module';
 import { DataSource } from 'typeorm';
 import { v4 as uuidv4 } from 'uuid';
+import { generateTestToken } from './helpers/jwt.helper';
 
 /**
  * Coach Classes E2E Tests
@@ -47,6 +48,26 @@ describe('Coach Classes (e2e)', () => {
   const classTypeId = uuidv4();
   let coachClassId: string;
   let otherCoachClassId: string;
+
+  // JWTs for each actor
+  const coachToken = generateTestToken({
+    id: coachUserId,
+    email: 'coach@coach-classes.test',
+    gymId,
+    role: 'coach',
+  });
+  const otherCoachToken = generateTestToken({
+    id: otherCoachUserId,
+    email: 'other-coach@coach-classes.test',
+    gymId,
+    role: 'coach',
+  });
+  const athleteToken = generateTestToken({
+    id: athleteUserId,
+    email: 'athlete@coach-classes.test',
+    gymId,
+    role: 'athlete',
+  });
 
   beforeAll(async () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
@@ -253,8 +274,7 @@ describe('Coach Classes (e2e)', () => {
     it('GET /api/gyms/:gymId/coach/classes → 200 with coach-scoped classes', async () => {
       const response = await request(app.getHttpServer())
         .get(`/api/gyms/${gymId}/coach/classes`)
-        .set('x-user-id', coachUserId)
-        .set('x-gym-id', gymId)
+        .set('Authorization', `Bearer ${coachToken}`)
         .expect(200);
 
       const body = response.body as Record<string, unknown>;
@@ -287,8 +307,7 @@ describe('Coach Classes (e2e)', () => {
     it('GET /api/gyms/:gymId/coach/classes as otherCoach → 403', async () => {
       await request(app.getHttpServer())
         .get(`/api/gyms/${gymId}/coach/classes`)
-        .set('x-user-id', otherCoachUserId)
-        .set('x-gym-id', gymId)
+        .set('Authorization', `Bearer ${otherCoachToken}`)
         .expect(403);
     });
   });
@@ -300,8 +319,7 @@ describe('Coach Classes (e2e)', () => {
     it('GET /api/gyms/:gymId/coach/classes as athlete → 403', async () => {
       await request(app.getHttpServer())
         .get(`/api/gyms/${gymId}/coach/classes`)
-        .set('x-user-id', athleteUserId)
-        .set('x-gym-id', gymId)
+        .set('Authorization', `Bearer ${athleteToken}`)
         .expect(403);
     });
   });

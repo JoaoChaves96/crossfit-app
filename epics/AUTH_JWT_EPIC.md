@@ -1,7 +1,8 @@
 # EPIC: JWT Authentication Infrastructure
 
-**Status:** 🔄 NOT STARTED  
-**Start Date:** TBD  
+**Status:** ✅ COMPLETE  
+**Start Date:** 2026-05-03  
+**End Date:** 2026-05-03  
 **Owner:** Backend team  
 **Replaces:** `context/AUTH_INFRASTRUCTURE.md` (now superseded by this epic)
 
@@ -158,26 +159,26 @@ Tasks #1, #2, #3, #4 can all run in parallel. Task #5 depends on all of them.
 
 ## Acceptance Criteria
 
-- [ ] `POST /api/auth/login` issues a valid JWT for correct credentials
-- [ ] `POST /api/auth/login` returns 401 for wrong credentials
-- [ ] All endpoints reject requests with missing or invalid tokens (except in dev bypass mode)
-- [ ] All endpoints enforce the correct role — wrong role returns 403
-- [ ] `CurrentUser` and `CurrentGym` read from JWT claims with no hardcoded fallbacks
-- [ ] Coach invite creates users with `status: pending` and `passwordHash` set
-- [ ] User + staff creation is wrapped in a transaction
-- [ ] All existing E2E tests pass using real JWT tokens
-- [ ] Dev bootstrap still works locally via the `NODE_ENV=development` header bypass
+- [x] `POST /api/auth/login` issues a valid JWT for correct credentials
+- [x] `POST /api/auth/login` returns 401 for wrong credentials
+- [x] All endpoints reject requests with missing or invalid tokens (except in dev bypass mode)
+- [x] All endpoints enforce the correct role — wrong role returns 403
+- [x] `CurrentUser` and `CurrentGym` read from JWT claims with no hardcoded fallbacks
+- [x] Coach invite creates users with `status: pending` and `passwordHash` set
+- [x] User + staff creation is wrapped in a transaction
+- [x] All existing E2E tests pass using real JWT tokens
+- [x] Dev bootstrap still works locally via the `NODE_ENV=development` header bypass
 
 ---
 
 ## Pre-Prod Checklist Items Resolved
 
 When this epic is complete, mark the following as done in `context/PRE_PROD_CHECKLIST.md`:
-- [ ] Replace `JwtAuthGuard` stub with real JWT validation
-- [ ] Add role guard to `POST /api/gyms`
-- [ ] Auto-created users via coach invite set to `pending`
-- [ ] User name must not default to email address
-- [ ] Wrap user + staff creation in a single database transaction
+- [x] Replace `JwtAuthGuard` stub with real JWT validation
+- [x] Add role guard to `POST /api/gyms`
+- [x] Auto-created users via coach invite set to `pending`
+- [x] User name must not default to email address
+- [x] Wrap user + staff creation in a single database transaction
 
 ---
 

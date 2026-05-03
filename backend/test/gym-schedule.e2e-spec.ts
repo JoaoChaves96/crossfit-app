@@ -4,6 +4,7 @@ import request from 'supertest';
 import { AppModule } from '../src/app.module';
 import { DataSource } from 'typeorm';
 import { v4 as uuidv4 } from 'uuid';
+import { generateTestToken } from './helpers/jwt.helper';
 
 /**
  * Gym Owner Schedule E2E Tests
@@ -45,6 +46,26 @@ describe('Gym Owner Schedule (e2e)', () => {
   const spaceId = uuidv4();
   const classTypeId = uuidv4();
   let classId: string;
+
+  // JWTs for each actor
+  const ownerToken = generateTestToken({
+    id: ownerUserId,
+    email: 'owner@gym-schedule.test',
+    gymId,
+    role: 'owner',
+  });
+  const coachToken = generateTestToken({
+    id: coachUserId,
+    email: 'coach@gym-schedule.test',
+    gymId,
+    role: 'coach',
+  });
+  const athleteToken = generateTestToken({
+    id: athleteUserId,
+    email: 'athlete@gym-schedule.test',
+    gymId,
+    role: 'athlete',
+  });
 
   beforeAll(async () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
@@ -196,8 +217,7 @@ describe('Gym Owner Schedule (e2e)', () => {
     it('GET /api/gyms/:gymId/schedule → 200 with all classes', async () => {
       const response = await request(app.getHttpServer())
         .get(`/api/gyms/${gymId}/schedule`)
-        .set('x-user-id', ownerUserId)
-        .set('x-gym-id', gymId)
+        .set('Authorization', `Bearer ${ownerToken}`)
         .expect(200);
 
       const body = response.body as Record<string, unknown>;
@@ -224,8 +244,7 @@ describe('Gym Owner Schedule (e2e)', () => {
     it('GET /api/gyms/:gymId/schedule as athlete → 403', async () => {
       await request(app.getHttpServer())
         .get(`/api/gyms/${gymId}/schedule`)
-        .set('x-user-id', athleteUserId)
-        .set('x-gym-id', gymId)
+        .set('Authorization', `Bearer ${athleteToken}`)
         .expect(403);
     });
   });
@@ -237,8 +256,7 @@ describe('Gym Owner Schedule (e2e)', () => {
     it('GET /api/gyms/:gymId/schedule as coach → 403', async () => {
       await request(app.getHttpServer())
         .get(`/api/gyms/${gymId}/schedule`)
-        .set('x-user-id', coachUserId)
-        .set('x-gym-id', gymId)
+        .set('Authorization', `Bearer ${coachToken}`)
         .expect(403);
     });
   });

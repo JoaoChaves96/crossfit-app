@@ -7,14 +7,14 @@ This is a living document — add items as they surface during MVP development.
 
 ## Authentication & Authorization
 
-- [ ] Replace `JwtAuthGuard` stub with real JWT validation (currently accepts any `x-user-id` header with hardcoded fallback `'user-123'`)
-- [ ] Add role guard to `POST /api/gyms` — currently any user can create a gym (privilege escalation)
+- [x] Replace `JwtAuthGuard` stub with real JWT validation ✅ Epic A (2026-05-03)
+- [x] Add role guard to `POST /api/gyms` ✅ Epic A (2026-05-03)
 
 ## Data Safety
 
-- [ ] Auto-created users via coach invite should be set to `pending`, not `active` (no credentials yet)
-- [ ] User name must not default to email address — use a placeholder until the user fills in their profile
-- [ ] Wrap user + staff creation in a single database transaction — partial failure currently leaves orphaned users
+- [x] Auto-created users via coach invite should be set to `pending`, not `active` ✅ Epic A (2026-05-03)
+- [x] User name must not default to email address — placeholder 'Coach' used until profile setup ✅ Epic A (2026-05-03)
+- [x] Wrap user + staff creation in a single database transaction ✅ Epic A (2026-05-03)
 
 ---
 

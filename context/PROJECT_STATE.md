@@ -1,7 +1,8 @@
 # Project State
 
 **→ See `epics/GYM_OWNER_EPIC.md` for completed epic details**  
-**→ See `epics/COACH_MVP_EPIC.md` for completed epic details**
+**→ See `epics/COACH_MVP_EPIC.md` for completed epic details**  
+**→ See `epics/AUTH_JWT_EPIC.md` for completed epic details**
 
 ## Product
 
@@ -9,9 +10,25 @@ Crossfit class booking application.
 
 ## Current Phase (2026-05-03)
 
-**EPIC:** Coach MVP — ✅ COMPLETE (2026-05-03)
+**EPIC:** JWT Auth Infrastructure (Epic A) — ✅ COMPLETE (2026-05-03)
 
-**Previous:** Minimal Gym Owner MVP — ✅ COMPLETE (2026-04-29)
+**Previous:** Coach MVP — ✅ COMPLETE (2026-05-03)
+
+## Auth State
+
+- `JwtAuthGuard` validates real Bearer tokens (JWT_SECRET env var)
+- Dev bypass active when `NODE_ENV=development` and no Authorization header (header stub still works locally)
+- All endpoints protected with JwtAuthGuard + role-based RolesGuard
+- `POST /api/auth/login` is public — issues signed JWT for valid credentials
+- `CurrentUser` and `CurrentGym` read from JWT claims — no hardcoded fallbacks
+
+## Local Environment
+
+- Backend: NestJS on port 3000
+- Frontend: Expo web on port 8081
+- Auth: JWT (Bearer token) in production/test; header bypass in `NODE_ENV=development`
+- Dev bootstrap screen exists (DEV ONLY) — still usable via header bypass
+- Designs saved in: `/designs/`
 
 ## Verified Working Flows (Athlete MVP)
 
@@ -31,35 +48,6 @@ Crossfit class booking application.
 ✅ Sidebar navigation: Schedule ↔ Coaches  
 ✅ Disabled nav items are muted and non-interactive  
 
-## All Active Endpoints
-
-✅ POST /api/gyms (create gym)  
-✅ POST /gym-configuration/spaces (create space)  
-✅ POST /gym-configuration/class-types (configure class types)  
-✅ POST /api/gyms/:gymId/classes (create class)  
-✅ POST /api/gyms/:gymId/configuration/coaches (invite coach)  
-✅ GET /api/gyms/:gymId/configuration/coaches (list coaches)  
-✅ GET /api/gyms/:gymId/schedule (owner schedule)  
-
-## Local Environment
-
-- Backend: NestJS on port 3000
-- Frontend: Expo web on port 8081
-- Auth: header-based (x-user-id, x-gym-id) — **DEV STUB, NOT PRODUCTION**
-- Dev bootstrap screen exists (DEV ONLY)
-- Designs saved in: `/designs/`
-
-## Deferred to Pre-Prod
-
-Security hardening items (JwtAuthGuard, role guards, user state, transaction safety) are deliberately deferred. Full list in `context/PRE_PROD_CHECKLIST.md`.
-
-## Known Non-Goals (for now)
-
-- No production auth (deferred, documented)
-- No payments
-- No Members UI
-- No Settings UI
-
 ## Verified Working Flows (Coach MVP)
 
 ✅ My Assigned Classes screen loads with real coach-scoped data  
@@ -71,20 +59,31 @@ Security hardening items (JwtAuthGuard, role guards, user state, transaction saf
 
 ## All Active Endpoints
 
-✅ POST /api/gyms (create gym)  
-✅ POST /gym-configuration/spaces (create space)  
-✅ POST /gym-configuration/class-types (configure class types)  
-✅ POST /api/gyms/:gymId/classes (create class)  
-✅ POST /api/gyms/:gymId/configuration/coaches (invite coach)  
-✅ GET /api/gyms/:gymId/configuration/coaches (list coaches)  
-✅ GET /api/gyms/:gymId/schedule (owner schedule)  
-✅ GET /api/gyms/:gymId/coach/classes (coach assigned classes)  
-✅ GET /api/gyms/:gymId/classes/:classId/programming (fetch WOD)  
-✅ POST /api/gyms/:gymId/classes/:classId/programming (add/edit WOD)  
-✅ GET /api/gyms/:gymId/classes/:classId/bookings (booked athletes)  
-✅ POST /api/gyms/:gymId/classes/:classId/attendance (mark attendance)  
-✅ GET /api/gyms/:gymId/classes/:classId/results (class results)  
+✅ POST /api/auth/login (public — issues JWT)  
+✅ POST /api/gyms (any authenticated user)  
+✅ POST /gym-configuration/spaces (owner)  
+✅ POST /gym-configuration/class-types (owner)  
+✅ POST /api/gyms/:gymId/classes (owner)  
+✅ POST /api/gyms/:gymId/configuration/coaches (owner)  
+✅ GET /api/gyms/:gymId/configuration/coaches (owner)  
+✅ GET /api/gyms/:gymId/schedule (owner)  
+✅ GET /api/gyms/:gymId/coach/classes (coach)  
+✅ GET /api/gyms/:gymId/classes/:classId/programming (coach or owner)  
+✅ POST /api/gyms/:gymId/classes/:classId/programming (coach)  
+✅ GET /api/gyms/:gymId/classes/:classId/bookings (coach or owner)  
+✅ POST /api/gyms/:gymId/classes/:classId/attendance (coach)  
+✅ GET /api/gyms/:gymId/classes/:classId/results (coach or owner)  
+✅ POST /api/gyms/:gymId/classes/:classId/transition (coach or owner)  
+
+## Known Non-Goals (for now)
+
+- No login/register screens (Epic B — Auth Flows)
+- No frontend token storage/handling (Epic B)
+- No invite flow / email delivery (Epic C — Invite & Onboarding)
+- No payments
+- No Members UI
+- No Settings UI
 
 ## Next Action
 
-Coach MVP is complete. Next epic to be determined.
+Epic A complete. Next: Epic B — Auth Flows (login/register screens, frontend token handling).
