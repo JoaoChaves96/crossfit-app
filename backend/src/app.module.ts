@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { DatabaseModule } from './config/database.module';
 import { HttpModule } from './http/http.module';
+import { AuthModule } from './api/auth/auth.module';
 
 /**
  * AppModule: Root application module
@@ -8,6 +9,7 @@ import { HttpModule } from './http/http.module';
  * Wiring:
  * 1. DatabaseModule - Configures TypeORM and all entities
  * 2. HttpModule - Registers all HTTP controllers and imports feature modules
+ * 3. AuthModule - Handles authentication (login, JWT issuance)
  *
  * This module brings together all layers:
  * - Database configuration and ORM
@@ -19,6 +21,7 @@ import { HttpModule } from './http/http.module';
   imports: [
     DatabaseModule, // TypeORM setup
     HttpModule, // Controllers + feature modules
+    AuthModule, // Authentication
   ],
 })
 export class AppModule {}

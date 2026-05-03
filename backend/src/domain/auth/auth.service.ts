@@ -1,0 +1,67 @@
+import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { JwtService } from '@nestjs/jwt';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+import * as bcrypt from 'bcrypt';
+import { UserEntity } from '../user/entities/user.entity';
+import { GymStaffEntity } from '../gym-staff/entities/gym-staff.entity';
+import { GymMembershipEntity } from '../gym-membership/entities/gym-membership.entity';
+
+@Injectable()
+export class AuthService {
+  constructor(
+    @InjectRepository(UserEntity)
+    private readonly userRepository: Repository<UserEntity>,
+    @InjectRepository(GymStaffEntity)
+    private readonly gymStaffRepository: Repository<GymStaffEntity>,
+    @InjectRepository(GymMembershipEntity)
+    private readonly gymMembershipRepository: Repository<GymMembershipEntity>,
+    private readonly jwtService: JwtService,
+  ) {}
+
+  async login(email: string, password: string): Promise<string> {
+    const user = await this.userRepository.findOne({ where: { email } });
+
+    if (!user || !user.passwordHash) {
+      throw new UnauthorizedException('Invalid credentials');
+    }
+
+    const passwordValid = await bcrypt.compare(password, user.passwordHash);
+    if (!passwordValid) {
+      throw new UnauthorizedException('Invalid credentials');
+    }
+
+    const { gymId, role } = await this.resolveGymContext(user.id);
+
+    const payload = {
+      sub: user.id,
+      email: user.email,
+      gymId,
+      role,
+    };
+
+    return this.jwtService.sign(payload);
+  }
+
+  private async resolveGymContext(
+    userId: string,
+  ): Promise<{ gymId: string | null; role: string | null }> {
+    const staffEntry = await this.gymStaffRepository.findOne({
+      where: { userId, status: 'active' },
+    });
+
+    if (staffEntry) {
+      return { gymId: staffEntry.gymId, role: staffEntry.role };
+    }
+
+    const membership = await this.gymMembershipRepository.findOne({
+      where: { userId, status: 'active' },
+    });
+
+    if (membership) {
+      return { gymId: membership.gymId, role: 'athlete' };
+    }
+
+    return { gymId: null, role: null };
+  }
+}
