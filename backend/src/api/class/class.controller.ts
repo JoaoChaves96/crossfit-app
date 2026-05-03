@@ -184,6 +184,7 @@ export class ClassController {
    * - Returns all active bookings (booked + waitlisted) with athlete userId and display name
    */
   @Get('/:classId/bookings')
+  @Role(['coach', 'owner'])
   @ApiOperation({
     summary: 'Get booked athletes for a class',
     description:
@@ -199,7 +200,7 @@ export class ClassController {
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   @ApiResponse({
     status: 403,
-    description: 'Forbidden - Assigned coach or gym owner required',
+    description: 'Forbidden - Coach or owner role required',
   })
   @ApiResponse({ status: 404, description: 'Class not found in gym' })
   async getClassBookings(
@@ -406,6 +407,7 @@ export class ClassController {
    * - Returns null for content and lastUpdatedAt if no programming has been saved yet
    */
   @Get('/:classId/programming')
+  @Role(['coach', 'owner'])
   @ApiOperation({
     summary: 'Get class programming (WOD)',
     description:
@@ -421,7 +423,7 @@ export class ClassController {
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   @ApiResponse({
     status: 403,
-    description: 'Forbidden - Assigned coach or gym owner required',
+    description: 'Forbidden - Coach or owner role required',
   })
   @ApiResponse({ status: 404, description: 'Class not found in gym' })
   async getClassProgramming(
@@ -557,11 +559,11 @@ export class ClassController {
    * - Class cannot transition backwards (state machine is unidirectional)
    */
   @Post('/:classId/transition')
-  @Role('coach')
+  @Role(['coach', 'owner'])
   @ApiOperation({
     summary: 'Manually transition class state',
     description:
-      'Move a class to the next state in the lifecycle (published → booking_closed → in_progress → completed → archived). Coaches only. State transitions are unidirectional.',
+      'Move a class to the next state in the lifecycle (published → booking_closed → in_progress → completed → archived). Coaches or gym owners. State transitions are unidirectional.',
   })
   @ApiParam({ name: 'gymId', description: 'Gym ID' })
   @ApiParam({ name: 'classId', description: 'Class ID' })
@@ -572,7 +574,7 @@ export class ClassController {
     type: ManuallyTransitionClassStateResponseDto,
   })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
-  @ApiResponse({ status: 403, description: 'Forbidden - Coach role required' })
+  @ApiResponse({ status: 403, description: 'Forbidden - Coach or owner role required' })
   async manuallyTransitionClassState(
     @Param('gymId') gymId: string,
     @Param('classId') classId: string,
@@ -686,6 +688,7 @@ export class ClassController {
    * - Returns all athlete results logged for the class
    */
   @Get('/:classId/results')
+  @Role(['coach', 'owner'])
   @ApiOperation({
     summary: 'Get athlete results for a class',
     description:
@@ -701,7 +704,7 @@ export class ClassController {
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   @ApiResponse({
     status: 403,
-    description: 'Forbidden - Assigned coach or gym owner required',
+    description: 'Forbidden - Coach or owner role required',
   })
   @ApiResponse({ status: 404, description: 'Class not found in gym' })
   async getClassResults(

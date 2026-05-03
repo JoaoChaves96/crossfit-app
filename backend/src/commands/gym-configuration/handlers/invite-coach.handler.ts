@@ -14,6 +14,8 @@ import { DataSource, EntityManager } from 'typeorm';
 import { GymStaffEntity } from '../../../domain/gym-staff/entities/gym-staff.entity';
 import { UserEntity } from '../../../domain/user/entities/user.entity';
 import { v4 as uuid } from 'uuid';
+import * as crypto from 'crypto';
+import * as bcrypt from 'bcrypt';
 
 /**
  * InviteCoachHandler: Orchestrates coach invitations
@@ -69,13 +71,16 @@ export class InviteCoachHandler implements ICommandHandler<InviteCoachCommand> {
         where: { email: command.coachEmail },
       });
       if (!coachUser) {
+        const temporaryPassword = crypto.randomBytes(32).toString('hex');
+        const passwordHash = await bcrypt.hash(temporaryPassword, 10);
+
         const newUser = new UserEntity();
         newUser.id = uuid();
         newUser.email = command.coachEmail;
         // Placeholder name until user completes profile setup.
         // Intentionally non-unique — user must update their actual name.
         newUser.name = 'Coach';
-        newUser.passwordHash = null;
+        newUser.passwordHash = passwordHash;
         newUser.socialLoginId = null;
         newUser.status = 'pending';
         coachUser = await userRepository.save(newUser);
