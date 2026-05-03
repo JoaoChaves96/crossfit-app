@@ -32,9 +32,10 @@ function decodeJwtPayload(token: string): Record<string, unknown> {
   }
 }
 
-function isTokenExpired(payload: Record<string, unknown>): boolean {
+function isTokenValid(payload: Record<string, unknown>): boolean {
+  if (typeof payload.sub !== 'string' || !payload.sub) return false;
   if (typeof payload.exp !== 'number') return false;
-  return Date.now() / 1000 > payload.exp;
+  return Date.now() / 1000 < payload.exp;
 }
 
 function userFromPayload(payload: Record<string, unknown>): AuthUser {
@@ -57,7 +58,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         const storedToken = await storage.getItem(AUTH_TOKEN_KEY);
         if (storedToken) {
           const payload = decodeJwtPayload(storedToken);
-          if (isTokenExpired(payload)) {
+          if (!isTokenValid(payload)) {
             await storage.removeItem(AUTH_TOKEN_KEY);
           } else {
             setToken(storedToken);

@@ -2,7 +2,9 @@
 
 **→ See `epics/GYM_OWNER_EPIC.md` for completed epic details**  
 **→ See `epics/COACH_MVP_EPIC.md` for completed epic details**  
-**→ See `epics/AUTH_JWT_EPIC.md` for completed epic details**
+**→ See `epics/AUTH_JWT_EPIC.md` for completed epic details**  
+**→ See `epics/AUTH_FLOWS_EPIC.md` for completed epic details**  
+**→ See `epics/ATHLETE_SCREENS_EPIC.md` for completed epic details**
 
 ## Product
 
@@ -10,34 +12,47 @@ Crossfit class booking application.
 
 ## Current Phase (2026-05-03)
 
-**EPIC:** JWT Auth Infrastructure (Epic A) — ✅ COMPLETE (2026-05-03)
+**EPIC:** Athlete Screens Redesign (Epic C.1) — ✅ COMPLETE (2026-05-03)
 
+**Previous:** Auth Flows (Epic B) — ✅ COMPLETE (2026-05-03)  
+**Previous:** JWT Auth Infrastructure (Epic A) — ✅ COMPLETE (2026-05-03)  
 **Previous:** Coach MVP — ✅ COMPLETE (2026-05-03)
 
-## Auth State
+## Auth State (Epic B Complete)
 
-- `JwtAuthGuard` validates real Bearer tokens (JWT_SECRET env var)
-- Dev bypass active when `NODE_ENV=development` and no Authorization header (header stub still works locally)
+### Backend
+- `JwtAuthGuard` validates real Bearer tokens (JWT_SECRET from `backend/.env`)
+- Dev bypass: `NODE_ENV=development` + no Authorization header → falls back to `x-user-id`/`x-gym-id` headers
 - All endpoints protected with JwtAuthGuard + role-based RolesGuard
-- `POST /api/auth/login` is public — issues signed JWT for valid credentials
-- `CurrentUser` and `CurrentGym` read from JWT claims — no hardcoded fallbacks
+- `POST /api/auth/login` — public, issues 7-day JWT for valid credentials
+- `POST /api/auth/register` — public, creates athlete account and issues JWT (gymId: null, role: null)
+- `CurrentUser` and `CurrentGym` decorators read from JWT claims
+
+### Frontend
+- `AuthContext` — manages token, user state, session restore on app start
+- `apiClient` — attaches Bearer token to all requests, handles 401 redirects
+- Navigation guard — unauthenticated users redirected to `/login`
+- Login screen — logs in any role, routes by role (owner/athlete → `/(tabs)/schedule`, coach → `/coach-classes`)
+- Register screen — creates new athlete account, routes to `/no-gym`
+- No-gym screen — holds unauthenticated athletes until invited to a gym
+- Dev bootstrap — three tappable user cards (Owner, Coach, Athlete) with instant login
 
 ## Local Environment
 
-- Backend: NestJS on port 3000
+- Backend: NestJS on port 3000 (requires `JWT_SECRET` in `backend/.env`)
 - Frontend: Expo web on port 8081
-- Auth: JWT (Bearer token) in production/test; header bypass in `NODE_ENV=development`
-- Dev bootstrap screen exists (DEV ONLY) — still usable via header bypass
-- Designs saved in: `/designs/`
+- Database: PostgreSQL (seeded with test users: owner@, coach@, athlete@example.com / password123)
+- Designs: `/designs/auth-screens.pen`, `/designs/athlete-screens.pen`, `/designs/gym-owner-screens.pen`, `/designs/coach-screens.pen`
 
 ## Verified Working Flows (Athlete MVP)
 
-✅ View class schedule  
-✅ View class details  
+✅ View class schedule (redesigned with Pencil specs: header, date separators, class cards, status badges)  
+✅ View class details (redesigned: back nav, meta info with icons, capacity progress bar, programming section)  
 ✅ Book a class  
-✅ View My Bookings  
+✅ View My Bookings (redesigned: toggle filters, booking cards, empty state with Browse Schedule button)  
 ✅ Cancel booking  
-✅ State persists across reload (dev)
+✅ State persists across reload (dev)  
+✅ GymContext persists gym ID after login (fixed: athletes now see their gym's classes)
 
 ## Verified Working Flows (Gym Owner MVP)
 
@@ -77,13 +92,31 @@ Crossfit class booking application.
 
 ## Known Non-Goals (for now)
 
-- No login/register screens (Epic B — Auth Flows)
-- No frontend token storage/handling (Epic B)
-- No invite flow / email delivery (Epic C — Invite & Onboarding)
+- No invite flow / email delivery (Epic C.2 — Invite & Onboarding)
 - No payments
 - No Members UI
 - No Settings UI
 
-## Next Action
+## Next Epic
 
-Epic A complete. Epic B (Auth Flows) planned — see `epics/AUTH_FLOWS_EPIC.md`.
+Epic C.2 — Invite & Onboarding — TBD
+
+Remaining work:
+- Invite flow (coaches/owners invite athletes to gyms)
+- Email delivery (invite link + onboarding)
+- Gym joining / membership activation
+- User profile setup (name, avatar, preferences)
+
+## Verification Complete (2026-05-03)
+
+✅ All endpoints tested and working  
+✅ Frontend auth flow works end-to-end  
+✅ Dev bootstrap ready for quick testing  
+✅ Session persistence working  
+
+Test credentials:
+- athlete@example.com / password123
+- coach@example.com / password123
+- owner@example.com / password123
+
+Resume token: c157441a-ad5b-46b0-b7eb-a0df12c3d445

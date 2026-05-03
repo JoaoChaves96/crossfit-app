@@ -1,5 +1,5 @@
 import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
-import { Stack, useRouter } from 'expo-router';
+import { Stack, usePathname, useRouter } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import 'react-native-reanimated';
 import { useContext, useEffect } from 'react';
@@ -8,20 +8,29 @@ import { useColorScheme } from '@/hooks/use-color-scheme';
 import { AuthContext, AuthProvider } from '@/context/AuthContext';
 import { GymProvider } from '@/context/GymContext';
 
+const DEV_BOOTSTRAP_ROUTE = '/dev-bootstrap';
+
 export const unstable_settings = {
   anchor: '(tabs)',
 };
 
 function NavigationGuard() {
   const router = useRouter();
+  const pathname = usePathname();
   const auth = useContext(AuthContext);
 
+  const isDevBootstrap = __DEV__ && pathname === DEV_BOOTSTRAP_ROUTE;
+
   useEffect(() => {
+    if (isDevBootstrap) return;
     if (!auth || auth.isLoading) return;
     if (!auth.isAuthenticated) {
       router.replace('/login' as never);
     }
-  }, [auth, router]);
+    if (auth.isAuthenticated && pathname === DEV_BOOTSTRAP_ROUTE) {
+      router.replace('/(tabs)' as never);
+    }
+  }, [auth, isDevBootstrap, pathname, router]);
 
   return null;
 }

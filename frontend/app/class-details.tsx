@@ -1,18 +1,168 @@
 import React, { useEffect, useState } from 'react';
-import { View, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator, Text } from 'react-native';
+import {
+  View,
+  Text,
+  ScrollView,
+  TouchableOpacity,
+  ActivityIndicator,
+  StyleSheet,
+} from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
+import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '@/hooks/useAuth';
 import { useGym } from '@/hooks/useGym';
 import { createApiClient } from '@/utils/api-client';
 import { showConfirm, showError } from '@/utils/alert';
 import { components } from '@/types/api.gen';
 
+// --- Design tokens ---
+const COLORS = {
+  bg: '#FFFFFF',
+  fontPrimary: '#1A1A1A',
+  fontSecondary: '#666666',
+  fontTertiary: '#999999',
+  border: '#E0E0E0',
+  divider: '#E5E5E5',
+  accent: '#333333',
+  danger: '#DC2626',
+  badgeBooked: '#059669',
+  badgeBookedBg: '#ECFDF5',
+  badgeWaitlisted: '#E65100',
+  badgeWaitlistedBg: '#FFF3E0',
+  capacityBar: '#F59E0B',
+  capacityBarBg: '#E5E5E5',
+  black: '#000000',
+  white: '#FFFFFF',
+  errorBg: '#FFEBEE',
+  errorText: '#C62828',
+} as const;
+
+// --- Types ---
 type ClassDetailsItem = components['schemas']['ClassScheduleItemDto'];
-type UserBookingItem = components['schemas']['UserBookingItemDto'];
 type GetUserBookingsResponse = components['schemas']['GetUserBookingsResponseDto'];
 type GetClassScheduleResponse = components['schemas']['GetClassScheduleResponseDto'];
 
 type BookingStatus = 'booked' | 'waitlisted' | 'open' | 'full';
+
+// --- Sub-components ---
+
+function MetaRow({
+  iconName,
+  text,
+}: {
+  iconName: keyof typeof Ionicons.glyphMap;
+  text: string;
+}) {
+  return (
+    <View style={styles.metaRow}>
+      <Ionicons name={iconName} size={16} color={COLORS.fontSecondary} />
+      <Text style={styles.metaText}>{text}</Text>
+    </View>
+  );
+}
+
+function Divider() {
+  return <View style={styles.divider} />;
+}
+
+function SectionLabel({ text }: { text: string }) {
+  return <Text style={styles.sectionLabel}>{text}</Text>;
+}
+
+function CapacitySection({
+  capacity,
+  bookedCount,
+}: {
+  capacity: number;
+  bookedCount: number;
+}) {
+  const fillRatio = capacity > 0 ? bookedCount / capacity : 0;
+  const remaining = capacity - bookedCount;
+  const pct = Math.round(fillRatio * 100);
+
+  return (
+    <View style={styles.sectionGap8}>
+      <SectionLabel text="Capacity" />
+      <View style={styles.capacityHeader}>
+        <Text style={styles.capacityCount}>{`${bookedCount} / ${capacity}`}</Text>
+      </View>
+      <View style={styles.capacityBarBg}>
+        <View style={[styles.capacityBarFill, { flex: fillRatio }]} />
+      </View>
+      <Text style={styles.capacityNote}>
+        {`${pct}% full · ${remaining} spot${remaining !== 1 ? 's' : ''} remaining`}
+      </Text>
+    </View>
+  );
+}
+
+function BookingStatusSection({ status }: { status: BookingStatus }) {
+  const isBooked = status === 'booked';
+  const isWaitlisted = status === 'waitlisted';
+
+  if (!isBooked && !isWaitlisted) return null;
+
+  const badgeColor = isBooked ? COLORS.badgeBooked : COLORS.badgeWaitlisted;
+  const badgeBg = isBooked ? COLORS.badgeBookedBg : COLORS.badgeWaitlistedBg;
+  const labelText = isBooked ? 'BOOKED – Confirmed' : 'WAITLISTED';
+  const iconName: keyof typeof Ionicons.glyphMap = isBooked
+    ? 'checkmark-circle'
+    : 'time-outline';
+
+  return (
+    <View style={styles.sectionGap8}>
+      <SectionLabel text="Booking Status" />
+      <View style={[styles.statusBadge, { backgroundColor: badgeBg }]}>
+        <Ionicons name={iconName} size={18} color={badgeColor} />
+        <Text style={[styles.statusBadgeText, { color: badgeColor }]}>{labelText}</Text>
+      </View>
+    </View>
+  );
+}
+
+function ProgrammingSection() {
+  return (
+    <View style={styles.sectionGap10}>
+      <SectionLabel text="Programming" />
+      <Text style={styles.wodTitle}>WOD</Text>
+      <View style={styles.programBlock}>
+        <Text style={styles.programSubLabel}>Warm-up</Text>
+        <Text style={styles.programText}>See class details provided by your coach.</Text>
+      </View>
+    </View>
+  );
+}
+
+function ResultsSection() {
+  return (
+    <View style={styles.sectionGap10}>
+      <SectionLabel text="Recent Results" />
+    </View>
+  );
+}
+
+// --- Loading / Error screens ---
+
+function LoadingScreen() {
+  return (
+    <View style={styles.centered}>
+      <ActivityIndicator size="large" color={COLORS.accent} />
+    </View>
+  );
+}
+
+function ErrorScreen({ message, onBack }: { message: string; onBack: () => void }) {
+  return (
+    <View style={styles.centered}>
+      <Text style={styles.errorText}>{message}</Text>
+      <TouchableOpacity style={styles.errorBackBtn} onPress={onBack}>
+        <Text style={styles.errorBackBtnText}>Go Back</Text>
+      </TouchableOpacity>
+    </View>
+  );
+}
+
+// --- Main screen ---
 
 export default function ClassDetailsScreen() {
   const router = useRouter();
@@ -21,51 +171,12 @@ export default function ClassDetailsScreen() {
   const { classId } = useLocalSearchParams();
 
   const [classData, setClassData] = useState<ClassDetailsItem | null>(null);
-  const [userBookingStatus, setUserBookingStatus] = useState<BookingStatus>('open');
-  const [userBookingId, setUserBookingId] = useState<string | null>(null);
+  const [bookingStatus, setBookingStatus] = useState<BookingStatus>('open');
+  const [bookingId, setBookingId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [fetchError, setFetchError] = useState<string | null>(null);
   const [mutationError, setMutationError] = useState<string | null>(null);
-
-  const fetchData = async (client: ReturnType<typeof createApiClient>) => {
-    try {
-      setIsLoading(true);
-      setError(null);
-
-      // Fetch both schedule and bookings
-      const [scheduleResponse, bookingsResponse] = await Promise.all([
-        client.get<GetClassScheduleResponse>(`/api/gyms/${currentGymId}/classes`),
-        client.get<GetUserBookingsResponse>('/api/me/bookings'),
-      ]);
-
-      const found = scheduleResponse.classes.find((c) => c.id === classId);
-      if (!found) {
-        setError('Class not found');
-        return;
-      }
-
-      setClassData(found);
-
-      // Determine booking status
-      const booking = bookingsResponse.bookings.find((b) => b.classId === classId);
-      if (booking) {
-        setUserBookingStatus(booking.status);
-        setUserBookingId(booking.id);
-      } else if (found.bookedCount >= found.capacity) {
-        setUserBookingStatus('full');
-        setUserBookingId(null);
-      } else {
-        setUserBookingStatus('open');
-        setUserBookingId(null);
-      }
-    } catch (err) {
-      const message = err instanceof Error ? err.message : 'Failed to load class details';
-      setError(message);
-    } finally {
-      setIsLoading(false);
-    }
-  };
 
   useEffect(() => {
     if (authLoading || gymLoading || !token || !currentGymId || !classId) {
@@ -74,383 +185,435 @@ export default function ClassDetailsScreen() {
     }
 
     const client = createApiClient({ token });
-    fetchData(client);
+
+    const load = async () => {
+      setIsLoading(true);
+      setFetchError(null);
+      try {
+        const [scheduleRes, bookingsRes] = await Promise.all([
+          client.get<GetClassScheduleResponse>(`/api/gyms/${currentGymId}/classes`),
+          client.get<GetUserBookingsResponse>('/api/me/bookings'),
+        ]);
+
+        const found = scheduleRes.classes.find((c) => c.id === classId);
+        if (!found) {
+          setFetchError('Class not found');
+          return;
+        }
+
+        const booking = bookingsRes.bookings.find((b) => b.classId === classId);
+        const resolved: BookingStatus = booking
+          ? booking.status
+          : found.bookedCount >= found.capacity
+            ? 'full'
+            : 'open';
+
+        setClassData(found);
+        setBookingStatus(resolved);
+        setBookingId(booking?.id ?? null);
+      } catch (err) {
+        setFetchError(err instanceof Error ? err.message : 'Failed to load class details');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    load();
   }, [authLoading, gymLoading, token, currentGymId, classId]);
 
-  const handleBookClass = async () => {
+  const handleBook = async () => {
     if (!token || !currentGymId || !classId) return;
-
+    setIsSubmitting(true);
+    setMutationError(null);
     try {
-      setIsSubmitting(true);
-      setMutationError(null);
-
       const client = createApiClient({ token });
-
-      // Call booking endpoint
       await client.post(`/api/gyms/${currentGymId}/classes/${classId}/bookings`, {
         classId,
         gymId: currentGymId,
       });
-
-      // Re-fetch bookings to update UI
-      const bookingsResponse = await client.get<GetUserBookingsResponse>('/api/me/bookings');
-      const booking = bookingsResponse.bookings.find((b) => b.classId === classId);
+      const bookingsRes = await client.get<GetUserBookingsResponse>('/api/me/bookings');
+      const booking = bookingsRes.bookings.find((b) => b.classId === classId);
       if (booking) {
-        setUserBookingStatus(booking.status);
-        setUserBookingId(booking.id);
+        setBookingStatus(booking.status);
+        setBookingId(booking.id);
       }
     } catch (err) {
-      const message = err instanceof Error ? err.message : 'Failed to book class';
-      setMutationError(message);
-      showError('Booking Error', message);
+      const msg = err instanceof Error ? err.message : 'Failed to book class';
+      setMutationError(msg);
+      showError('Booking Error', msg);
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  const handleCancelBooking = () => {
-    showConfirm(
-      'Cancel Booking',
-      'Are you sure you want to cancel this booking?',
-      [
-        { text: 'Keep Booking', style: 'cancel', onPress: () => {} },
-        {
-          text: 'Cancel Booking',
-          style: 'destructive',
-          onPress: async () => {
-            if (!token || !currentGymId || !userBookingId) {
-              showError('Error', 'Missing required information for cancellation');
-              return;
+  const handleCancel = () => {
+    showConfirm('Cancel Booking', 'Are you sure you want to cancel this booking?', [
+      { text: 'Keep Booking', style: 'cancel', onPress: () => {} },
+      {
+        text: 'Cancel Booking',
+        style: 'destructive',
+        onPress: async () => {
+          if (!token || !currentGymId || !bookingId) {
+            showError('Error', 'Missing required information for cancellation');
+            return;
+          }
+          setIsSubmitting(true);
+          setMutationError(null);
+          try {
+            const client = createApiClient({ token });
+            await client.delete(`/api/gyms/${currentGymId}/classes/bookings/${bookingId}`);
+            const bookingsRes = await client.get<GetUserBookingsResponse>('/api/me/bookings');
+            const booking = bookingsRes.bookings.find((b) => b.classId === classId);
+            if (booking) {
+              setBookingStatus(booking.status);
+              setBookingId(booking.id);
+            } else {
+              setBookingId(null);
+              setBookingStatus(
+                classData && classData.bookedCount >= classData.capacity ? 'full' : 'open',
+              );
             }
-
-            try {
-              setIsSubmitting(true);
-              setMutationError(null);
-
-              const client = createApiClient({ token });
-
-              // Call cancellation endpoint
-              await client.delete(`/api/gyms/${currentGymId}/classes/bookings/${userBookingId}`);
-
-              // Re-fetch bookings to update UI
-              const bookingsResponse = await client.get<GetUserBookingsResponse>('/api/me/bookings');
-              const booking = bookingsResponse.bookings.find((b) => b.classId === classId);
-              if (booking) {
-                setUserBookingStatus(booking.status);
-                setUserBookingId(booking.id);
-              } else {
-                // No more bookings for this class
-                const currentClass = classData;
-                if (currentClass && currentClass.bookedCount >= currentClass.capacity) {
-                  setUserBookingStatus('full');
-                } else {
-                  setUserBookingStatus('open');
-                }
-                setUserBookingId(null);
-              }
-            } catch (err) {
-              const message = err instanceof Error ? err.message : 'Failed to cancel booking';
-              setMutationError(message);
-              showError('Cancellation Error', message);
-            } finally {
-              setIsSubmitting(false);
-            }
-          },
+          } catch (err) {
+            const msg = err instanceof Error ? err.message : 'Failed to cancel booking';
+            setMutationError(msg);
+            showError('Cancellation Error', msg);
+          } finally {
+            setIsSubmitting(false);
+          }
         },
-      ]
-    );
+      },
+    ]);
   };
 
-  const getStatusColor = (status: BookingStatus): string => {
-    switch (status) {
-      case 'booked':
-        return '#4caf50';
-      case 'waitlisted':
-        return '#ff9800';
-      case 'full':
-        return '#f44336';
-      case 'open':
-        return '#2196f3';
-      default:
-        return '#999';
-    }
-  };
-
-  const getStatusLabel = (status: BookingStatus): string => {
-    switch (status) {
-      case 'booked':
-        return 'You are booked';
-      case 'waitlisted':
-        return 'You are waitlisted';
-      case 'full':
-        return 'Class is full';
-      case 'open':
-        return 'Open';
-      default:
-        return '';
-    }
-  };
-
-  const isBookingDisabled =
-    userBookingStatus === 'booked' ||
-    userBookingStatus === 'waitlisted' ||
-    classData?.state === 'booking_closed' ||
-    classData?.state === 'in_progress' ||
-    classData?.state === 'completed' ||
-    classData?.state === 'archived' ||
-    isSubmitting;
-
-  const getBookButtonText = (): string => {
-    if (userBookingStatus === 'booked') return 'Already Booked';
-    if (userBookingStatus === 'waitlisted') return 'Already on Waitlist';
-    if (classData?.state === 'booking_closed') return 'Booking Closed';
-    if (classData?.state !== 'published') return 'Not Available';
-    return userBookingStatus === 'full' ? 'Join Waitlist' : 'Book Class';
-  };
-
-  if (isLoading) {
+  if (isLoading) return <LoadingScreen />;
+  if (fetchError || !classData) {
     return (
-      <View style={[styles.container, styles.centerContent]}>
-        <ActivityIndicator size="large" color="#0a7ea4" />
-      </View>
+      <ErrorScreen
+        message={fetchError ?? 'Class not found'}
+        onBack={() => router.back()}
+      />
     );
   }
 
-  if (error || !classData) {
-    return (
-      <View style={[styles.container, styles.centerContent]}>
-        <Text style={styles.errorText}>Error: {error || 'Class not found'}</Text>
-        <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
-          <Text style={styles.backButtonText}>Go Back</Text>
-        </TouchableOpacity>
-      </View>
-    );
-  }
+  const isClassPublished = classData.state === 'published';
+  const canBook = isClassPublished && bookingStatus === 'open';
+  const canJoinWaitlist = isClassPublished && bookingStatus === 'full';
+  const canCancel = bookingStatus === 'booked' || bookingStatus === 'waitlisted';
 
-  const isAvailable = classData.bookedCount < classData.capacity;
-  const availableSpots = classData.capacity - classData.bookedCount;
+  const bookBtnLabel =
+    bookingStatus === 'full' ? 'JOIN WAITLIST' : 'BOOK CLASS';
+
+  const formattedDate = `${classData.scheduledDate} · ${classData.scheduledTime}`;
+  const coachLabel = `Coach: ${classData.coachName}`;
 
   return (
-    <ScrollView style={styles.container}>
+    <View style={styles.screen}>
+      {/* Header */}
       <View style={styles.header}>
-        <Text style={styles.title}>{classData.classTypeName}</Text>
-        <View
-          style={[styles.stateBadge, { backgroundColor: getStatusColor(userBookingStatus) }]}>
-          <Text style={styles.stateBadgeText}>{getStatusLabel(userBookingStatus)}</Text>
-        </View>
-      </View>
-
-      {(userBookingStatus === 'booked' || userBookingStatus === 'waitlisted') && (
-        <View
-          style={[
-            styles.bookingStatusCard,
-            {
-              borderLeftColor: userBookingStatus === 'booked' ? '#4caf50' : '#ff9800',
-              backgroundColor: userBookingStatus === 'booked' ? '#e8f5e9' : '#fff3e0',
-            },
-          ]}>
-          <Text
-            style={[
-              styles.bookingStatusText,
-              {
-                color: userBookingStatus === 'booked' ? '#2e7d32' : '#e65100',
-              },
-            ]}>
-            ✓ You are {userBookingStatus === 'booked' ? 'booked for this class' : 'on the waitlist'}
-          </Text>
-        </View>
-      )}
-
-      {mutationError && (
-        <View style={styles.errorCard}>
-          <Text style={styles.errorCardText}>{mutationError}</Text>
-        </View>
-      )}
-
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Date & Time</Text>
-        <Text style={styles.sectionContent}>
-          {classData.scheduledDate} at {classData.scheduledTime}
-        </Text>
-      </View>
-
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Coach</Text>
-        <Text style={styles.sectionContent}>{classData.coachName}</Text>
-      </View>
-
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Availability</Text>
-        <Text style={styles.sectionContent}>
-          {isAvailable
-            ? `${availableSpots}/${classData.capacity} spots available`
-            : `Fully booked (Waitlist available)`}
-        </Text>
-      </View>
-
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Status</Text>
-        <Text style={styles.sectionContent}>{classData.state}</Text>
-      </View>
-
-      {classData.state === 'published' && (
-        <TouchableOpacity
-          style={[styles.bookButton, isBookingDisabled && styles.bookButtonDisabled]}
-          onPress={handleBookClass}
-          disabled={isBookingDisabled}>
-          {isSubmitting && userBookingStatus !== 'booked' && userBookingStatus !== 'waitlisted' ? (
-            <ActivityIndicator color="#fff" size="small" />
-          ) : (
-            <Text style={styles.bookButtonText}>{getBookButtonText()}</Text>
-          )}
+        <TouchableOpacity onPress={() => router.back()} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+          <Ionicons name="chevron-back" size={24} color={COLORS.black} />
         </TouchableOpacity>
-      )}
+        <Text style={styles.headerTitle}>Class Details</Text>
+      </View>
 
-      {(userBookingStatus === 'booked' || userBookingStatus === 'waitlisted') && (
-        <TouchableOpacity
-          style={[styles.cancelButton, isSubmitting && styles.cancelButtonDisabled]}
-          onPress={handleCancelBooking}
-          disabled={isSubmitting}>
-          {isSubmitting ? (
-            <ActivityIndicator color="#fff" size="small" />
-          ) : (
-            <Text style={styles.cancelButtonText}>Cancel Booking</Text>
-          )}
-        </TouchableOpacity>
-      )}
+      {/* Scrollable content */}
+      <ScrollView
+        style={styles.scrollView}
+        contentContainerStyle={styles.contentContainer}
+        showsVerticalScrollIndicator={false}>
 
-      <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
-        <Text style={styles.backButtonText}>Back to Schedule</Text>
-      </TouchableOpacity>
-    </ScrollView>
+        {/* Class name */}
+        <Text style={styles.className}>{classData.classTypeName}</Text>
+
+        {/* Meta info */}
+        <View style={styles.metaGroup}>
+          <MetaRow iconName="calendar-outline" text={formattedDate} />
+          <MetaRow iconName="person-outline" text={coachLabel} />
+        </View>
+
+        <Divider />
+
+        {/* Capacity */}
+        <CapacitySection capacity={classData.capacity} bookedCount={classData.bookedCount} />
+
+        <Divider />
+
+        {/* Booking Status */}
+        <BookingStatusSection status={bookingStatus} />
+
+        {canCancel && <Divider />}
+
+        {/* Programming */}
+        <ProgrammingSection />
+
+        <Divider />
+
+        {/* Results */}
+        <ResultsSection />
+
+        {/* Mutation error inline */}
+        {mutationError !== null && (
+          <View style={styles.mutationErrorCard}>
+            <Text style={styles.mutationErrorText}>{mutationError}</Text>
+          </View>
+        )}
+      </ScrollView>
+
+      {/* Action button */}
+      <View style={styles.actionContainer}>
+        {canCancel && (
+          <TouchableOpacity
+            style={styles.cancelBtn}
+            onPress={handleCancel}
+            disabled={isSubmitting}
+            activeOpacity={0.85}>
+            {isSubmitting ? (
+              <ActivityIndicator color={COLORS.white} size="small" />
+            ) : (
+              <Text style={styles.cancelBtnText}>CANCEL BOOKING</Text>
+            )}
+          </TouchableOpacity>
+        )}
+
+        {(canBook || canJoinWaitlist) && (
+          <TouchableOpacity
+            style={styles.bookBtn}
+            onPress={handleBook}
+            disabled={isSubmitting}
+            activeOpacity={0.85}>
+            {isSubmitting ? (
+              <ActivityIndicator color={COLORS.white} size="small" />
+            ) : (
+              <Text style={styles.bookBtnText}>{bookBtnLabel}</Text>
+            )}
+          </TouchableOpacity>
+        )}
+      </View>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
+  screen: {
     flex: 1,
-    backgroundColor: '#fff',
-    paddingHorizontal: 16,
+    backgroundColor: COLORS.bg,
   },
-  centerContent: {
+  centered: {
+    flex: 1,
+    backgroundColor: COLORS.bg,
     justifyContent: 'center',
     alignItems: 'center',
+    paddingHorizontal: 20,
   },
+
+  // Header
   header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+  },
+  headerTitle: {
+    fontFamily: 'Inter',
+    fontSize: 18,
+    fontWeight: '600',
+    color: COLORS.black,
+  },
+
+  // Scroll
+  scrollView: {
+    flex: 1,
+  },
+  contentContainer: {
+    paddingHorizontal: 20,
+    paddingBottom: 24,
+    gap: 24,
+  },
+
+  // Class name
+  className: {
+    fontFamily: 'Inter',
+    fontSize: 24,
+    fontWeight: '700',
+    color: COLORS.black,
+  },
+
+  // Meta rows
+  metaGroup: {
+    gap: 8,
+  },
+  metaRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  metaText: {
+    fontFamily: 'Inter',
+    fontSize: 14,
+    fontWeight: '400',
+    color: COLORS.fontSecondary,
+  },
+
+  // Divider
+  divider: {
+    height: 1,
+    backgroundColor: COLORS.divider,
+  },
+
+  // Section groups
+  sectionGap8: {
+    gap: 8,
+  },
+  sectionGap10: {
+    gap: 10,
+  },
+  sectionLabel: {
+    fontFamily: 'Inter',
+    fontSize: 14,
+    fontWeight: '600',
+    color: COLORS.black,
+  },
+
+  // Capacity
+  capacityHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginTop: 16,
-    marginBottom: 16,
-    paddingBottom: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: '#e0e0e0',
   },
-  title: {
-    fontSize: 28,
-    fontWeight: 'bold',
-    color: '#000',
-    flex: 1,
+  capacityCount: {
+    fontFamily: 'Inter',
+    fontSize: 14,
+    fontWeight: '600',
+    color: COLORS.black,
   },
-  stateBadge: {
-    paddingHorizontal: 12,
-    paddingVertical: 8,
+  capacityBarBg: {
+    flexDirection: 'row',
+    height: 8,
     borderRadius: 4,
-    marginLeft: 8,
+    backgroundColor: COLORS.capacityBarBg,
+    overflow: 'hidden',
   },
-  stateBadgeText: {
+  capacityBarFill: {
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: COLORS.capacityBar,
+  },
+  capacityNote: {
+    fontFamily: 'Inter',
+    fontSize: 12,
+    fontWeight: '400',
+    color: COLORS.capacityBar,
+  },
+
+  // Booking status badge
+  statusBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    borderRadius: 8,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+  },
+  statusBadgeText: {
+    fontFamily: 'Inter',
+    fontSize: 14,
+    fontWeight: '600',
+  },
+
+  // Programming
+  wodTitle: {
+    fontFamily: 'Inter',
+    fontSize: 14,
+    fontWeight: '600',
+    color: COLORS.accent,
+  },
+  programBlock: {
+    gap: 4,
+  },
+  programSubLabel: {
+    fontFamily: 'Inter',
     fontSize: 12,
     fontWeight: '600',
-    color: '#fff',
+    color: COLORS.fontTertiary,
   },
-  bookingStatusCard: {
+  programText: {
+    fontFamily: 'Inter',
+    fontSize: 13,
+    fontWeight: '400',
+    color: '#444444',
+    lineHeight: 13 * 1.4,
+  },
+
+  // Mutation error
+  mutationErrorCard: {
+    backgroundColor: COLORS.errorBg,
     borderLeftWidth: 4,
-    padding: 12,
+    borderLeftColor: COLORS.danger,
     borderRadius: 6,
-    marginBottom: 16,
-  },
-  bookingStatusText: {
-    fontSize: 14,
-    fontWeight: '500',
-  },
-  errorCard: {
-    backgroundColor: '#ffebee',
-    borderLeftWidth: 4,
-    borderLeftColor: '#d32f2f',
     padding: 12,
-    borderRadius: 6,
-    marginBottom: 16,
   },
-  errorCardText: {
+  mutationErrorText: {
+    fontFamily: 'Inter',
     fontSize: 14,
-    color: '#c62828',
     fontWeight: '500',
+    color: COLORS.errorText,
   },
-  section: {
-    marginBottom: 20,
+
+  // Action button area
+  actionContainer: {
+    paddingTop: 12,
+    paddingHorizontal: 20,
+    paddingBottom: 32,
+    gap: 12,
   },
-  sectionTitle: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#666',
-    marginBottom: 8,
-    textTransform: 'uppercase',
-  },
-  sectionContent: {
-    fontSize: 16,
-    color: '#000',
-  },
-  bookButton: {
-    backgroundColor: '#0a7ea4',
-    paddingVertical: 14,
-    borderRadius: 8,
+  cancelBtn: {
+    height: 50,
+    borderRadius: 12,
+    backgroundColor: COLORS.danger,
     alignItems: 'center',
-    marginVertical: 12,
     justifyContent: 'center',
-    minHeight: 48,
   },
-  bookButtonDisabled: {
-    backgroundColor: '#ccc',
+  cancelBtnText: {
+    fontFamily: 'Inter',
+    fontSize: 15,
+    fontWeight: '700',
+    color: COLORS.white,
+    letterSpacing: 0.5,
   },
-  bookButtonText: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#fff',
-  },
-  cancelButton: {
-    backgroundColor: '#f44336',
-    paddingVertical: 14,
-    borderRadius: 8,
+  bookBtn: {
+    height: 50,
+    borderRadius: 12,
+    backgroundColor: COLORS.accent,
     alignItems: 'center',
-    marginBottom: 12,
     justifyContent: 'center',
-    minHeight: 48,
   },
-  cancelButtonDisabled: {
-    backgroundColor: '#ffb3b3',
+  bookBtnText: {
+    fontFamily: 'Inter',
+    fontSize: 15,
+    fontWeight: '700',
+    color: COLORS.white,
+    letterSpacing: 0.5,
   },
-  cancelButtonText: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#fff',
-  },
-  backButton: {
-    backgroundColor: '#f0f0f0',
-    paddingVertical: 12,
-    borderRadius: 8,
-    alignItems: 'center',
-    marginVertical: 8,
-    marginBottom: 32,
-  },
-  backButtonText: {
-    fontSize: 16,
-    fontWeight: '500',
-    color: '#0a7ea4',
-  },
+
+  // Error screen
   errorText: {
+    fontFamily: 'Inter',
     fontSize: 16,
-    color: '#d32f2f',
+    color: COLORS.errorText,
     textAlign: 'center',
     marginBottom: 16,
+  },
+  errorBackBtn: {
+    paddingVertical: 12,
+    paddingHorizontal: 24,
+    borderRadius: 8,
+    backgroundColor: COLORS.divider,
+  },
+  errorBackBtnText: {
+    fontFamily: 'Inter',
+    fontSize: 14,
+    fontWeight: '600',
+    color: COLORS.black,
   },
 });

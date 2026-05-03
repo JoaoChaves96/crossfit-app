@@ -35,12 +35,12 @@ TRUNCATE TABLE gym_staff CASCADE;
 TRUNCATE TABLE gyms CASCADE;
 TRUNCATE TABLE users CASCADE;
 
--- Insert Users (proper UUIDs)
+-- Insert Users with bcrypt-hashed passwords (plaintext: "password123")
 INSERT INTO users (id, email, "passwordHash", "socialLoginId", name, status, "createdAt")
 VALUES
-  ('550e8400-e29b-41d4-a716-446655440001', 'athlete@example.com', NULL, NULL, 'Test Athlete', 'active', NOW()),
-  ('550e8400-e29b-41d4-a716-446655440002', 'coach@example.com', NULL, NULL, 'Test Coach', 'active', NOW()),
-  ('550e8400-e29b-41d4-a716-446655440003', 'owner@example.com', NULL, NULL, 'Gym Owner', 'active', NOW());
+  ('550e8400-e29b-41d4-a716-446655440001', 'athlete@example.com', '$2b$10$2XwoJPhlfulcQ0fJsZ8lgOUhPtLiTRdIVgnZxCvJXc9/e9G3PBEoC', NULL, 'Test Athlete', 'active', NOW()),
+  ('550e8400-e29b-41d4-a716-446655440002', 'coach@example.com', '$2b$10$2XwoJPhlfulcQ0fJsZ8lgOUhPtLiTRdIVgnZxCvJXc9/e9G3PBEoC', NULL, 'Test Coach', 'active', NOW()),
+  ('550e8400-e29b-41d4-a716-446655440003', 'owner@example.com', '$2b$10$2XwoJPhlfulcQ0fJsZ8lgOUhPtLiTRdIVgnZxCvJXc9/e9G3PBEoC', NULL, 'Gym Owner', 'active', NOW());
 
 -- Insert Gym
 INSERT INTO gyms (id, name, description, location, "logoUrl", "ownerUserId", status, "createdAt", "lastModifiedAt")
