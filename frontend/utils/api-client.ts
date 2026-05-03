@@ -1,12 +1,5 @@
-/**
- * API Client utility.
- * Attaches x-user-id and x-gym-id headers for header-based authentication.
- */
-
 export interface ApiClientOptions {
-  token?: string; // Legacy support (not used with header-based auth)
-  userId?: string | null;
-  gymId?: string | null;
+  token?: string | null;
   baseUrl?: string;
 }
 
@@ -17,12 +10,8 @@ export function createApiClient(options: ApiClientOptions) {
     'Content-Type': 'application/json',
   };
 
-  // Add header-based auth headers
-  if (options.userId) {
-    headers['x-user-id'] = options.userId;
-  }
-  if (options.gymId) {
-    headers['x-gym-id'] = options.gymId;
+  if (options.token) {
+    headers['Authorization'] = `Bearer ${options.token}`;
   }
 
   return {
@@ -37,7 +26,7 @@ export function createApiClient(options: ApiClientOptions) {
       return response.json();
     },
 
-    async post<T>(url: string, body?: Record<string, any>): Promise<T> {
+    async post<T>(url: string, body?: Record<string, unknown>): Promise<T> {
       const response = await fetch(`${baseUrl}${url}`, {
         method: 'POST',
         headers,
@@ -49,7 +38,7 @@ export function createApiClient(options: ApiClientOptions) {
       return response.json();
     },
 
-    async patch<T>(url: string, body?: Record<string, any>): Promise<T> {
+    async patch<T>(url: string, body?: Record<string, unknown>): Promise<T> {
       const response = await fetch(`${baseUrl}${url}`, {
         method: 'PATCH',
         headers,

@@ -1,15 +1,30 @@
 import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
-import { Stack } from 'expo-router';
+import { Stack, useRouter } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import 'react-native-reanimated';
+import { useContext, useEffect } from 'react';
 
 import { useColorScheme } from '@/hooks/use-color-scheme';
-import { AuthProvider } from '@/context/AuthContext';
+import { AuthContext, AuthProvider } from '@/context/AuthContext';
 import { GymProvider } from '@/context/GymContext';
 
 export const unstable_settings = {
   anchor: '(tabs)',
 };
+
+function NavigationGuard() {
+  const router = useRouter();
+  const auth = useContext(AuthContext);
+
+  useEffect(() => {
+    if (!auth || auth.isLoading) return;
+    if (!auth.isAuthenticated) {
+      router.replace('/login' as never);
+    }
+  }, [auth, router]);
+
+  return null;
+}
 
 export default function RootLayout() {
   const colorScheme = useColorScheme();
@@ -18,8 +33,12 @@ export default function RootLayout() {
     <AuthProvider>
       <GymProvider>
         <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
+          <NavigationGuard />
           <Stack>
             <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+            <Stack.Screen name="login" options={{ headerShown: false }} />
+            <Stack.Screen name="register" options={{ headerShown: false }} />
+            <Stack.Screen name="no-gym" options={{ headerShown: false }} />
             <Stack.Screen name="modal" options={{ presentation: 'modal', title: 'Modal' }} />
             <Stack.Screen
               name="gym-setup"

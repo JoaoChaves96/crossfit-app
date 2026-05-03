@@ -20,29 +20,18 @@ if (!__DEV__) {
 
 export default function DevBootstrapScreen() {
   const router = useRouter();
-  const { setAuth } = useAuth();
+  const { login } = useAuth();
   const { setCurrentGymId } = useGym();
 
-  const [userIdInput, setUserIdInput] = useState(
-    "550e8400-e29b-41d4-a716-446655440001",
-  );
+  const [tokenInput, setTokenInput] = useState("");
   const [gymIdInput, setGymIdInput] = useState(
     "550e8400-e29b-41d4-a716-446655440010",
   );
   const [isLoading, setIsLoading] = useState(false);
 
-  // Quick-fill with test data from seed script
-  const quickFillAthlete = () => {
-    // Query the database to get actual UUIDs, but provide placeholder for now
-    showAlert(
-      "Quick Fill: Athlete",
-      "To use quick-fill, run this in your terminal:\n\ndocker-compose exec postgres psql -U postgres -d crossfit_box_dev -c \"SELECT id FROM users WHERE email = 'athlete@example.com'; SELECT id FROM gyms LIMIT 1;\""
-    );
-  };
-
   const handleSetAuth = async () => {
-    if (!userIdInput.trim()) {
-      showAlert("Error", "Please enter a user ID");
+    if (!tokenInput.trim()) {
+      showAlert("Error", "Please enter a JWT token");
       return;
     }
 
@@ -53,16 +42,9 @@ export default function DevBootstrapScreen() {
 
     setIsLoading(true);
     try {
-      // For header-based auth, we use a placeholder token (not used, but required by context)
-      const placeholderToken = "dev-header-auth-placeholder";
-      const userId = userIdInput.trim();
-      const gymId = gymIdInput.trim();
+      await login(tokenInput.trim());
+      await setCurrentGymId(gymIdInput.trim());
 
-      // Set auth and gym context
-      await setAuth(placeholderToken, userId);
-      await setCurrentGymId(gymId);
-
-      // Navigate immediately (context state is now set)
       router.replace("/(tabs)/schedule");
     } catch (error) {
       const message = error instanceof Error ? error.message : "Unknown error";
@@ -73,7 +55,7 @@ export default function DevBootstrapScreen() {
   };
 
   const handleClearAuth = async () => {
-    setUserIdInput("");
+    setTokenInput("");
     setGymIdInput("");
     showAlert("Cleared", "Auth inputs cleared");
   };
@@ -82,21 +64,24 @@ export default function DevBootstrapScreen() {
     <ScrollView style={styles.container}>
       <View style={styles.content}>
         <View style={styles.header}>
-          <Text style={styles.headerText}>🔧 DEV Bootstrap</Text>
+          <Text style={styles.headerText}>DEV Bootstrap</Text>
           <Text style={styles.subtitle}>Local development auth setup</Text>
         </View>
 
         <View style={styles.section}>
-          <Text style={styles.label}>User ID</Text>
+          <Text style={styles.label}>JWT Token</Text>
           <TextInput
             style={styles.input}
-            placeholder="e.g., 550e8400-e29b-41d4-a716-446655440000"
+            placeholder="Paste a JWT token from the backend login endpoint"
             placeholderTextColor="#999"
-            value={userIdInput}
-            onChangeText={setUserIdInput}
+            value={tokenInput}
+            onChangeText={setTokenInput}
             editable={!isLoading}
+            multiline
           />
-          <Text style={styles.hint}>UUID of the user (from database)</Text>
+          <Text style={styles.hint}>
+            Obtain via POST /api/auth/login with valid credentials
+          </Text>
         </View>
 
         <View style={styles.section}>
@@ -132,46 +117,28 @@ export default function DevBootstrapScreen() {
           >
             <Text style={styles.secondaryButtonText}>Clear Inputs</Text>
           </TouchableOpacity>
-
-          <TouchableOpacity
-            style={[styles.button, styles.helpButton]}
-            onPress={quickFillAthlete}
-            disabled={isLoading}
-          >
-            <Text style={styles.helpButtonText}>? How to get IDs</Text>
-          </TouchableOpacity>
         </View>
 
         <View style={styles.infoBox}>
-          <Text style={styles.infoTitle}>ℹ️ How to use:</Text>
+          <Text style={styles.infoTitle}>How to use:</Text>
           <Text style={styles.infoText}>
             1. Start the backend and database with: bash scripts/dev-up.sh
           </Text>
           <Text style={styles.infoText}>
-            2. Query your user and gym IDs from the database (or tap &quot;How
-            to get IDs&quot;)
+            2. POST /api/auth/login to get a JWT token
           </Text>
-          <Text style={styles.infoText}>3. Enter both IDs above</Text>
+          <Text style={styles.infoText}>3. Paste the token above</Text>
           <Text style={styles.infoText}>
-            4. Tap &quot;Set Auth & Go to Schedule&quot;
+            4. Enter the gym ID and tap Set Auth
           </Text>
           <Text style={styles.infoText}>
-            5. Your session persists until app restart or manual clear
-          </Text>
-        </View>
-
-        <View style={styles.codeBox}>
-          <Text style={styles.codeTitle}>Quick: Get test user IDs</Text>
-          <Text style={styles.codeText}>
-            docker-compose exec postgres psql -U postgres -d crossfit_box_dev -c
-            &quot;SELECT id FROM users WHERE email =
-            &apos;athlete@example.com&apos;; SELECT id FROM gyms LIMIT 1;&rdquo;
+            5. Your session persists until the token expires or app restart
           </Text>
         </View>
 
         <View style={styles.warningBox}>
           <Text style={styles.warningText}>
-            ⚠️ This screen is DEV-ONLY and will not appear in production builds.
+            This screen is DEV-ONLY and will not appear in production builds.
           </Text>
         </View>
       </View>
@@ -247,11 +214,6 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: "#ddd",
   },
-  helpButton: {
-    backgroundColor: "#f0f0f0",
-    borderWidth: 1,
-    borderColor: "#999",
-  },
   buttonText: {
     fontSize: 16,
     fontWeight: "600",
@@ -261,11 +223,6 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: "600",
     color: "#0a7ea4",
-  },
-  helpButtonText: {
-    fontSize: 16,
-    fontWeight: "600",
-    color: "#333",
   },
   infoBox: {
     backgroundColor: "#e3f2fd",
@@ -286,27 +243,6 @@ const styles = StyleSheet.create({
     color: "#1565c0",
     marginBottom: 4,
     lineHeight: 18,
-  },
-  codeBox: {
-    backgroundColor: "#f5f5f5",
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: "#ddd",
-    padding: 12,
-    marginBottom: 12,
-    fontFamily: "Courier New",
-  },
-  codeTitle: {
-    fontSize: 13,
-    fontWeight: "600",
-    color: "#333",
-    marginBottom: 8,
-  },
-  codeText: {
-    fontSize: 11,
-    color: "#555",
-    fontFamily: "Courier New",
-    lineHeight: 16,
   },
   warningBox: {
     backgroundColor: "#fff3e0",

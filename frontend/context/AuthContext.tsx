@@ -2,31 +2,68 @@ import React, { createContext, ReactNode, useEffect, useState } from 'react';
 import { storage } from '@/utils/storage';
 
 const AUTH_TOKEN_KEY = 'auth_token';
-const AUTH_USER_ID_KEY = 'auth_user_id';
+
+export interface AuthUser {
+  id: string;
+  email: string;
+  role: string | null;
+  gymId: string | null;
+}
 
 export interface AuthContextType {
+  user: AuthUser | null;
   token: string | null;
-  userId: string | null;
+  isAuthenticated: boolean;
   isLoading: boolean;
-  setAuth: (token: string, userId: string) => Promise<void>;
-  clearAuth: () => Promise<void>;
+  login(token: string): Promise<void>;
+  logout(): Promise<void>;
 }
 
 export const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+function decodeJwtPayload(token: string): Record<string, unknown> {
+  try {
+    const base64 = token.split('.')[1];
+    const padded = base64.replace(/-/g, '+').replace(/_/g, '/');
+    const json = atob(padded);
+    return JSON.parse(json) as Record<string, unknown>;
+  } catch {
+    return {};
+  }
+}
+
+function isTokenExpired(payload: Record<string, unknown>): boolean {
+  if (typeof payload.exp !== 'number') return false;
+  return Date.now() / 1000 > payload.exp;
+}
+
+function userFromPayload(payload: Record<string, unknown>): AuthUser {
+  return {
+    id: typeof payload.sub === 'string' ? payload.sub : '',
+    email: typeof payload.email === 'string' ? payload.email : '',
+    role: typeof payload.role === 'string' ? payload.role : null,
+    gymId: typeof payload.gymId === 'string' ? payload.gymId : null,
+  };
+}
+
 export function AuthProvider({ children }: { children: ReactNode }) {
+  const [user, setUser] = useState<AuthUser | null>(null);
   const [token, setToken] = useState<string | null>(null);
-  const [userId, setUserId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Load token and userId from storage on mount
   useEffect(() => {
     (async () => {
       try {
         const storedToken = await storage.getItem(AUTH_TOKEN_KEY);
-        const storedUserId = await storage.getItem(AUTH_USER_ID_KEY);
-        setToken(storedToken);
-        setUserId(storedUserId);
+        if (storedToken) {
+          const payload = decodeJwtPayload(storedToken);
+          if (isTokenExpired(payload)) {
+            await storage.removeItem(AUTH_TOKEN_KEY);
+          } else {
+            setToken(storedToken);
+            setUser(userFromPayload(payload));
+          }
+        }
       } catch (error) {
         console.error('Failed to load auth from storage:', error);
       } finally {
@@ -35,22 +72,30 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     })();
   }, []);
 
-  const setAuth = async (newToken: string, newUserId: string) => {
+  const login = async (newToken: string): Promise<void> => {
     await storage.setItem(AUTH_TOKEN_KEY, newToken);
-    await storage.setItem(AUTH_USER_ID_KEY, newUserId);
+    const payload = decodeJwtPayload(newToken);
     setToken(newToken);
-    setUserId(newUserId);
+    setUser(userFromPayload(payload));
   };
 
-  const clearAuth = async () => {
+  const logout = async (): Promise<void> => {
     await storage.removeItem(AUTH_TOKEN_KEY);
-    await storage.removeItem(AUTH_USER_ID_KEY);
     setToken(null);
-    setUserId(null);
+    setUser(null);
   };
 
   return (
-    <AuthContext.Provider value={{ token, userId, isLoading, setAuth, clearAuth }}>
+    <AuthContext.Provider
+      value={{
+        user,
+        token,
+        isAuthenticated: user !== null && token !== null,
+        isLoading,
+        login,
+        logout,
+      }}
+    >
       {children}
     </AuthContext.Provider>
   );

@@ -167,10 +167,10 @@ interface InviteModalProps {
   onClose: () => void;
   onSuccess: () => void;
   gymId: string;
-  userId: string | null | undefined;
+  token: string | null | undefined;
 }
 
-function InviteModal({ visible, onClose, onSuccess, gymId, userId }: InviteModalProps) {
+function InviteModal({ visible, onClose, onSuccess, gymId, token }: InviteModalProps) {
   const [email, setEmail] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -193,7 +193,7 @@ function InviteModal({ visible, onClose, onSuccess, gymId, userId }: InviteModal
     setError(null);
 
     try {
-      const client = createApiClient({ userId, gymId });
+      const client = createApiClient({ token });
       const body: InviteCoachRequest = { coachEmail: trimmedEmail };
       const result = await client.post<InviteCoachResponse>(
         `/api/gyms/${gymId}/configuration/coaches`,
@@ -272,7 +272,7 @@ function InviteModal({ visible, onClose, onSuccess, gymId, userId }: InviteModal
 
 export default function CoachesScreen() {
   const router = useRouter();
-  const { userId } = useAuth();
+  const { token } = useAuth();
   const { currentGymId } = useGym();
 
   const [coaches, setCoaches] = useState<CoachListItem[]>([]);
@@ -281,13 +281,13 @@ export default function CoachesScreen() {
   const [modalVisible, setModalVisible] = useState(false);
 
   const fetchCoaches = useCallback(async () => {
-    if (!userId || !currentGymId) return;
+    if (!token || !currentGymId) return;
 
     setIsLoading(true);
     setError(null);
 
     try {
-      const client = createApiClient({ userId, gymId: currentGymId });
+      const client = createApiClient({ token });
       const data = await client.get<CoachesListResponse>(
         `/api/gyms/${currentGymId}/configuration/coaches`,
       );
@@ -298,7 +298,7 @@ export default function CoachesScreen() {
     } finally {
       setIsLoading(false);
     }
-  }, [userId, currentGymId]);
+  }, [token, currentGymId]);
 
   useEffect(() => {
     fetchCoaches();
@@ -386,7 +386,7 @@ export default function CoachesScreen() {
           onClose={() => setModalVisible(false)}
           onSuccess={handleInviteSuccess}
           gymId={currentGymId}
-          userId={userId}
+          token={token}
         />
       ) : null}
     </View>

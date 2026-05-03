@@ -8,11 +8,38 @@ import {
 import { AuthService } from '../../domain/auth/auth.service';
 import { LoginDto } from './dto/login.dto';
 import { LoginResponseDto } from './dto/login-response.dto';
+import { RegisterDto } from './dto/register.dto';
 
 @ApiTags('Auth')
 @Controller('api/auth')
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
+
+  @Post('register')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Register a new user account and receive a JWT token' })
+  @ApiBody({ type: RegisterDto })
+  @ApiResponse({
+    status: 200,
+    description: 'Registration successful. Returns a signed JWT access token.',
+    type: LoginResponseDto,
+  })
+  @ApiResponse({
+    status: 400,
+    description: 'Validation error (missing or malformed fields).',
+  })
+  @ApiResponse({
+    status: 409,
+    description: 'Registration failed.',
+  })
+  async register(@Body() body: RegisterDto): Promise<LoginResponseDto> {
+    const accessToken = await this.authService.register(
+      body.email,
+      body.password,
+      body.name,
+    );
+    return { accessToken };
+  }
 
   @Post('login')
   @HttpCode(HttpStatus.OK)

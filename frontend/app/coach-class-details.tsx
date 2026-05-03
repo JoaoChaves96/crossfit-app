@@ -167,7 +167,7 @@ function Sidebar() {
 
 export default function CoachClassDetailsScreen() {
   const router = useRouter();
-  const { userId } = useAuth();
+  const { token } = useAuth();
   const { currentGymId } = useGym();
 
   const params = useLocalSearchParams<{
@@ -212,12 +212,12 @@ export default function CoachClassDetailsScreen() {
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!userId || !currentGymId || !classId) {
+    if (!token || !currentGymId || !classId) {
       setIsProgrammingLoading(false);
       return;
     }
 
-    const client = createApiClient({ userId, gymId: currentGymId });
+    const client = createApiClient({ token });
 
     client
       .get<GetClassProgrammingResponse>(`/api/gyms/${currentGymId}/classes/${classId}/programming`)
@@ -241,10 +241,10 @@ export default function CoachClassDetailsScreen() {
       .finally(() => {
         setIsProgrammingLoading(false);
       });
-  }, [userId, currentGymId, classId]);
+  }, [token, currentGymId, classId]);
 
   const handleSaveProgramming = async () => {
-    if (!userId || !currentGymId || !classId) return;
+    if (!token || !currentGymId || !classId) return;
 
     const trimmedWod = wodContent.trim();
     if (!trimmedWod) {
@@ -261,7 +261,7 @@ export default function CoachClassDetailsScreen() {
     setSuccessMessage(null);
 
     try {
-      const client = createApiClient({ userId, gymId: currentGymId });
+      const client = createApiClient({ token });
       const result = await client.post<AddOrEditProgrammingResponse>(
         `/api/gyms/${currentGymId}/classes/${classId}/programming`,
         {

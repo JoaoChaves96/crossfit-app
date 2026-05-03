@@ -195,7 +195,7 @@ function AthleteRow({ slot, isAlt, onToggle }: AthleteRowProps) {
 
 export default function CoachMarkAttendanceScreen() {
   const router = useRouter();
-  const { userId } = useAuth();
+  const { token } = useAuth();
   const { currentGymId } = useGym();
 
   const params = useLocalSearchParams<{
@@ -231,10 +231,10 @@ export default function CoachMarkAttendanceScreen() {
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!userId || !currentGymId || !classId) return;
+    if (!token || !currentGymId || !classId) return;
 
     let cancelled = false;
-    const client = createApiClient({ userId, gymId: currentGymId });
+    const client = createApiClient({ token });
 
     setIsLoadingBookings(true);
     setBookingsError(null);
@@ -263,7 +263,7 @@ export default function CoachMarkAttendanceScreen() {
     return () => {
       cancelled = true;
     };
-  }, [userId, currentGymId, classId]);
+  }, [token, currentGymId, classId]);
 
   const markedPresentCount = slots.filter((s) => s.present).length;
   const markedAbsentCount = slots.filter((s) => !s.present).length;
@@ -277,7 +277,7 @@ export default function CoachMarkAttendanceScreen() {
   };
 
   const handleSubmit = async () => {
-    if (!userId || !currentGymId || !classId) return;
+    if (!token || !currentGymId || !classId) return;
 
     setIsSubmitting(true);
     setSubmitError(null);
@@ -294,7 +294,7 @@ export default function CoachMarkAttendanceScreen() {
     };
 
     try {
-      const client = createApiClient({ userId, gymId: currentGymId });
+      const client = createApiClient({ token });
       await client.post<MarkAttendanceResponse>(
         `/api/gyms/${currentGymId}/classes/${classId}/attendance`,
         body,

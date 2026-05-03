@@ -22,7 +22,7 @@ interface EnrichedClass extends ClassScheduleItem {
 
 export default function ScheduleScreen() {
   const router = useRouter();
-  const { token, userId, isLoading: authLoading } = useAuth();
+  const { token, isLoading: authLoading } = useAuth();
   const { currentGymId, isLoading: gymLoading } = useGym();
 
   const [classes, setClasses] = useState<EnrichedClass[]>([]);
@@ -31,7 +31,7 @@ export default function ScheduleScreen() {
   const [cancellingBookingId, setCancellingBookingId] = useState<string | null>(null);
 
   const fetchData = useCallback(async () => {
-    if (authLoading || gymLoading || !token || !currentGymId || !userId) {
+    if (authLoading || gymLoading || !token || !currentGymId) {
       setIsLoading(false);
       return;
     }
@@ -40,7 +40,7 @@ export default function ScheduleScreen() {
       setIsLoading(true);
       setError(null);
 
-      const client = createApiClient({ userId, gymId: currentGymId });
+      const client = createApiClient({ token });
 
       // Fetch both schedule and bookings in parallel
       const [scheduleResponse, bookingsResponse] = await Promise.all([
@@ -83,7 +83,7 @@ export default function ScheduleScreen() {
     } finally {
       setIsLoading(false);
     }
-  }, [authLoading, gymLoading, token, userId, currentGymId]);
+  }, [authLoading, gymLoading, token, currentGymId]);
 
   useEffect(() => {
     fetchData();
@@ -123,7 +123,7 @@ export default function ScheduleScreen() {
             try {
               setCancellingBookingId(bookingId);
 
-              const client = createApiClient({ userId: userId!, gymId: currentGymId! });
+              const client = createApiClient({ token: token! });
 
               // Call cancellation endpoint
               await client.delete(`/api/gyms/${currentGymId}/classes/bookings/${bookingId}`);

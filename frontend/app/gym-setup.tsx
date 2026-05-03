@@ -548,7 +548,7 @@ function SuccessScreen({ gymName, onCreateFirstClass }: SuccessScreenProps) {
 
 export default function GymSetupScreen() {
   const router = useRouter();
-  const { userId } = useAuth();
+  const { token } = useAuth();
 
   const [currentStep, setCurrentStep] = useState<Step>(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -567,7 +567,7 @@ export default function GymSetupScreen() {
   };
 
   const handleSubmit = async () => {
-    if (!userId) {
+    if (!token) {
       setSubmitError('Not authenticated. Please log in.');
       return;
     }
@@ -577,7 +577,7 @@ export default function GymSetupScreen() {
 
     try {
       // Step 1: Create the gym
-      const client = createApiClient({ userId });
+      const client = createApiClient({ token });
       const gymResponse = await client.post<{ gymId: string }>('/api/gyms', {
         name: wizardState.basics.name.trim(),
         location: wizardState.basics.location.trim(),

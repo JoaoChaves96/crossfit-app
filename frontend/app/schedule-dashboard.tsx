@@ -257,7 +257,7 @@ function ListRow({ gymClass, colorIndex }: ListRowProps) {
 
 export default function ScheduleDashboard() {
   const router = useRouter();
-  const { userId } = useAuth();
+  const { token } = useAuth();
   const { currentGymId } = useGym();
 
   const [weekStart, setWeekStart] = useState<Date>(() => getWeekStart(new Date()));
@@ -267,13 +267,13 @@ export default function ScheduleDashboard() {
   const [error, setError] = useState<string | null>(null);
 
   const fetchClasses = useCallback(async () => {
-    if (!userId || !currentGymId) return;
+    if (!token || !currentGymId) return;
 
     setIsLoading(true);
     setError(null);
 
     try {
-      const client = createApiClient({ userId, gymId: currentGymId });
+      const client = createApiClient({ token });
       const data = await client.get<ApiClassesResponse>(
         `/api/gyms/${currentGymId}/schedule`
       );
@@ -284,7 +284,7 @@ export default function ScheduleDashboard() {
     } finally {
       setIsLoading(false);
     }
-  }, [userId, currentGymId]);
+  }, [token, currentGymId]);
 
   useEffect(() => {
     fetchClasses();

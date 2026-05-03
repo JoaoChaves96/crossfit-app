@@ -1,23 +1,18 @@
 import { useAuth } from './useAuth';
-import { useGym } from './useGym';
 import { createApiClient } from '@/utils/api-client';
 import { useMemo } from 'react';
 
 /**
  * Hook that provides an authenticated API client.
- * Automatically attaches userId and gymId from auth/gym context.
+ * Automatically attaches the Bearer token from auth context.
  */
 export function useApiClient() {
-  const { userId } = useAuth();
-  const { currentGymId } = useGym();
+  const { token } = useAuth();
 
   return useMemo(() => {
-    if (!userId) {
-      throw new Error('useApiClient: No userId available. User must be authenticated.');
+    if (!token) {
+      throw new Error('useApiClient: No token available. User must be authenticated.');
     }
-    if (!currentGymId) {
-      throw new Error('useApiClient: No gym selected. Gym context must be set.');
-    }
-    return createApiClient({ userId, gymId: currentGymId });
-  }, [userId, currentGymId]);
+    return createApiClient({ token });
+  }, [token]);
 }

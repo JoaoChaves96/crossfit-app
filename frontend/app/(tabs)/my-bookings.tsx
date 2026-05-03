@@ -19,7 +19,7 @@ interface BookingWithClassDetails extends ClassScheduleItem {
 
 export default function MyBookingsScreen() {
   const router = useRouter();
-  const { userId, isLoading: authLoading } = useAuth();
+  const { token, isLoading: authLoading } = useAuth();
   const { currentGymId, isLoading: gymLoading } = useGym();
 
   const [bookings, setBookings] = useState<BookingWithClassDetails[]>([]);
@@ -28,7 +28,7 @@ export default function MyBookingsScreen() {
   const [cancellingBookingId, setCancellingBookingId] = useState<string | null>(null);
 
   const fetchData = useCallback(async () => {
-    if (authLoading || gymLoading || !userId || !currentGymId) {
+    if (authLoading || gymLoading || !token || !currentGymId) {
       setIsLoading(false);
       return;
     }
@@ -37,7 +37,7 @@ export default function MyBookingsScreen() {
       setIsLoading(true);
       setError(null);
 
-      const client = createApiClient({ userId, gymId: currentGymId });
+      const client = createApiClient({ token });
 
       // Fetch both classes and bookings in parallel
       const [scheduleResponse, bookingsResponse] = await Promise.all([
@@ -73,7 +73,7 @@ export default function MyBookingsScreen() {
     } finally {
       setIsLoading(false);
     }
-  }, [authLoading, gymLoading, userId, currentGymId]);
+  }, [authLoading, gymLoading, token, currentGymId]);
 
   useEffect(() => {
     fetchData();
@@ -107,7 +107,7 @@ export default function MyBookingsScreen() {
             try {
               setCancellingBookingId(booking.bookingId);
 
-              const client = createApiClient({ userId: userId!, gymId: currentGymId! });
+              const client = createApiClient({ token: token! });
 
               // Call cancellation endpoint
               await client.delete(`/api/gyms/${currentGymId}/classes/bookings/${booking.bookingId}`);
@@ -179,7 +179,7 @@ export default function MyBookingsScreen() {
     </TouchableOpacity>
   );
 
-  if (!userId || !currentGymId) {
+  if (!token || !currentGymId) {
     return (
       <View style={styles.container}>
         <Text style={styles.errorText}>

@@ -211,7 +211,7 @@ function ClassRow({ gymClass, isAlt, onView }: ClassRowProps) {
 
 export default function CoachClassesScreen() {
   const router = useRouter();
-  const { userId } = useAuth();
+  const { token } = useAuth();
   const { currentGymId } = useGym();
 
   const [allClasses, setAllClasses] = useState<CoachClassItem[]>([]);
@@ -220,13 +220,13 @@ export default function CoachClassesScreen() {
   const [filterMode, setFilterMode] = useState<FilterMode>('upcoming');
 
   const fetchClasses = useCallback(async () => {
-    if (!userId || !currentGymId) return;
+    if (!token || !currentGymId) return;
 
     setIsLoading(true);
     setError(null);
 
     try {
-      const client = createApiClient({ userId, gymId: currentGymId });
+      const client = createApiClient({ token });
       const data = await client.get<GetCoachClassesResponse>(
         `/api/gyms/${currentGymId}/coach/classes`,
       );
@@ -242,7 +242,7 @@ export default function CoachClassesScreen() {
     } finally {
       setIsLoading(false);
     }
-  }, [userId, currentGymId]);
+  }, [token, currentGymId]);
 
   useEffect(() => {
     fetchClasses();

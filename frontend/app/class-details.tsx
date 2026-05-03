@@ -16,7 +16,7 @@ type BookingStatus = 'booked' | 'waitlisted' | 'open' | 'full';
 
 export default function ClassDetailsScreen() {
   const router = useRouter();
-  const { userId, isLoading: authLoading } = useAuth();
+  const { token, isLoading: authLoading } = useAuth();
   const { currentGymId, isLoading: gymLoading } = useGym();
   const { classId } = useLocalSearchParams();
 
@@ -68,23 +68,23 @@ export default function ClassDetailsScreen() {
   };
 
   useEffect(() => {
-    if (authLoading || gymLoading || !userId || !currentGymId || !classId) {
+    if (authLoading || gymLoading || !token || !currentGymId || !classId) {
       setIsLoading(false);
       return;
     }
 
-    const client = createApiClient({ userId, gymId: currentGymId });
+    const client = createApiClient({ token });
     fetchData(client);
-  }, [authLoading, gymLoading, userId, currentGymId, classId]);
+  }, [authLoading, gymLoading, token, currentGymId, classId]);
 
   const handleBookClass = async () => {
-    if (!userId || !currentGymId || !classId) return;
+    if (!token || !currentGymId || !classId) return;
 
     try {
       setIsSubmitting(true);
       setMutationError(null);
 
-      const client = createApiClient({ userId, gymId: currentGymId });
+      const client = createApiClient({ token });
 
       // Call booking endpoint
       await client.post(`/api/gyms/${currentGymId}/classes/${classId}/bookings`, {
@@ -118,7 +118,7 @@ export default function ClassDetailsScreen() {
           text: 'Cancel Booking',
           style: 'destructive',
           onPress: async () => {
-            if (!userId || !currentGymId || !userBookingId) {
+            if (!token || !currentGymId || !userBookingId) {
               showError('Error', 'Missing required information for cancellation');
               return;
             }
@@ -127,7 +127,7 @@ export default function ClassDetailsScreen() {
               setIsSubmitting(true);
               setMutationError(null);
 
-              const client = createApiClient({ userId, gymId: currentGymId });
+              const client = createApiClient({ token });
 
               // Call cancellation endpoint
               await client.delete(`/api/gyms/${currentGymId}/classes/bookings/${userBookingId}`);

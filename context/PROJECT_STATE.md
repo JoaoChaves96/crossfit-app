@@ -86,4 +86,4 @@ Crossfit class booking application.
 
 ## Next Action
 
-Epic A complete. Next: Epic B — Auth Flows (login/register screens, frontend token handling).
+Epic A complete. Epic B (Auth Flows) planned — see `epics/AUTH_FLOWS_EPIC.md`.

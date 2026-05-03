@@ -1,8 +1,13 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import {
+  ConflictException,
+  Injectable,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import * as bcrypt from 'bcrypt';
+import { v4 as uuidv4 } from 'uuid';
 import { UserEntity } from '../user/entities/user.entity';
 import { GymStaffEntity } from '../gym-staff/entities/gym-staff.entity';
 import { GymMembershipEntity } from '../gym-membership/entities/gym-membership.entity';
@@ -18,6 +23,36 @@ export class AuthService {
     private readonly gymMembershipRepository: Repository<GymMembershipEntity>,
     private readonly jwtService: JwtService,
   ) {}
+
+  async register(
+    email: string,
+    password: string,
+    name: string,
+  ): Promise<string> {
+    const existing = await this.userRepository.findOne({ where: { email } });
+    if (existing) {
+      throw new ConflictException('Registration failed.');
+    }
+
+    const passwordHash = await bcrypt.hash(password, 10);
+    const user = this.userRepository.create({
+      id: uuidv4(),
+      email,
+      passwordHash,
+      name,
+      status: 'active',
+    });
+    await this.userRepository.save(user);
+
+    const payload = {
+      sub: user.id,
+      email: user.email,
+      gymId: null,
+      role: null,
+    };
+
+    return this.jwtService.sign(payload);
+  }
 
   async login(email: string, password: string): Promise<string> {
     const user = await this.userRepository.findOne({ where: { email } });
