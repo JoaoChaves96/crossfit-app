@@ -48,3 +48,10 @@ export class GymNotFoundError extends Error {
     this.name = 'GymNotFoundError';
   }
 }
+
+export class InviteAlreadyRevokedError extends Error {
+  constructor(token: string) {
+    super(`Invite has already been revoked: ${token}`);
+    this.name = 'InviteAlreadyRevokedError';
+  }
+}

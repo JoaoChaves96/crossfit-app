@@ -147,7 +147,7 @@ export interface paths {
         put?: never;
         /**
          * Manually transition class state
-         * @description Move a class to the next state in the lifecycle (published → booking_closed → in_progress → completed → archived). Coaches only. State transitions are unidirectional.
+         * @description Move a class to the next state in the lifecycle (published → booking_closed → in_progress → completed → archived). Coaches or gym owners. State transitions are unidirectional.
          */
         post: operations["ClassController_manuallyTransitionClassState"];
         delete?: never;
@@ -502,6 +502,124 @@ export interface paths {
         get: operations["CoachClassesController_getCoachClasses"];
         put?: never;
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/gyms/{gymId}/invites": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List all invites for a gym
+         * @description Returns all non-deleted invites for the given gym, ordered by creation date descending. Accessible by gym owners and coaches.
+         */
+        get: operations["InviteController_listInvites"];
+        put?: never;
+        /**
+         * Create an athlete invite
+         * @description Generates a unique 7-day invite link for an athlete to join the gym. Accessible by gym owners and coaches.
+         */
+        post: operations["InviteController_createInvite"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/gyms/{gymId}/invites/{token}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /**
+         * Revoke an invite
+         * @description Sets the invite status to revoked. Returns 404 if not found, 400 if already accepted or already revoked.
+         */
+        delete: operations["InviteController_revokeInvite"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/invites/{inviteToken}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Validate an invite token
+         * @description Public endpoint. Returns gym details and invite status for a given token. Expired tokens are marked accordingly.
+         */
+        get: operations["InviteController_validateInvite"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/invites/{inviteToken}/accept": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Accept an invite
+         * @description Accepts an invite and creates a GymMembership for the athlete. If the request includes a valid JWT the authenticated user is used; otherwise the athlete is resolved by the invite email. The athlete must already be registered.
+         */
+        post: operations["InviteController_acceptInvite"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/auth/register": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Register a new user account and receive a JWT token */
+        post: operations["AuthController_register"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/auth/login": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Authenticate a user and receive a JWT token */
+        post: operations["AuthController_login"];
         delete?: never;
         options?: never;
         head?: never;
@@ -1516,6 +1634,180 @@ export interface components {
             /** @description List of classes assigned to the authenticated coach in this gym */
             classes: components["schemas"]["CoachClassItemDto"][];
         };
+        CreateInviteDto: {
+            /**
+             * @description Email address of the person to invite
+             * @example athlete@example.com
+             */
+            inviteeEmail: string;
+        };
+        InviteResponseDto: {
+            /**
+             * @description The unique invite token used in the invite link
+             * @example abc123xyz...
+             */
+            inviteToken: string;
+            /**
+             * @description The full invite link to be shared with the invitee
+             * @example https://app.example.com/invite/abc123xyz
+             */
+            inviteLink: string;
+            /**
+             * @description ISO timestamp when the invite expires (7 days from creation)
+             * @example 2026-05-10T12:00:00.000Z
+             */
+            expiresAt: string;
+            /**
+             * @description Email address the invite was sent to
+             * @example athlete@example.com
+             */
+            inviteeEmail: string;
+        };
+        InviteListItemDto: {
+            /**
+             * @description Unique identifier of the invite
+             * @example uuid-invite-id
+             */
+            id: string;
+            /**
+             * @description Email address the invite was sent to
+             * @example athlete@example.com
+             */
+            inviteeEmail: string;
+            /**
+             * @description Unique invite token used in the invite link
+             * @example abc123xyz...
+             */
+            inviteToken: string;
+            /**
+             * @description Current status of the invite
+             * @example pending
+             * @enum {string}
+             */
+            status: "pending" | "accepted" | "expired" | "revoked";
+            /**
+             * @description ISO timestamp when the invite was created
+             * @example 2026-05-01T10:00:00.000Z
+             */
+            createdAt: string;
+            /**
+             * @description ISO timestamp when the invite expires
+             * @example 2026-05-08T10:00:00.000Z
+             */
+            expiresAt: string;
+            /**
+             * @description ISO timestamp when the invite was accepted, if applicable
+             * @example 2026-05-03T14:00:00.000Z
+             */
+            acceptedAt?: Record<string, never> | null;
+        };
+        RevokeInviteResponseDto: {
+            /**
+             * @description Confirmation message
+             * @example Invite revoked
+             */
+            message: string;
+        };
+        ValidateInviteResponseDto: {
+            /**
+             * @description ID of the gym the invite belongs to
+             * @example uuid-gym-id
+             */
+            gymId: string;
+            /**
+             * @description Name of the gym the invite belongs to
+             * @example CrossFit Downtown
+             */
+            gymName: string;
+            /**
+             * @description Email address the invite was sent to
+             * @example athlete@example.com
+             */
+            inviteeEmail: string;
+            /**
+             * @description ISO timestamp when the invite expires
+             * @example 2026-05-10T12:00:00.000Z
+             */
+            expiresAt: string;
+            /**
+             * @description Current status of the invite
+             * @example pending
+             * @enum {string}
+             */
+            status: "pending" | "accepted" | "expired" | "revoked";
+        };
+        AcceptInviteRequestDto: Record<string, never>;
+        AcceptInviteGymDto: {
+            /**
+             * @description Gym ID
+             * @example uuid-gym-id
+             */
+            id: string;
+            /**
+             * @description Gym name
+             * @example CrossFit Downtown
+             */
+            name: string;
+        };
+        AcceptInviteAthleteDto: {
+            /**
+             * @description Athlete user ID
+             * @example uuid-user-id
+             */
+            id: string;
+            /**
+             * @description Athlete email address
+             * @example athlete@example.com
+             */
+            email: string;
+        };
+        AcceptInviteResponseDto: {
+            /** @description Gym details */
+            gym: components["schemas"]["AcceptInviteGymDto"];
+            /** @description Athlete details */
+            athlete: components["schemas"]["AcceptInviteAthleteDto"];
+            /**
+             * @description Confirmation message
+             * @example Successfully joined gym
+             */
+            message: string;
+        };
+        RegisterDto: {
+            /**
+             * @description User email address
+             * @example user@example.com
+             */
+            email: string;
+            /**
+             * @description User password (minimum 1 character)
+             * @example secret123
+             */
+            password: string;
+            /**
+             * @description User full name
+             * @example Jane Doe
+             */
+            name: string;
+        };
+        LoginResponseDto: {
+            /**
+             * @description Signed JWT access token
+             * @example eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+             */
+            accessToken: string;
+        };
+        LoginDto: {
+            /**
+             * @description User email address
+             * @example user@example.com
+             */
+            email: string;
+            /**
+             * @description User password
+             * @example secret123
+             */
+            password: string;
+        };
     };
     responses: never;
     parameters: never;
@@ -1633,7 +1925,7 @@ export interface operations {
                 };
                 content?: never;
             };
-            /** @description Forbidden - Assigned coach or gym owner required */
+            /** @description Forbidden - Coach or owner role required */
             403: {
                 headers: {
                     [name: string]: unknown;
@@ -1804,7 +2096,7 @@ export interface operations {
                 };
                 content?: never;
             };
-            /** @description Forbidden - Assigned coach or gym owner required */
+            /** @description Forbidden - Coach or owner role required */
             403: {
                 headers: {
                     [name: string]: unknown;
@@ -1940,7 +2232,7 @@ export interface operations {
                 };
                 content?: never;
             };
-            /** @description Forbidden - Coach role required */
+            /** @description Forbidden - Coach or owner role required */
             403: {
                 headers: {
                     [name: string]: unknown;
@@ -2022,7 +2314,7 @@ export interface operations {
                 };
                 content?: never;
             };
-            /** @description Forbidden - Assigned coach or gym owner required */
+            /** @description Forbidden - Coach or owner role required */
             403: {
                 headers: {
                     [name: string]: unknown;
@@ -2742,8 +3034,300 @@ export interface operations {
                 };
                 content?: never;
             };
-            /** @description Forbidden - User is not an active coach in this gym */
+            /** @description Forbidden - Coach role required */
             403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    InviteController_listInvites: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The ID of the gym */
+                gymId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description List of invites */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["InviteListItemDto"][];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Forbidden - owner or coach role required */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    InviteController_createInvite: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The ID of the gym */
+                gymId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateInviteDto"];
+            };
+        };
+        responses: {
+            /** @description Invite created and email sent */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["InviteResponseDto"];
+                };
+            };
+            /** @description Validation error or gym not found */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Forbidden - owner or coach role required */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    InviteController_revokeInvite: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The ID of the gym */
+                gymId: string;
+                /** @description The unique invite token to revoke */
+                token: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Invite revoked */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RevokeInviteResponseDto"];
+                };
+            };
+            /** @description Invite already accepted or already revoked */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Forbidden - owner or coach role required */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Invite not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    InviteController_validateInvite: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The unique invite token from the invite link */
+                inviteToken: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Invite details returned */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ValidateInviteResponseDto"];
+                };
+            };
+            /** @description Invite not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    InviteController_acceptInvite: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The unique invite token from the invite link */
+                inviteToken: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["AcceptInviteRequestDto"];
+            };
+        };
+        responses: {
+            /** @description Invite accepted and gym membership created */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AcceptInviteResponseDto"];
+                };
+            };
+            /** @description Token expired, revoked, already accepted, or athlete not registered */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Invite not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Athlete is already a member of this gym */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    AuthController_register: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RegisterDto"];
+            };
+        };
+        responses: {
+            /** @description Registration successful. Returns a signed JWT access token. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LoginResponseDto"];
+                };
+            };
+            /** @description Validation error (missing or malformed fields). */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Registration failed. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    AuthController_login: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["LoginDto"];
+            };
+        };
+        responses: {
+            /** @description Login successful. Returns a signed JWT access token. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LoginResponseDto"];
+                };
+            };
+            /** @description Validation error (missing or malformed fields). */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Invalid credentials. */
+            401: {
                 headers: {
                     [name: string]: unknown;
                 };

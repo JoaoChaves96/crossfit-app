@@ -5,6 +5,7 @@
 **→ See `epics/AUTH_JWT_EPIC.md` for completed epic details**  
 **→ See `epics/AUTH_FLOWS_EPIC.md` for completed epic details**  
 **→ See `epics/ATHLETE_SCREENS_EPIC.md` for completed epic details**
+**→ See `epics/INVITE_ONBOARDING_EPIC.md` for completed epic details**
 
 ## Product
 
@@ -12,12 +13,12 @@ Crossfit class booking application.
 
 ## Current Phase (2026-05-03)
 
-**EPIC:** Invite & Onboarding (Epic C.2) — 🔄 IN PROGRESS (2026-05-03)
-- ✅ Task #1: Backend invite endpoints (create, validate, accept) — COMPLETE
-- ✅ Task #2: UX design — invite acceptance + invite manager screens — COMPLETE
-- ⏳ Task #3: Frontend invite link handler
-- ⏳ Task #4: Frontend invite manager (owner/coach)
-- ⏳ Task #5: Registration flow pre-fill
+**EPIC:** Invite & Onboarding (Epic C.2) — ✅ COMPLETE (2026-05-03)
+- ✅ Task #1: Backend invite endpoints (create, validate, accept, list, revoke)
+- ✅ Task #2: UX design — invite acceptance + invite manager screens
+- ✅ Task #3: Frontend invite link handler (`/invite/[inviteToken]`)
+- ✅ Task #4: Frontend invite manager (owner/coach tab)
+- ✅ Task #5: Registration flow pre-fill from invite link
 
 **Previous:** Athlete Screens Redesign (Epic C.1) — ✅ COMPLETE (2026-05-03)
 

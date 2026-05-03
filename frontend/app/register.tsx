@@ -10,7 +10,7 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import { useRouter } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import { AuthContext } from '@/context/AuthContext';
 import { ApiError, createApiClient } from '@/utils/api-client';
 
@@ -25,9 +25,16 @@ interface RegisterResponse {
 export default function RegisterScreen() {
   const router = useRouter();
   const auth = useContext(AuthContext);
+  const { email: emailParam, inviteToken } = useLocalSearchParams<{
+    email?: string;
+    inviteToken?: string;
+  }>();
+
+  const prefillEmail = emailParam ?? '';
+  const fromInvite = typeof inviteToken === 'string' && inviteToken.length > 0;
 
   const [name, setName] = useState('');
-  const [email, setEmail] = useState('');
+  const [email, setEmail] = useState(prefillEmail);
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -45,7 +52,12 @@ export default function RegisterScreen() {
       });
 
       await auth?.login(response.accessToken);
-      router.replace('/no-gym' as never);
+
+      if (fromInvite) {
+        router.replace(`/invite/${inviteToken}` as never);
+      } else {
+        router.replace('/no-gym' as never);
+      }
     } catch (err) {
       const status = err instanceof ApiError ? err.status : (err as { status?: number }).status;
       if (status === 409) {
@@ -100,11 +112,12 @@ export default function RegisterScreen() {
             <View style={styles.field}>
               <Text style={styles.fieldLabel}>Email</Text>
               <TextInput
-                style={styles.input}
+                style={[styles.input, fromInvite && styles.inputReadOnly]}
                 placeholder="your@email.com"
                 placeholderTextColor="#999999"
                 value={email}
-                onChangeText={setEmail}
+                onChangeText={fromInvite ? undefined : setEmail}
+                editable={!fromInvite}
                 keyboardType="email-address"
                 autoCapitalize="none"
                 autoCorrect={false}
@@ -233,6 +246,10 @@ const styles = StyleSheet.create({
     fontFamily: 'Inter',
     fontSize: 15,
     color: '#1A1A1A',
+  },
+  inputReadOnly: {
+    backgroundColor: '#F5F5F5',
+    color: '#666666',
   },
 
   // Error

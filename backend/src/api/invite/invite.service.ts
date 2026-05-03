@@ -8,6 +8,8 @@ import { GymEntity } from '../../domain/gym/entities/gym.entity';
 import { UserEntity } from '../../domain/user/entities/user.entity';
 import { GymMembershipEntity } from '../../domain/gym-membership/entities/gym-membership.entity';
 import { InviteResponseDto } from './dto/invite-response.dto';
+import { InviteListItemDto } from './dto/invite-list-item.dto';
+import { RevokeInviteResponseDto } from './dto/revoke-invite-response.dto';
 import { ValidateInviteResponseDto } from './dto/validate-invite-response.dto';
 import { AcceptInviteResponseDto } from './dto/accept-invite-response.dto';
 import {
@@ -15,6 +17,7 @@ import {
   AthleteNotRegisteredError,
   GymNotFoundError,
   InviteAlreadyAcceptedError,
+  InviteAlreadyRevokedError,
   InviteExpiredError,
   InviteNotFoundError,
   InviteRevokedError,
@@ -183,6 +186,48 @@ export class InviteService {
       athlete: { id: athlete.id, email: athlete.email },
       message: 'Successfully joined gym',
     };
+  }
+
+  async listInvites(gymId: string): Promise<InviteListItemDto[]> {
+    const invites = await this.inviteRepository.find({
+      where: { gymId },
+      order: { createdAt: 'DESC' },
+    });
+
+    return invites.map((invite) => ({
+      id: invite.id,
+      inviteeEmail: invite.inviteeEmail,
+      inviteToken: invite.inviteToken,
+      status: invite.status,
+      createdAt: invite.createdAt.toISOString(),
+      expiresAt: invite.expiresAt.toISOString(),
+      acceptedAt: invite.acceptedAt ? invite.acceptedAt.toISOString() : null,
+    }));
+  }
+
+  async revokeInvite(
+    gymId: string,
+    token: string,
+  ): Promise<RevokeInviteResponseDto> {
+    const invite = await this.inviteRepository.findOne({
+      where: { gymId, inviteToken: token },
+    });
+
+    if (!invite) {
+      throw new InviteNotFoundError(token);
+    }
+
+    if (invite.status === 'accepted') {
+      throw new InviteAlreadyAcceptedError(token);
+    }
+
+    if (invite.status === 'revoked') {
+      throw new InviteAlreadyRevokedError(token);
+    }
+
+    await this.inviteRepository.update(invite.id, { status: 'revoked' });
+
+    return { message: 'Invite revoked' };
   }
 
   private resolveStatus(

@@ -2,6 +2,7 @@ import {
   Controller,
   Post,
   Get,
+  Delete,
   Body,
   Param,
   Req,
@@ -29,6 +30,8 @@ import { CurrentUser } from '../../auth/decorators/current-user.decorator';
 import { InviteService } from './invite.service';
 import { CreateInviteDto } from './dto/create-invite.dto';
 import { InviteResponseDto } from './dto/invite-response.dto';
+import { InviteListItemDto } from './dto/invite-list-item.dto';
+import { RevokeInviteResponseDto } from './dto/revoke-invite-response.dto';
 import { ValidateInviteResponseDto } from './dto/validate-invite-response.dto';
 import { AcceptInviteRequestDto } from './dto/accept-invite-request.dto';
 import { AcceptInviteResponseDto } from './dto/accept-invite-response.dto';
@@ -37,6 +40,7 @@ import {
   AthleteNotRegisteredError,
   GymNotFoundError,
   InviteAlreadyAcceptedError,
+  InviteAlreadyRevokedError,
   InviteExpiredError,
   InviteNotFoundError,
   InviteRevokedError,
@@ -95,6 +99,98 @@ export class InviteController {
     } catch (err) {
       if (err instanceof GymNotFoundError) {
         throw new NotFoundException(err.message);
+      }
+      throw err;
+    }
+  }
+
+  /**
+   * List all invites for a gym. Gym owner or coach role required.
+   */
+  @Get('/gyms/:gymId/invites')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Role(['owner', 'coach'])
+  @ApiBearerAuth()
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary: 'List all invites for a gym',
+    description:
+      'Returns all non-deleted invites for the given gym, ordered by creation date descending. Accessible by gym owners and coaches.',
+  })
+  @ApiParam({
+    name: 'gymId',
+    description: 'The ID of the gym',
+    example: 'uuid-gym-id',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'List of invites',
+    type: [InviteListItemDto],
+  })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiResponse({
+    status: 403,
+    description: 'Forbidden - owner or coach role required',
+  })
+  async listInvites(
+    @Param('gymId') gymId: string,
+  ): Promise<InviteListItemDto[]> {
+    return await this.inviteService.listInvites(gymId);
+  }
+
+  /**
+   * Revoke an invite by token. Gym owner or coach role required.
+   */
+  @Delete('/gyms/:gymId/invites/:token')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Role(['owner', 'coach'])
+  @ApiBearerAuth()
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary: 'Revoke an invite',
+    description:
+      'Sets the invite status to revoked. Returns 404 if not found, 400 if already accepted or already revoked.',
+  })
+  @ApiParam({
+    name: 'gymId',
+    description: 'The ID of the gym',
+    example: 'uuid-gym-id',
+  })
+  @ApiParam({
+    name: 'token',
+    description: 'The unique invite token to revoke',
+    example: 'abc123xyz...',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Invite revoked',
+    type: RevokeInviteResponseDto,
+  })
+  @ApiResponse({
+    status: 400,
+    description: 'Invite already accepted or already revoked',
+  })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiResponse({
+    status: 403,
+    description: 'Forbidden - owner or coach role required',
+  })
+  @ApiResponse({ status: 404, description: 'Invite not found' })
+  async revokeInvite(
+    @Param('gymId') gymId: string,
+    @Param('token') token: string,
+  ): Promise<RevokeInviteResponseDto> {
+    try {
+      return await this.inviteService.revokeInvite(gymId, token);
+    } catch (err) {
+      if (err instanceof InviteNotFoundError) {
+        throw new NotFoundException(err.message);
+      }
+      if (
+        err instanceof InviteAlreadyAcceptedError ||
+        err instanceof InviteAlreadyRevokedError
+      ) {
+        throw new BadRequestException(err.message);
       }
       throw err;
     }

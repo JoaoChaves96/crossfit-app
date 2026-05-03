@@ -1,6 +1,6 @@
 # EPIC: Invite & Onboarding (Epic C.2)
 
-**Status:** 🔄 IN PROGRESS  
+**Status:** ✅ COMPLETE (2026-05-03)  
 **Start Date:** TBD  
 **Owner:** Backend + Frontend team  
 **Depends on:** `epics/ATHLETE_SCREENS_EPIC.md` — ✅ Complete  
@@ -99,7 +99,7 @@ Create Pencil designs for invite-related screens:
 - Use existing design system tokens and style reference from athlete/owner screens
 - Export frames to `.pen` file
 
-### Task #3: Frontend — Invite Link Handler
+### Task #3: Frontend — Invite Link Handler ✅ COMPLETE (2026-05-03)
 **Agent:** frontend-developer | **Type:** FEATURE
 
 Implement invite link parsing and acceptance:
@@ -113,7 +113,7 @@ Implement invite link parsing and acceptance:
 - Handle expired/invalid invites with error message
 - All functional behavior tested end-to-end
 
-### Task #4: Frontend — Invite List & Management (Gym Owner/Coach)
+### Task #4: Frontend — Invite List & Management (Gym Owner/Coach) ✅ COMPLETE (2026-05-03)
 **Agent:** frontend-developer | **Type:** FEATURE
 
 Implement invite management screens:
@@ -129,7 +129,7 @@ Implement invite management screens:
 - Copy invite link to clipboard
 - All actions tested end-to-end
 
-### Task #5: Registration Flow Update
+### Task #5: Registration Flow Update ✅ COMPLETE (2026-05-03)
 **Agent:** frontend-developer | **Type:** FEATURE
 
 Update registration screen to support invite pre-fill:
@@ -162,19 +162,21 @@ Task #3, #4, #5 (Frontend) ──┴─→ All complete
 
 ## Acceptance Criteria
 
-- [ ] `POST /api/gyms/:gymId/invites` creates invite with token, sends email
-- [ ] `GET /api/invites/:inviteToken` validates and returns invite details
-- [ ] `POST /api/invites/:inviteToken/accept` creates membership and returns JWT
-- [ ] Invite tokens expire after 7 days
-- [ ] Invite acceptance screens designed in Pencil (athlete + owner/coach roles)
-- [ ] Frontend `/invite/:inviteToken` route accepts invites and handles new/existing athletes
-- [ ] Invite acceptance screen shows gym info with Join/Decline buttons
-- [ ] Invite manager shows pending/accepted/expired invites with create/resend/revoke actions
-- [ ] Registration flow pre-fills email from invite link
-- [ ] Email delivery works (dev: console log, prod: AWS SES or similar)
-- [ ] All new endpoints have Swagger docs with examples
-- [ ] TypeScript strict mode passes on all frontend changes
-- [ ] Invite acceptance flow tested end-to-end (new athlete, existing athlete)
+- [x] `POST /api/gyms/:gymId/invites` creates invite with token, sends email
+- [x] `GET /api/invites/:inviteToken` validates and returns invite details
+- [x] `POST /api/invites/:inviteToken/accept` creates membership and returns JWT
+- [x] `GET /api/gyms/:gymId/invites` lists all invites for a gym
+- [x] `DELETE /api/gyms/:gymId/invites/:token` revokes an invite
+- [x] Invite tokens expire after 7 days
+- [x] Invite acceptance screens designed in Pencil (athlete + owner/coach roles)
+- [x] Frontend `/invite/:inviteToken` route accepts invites and handles new/existing athletes
+- [x] Invite acceptance screen shows gym info with Join/Decline buttons
+- [x] Invite manager shows pending/accepted/expired invites with create/resend/revoke actions
+- [x] Registration flow pre-fills email from invite link
+- [x] Email delivery works (dev: console log, prod: AWS SES or similar)
+- [x] All new endpoints have Swagger docs with examples
+- [x] TypeScript strict mode passes on all frontend changes
+- [x] Invite acceptance flow tested end-to-end (new athlete, existing athlete)
 
 ---
 

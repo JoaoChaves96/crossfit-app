@@ -20,9 +20,11 @@ function NavigationGuard() {
   const auth = useContext(AuthContext);
 
   const isDevBootstrap = __DEV__ && pathname === DEV_BOOTSTRAP_ROUTE;
+  const isPublicRoute = pathname.startsWith('/invite/');
 
   useEffect(() => {
     if (isDevBootstrap) return;
+    if (isPublicRoute) return;
     if (!auth || auth.isLoading) return;
     if (!auth.isAuthenticated) {
       router.replace('/login' as never);
@@ -30,7 +32,7 @@ function NavigationGuard() {
     if (auth.isAuthenticated && pathname === DEV_BOOTSTRAP_ROUTE) {
       router.replace('/(tabs)' as never);
     }
-  }, [auth, isDevBootstrap, pathname, router]);
+  }, [auth, isDevBootstrap, isPublicRoute, pathname, router]);
 
   return null;
 }
@@ -57,6 +59,7 @@ export default function RootLayout() {
               name="schedule-dashboard"
               options={{ title: 'Schedule Dashboard', headerShown: false }}
             />
+            <Stack.Screen name="invite/[inviteToken]" options={{ headerShown: false }} />
             <Stack.Screen name="coaches" options={{ headerShown: false }} />
             <Stack.Screen name="coach-classes" options={{ headerShown: false }} />
             <Stack.Screen name="coach-class-details" options={{ headerShown: false }} />
