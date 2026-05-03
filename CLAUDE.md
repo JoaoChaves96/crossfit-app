@@ -166,6 +166,7 @@ The intended workflow is:
 4. **Execution**
    - Tasks are delegated to execution agents
    - Claude does NOT execute them itself
+   - **Claude MUST show the full execution prompt to the human and wait for explicit approval before dispatching any agent** — no agent is ever launched without the human reviewing and confirming the prompt first
 
 5. **Documentation update (only if needed)**
    - Docs are updated only when:

@@ -12,7 +12,14 @@ Crossfit class booking application.
 
 ## Current Phase (2026-05-03)
 
-**EPIC:** Athlete Screens Redesign (Epic C.1) — ✅ COMPLETE (2026-05-03)
+**EPIC:** Invite & Onboarding (Epic C.2) — 🔄 IN PROGRESS (2026-05-03)
+- ✅ Task #1: Backend invite endpoints (create, validate, accept) — COMPLETE
+- ✅ Task #2: UX design — invite acceptance + invite manager screens — COMPLETE
+- ⏳ Task #3: Frontend invite link handler
+- ⏳ Task #4: Frontend invite manager (owner/coach)
+- ⏳ Task #5: Registration flow pre-fill
+
+**Previous:** Athlete Screens Redesign (Epic C.1) — ✅ COMPLETE (2026-05-03)
 
 **Previous:** Auth Flows (Epic B) — ✅ COMPLETE (2026-05-03)  
 **Previous:** JWT Auth Infrastructure (Epic A) — ✅ COMPLETE (2026-05-03)  
@@ -90,9 +97,15 @@ Crossfit class booking application.
 ✅ GET /api/gyms/:gymId/classes/:classId/results (coach or owner)  
 ✅ POST /api/gyms/:gymId/classes/:classId/transition (coach or owner)  
 
+## Invite Endpoints (Task #1 Complete)
+
+✅ POST /api/gyms/:gymId/invites (owner/coach — creates invite, sends email, returns token + link)
+✅ GET /api/invites/:inviteToken (public — validates invite, returns gym name + status)
+✅ POST /api/invites/:inviteToken/accept (public — creates membership, returns gym + athlete)
+
 ## Known Non-Goals (for now)
 
-- No invite flow / email delivery (Epic C.2 — Invite & Onboarding)
+- No invite flow / email delivery (Epic C.2 — Invite & Onboarding — IN PROGRESS)
 - No payments
 - No Members UI
 - No Settings UI

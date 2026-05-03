@@ -17,6 +17,7 @@ import { GymMembershipEntity } from '../domain/gym-membership/entities/gym-membe
 import { BookingEntity } from '../domain/booking/entities/booking.entity';
 import { GymScheduleController } from '../api/gym-schedule/gym-schedule.controller';
 import { CoachClassesController } from '../api/coach/coach-classes.controller';
+import { InviteModule } from '../api/invite/invite.module';
 
 /**
  * HttpModule: Registers all HTTP controllers
@@ -35,6 +36,7 @@ import { CoachClassesController } from '../api/coach/coach-classes.controller';
     GymStaffModule,
     GymConfigurationModule,
     GymFeatureModule,
+    InviteModule,
     TypeOrmModule.forFeature([GymMembershipEntity, BookingEntity]),
   ],
   controllers: [

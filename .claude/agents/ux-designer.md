@@ -87,10 +87,12 @@ For each screen in the prompt:
 
 After all screens are designed:
 
-1. Verify the role file exists on disk using the Bash tool: `ls <roleFilePath>`
-2. If the file does NOT exist on disk, state:
-   > "⚠️ FILE NOT SAVED: `<path>` — Pencil has the design open but has not written it to disk. The user must manually save it in the Pencil app (Cmd+S) before frontend tasks can begin."
-3. If the file DOES exist, confirm the path and list every frame name added.
+1. Save the file using the Pencil MCP tool: `mcp__pencil__batch_design()` with a save operation, OR use the Bash tool to trigger a save if a CLI save is available. If neither works, use `mcp__pencil__get_editor_state()` to check if the file is marked as unsaved and warn accordingly.
+2. Verify the role file exists on disk using the Bash tool: `ls <roleFilePath>` and check its modification timestamp with `stat <roleFilePath>` to confirm it was just written.
+3. If the file timestamp has NOT updated (Pencil has not flushed to disk), use `osascript -e 'tell application "Pencil" to save'` to trigger a save via AppleScript.
+4. If the file DOES exist and the timestamp is recent, confirm the path and list every frame name added.
+5. If saving cannot be confirmed, state:
+   > "⚠️ FILE NOT SAVED: `<path>` — Pencil has the design open but has not written it to disk. Run: `osascript -e 'tell application \"Pencil\" to save'` or press Cmd+S in the Pencil app before frontend tasks can begin."
 
 ---
 

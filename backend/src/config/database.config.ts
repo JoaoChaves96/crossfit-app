@@ -12,6 +12,7 @@ import { AttendanceEntity } from '../domain/attendance/entities/attendance.entit
 import { ResultEntity } from '../domain/result/entities/result.entity';
 import { GymMembershipEntity } from '../domain/gym-membership/entities/gym-membership.entity';
 import { AthleteMembershipPlanEntity } from '../domain/athlete-membership-plan/entities/athlete-membership-plan.entity';
+import { InviteEntity } from '../domain/invite/entities/invite.entity';
 
 export const databaseConfig: TypeOrmModuleOptions = {
   type: 'postgres',
@@ -34,6 +35,7 @@ export const databaseConfig: TypeOrmModuleOptions = {
     ResultEntity,
     GymMembershipEntity,
     AthleteMembershipPlanEntity,
+    InviteEntity,
   ],
   synchronize: process.env.NODE_ENV !== 'production',
   logging: process.env.DATABASE_LOGGING === 'true',
