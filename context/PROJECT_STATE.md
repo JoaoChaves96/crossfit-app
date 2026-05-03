@@ -1,7 +1,7 @@
 # Project State
 
-**→ See `GYM_OWNER_EPIC.md` for completed epic details**  
-**→ See `COACH_MVP_EPIC.md` for completed epic details**
+**→ See `epics/GYM_OWNER_EPIC.md` for completed epic details**  
+**→ See `epics/COACH_MVP_EPIC.md` for completed epic details**
 
 ## Product
 

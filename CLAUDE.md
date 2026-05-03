@@ -242,7 +242,7 @@ Athletes may see a class only if:
 When any work is completed—tasks, features, endpoints, fixes, or milestones—Claude **MUST** immediately update the relevant project documentation to reflect progress.
 
 **Which files to update:**
-- Epics or feature tracking docs (e.g., `context/*_EPIC.md`)
+- Epics or feature tracking docs (e.g., `epics/*_EPIC.md`)
 - Project state docs (e.g., `context/PROJECT_STATE.md`)
 - Any `.md` file in `context/` or `docs/` that documents work, blockers, or progress
 - Backend/frontend checklists
@@ -289,7 +289,7 @@ Before creating any frontend tasks for a new epic:
 2. If any screen frame is missing, the **first task must be a `ux-designer` agent run** to add the missing frames
 3. Frontend tasks MUST NOT be started until the corresponding frames exist in the role file
 
-The `ux-designer` agent is defined in `.claude/agents/ux-designer.md`. Every prompt to it must include: epic file path, list of screens to design, a style reference `.pen` file, and the **role file** (e.g. `designs/coach-screens.pen`).
+The `ux-designer` agent is defined in `.claude/agents/ux-designer.md`. Every prompt to it must include: epic file path (under `epics/`), list of screens to design, a style reference `.pen` file, and the **role file** (e.g. `designs/coach-screens.pen`).
 
 **Why:** The frontend-developer agent implements from designs. Without a frame in the role file, it makes layout and UX decisions it should not be making.
 
