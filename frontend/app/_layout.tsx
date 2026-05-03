@@ -30,6 +30,9 @@ export default function RootLayout() {
               options={{ title: 'Schedule Dashboard', headerShown: false }}
             />
             <Stack.Screen name="coaches" options={{ headerShown: false }} />
+            <Stack.Screen name="coach-classes" options={{ headerShown: false }} />
+            <Stack.Screen name="coach-class-details" options={{ headerShown: false }} />
+            <Stack.Screen name="coach-mark-attendance" options={{ headerShown: false }} />
             {__DEV__ && (
               <Stack.Screen
                 name="dev-bootstrap"

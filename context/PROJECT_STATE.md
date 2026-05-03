@@ -1,15 +1,15 @@
 # Project State
 
 **→ See `GYM_OWNER_EPIC.md` for completed epic details**  
-**→ See `COACH_MVP_EPIC.md` for current epic details**
+**→ See `COACH_MVP_EPIC.md` for completed epic details**
 
 ## Product
 
 Crossfit class booking application.
 
-## Current Phase (2026-04-29)
+## Current Phase (2026-05-03)
 
-**EPIC:** Coach MVP — 🔄 IN PROGRESS
+**EPIC:** Coach MVP — ✅ COMPLETE (2026-05-03)
 
 **Previous:** Minimal Gym Owner MVP — ✅ COMPLETE (2026-04-29)
 
@@ -60,8 +60,31 @@ Security hardening items (JwtAuthGuard, role guards, user state, transaction saf
 - No Members UI
 - No Settings UI
 
+## Verified Working Flows (Coach MVP)
+
+✅ My Assigned Classes screen loads with real coach-scoped data  
+✅ Class Details & Programming screen renders class info and fetches existing WOD  
+✅ WOD programming can be added and edited via POST  
+✅ Mark Attendance screen loads real booked athletes from API  
+✅ Navigation: My Classes → Class Details → Mark Attendance  
+✅ All 3 CRITICAL cross-tenant class access bugs fixed (gymId scoping on programming, attendance, transition handlers)
+
+## All Active Endpoints
+
+✅ POST /api/gyms (create gym)  
+✅ POST /gym-configuration/spaces (create space)  
+✅ POST /gym-configuration/class-types (configure class types)  
+✅ POST /api/gyms/:gymId/classes (create class)  
+✅ POST /api/gyms/:gymId/configuration/coaches (invite coach)  
+✅ GET /api/gyms/:gymId/configuration/coaches (list coaches)  
+✅ GET /api/gyms/:gymId/schedule (owner schedule)  
+✅ GET /api/gyms/:gymId/coach/classes (coach assigned classes)  
+✅ GET /api/gyms/:gymId/classes/:classId/programming (fetch WOD)  
+✅ POST /api/gyms/:gymId/classes/:classId/programming (add/edit WOD)  
+✅ GET /api/gyms/:gymId/classes/:classId/bookings (booked athletes)  
+✅ POST /api/gyms/:gymId/classes/:classId/attendance (mark attendance)  
+✅ GET /api/gyms/:gymId/classes/:classId/results (class results)  
+
 ## Next Action
 
-Coach MVP is active. Start with backend Task #1 (GET assigned classes endpoint) — this is the only missing backend piece before frontend can begin.
-
-See `context/COACH_MVP_EPIC.md` for full task breakdown.
+Coach MVP is complete. Next epic to be determined.

@@ -60,6 +60,10 @@ import { ClassScheduleService } from '../../queries/class/class-schedule.service
 import { GetClassScheduleResponseDto } from '../../queries/class/dto/get-class-schedule-response.dto';
 import { GetClassResultsService } from '../../queries/class/get-class-results.service';
 import { GetClassResultsResponseDto } from '../../queries/class/dto/get-class-results-response.dto';
+import { GetClassProgrammingService } from '../../queries/class/get-class-programming.service';
+import { GetClassProgrammingResponseDto } from '../../queries/class/dto/get-class-programming-response.dto';
+import { GetClassBookingsService } from '../../queries/class/get-class-bookings.service';
+import { GetClassBookingsResponseDto } from '../../queries/class/dto/get-class-bookings-response.dto';
 
 @Controller('/api/gyms/:gymId/classes')
 @ApiTags('Classes')
@@ -70,6 +74,8 @@ export class ClassController {
     @Inject(CommandBus) private readonly commandBus: CommandBus,
     private readonly classScheduleService: ClassScheduleService,
     private readonly getClassResultsService: GetClassResultsService,
+    private readonly getClassProgrammingService: GetClassProgrammingService,
+    private readonly getClassBookingsService: GetClassBookingsService,
   ) {}
 
   /**
@@ -164,6 +170,48 @@ export class ClassController {
     );
 
     return this.commandBus.execute(command);
+  }
+
+  /**
+   * Get booked athletes for a class (Coach assigned to class or Gym Owner)
+   *
+   * **Preconditions:**
+   * - User must be authenticated
+   * - User must be either the coach assigned to the class or a gym owner of the gym
+   * - Class must belong to the gym specified in the route (gymId scoping enforced)
+   *
+   * **Postconditions:**
+   * - Returns all active bookings (booked + waitlisted) with athlete userId and display name
+   */
+  @Get('/:classId/bookings')
+  @ApiOperation({
+    summary: 'Get booked athletes for a class',
+    description:
+      'Retrieve the list of athletes with active bookings (booked or waitlisted) for a class. Accessible by the assigned coach or the gym owner. gymId is validated against the class.',
+  })
+  @ApiParam({ name: 'gymId', description: 'Gym ID' })
+  @ApiParam({ name: 'classId', description: 'Class ID' })
+  @ApiResponse({
+    status: 200,
+    description: 'Bookings returned',
+    type: GetClassBookingsResponseDto,
+  })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiResponse({
+    status: 403,
+    description: 'Forbidden - Assigned coach or gym owner required',
+  })
+  @ApiResponse({ status: 404, description: 'Class not found in gym' })
+  async getClassBookings(
+    @Param('gymId') gymId: string,
+    @Param('classId') classId: string,
+    @CurrentUser() userId: string,
+  ): Promise<GetClassBookingsResponseDto> {
+    return this.getClassBookingsService.getClassBookings(
+      gymId,
+      classId,
+      userId,
+    );
   }
 
   /**
@@ -343,6 +391,49 @@ export class ClassController {
     );
 
     return this.commandBus.execute(command);
+  }
+
+  /**
+   * Get programming for a class (Coach assigned to class or Gym Owner)
+   *
+   * **Preconditions:**
+   * - User must be authenticated
+   * - User must be either the coach assigned to the class or a gym owner of the gym
+   * - Class must belong to the gym specified in the route (gymId scoping enforced)
+   *
+   * **Postconditions:**
+   * - Returns programming content and loggable status
+   * - Returns null for content and lastUpdatedAt if no programming has been saved yet
+   */
+  @Get('/:classId/programming')
+  @ApiOperation({
+    summary: 'Get class programming (WOD)',
+    description:
+      'Retrieve the workout programming for a class. Accessible by the assigned coach or the gym owner. Returns null content when no programming has been set. gymId is validated against the class.',
+  })
+  @ApiParam({ name: 'gymId', description: 'Gym ID' })
+  @ApiParam({ name: 'classId', description: 'Class ID' })
+  @ApiResponse({
+    status: 200,
+    description: 'Programming returned (content may be null if not yet set)',
+    type: GetClassProgrammingResponseDto,
+  })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiResponse({
+    status: 403,
+    description: 'Forbidden - Assigned coach or gym owner required',
+  })
+  @ApiResponse({ status: 404, description: 'Class not found in gym' })
+  async getClassProgramming(
+    @Param('gymId') gymId: string,
+    @Param('classId') classId: string,
+    @CurrentUser() userId: string,
+  ): Promise<GetClassProgrammingResponseDto> {
+    return this.getClassProgrammingService.getClassProgramming(
+      gymId,
+      classId,
+      userId,
+    );
   }
 
   /**

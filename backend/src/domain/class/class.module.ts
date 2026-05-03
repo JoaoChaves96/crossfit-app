@@ -23,7 +23,10 @@ import { ManuallyTransitionClassStateHandler } from '../../commands/class/handle
 import { UpdateClassStructureHandler } from '../../commands/class/handlers/update-class-structure.handler';
 import { ClassScheduleService } from '../../queries/class/class-schedule.service';
 import { GetClassResultsService } from '../../queries/class/get-class-results.service';
+import { GetClassProgrammingService } from '../../queries/class/get-class-programming.service';
+import { GetClassBookingsService } from '../../queries/class/get-class-bookings.service';
 import { GymModule } from '../gym/gym.module';
+import { UserModule } from '../user/user.module';
 import { GymStaffModule } from '../gym-staff/gym-staff.module';
 import { SpaceModule } from '../space/space.module';
 import { ClassTypeModule } from '../class-type/class-type.module';
@@ -55,6 +58,7 @@ const CommandHandlers = [
     ]),
     GymModule,
     GymStaffModule,
+    UserModule,
     SpaceModule,
     ClassTypeModule,
     GymMembershipModule,
@@ -68,6 +72,8 @@ const CommandHandlers = [
     ProgrammingRepository,
     ClassScheduleService,
     GetClassResultsService,
+    GetClassProgrammingService,
+    GetClassBookingsService,
     ...CommandHandlers,
   ],
   exports: [
@@ -78,6 +84,8 @@ const CommandHandlers = [
     ProgrammingRepository,
     ClassScheduleService,
     GetClassResultsService,
+    GetClassProgrammingService,
+    GetClassBookingsService,
   ],
 })
 export class ClassModule {}

@@ -1,6 +1,6 @@
 # EPIC: Coach MVP
 
-**Status:** 🔄 IN PROGRESS  
+**Status:** ✅ COMPLETE (2026-05-03)  
 **Start Date:** 2026-04-29  
 **Owner:** Backend + Frontend team
 
@@ -45,37 +45,29 @@ Frames created:
 ## Backend Tasks
 
 ### Task #1: GET /api/gyms/:gymId/coach/classes — Assigned Classes
-**Status:** ❌ Missing
-
-No endpoint exists for a coach to fetch their own assigned classes. The existing `GET /api/gyms/:gymId/schedule` is owner-only (returns all classes).
-
-Needs to return: class list filtered by `coach_id = requesting user`, with date, time, space, class type, capacity, and booking count.
+**Status:** ✅ Done
 
 ### Task #2: Verify existing endpoints are coach-accessible
-
-Verify that the following endpoints already work for a coach role (correct gymId scoping, no owner-only guard):
-- `POST /api/classes/:classId/programming` — add WOD
-- `POST /api/classes/:classId/attendance` — mark attendees
-- `POST /api/classes/:classId/transition` — lifecycle transition
-- `GET /api/classes/:classId/results` — view results
+**Status:** ✅ Done — CRITICAL cross-tenant bugs found and fixed. All 3 command handlers now enforce gymId scoping. Additional endpoints added:
+- `GET /api/gyms/:gymId/classes/:classId/programming` — fetch existing WOD
+- `GET /api/gyms/:gymId/classes/:classId/results` — fetch class results
+- `GET /api/gyms/:gymId/classes/:classId/bookings` — fetch booked athletes
 
 ---
 
 ## Frontend Tasks
 
 ### Task #3: My Assigned Classes screen
-Coach home screen. Lists the coach's upcoming assigned classes, grouped or sorted by date. Uses `GET /api/gyms/:gymId/coach/classes`.
-
-Same sidebar navigation pattern as the gym owner Schedule Dashboard.
+**Status:** ✅ Done — `frontend/app/coach-classes.tsx`
 
 ### Task #4: Class Details & Programming screen
-Displays class info (type, time, space, capacity) and current WOD programming. Allows coach to add/edit programming via `POST /api/classes/:classId/programming`.
+**Status:** ✅ Done — `frontend/app/coach-class-details.tsx`
 
 ### Task #5: Mark Attendance screen
-Lists booked athletes for the class. Coach can toggle each athlete as present/absent. Submits via `POST /api/classes/:classId/attendance`.
+**Status:** ✅ Done — `frontend/app/coach-mark-attendance.tsx`
 
 ### Task #6: Coach navigation & routing
-Wire up coach-specific navigation (sidebar or tab): My Classes → Class Details → Mark Attendance.
+**Status:** ✅ Done — routes registered in `_layout.tsx`, View and Mark Attendance buttons wired
 
 ---
 
@@ -92,13 +84,13 @@ Task #2 (verify programming/attendance endpoints) ──────────
 
 ## Acceptance Criteria
 
-- [ ] Coach can see only their own assigned classes (not other coaches')
-- [ ] Coach can view class details and existing WOD programming
-- [ ] Coach can add WOD programming to a class
-- [ ] Coach can mark athletes as present or absent
-- [ ] Navigation between screens works correctly
-- [ ] All screens use generated API types (no manual type definitions)
-- [ ] Manual flow verified end-to-end in browser
+- [x] Coach can see only their own assigned classes (not other coaches')
+- [x] Coach can view class details and existing WOD programming
+- [x] Coach can add WOD programming to a class
+- [x] Coach can mark athletes as present or absent
+- [x] Navigation between screens works correctly
+- [x] All screens use generated API types (no manual type definitions)
+- [x] Manual flow verified end-to-end in browser (2026-05-03)
 
 ---
 

@@ -35,7 +35,11 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get?: never;
+        /**
+         * Get booked athletes for a class
+         * @description Retrieve the list of athletes with active bookings (booked or waitlisted) for a class. Accessible by the assigned coach or the gym owner. gymId is validated against the class.
+         */
+        get: operations["ClassController_getClassBookings"];
         put?: never;
         /**
          * Book a class
@@ -95,7 +99,11 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get?: never;
+        /**
+         * Get class programming (WOD)
+         * @description Retrieve the workout programming for a class. Accessible by the assigned coach or the gym owner. Returns null content when no programming has been set. gymId is validated against the class.
+         */
+        get: operations["ClassController_getClassProgramming"];
         put?: never;
         /**
          * Add or edit class programming
@@ -175,7 +183,11 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get?: never;
+        /**
+         * Get athlete results for a class
+         * @description Retrieve all athlete results for a given class. Accessible by the assigned coach or the gym owner. gymId is validated against the class.
+         */
+        get: operations["ClassController_getClassResults"];
         put?: never;
         /**
          * Log a result for a completed class
@@ -476,6 +488,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/gyms/{gymId}/coach/classes": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get classes assigned to the authenticated coach
+         * @description Retrieve all non-archived classes assigned to the requesting coach in the given gym. Scoped by gymId and coachId — no cross-gym or cross-coach access. Coaches only.
+         */
+        get: operations["CoachClassesController_getCoachClasses"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -588,6 +620,33 @@ export interface components {
              */
             lastModifiedAt: string;
         };
+        ClassBookingItemDto: {
+            /**
+             * @description Unique identifier for the booking
+             * @example uuid-booking-id
+             */
+            bookingId: string;
+            /**
+             * @description User ID of the booked athlete
+             * @example uuid-athlete-user-id
+             */
+            athleteUserId: string;
+            /**
+             * @description Display name of the athlete (full name or username)
+             * @example Jane Doe
+             */
+            displayName: string;
+            /**
+             * @description Current status of the booking
+             * @example booked
+             * @enum {string}
+             */
+            status: "booked" | "waitlisted";
+        };
+        GetClassBookingsResponseDto: {
+            /** @description List of athletes with active bookings (booked or waitlisted) for the class */
+            bookings: components["schemas"]["ClassBookingItemDto"][];
+        };
         BookClassDto: {
             /** @example uuid-class-id */
             classId: string;
@@ -674,6 +733,24 @@ export interface components {
             /** @example uuid-class-id */
             classId: string;
             attendanceRecords: components["schemas"]["AttendanceRecordResponseDto"][];
+        };
+        GetClassProgrammingResponseDto: {
+            /**
+             * @description Programming content (WOD description). Null if no programming exists.
+             * @example 5 rounds: 10 pull-ups, 20 push-ups, 30 squats
+             */
+            content: string | null;
+            /**
+             * @description Whether athletes are allowed to log results for this class.
+             * @example true
+             */
+            loggable: boolean;
+            /**
+             * Format: date-time
+             * @description Timestamp of the last update to the programming. Null if no programming exists.
+             * @example 2026-05-01T10:00:00.000Z
+             */
+            lastUpdatedAt: string | null;
         };
         AddOrEditProgrammingDto: {
             /** @example uuid-class-id */
@@ -839,6 +916,55 @@ export interface components {
              * @example 2024-06-14T20:00:00.000Z
              */
             lastModifiedAt: string;
+        };
+        ClassResultItemDto: {
+            /**
+             * @description Unique identifier for the result
+             * @example uuid-result-id
+             */
+            id: string;
+            /**
+             * @description ID of the athlete who logged this result
+             * @example uuid-user-id
+             */
+            userId: string;
+            /**
+             * @description Type of metric logged
+             * @example time
+             * @enum {string}
+             */
+            metricType: "time" | "reps" | "weight" | "rounds" | "note";
+            /**
+             * @description Result value (as string)
+             * @example 180
+             */
+            value: string;
+            /**
+             * @description Unit for the result value
+             * @example seconds
+             * @enum {string}
+             */
+            unit: "seconds" | "minutes" | "reps" | "kg" | "lb" | "rounds" | "none";
+            /**
+             * @description Optional notes from the athlete
+             * @example Felt strong today
+             */
+            notes: Record<string, never> | null;
+            /**
+             * Format: date-time
+             * @description Timestamp when the result was logged
+             * @example 2024-06-15T09:00:00.000Z
+             */
+            loggedAt: string;
+            /**
+             * @description Timestamp when the result was last edited, or null if never edited
+             * @example 2024-06-15T09:05:00.000Z
+             */
+            editedAt: Record<string, never> | null;
+        };
+        GetClassResultsResponseDto: {
+            /** @description List of athlete results for the class */
+            results: components["schemas"]["ClassResultItemDto"][];
         };
         LogResultDto: {
             /** @example uuid-class-id */
@@ -1343,6 +1469,53 @@ export interface components {
              */
             createdAt: string;
         };
+        CoachClassItemDto: {
+            /**
+             * @description Unique identifier for the class
+             * @example uuid-class-id
+             */
+            id: string;
+            /**
+             * @description Date the class is scheduled, YYYY-MM-DD format
+             * @example 2024-06-15
+             */
+            scheduledDate: string;
+            /**
+             * @description Time the class starts, HH:mm format
+             * @example 07:00
+             */
+            scheduledTime: string;
+            /**
+             * @description Name of the space where the class takes place
+             * @example Main Box
+             */
+            spaceName: string;
+            /**
+             * @description Human-readable name of the class type
+             * @example CrossFit
+             */
+            classTypeName: string;
+            /**
+             * @description Total capacity of the class
+             * @example 20
+             */
+            capacity: number;
+            /**
+             * @description Number of booked (confirmed) spots
+             * @example 12
+             */
+            bookedCount: number;
+            /**
+             * @description Current state of the class in its lifecycle
+             * @example published
+             * @enum {string}
+             */
+            state: "published" | "booking_closed" | "in_progress" | "completed" | "archived";
+        };
+        GetCoachClassesResponseDto: {
+            /** @description List of classes assigned to the authenticated coach in this gym */
+            classes: components["schemas"]["CoachClassItemDto"][];
+        };
     };
     responses: never;
     parameters: never;
@@ -1423,6 +1596,52 @@ export interface operations {
             };
             /** @description Forbidden - Owner role required */
             403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    ClassController_getClassBookings: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Gym ID */
+                gymId: string;
+                /** @description Class ID */
+                classId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Bookings returned */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GetClassBookingsResponseDto"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Forbidden - Assigned coach or gym owner required */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Class not found in gym */
+            404: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -1548,6 +1767,52 @@ export interface operations {
             };
             /** @description Forbidden - Coach role required */
             403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    ClassController_getClassProgramming: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Gym ID */
+                gymId: string;
+                /** @description Class ID */
+                classId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Programming returned (content may be null if not yet set) */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GetClassProgrammingResponseDto"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Forbidden - Assigned coach or gym owner required */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Class not found in gym */
+            404: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -1720,6 +1985,52 @@ export interface operations {
             };
             /** @description Forbidden - Coach role required */
             403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    ClassController_getClassResults: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Gym ID */
+                gymId: string;
+                /** @description Class ID */
+                classId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Results returned */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GetClassResultsResponseDto"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Forbidden - Assigned coach or gym owner required */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Class not found in gym */
+            404: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -2395,6 +2706,43 @@ export interface operations {
                 content?: never;
             };
             /** @description Forbidden - Owner role required */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    CoachClassesController_getCoachClasses: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Gym ID */
+                gymId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description List of classes assigned to the coach */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GetCoachClassesResponseDto"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Forbidden - User is not an active coach in this gym */
             403: {
                 headers: {
                     [name: string]: unknown;
