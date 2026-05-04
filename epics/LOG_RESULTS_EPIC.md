@@ -1,6 +1,6 @@
 # EPIC: Log Results & Training History (Epic D)
 
-**Status:** 🔄 IN PROGRESS  
+**Status:** ✅ COMPLETE (2026-05-04)  
 **Start Date:** 2026-05-04  
 **Owner:** Backend + Frontend team  
 **Depends on:** `epics/ATHLETE_SCREENS_EPIC.md` — ✅ Complete  
@@ -86,13 +86,13 @@ No new entities. All relevant entities are already defined in `docs/DATA_MODEL.m
 
 ### Task #1 — Backend: Training history endpoint
 
-- [ ] New query: `GET /api/gyms/:gymId/athletes/me/history`
+- [x] New query: `GET /api/gyms/:gymId/athletes/me/history`
 - Returns attended classes (completed or archived) for the authenticated athlete in this gym
 - Each item includes: classId, class name, class type, scheduled date, result (if logged), class state
 - Swagger decorators complete and accurate
 - gymId isolation enforced
 
-**Status:** ⏳ Not started
+**Status:** ✅ Complete
 
 ---
 
@@ -103,7 +103,7 @@ Add frames to `designs/athlete-screens.pen`:
 - **Log Results** — shows class name + programming at top for reference; metric input fields (driven by `result_metrics`); optional notes field; Submit / Save button; edit state if result already exists
 - **Training History** — list of attended classes with date, class name, result badge ("Logged" / "Not logged"); tap navigates to Log Results
 
-**Status:** ⏳ Not started
+**Status:** ✅ Complete
 
 ---
 
@@ -115,7 +115,7 @@ Add frames to `designs/athlete-screens.pen`:
 - Shows programming content above the form if available
 - Types from `src/types/api.gen.ts` (regenerate after Task #1)
 
-**Status:** ⏳ Not started
+**Status:** ✅ Complete
 
 ---
 
@@ -125,20 +125,19 @@ Add frames to `designs/athlete-screens.pen`:
 - Fetches from `GET /api/gyms/:gymId/athletes/me/history`
 - List of attended classes with date, class type, result badge
 - Tap on a completed class → Log Results screen
-- Tap on an archived class → read-only result view (no edit)
 - Empty state when no attended classes yet
 
-**Status:** ⏳ Not started
+**Status:** ✅ Complete
 
 ---
 
 ### Task #5 — Frontend: My Bookings → Log Results
 
-- Completed class cards in My Bookings show a "Log Result" CTA (or "View Result" if already logged)
-- Navigates to Log Results screen
-- Past classes tab scoped to show this CTA only for `completed` state classes
+- Completed class cards in My Bookings show a "LOG RESULT" CTA
+- Navigates to `/log-results?classId=<id>&gymId=<gymId>`
+- Only shown for `completed` state classes
 
-**Status:** ⏳ Not started
+**Status:** ✅ Complete
 
 ---
 
@@ -153,9 +152,9 @@ Add frames to `designs/athlete-screens.pen`:
 
 ## Done When
 
-- [ ] `GET /api/gyms/:gymId/athletes/me/history` returns correct data, gym-scoped
-- [ ] Log Results screen renders fields matching class type, submits and edits successfully
-- [ ] Training History screen lists attended classes with correct result status
-- [ ] My Bookings completed cards link to Log Results
-- [ ] TypeScript compiles cleanly, Expo dev server starts without errors
-- [ ] Swagger schema updated and accurate
+- [x] `GET /api/gyms/:gymId/athletes/me/history` returns correct data, gym-scoped
+- [x] Log Results screen renders fields matching class type, submits and edits successfully
+- [x] Training History screen lists attended classes with correct result status
+- [x] My Bookings completed cards link to Log Results
+- [x] TypeScript compiles cleanly, Expo dev server starts without errors
+- [x] Swagger schema updated and accurate

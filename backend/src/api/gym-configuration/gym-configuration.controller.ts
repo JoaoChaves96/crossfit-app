@@ -67,6 +67,14 @@ import { ChangeCoachStatusResponseDto } from '../../commands/gym-configuration/d
 import { CoachesQueryService } from '../../queries/gym-configuration/coaches.service';
 import { GetCoachesResponseDto } from '../../queries/gym-configuration/dto/get-coaches-response.dto';
 
+// ClassTypes Query
+import { ClassTypesQueryService } from '../../queries/gym-configuration/class-types.service';
+import { GetClassTypesResponseDto } from '../../queries/gym-configuration/dto/get-class-types-response.dto';
+
+// Spaces Query
+import { SpacesQueryService } from '../../queries/gym-configuration/spaces.service';
+import { GetSpacesResponseDto } from '../../queries/gym-configuration/dto/get-spaces-response.dto';
+
 @Controller('/api/gyms/:gymId/configuration')
 @ApiTags('Gym Configuration')
 @ApiBearerAuth()
@@ -75,9 +83,46 @@ export class GymConfigurationController {
   constructor(
     @Inject(CommandBus) private readonly commandBus: CommandBus,
     private readonly coachesQueryService: CoachesQueryService,
+    private readonly classTypesQueryService: ClassTypesQueryService,
+    private readonly spacesQueryService: SpacesQueryService,
   ) {}
 
   // ============= SPACES =============
+
+  /**
+   * List all spaces for a gym (Gym Owner only)
+   *
+   * **Preconditions:**
+   * - User must be authenticated as a gym owner
+   *
+   * **Postconditions:**
+   * - Returns all active (non-deleted) spaces for the gym
+   */
+  @Get('/spaces')
+  @Role('owner')
+  @ApiOperation({
+    summary: 'List spaces',
+    description:
+      'Returns all active training spaces for the gym. Gym owners only.',
+  })
+  @ApiParam({ name: 'gymId', description: 'Gym ID' })
+  @ApiResponse({
+    status: 200,
+    description: 'Spaces list returned',
+    type: GetSpacesResponseDto,
+  })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiResponse({ status: 403, description: 'Forbidden - Owner role required' })
+  async getSpaces(
+    @Param('gymId') gymId: string,
+    @CurrentGym() currentGymId: string,
+  ): Promise<GetSpacesResponseDto> {
+    if (gymId !== currentGymId) {
+      throw new Error('Gym ID mismatch');
+    }
+
+    return this.spacesQueryService.getSpacesByGym(gymId);
+  }
 
   /**
    * Create a space (Gym Owner only)
@@ -220,6 +265,41 @@ export class GymConfigurationController {
   }
 
   // ============= CLASS TYPES =============
+
+  /**
+   * List all class types for a gym (Gym Owner only)
+   *
+   * **Preconditions:**
+   * - User must be authenticated as a gym owner
+   *
+   * **Postconditions:**
+   * - Returns all active (non-deleted) class types for the gym
+   */
+  @Get('/class-types')
+  @Role('owner')
+  @ApiOperation({
+    summary: 'List class types',
+    description:
+      'Returns all active class types for the gym. Gym owners only.',
+  })
+  @ApiParam({ name: 'gymId', description: 'Gym ID' })
+  @ApiResponse({
+    status: 200,
+    description: 'Class types list returned',
+    type: GetClassTypesResponseDto,
+  })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiResponse({ status: 403, description: 'Forbidden - Owner role required' })
+  async getClassTypes(
+    @Param('gymId') gymId: string,
+    @CurrentGym() currentGymId: string,
+  ): Promise<GetClassTypesResponseDto> {
+    if (gymId !== currentGymId) {
+      throw new Error('Gym ID mismatch');
+    }
+
+    return this.classTypesQueryService.getClassTypesByGym(gymId);
+  }
 
   /**
    * Configure class types (Gym Owner only)

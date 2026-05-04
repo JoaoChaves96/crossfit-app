@@ -9,7 +9,7 @@
     "ios": "expo start --ios",
     "web": "expo start --web",
     "lint": "expo lint",
-    "generate:api-types": "openapi-typescript http://localhost:3000/api-docs -o types/api.gen.ts"
+    "generate:api-types": "openapi-typescript http://localhost:3000/api-docs-json -o types/api.gen.ts"
   },
   "dependencies": {
     "@expo/vector-icons": "^15.0.3",

@@ -67,38 +67,45 @@ export class BookClassHandler implements ICommandHandler<BookClassCommand> {
       throw new BadRequestException('Class does not belong to this gym');
     }
 
-    // Precondition 3: Verify athlete has active GymMembership for this gym
-    const gymMembership =
-      await this.gymMembershipRepository.getActiveGymMembershipByUserAndGym(
-        command.userId,
-        command.gymId,
-      );
-    if (!gymMembership) {
-      throw new ForbiddenException(
-        'Athlete does not have an active membership in this gym',
-      );
+    // Preconditions 3–5: Membership and plan checks — skipped for gym owners and coaches
+    // Staff are trusted members of their own gym and do not require a GymMembership record
+    const isStaff =
+      command.userRole === 'owner' || command.userRole === 'coach';
+
+    if (!isStaff) {
+      // Precondition 3: Verify athlete has active GymMembership for this gym
+      const gymMembership =
+        await this.gymMembershipRepository.getActiveGymMembershipByUserAndGym(
+          command.userId,
+          command.gymId,
+        );
+      if (!gymMembership) {
+        throw new ForbiddenException(
+          'Athlete does not have an active membership in this gym',
+        );
+      }
+
+      // Precondition 4: Verify athlete has active AthleteMembershipPlan for this gym
+      const activePlan =
+        await this.athleteMembershipPlanRepository.getActivePlanByGymMembership(
+          gymMembership.id,
+        );
+      if (!activePlan) {
+        throw new ForbiddenException(
+          'Athlete does not have an active membership plan for this gym',
+        );
+      }
+
+      // Precondition 5: Verify the plan's class_types includes this class's class_type_id
+      const plan = activePlan.membershipPlan;
+      if (!plan.classTypes.includes(classEntity.classTypeId)) {
+        throw new ForbiddenException(
+          'Athlete membership plan does not include this class type',
+        );
+      }
     }
 
-    // Precondition 4: Verify athlete has active AthleteMembershipPlan for this gym
-    const activePlan =
-      await this.athleteMembershipPlanRepository.getActivePlanByGymMembership(
-        gymMembership.id,
-      );
-    if (!activePlan) {
-      throw new ForbiddenException(
-        'Athlete does not have an active membership plan for this gym',
-      );
-    }
-
-    // Precondition 5: Verify the plan's class_types includes this class's class_type_id
-    const plan = activePlan.membershipPlan;
-    if (!plan.classTypes.includes(classEntity.classTypeId)) {
-      throw new ForbiddenException(
-        'Athlete membership plan does not include this class type',
-      );
-    }
-
-    // Precondition 6: Verify athlete does not already have an active booking for this class
+    // Precondition 6: Verify user does not already have an active booking for this class
     const existingBooking = await this.bookingRepository.findOne({
       where: {
         classId: command.classId,

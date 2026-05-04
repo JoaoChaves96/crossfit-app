@@ -148,10 +148,12 @@ function UpcomingCard({ item, isCancelling, onViewDetails, onCancel }: UpcomingC
 
 interface PastCardProps {
   item: BookingWithClassDetails;
+  gymId: string;
   onViewDetails: () => void;
+  onLogResult: () => void;
 }
 
-function PastCard({ item, onViewDetails }: PastCardProps) {
+function PastCard({ item, onViewDetails, onLogResult }: PastCardProps) {
   const badgeConfig = getPastBadgeConfig(item.state);
   const attended = item.state === 'completed';
   const isCancelledCard = !attended;
@@ -191,9 +193,16 @@ function PastCard({ item, onViewDetails }: PastCardProps) {
       )}
 
       {attended && (
-        <TouchableOpacity style={styles.viewButton} onPress={onViewDetails} activeOpacity={0.7}>
-          <Text style={styles.viewButtonText}>View Details</Text>
-        </TouchableOpacity>
+        <>
+          <TouchableOpacity style={styles.viewButton} onPress={onViewDetails} activeOpacity={0.7}>
+            <Text style={styles.viewButtonText}>View Details</Text>
+          </TouchableOpacity>
+          {item.state === 'completed' && (
+            <TouchableOpacity style={styles.viewButton} onPress={onLogResult} activeOpacity={0.7}>
+              <Text style={styles.viewButtonText}>LOG RESULT</Text>
+            </TouchableOpacity>
+          )}
+        </>
       )}
     </View>
   );
@@ -318,6 +327,14 @@ export default function MyBookingsScreen() {
     }, [fetchData]),
   );
 
+  const handleLogResult = (classId: string) => {
+    if (!currentGymId) return;
+    router.push({
+      pathname: '/log-results',
+      params: { classId, gymId: currentGymId },
+    });
+  };
+
   const handleViewDetails = (classId: string) => {
     if (!currentGymId) return;
     router.push({
@@ -427,7 +444,12 @@ export default function MyBookingsScreen() {
                   onCancel={() => handleCancelBooking(item)}
                 />
               ) : (
-                <PastCard item={item} onViewDetails={() => handleViewDetails(item.id)} />
+                <PastCard
+                  item={item}
+                  gymId={currentGymId}
+                  onViewDetails={() => handleViewDetails(item.id)}
+                  onLogResult={() => handleLogResult(item.id)}
+                />
               )
             }
             contentContainerStyle={styles.listContent}

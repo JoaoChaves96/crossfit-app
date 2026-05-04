@@ -16,6 +16,7 @@ import { RolesGuard } from '../../auth/guards/roles.guard';
 import { Role } from '../../auth/decorators/role.decorator';
 import { CurrentUser } from '../../auth/decorators/current-user.decorator';
 import { CurrentGym } from '../../auth/decorators/current-gym.decorator';
+import { CurrentRole } from '../../auth/decorators/current-role.decorator';
 import { CreateClassDto } from '../../commands/class/dto/create-class.dto';
 import { CreateClassCommand } from '../../commands/class/create-class.command';
 import { CreateClassResponseDto } from '../../commands/class/dto/create-class-response.dto';
@@ -92,11 +93,11 @@ export class ClassController {
    * - Includes class type, coach, capacity, and booking count
    */
   @Get()
-  @Role('athlete')
+  @Role(['athlete', 'owner', 'coach'])
   @ApiOperation({
-    summary: 'Get class schedule for athlete',
+    summary: 'Get class schedule',
     description:
-      'Retrieve all classes eligible for the authenticated athlete in a gym. Classes are filtered by gym membership and membership plan visibility. Athletes only.',
+      'Retrieve all classes in a gym. For athletes, classes are filtered by gym membership and membership plan visibility. Gym owners and coaches can view all classes in their gym.',
   })
   @ApiParam({ name: 'gymId', description: 'Gym ID' })
   @ApiResponse({
@@ -107,7 +108,7 @@ export class ClassController {
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   @ApiResponse({
     status: 403,
-    description: 'Forbidden - Athlete role required',
+    description: 'Forbidden - Athlete, owner, or coach role required',
   })
   async getClassSchedule(
     @Param('gymId') gymId: string,
@@ -233,11 +234,11 @@ export class ClassController {
    * - Booking created with status = 'waitlisted' if at capacity
    */
   @Post('/:classId/bookings')
-  @Role('athlete')
+  @Role(['athlete', 'owner', 'coach'])
   @ApiOperation({
     summary: 'Book a class',
     description:
-      'Reserve a spot in a class or join the waitlist if full. Athletes only.',
+      'Reserve a spot in a class or join the waitlist if full. Available to athletes, gym owners, and coaches. Membership and plan validation is bypassed for gym owners and coaches.',
   })
   @ApiParam({ name: 'gymId', description: 'Gym ID' })
   @ApiParam({ name: 'classId', description: 'Class ID' })
@@ -250,7 +251,7 @@ export class ClassController {
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   @ApiResponse({
     status: 403,
-    description: 'Forbidden - Athlete role required',
+    description: 'Forbidden - Athlete, owner, or coach role required',
   })
   async bookClass(
     @Param('gymId') gymId: string,
@@ -258,6 +259,7 @@ export class ClassController {
     @Body(ValidationPipe) bookClassDto: BookClassDto,
     @CurrentUser() userId: string,
     @CurrentGym() currentGymId: string,
+    @CurrentRole() userRole: string,
   ): Promise<BookClassResponseDto> {
     // Verify the param gymId matches the current gym context
     if (gymId !== currentGymId) {
@@ -274,7 +276,7 @@ export class ClassController {
       throw new Error('Class ID mismatch');
     }
 
-    const command = new BookClassCommand(userId, classId, gymId);
+    const command = new BookClassCommand(userId, classId, gymId, userRole);
 
     return this.commandBus.execute(command);
   }
@@ -295,11 +297,11 @@ export class ClassController {
    * - Remaining waitlist positions are renumbered
    */
   @Delete('/bookings/:bookingId')
-  @Role('athlete')
+  @Role(['athlete', 'owner', 'coach'])
   @ApiOperation({
     summary: 'Cancel a booking',
     description:
-      'Remove an athlete from a class booking. Only allowed while class is published. Athletes only.',
+      'Remove a user from a class booking. Only allowed while class is published. Available to athletes, gym owners, and coaches.',
   })
   @ApiParam({ name: 'gymId', description: 'Gym ID' })
   @ApiParam({ name: 'bookingId', description: 'Booking ID' })
@@ -311,7 +313,7 @@ export class ClassController {
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   @ApiResponse({
     status: 403,
-    description: 'Forbidden - Athlete role required',
+    description: 'Forbidden - Athlete, owner, or coach role required',
   })
   async cancelBooking(
     @Param('gymId') gymId: string,
@@ -716,11 +718,11 @@ export class ClassController {
   }
 
   @Post('/:classId/results')
-  @Role('athlete')
+  @Role(['athlete', 'owner', 'coach'])
   @ApiOperation({
     summary: 'Log a result for a completed class',
     description:
-      'Submit performance data for a completed class. Athletes only. Can only log results for classes where athlete was marked present.',
+      'Submit performance data for a completed class. Available to athletes, gym owners, and coaches. Can only log results for classes where the user was marked present.',
   })
   @ApiParam({ name: 'gymId', description: 'Gym ID' })
   @ApiParam({ name: 'classId', description: 'Class ID' })
@@ -733,7 +735,7 @@ export class ClassController {
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   @ApiResponse({
     status: 403,
-    description: 'Forbidden - Athlete role required',
+    description: 'Forbidden - Athlete, owner, or coach role required',
   })
   async logResult(
     @Param('gymId') gymId: string,
@@ -780,11 +782,11 @@ export class ClassController {
    * - Can edit until class is archived
    */
   @Patch('/results/:resultId')
-  @Role('athlete')
+  @Role(['athlete', 'owner', 'coach'])
   @ApiOperation({
     summary: 'Edit a logged result',
     description:
-      'Update performance data for a result. Athletes only. Can edit until class is archived.',
+      'Update performance data for a result. Available to athletes, gym owners, and coaches. Can edit until class is archived.',
   })
   @ApiParam({ name: 'gymId', description: 'Gym ID' })
   @ApiParam({ name: 'resultId', description: 'Result ID' })
@@ -797,7 +799,7 @@ export class ClassController {
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   @ApiResponse({
     status: 403,
-    description: 'Forbidden - Athlete role required',
+    description: 'Forbidden - Athlete, owner, or coach role required',
   })
   async editResult(
     @Param('gymId') gymId: string,

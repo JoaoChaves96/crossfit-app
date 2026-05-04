@@ -12,8 +12,8 @@ export interface paths {
             cookie?: never;
         };
         /**
-         * Get class schedule for athlete
-         * @description Retrieve all classes eligible for the authenticated athlete in a gym. Classes are filtered by gym membership and membership plan visibility. Athletes only.
+         * Get class schedule
+         * @description Retrieve all classes in a gym. For athletes, classes are filtered by gym membership and membership plan visibility. Gym owners and coaches can view all classes in their gym.
          */
         get: operations["ClassController_getClassSchedule"];
         put?: never;
@@ -43,7 +43,7 @@ export interface paths {
         put?: never;
         /**
          * Book a class
-         * @description Reserve a spot in a class or join the waitlist if full. Athletes only.
+         * @description Reserve a spot in a class or join the waitlist if full. Available to athletes, gym owners, and coaches. Membership and plan validation is bypassed for gym owners and coaches.
          */
         post: operations["ClassController_bookClass"];
         delete?: never;
@@ -64,7 +64,7 @@ export interface paths {
         post?: never;
         /**
          * Cancel a booking
-         * @description Remove an athlete from a class booking. Only allowed while class is published. Athletes only.
+         * @description Remove a user from a class booking. Only allowed while class is published. Available to athletes, gym owners, and coaches.
          */
         delete: operations["ClassController_cancelBooking"];
         options?: never;
@@ -191,7 +191,7 @@ export interface paths {
         put?: never;
         /**
          * Log a result for a completed class
-         * @description Submit performance data for a completed class. Athletes only. Can only log results for classes where athlete was marked present.
+         * @description Submit performance data for a completed class. Available to athletes, gym owners, and coaches. Can only log results for classes where the user was marked present.
          */
         post: operations["ClassController_logResult"];
         delete?: never;
@@ -215,7 +215,7 @@ export interface paths {
         head?: never;
         /**
          * Edit a logged result
-         * @description Update performance data for a result. Athletes only. Can edit until class is archived.
+         * @description Update performance data for a result. Available to athletes, gym owners, and coaches. Can edit until class is archived.
          */
         patch: operations["ClassController_editResult"];
         trace?: never;
@@ -227,7 +227,11 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get?: never;
+        /**
+         * List spaces
+         * @description Returns all active training spaces for the gym. Gym owners only.
+         */
+        get: operations["GymConfigurationController_getSpaces"];
         put?: never;
         /**
          * Create a training space
@@ -271,7 +275,11 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get?: never;
+        /**
+         * List class types
+         * @description Returns all active class types for the gym. Gym owners only.
+         */
+        get: operations["GymConfigurationController_getClassTypes"];
         put?: never;
         /**
          * Configure class types
@@ -437,9 +445,29 @@ export interface paths {
         };
         /**
          * Get authenticated user bookings
-         * @description Retrieve all active bookings for the authenticated athlete. Crosses all gyms (user-scoped endpoint).
+         * @description Retrieve all active bookings for the authenticated user. Available to athletes, gym owners, and coaches. Crosses all gyms (user-scoped endpoint).
          */
         get: operations["UserController_getUserBookings"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/gyms/{gymId}/athletes/me/history": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get training history
+         * @description Retrieve past attended classes for the authenticated user in the specified gym. Only includes classes where the user was marked present and the class is in completed or archived state. Results are ordered by scheduled date descending. Available to athletes, gym owners, and coaches.
+         */
+        get: operations["AthleteController_getTrainingHistory"];
         put?: never;
         post?: never;
         delete?: never;
@@ -1178,6 +1206,27 @@ export interface components {
             /** @example 2024-06-15T10:00:00.000Z */
             editedAt: Record<string, never> | null;
         };
+        SpaceItemDto: {
+            /**
+             * @description Unique identifier for the space
+             * @example uuid-space-id
+             */
+            id: string;
+            /**
+             * @description Name of the training space
+             * @example Main Floor
+             */
+            name: string;
+            /**
+             * @description Default maximum number of athletes the space can hold
+             * @example 20
+             */
+            baseCapacity: number;
+        };
+        GetSpacesResponseDto: {
+            /** @description List of training spaces for the gym */
+            spaces: components["schemas"]["SpaceItemDto"][];
+        };
         CreateSpaceDto: {
             /** @example Main Floor */
             name: string;
@@ -1228,6 +1277,33 @@ export interface components {
              * @example 2024-06-01T00:00:00.000Z
              */
             deletedAt: string;
+        };
+        ClassTypeItemDto: {
+            /**
+             * @description Unique identifier for the class type
+             * @example uuid-class-type-id
+             */
+            id: string;
+            /**
+             * @description Name of the class type
+             * @example CrossFit
+             */
+            name: string;
+            /**
+             * @description Whether athletes can log results for this class type
+             * @example true
+             */
+            loggable: boolean;
+            /**
+             * @description The metric used to log results for this class type
+             * @example time
+             * @enum {string}
+             */
+            resultMetrics: "time" | "reps" | "weight" | "rounds" | "none";
+        };
+        GetClassTypesResponseDto: {
+            /** @description List of class types for the gym */
+            classTypes: components["schemas"]["ClassTypeItemDto"][];
         };
         ConfigureClassTypesDto: {
             /**
@@ -1567,6 +1643,76 @@ export interface components {
             /** @description List of the user's active bookings */
             bookings: components["schemas"]["UserBookingItemDto"][];
         };
+        TrainingHistoryResultDto: {
+            /**
+             * @description Unique identifier for the result
+             * @example uuid-result-id
+             */
+            id: string;
+            /**
+             * @description Type of metric used for the result
+             * @example weight
+             * @enum {string}
+             */
+            metricType: "time" | "reps" | "weight" | "rounds" | "note";
+            /**
+             * @description The recorded value for the result
+             * @example 100
+             */
+            value: string;
+            /**
+             * @description Unit of measurement for the result value
+             * @example kg
+             * @enum {string}
+             */
+            unit: "seconds" | "minutes" | "reps" | "kg" | "lb" | "rounds" | "none";
+            /**
+             * @description Optional notes attached to the result
+             * @example Felt strong today
+             */
+            notes: string | null;
+            /**
+             * Format: date-time
+             * @description Timestamp when the result was first logged
+             * @example 2024-06-01T10:30:00.000Z
+             */
+            loggedAt: string;
+            /**
+             * Format: date-time
+             * @description Timestamp when the result was last edited, if ever
+             * @example 2024-06-01T11:00:00.000Z
+             */
+            editedAt: string | null;
+        };
+        TrainingHistoryItemDto: {
+            /**
+             * @description Unique identifier for the class
+             * @example uuid-class-id
+             */
+            classId: string;
+            /**
+             * @description Name of the class type
+             * @example CrossFit WOD
+             */
+            className: string;
+            /**
+             * @description ISO 8601 datetime combining the scheduled date and time
+             * @example 2024-06-01T09:00:00.000Z
+             */
+            scheduledAt: string;
+            /**
+             * @description Current lifecycle state of the class
+             * @example completed
+             * @enum {string}
+             */
+            classState: "completed" | "archived";
+            /** @description The logged result for this class, or null if none was logged */
+            result: components["schemas"]["TrainingHistoryResultDto"] | null;
+        };
+        GetTrainingHistoryResponseDto: {
+            /** @description Ordered list of the athlete's past attended classes (most recent first) */
+            history: components["schemas"]["TrainingHistoryItemDto"][];
+        };
         CreateGymDto: {
             /** @example CrossFit Downtown */
             name: string;
@@ -1850,7 +1996,7 @@ export interface operations {
                 };
                 content?: never;
             };
-            /** @description Forbidden - Athlete role required */
+            /** @description Forbidden - Athlete, owner, or coach role required */
             403: {
                 headers: {
                     [name: string]: unknown;
@@ -1980,7 +2126,7 @@ export interface operations {
                 };
                 content?: never;
             };
-            /** @description Forbidden - Athlete role required */
+            /** @description Forbidden - Athlete, owner, or coach role required */
             403: {
                 headers: {
                     [name: string]: unknown;
@@ -2019,7 +2165,7 @@ export interface operations {
                 };
                 content?: never;
             };
-            /** @description Forbidden - Athlete role required */
+            /** @description Forbidden - Athlete, owner, or coach role required */
             403: {
                 headers: {
                     [name: string]: unknown;
@@ -2369,7 +2515,7 @@ export interface operations {
                 };
                 content?: never;
             };
-            /** @description Forbidden - Athlete role required */
+            /** @description Forbidden - Athlete, owner, or coach role required */
             403: {
                 headers: {
                     [name: string]: unknown;
@@ -2412,7 +2558,44 @@ export interface operations {
                 };
                 content?: never;
             };
-            /** @description Forbidden - Athlete role required */
+            /** @description Forbidden - Athlete, owner, or coach role required */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    GymConfigurationController_getSpaces: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Gym ID */
+                gymId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Spaces list returned */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GetSpacesResponseDto"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Forbidden - Owner role required */
             403: {
                 headers: {
                     [name: string]: unknown;
@@ -2526,6 +2709,43 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["UpdateSpaceResponseDto"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Forbidden - Owner role required */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    GymConfigurationController_getClassTypes: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Gym ID */
+                gymId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Class types list returned */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GetClassTypesResponseDto"];
                 };
             };
             /** @description Unauthorized */
@@ -2934,7 +3154,44 @@ export interface operations {
                 };
                 content?: never;
             };
-            /** @description Forbidden - Athlete role required */
+            /** @description Forbidden - Athlete, owner, or coach role required */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    AthleteController_getTrainingHistory: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Gym ID */
+                gymId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Training history returned */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GetTrainingHistoryResponseDto"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Forbidden - Athlete, owner, or coach role required */
             403: {
                 headers: {
                     [name: string]: unknown;

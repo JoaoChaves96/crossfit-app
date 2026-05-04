@@ -32,12 +32,12 @@ export class UserController {
    * - Crosses all gyms (multi-gym support)
    */
   @Get('/bookings')
-  @Role('athlete')
+  @Role(['athlete', 'owner', 'coach'])
   @UserScoped()
   @ApiOperation({
     summary: 'Get authenticated user bookings',
     description:
-      'Retrieve all active bookings for the authenticated athlete. Crosses all gyms (user-scoped endpoint).',
+      'Retrieve all active bookings for the authenticated user. Available to athletes, gym owners, and coaches. Crosses all gyms (user-scoped endpoint).',
   })
   @ApiResponse({
     status: 200,
@@ -47,7 +47,7 @@ export class UserController {
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   @ApiResponse({
     status: 403,
-    description: 'Forbidden - Athlete role required',
+    description: 'Forbidden - Athlete, owner, or coach role required',
   })
   async getUserBookings(
     @CurrentUser() userId: string,

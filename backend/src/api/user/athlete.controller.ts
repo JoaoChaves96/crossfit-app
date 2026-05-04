@@ -35,11 +35,11 @@ export class AthleteController {
    * - gymId isolation: only returns classes belonging to the specified gym
    */
   @Get('/me/history')
-  @Role('athlete')
+  @Role(['athlete', 'owner', 'coach'])
   @ApiOperation({
-    summary: 'Get athlete training history',
+    summary: 'Get training history',
     description:
-      'Retrieve past attended classes for the authenticated athlete in the specified gym. Only includes classes where the athlete was marked present and the class is in completed or archived state. Results are ordered by scheduled date descending.',
+      'Retrieve past attended classes for the authenticated user in the specified gym. Only includes classes where the user was marked present and the class is in completed or archived state. Results are ordered by scheduled date descending. Available to athletes, gym owners, and coaches.',
   })
   @ApiParam({ name: 'gymId', description: 'Gym ID' })
   @ApiResponse({
@@ -50,7 +50,7 @@ export class AthleteController {
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   @ApiResponse({
     status: 403,
-    description: 'Forbidden - Athlete role with active gym membership required',
+    description: 'Forbidden - Athlete, owner, or coach role required',
   })
   async getTrainingHistory(
     @Param('gymId') gymId: string,
