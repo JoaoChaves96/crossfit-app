@@ -11,7 +11,13 @@
 
 Crossfit class booking application.
 
-## Current Phase (2026-05-03)
+## Current Phase (2026-05-04)
+
+**Waitlist UI** — ✅ COMPLETE (2026-05-04)
+- ✅ UX design: waitlist state variants added to `designs/athlete-screens.pen` (Class Details State A/B, Schedule full card, My Bookings waitlisted badge)
+- ✅ Backend: `waitlistPosition` added to `UserBookingItemDto` (was missing from GET /api/me/bookings)
+- ✅ Frontend: waitlist states implemented across Schedule, Class Details, and My Bookings
+- ✅ Frontend types regenerated from Swagger
 
 **EPIC:** Invite & Onboarding (Epic C.2) — ✅ COMPLETE (2026-05-03)
 - ✅ Task #1: Backend invite endpoints (create, validate, accept, list, revoke)
@@ -106,20 +112,17 @@ Crossfit class booking application.
 
 ## Known Non-Goals (for now)
 
-- No invite flow / email delivery (Epic C.2 — Invite & Onboarding — IN PROGRESS)
 - No payments
 - No Members UI
 - No Settings UI
 
-## Next Epic
+## Verified Working Flows (Waitlist)
 
-Epic C.2 — Invite & Onboarding — TBD
-
-Remaining work:
-- Invite flow (coaches/owners invite athletes to gyms)
-- Email delivery (invite link + onboarding)
-- Gym joining / membership activation
-- User profile setup (name, avatar, preferences)
+✅ Schedule — full class cards show "Full · Waitlist Open" in orange  
+✅ Class Details — "JOIN WAITLIST" button at capacity (State A)  
+✅ Class Details — "WAITLIST #N – You are #N in line" + "LEAVE WAITLIST" when on waitlist (State B)  
+✅ My Bookings — waitlisted cards show "WAITLISTED #N" badge, cancel label shows "Leave Waitlist"  
+✅ `waitlistPosition` returned by GET /api/me/bookings and wired into all UI states  
 
 ## Verification Complete (2026-05-03)
 

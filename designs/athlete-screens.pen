@@ -1536,11 +1536,11 @@
                           "type": "text",
                           "id": "VT0M8",
                           "name": "card3CapText",
-                          "fill": "#666666",
-                          "content": "20 / 20 spots",
+                          "fill": "#E65100",
+                          "content": "Full · Waitlist Open",
                           "fontFamily": "Inter",
                           "fontSize": 13,
-                          "fontWeight": "normal"
+                          "fontWeight": "600"
                         }
                       ]
                     },
@@ -5323,6 +5323,1005 @@
                   "fontWeight": "500"
                 }
               ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "frame",
+      "id": "29YKQ",
+      "x": 0,
+      "y": 1886,
+      "name": "Class Details — State A: Join Waitlist",
+      "width": 393,
+      "height": 980,
+      "fill": "#FFFFFF",
+      "layout": "vertical",
+      "children": [
+        {
+          "type": "frame",
+          "id": "hDic4",
+          "name": "statusBar",
+          "width": "fill_container",
+          "height": 62,
+          "padding": [
+            0,
+            24
+          ],
+          "justifyContent": "space_between",
+          "alignItems": "center",
+          "children": [
+            {
+              "type": "text",
+              "id": "JQnti",
+              "name": "time",
+              "fill": "#000000",
+              "content": "9:41",
+              "fontFamily": "Inter",
+              "fontSize": 16,
+              "fontWeight": "600"
+            },
+            {
+              "type": "frame",
+              "id": "0qX3z",
+              "name": "icons",
+              "gap": 6,
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "icon_font",
+                  "id": "rDC9L",
+                  "name": "signal",
+                  "width": 18,
+                  "height": 18,
+                  "iconFontName": "wifi",
+                  "iconFontFamily": "lucide",
+                  "fill": "#000000"
+                },
+                {
+                  "type": "icon_font",
+                  "id": "k6EdI",
+                  "name": "battery",
+                  "width": 18,
+                  "height": 18,
+                  "iconFontName": "battery",
+                  "iconFontFamily": "lucide",
+                  "fill": "#000000"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "frame",
+          "id": "7NZHD",
+          "name": "Header",
+          "width": "fill_container",
+          "gap": 12,
+          "padding": [
+            12,
+            16
+          ],
+          "alignItems": "center",
+          "children": [
+            {
+              "type": "icon_font",
+              "id": "HP8D2",
+              "name": "backBtn",
+              "width": 24,
+              "height": 24,
+              "iconFontName": "chevron-left",
+              "iconFontFamily": "lucide",
+              "fill": "#000000"
+            },
+            {
+              "type": "text",
+              "id": "JacpR",
+              "name": "headerTitle",
+              "fill": "#000000",
+              "content": "Class Details",
+              "fontFamily": "Inter",
+              "fontSize": 18,
+              "fontWeight": "600"
+            }
+          ]
+        },
+        {
+          "type": "frame",
+          "id": "4AoaX",
+          "name": "Content",
+          "clip": true,
+          "width": "fill_container",
+          "height": 648,
+          "layout": "vertical",
+          "gap": 24,
+          "padding": [
+            0,
+            20,
+            24,
+            20
+          ],
+          "children": [
+            {
+              "type": "text",
+              "id": "ptDn9",
+              "name": "classType",
+              "fill": "#000000",
+              "content": "CrossFit WOD",
+              "fontFamily": "Inter",
+              "fontSize": 24,
+              "fontWeight": "700"
+            },
+            {
+              "type": "frame",
+              "id": "gLYbk",
+              "name": "metaInfo",
+              "width": "fill_container",
+              "layout": "vertical",
+              "gap": 8,
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "AKZBN",
+                  "name": "metaDate",
+                  "gap": 8,
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "icon_font",
+                      "id": "xFcYG",
+                      "name": "calIcon",
+                      "width": 16,
+                      "height": 16,
+                      "iconFontName": "calendar",
+                      "iconFontFamily": "lucide",
+                      "fill": "#666666"
+                    },
+                    {
+                      "type": "text",
+                      "id": "iANi4",
+                      "name": "dateText",
+                      "fill": "#666666",
+                      "content": "Mon, Apr 21 · 07:00 – 08:00",
+                      "fontFamily": "Inter",
+                      "fontSize": 14,
+                      "fontWeight": "normal"
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "mLkLL",
+                  "name": "metaLoc",
+                  "gap": 8,
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "icon_font",
+                      "id": "ZN2K2",
+                      "name": "locIcon",
+                      "width": 16,
+                      "height": 16,
+                      "iconFontName": "map-pin",
+                      "iconFontFamily": "lucide",
+                      "fill": "#666666"
+                    },
+                    {
+                      "type": "text",
+                      "id": "eEktH",
+                      "name": "locText",
+                      "fill": "#666666",
+                      "content": "Main Box – Room A",
+                      "fontFamily": "Inter",
+                      "fontSize": 14,
+                      "fontWeight": "normal"
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "6s5rd",
+                  "name": "metaCoach",
+                  "gap": 8,
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "icon_font",
+                      "id": "kOoXf",
+                      "name": "coachIcon",
+                      "width": 16,
+                      "height": 16,
+                      "iconFontName": "user",
+                      "iconFontFamily": "lucide",
+                      "fill": "#666666"
+                    },
+                    {
+                      "type": "text",
+                      "id": "K4CJf",
+                      "name": "coachText",
+                      "fill": "#666666",
+                      "content": "Coach: Maria Santos",
+                      "fontFamily": "Inter",
+                      "fontSize": 14,
+                      "fontWeight": "normal"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "rectangle",
+              "id": "IGYz4",
+              "name": "div1",
+              "fill": "#E5E5E5",
+              "width": "fill_container",
+              "height": 1
+            },
+            {
+              "type": "frame",
+              "id": "s6zq2",
+              "name": "Capacity",
+              "width": "fill_container",
+              "layout": "vertical",
+              "gap": 8,
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "C2Wun",
+                  "name": "capHeader",
+                  "width": "fill_container",
+                  "justifyContent": "space_between",
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "yX7XK",
+                      "name": "capLabel",
+                      "fill": "#000000",
+                      "content": "Capacity",
+                      "fontFamily": "Inter",
+                      "fontSize": 14,
+                      "fontWeight": "600"
+                    },
+                    {
+                      "type": "text",
+                      "id": "jxNR4",
+                      "name": "capCount",
+                      "fill": "#000000",
+                      "content": "20 / 20",
+                      "fontFamily": "Inter",
+                      "fontSize": 14,
+                      "fontWeight": "600"
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "bWVRJ",
+                  "name": "barBg",
+                  "width": "fill_container",
+                  "height": 8,
+                  "fill": "#E5E5E5",
+                  "cornerRadius": 4,
+                  "children": [
+                    {
+                      "type": "rectangle",
+                      "cornerRadius": 4,
+                      "id": "vFUCp",
+                      "name": "barFill",
+                      "fill": "#DC2626",
+                      "width": "fill_container",
+                      "height": 8
+                    }
+                  ]
+                },
+                {
+                  "type": "text",
+                  "id": "lgDdR",
+                  "name": "capNote",
+                  "fill": "#DC2626",
+                  "content": "Class is full · Waitlist available",
+                  "fontFamily": "Inter",
+                  "fontSize": 12,
+                  "fontWeight": "normal"
+                }
+              ]
+            },
+            {
+              "type": "rectangle",
+              "id": "T4BoW",
+              "name": "div2",
+              "fill": "#E5E5E5",
+              "width": "fill_container",
+              "height": 1
+            },
+            {
+              "type": "frame",
+              "id": "wcOkt",
+              "name": "Booking Status",
+              "width": "fill_container",
+              "layout": "vertical",
+              "gap": 8,
+              "children": [
+                {
+                  "type": "text",
+                  "id": "3Fv6D",
+                  "name": "bsLabel",
+                  "fill": "#000000",
+                  "content": "Booking Status",
+                  "fontFamily": "Inter",
+                  "fontSize": 14,
+                  "fontWeight": "600"
+                },
+                {
+                  "type": "frame",
+                  "id": "OERi2",
+                  "name": "statusBadge",
+                  "width": "fill_container",
+                  "fill": "#FFF3E0",
+                  "cornerRadius": 8,
+                  "gap": 8,
+                  "padding": [
+                    12,
+                    16
+                  ],
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "icon_font",
+                      "id": "yEiX5",
+                      "name": "fullIcon",
+                      "width": 18,
+                      "height": 18,
+                      "iconFontName": "ban",
+                      "iconFontFamily": "lucide",
+                      "fill": "#E65100"
+                    },
+                    {
+                      "type": "text",
+                      "id": "cIZGD",
+                      "name": "statusText",
+                      "fill": "#E65100",
+                      "content": "Class is full – not booked",
+                      "fontFamily": "Inter",
+                      "fontSize": 14,
+                      "fontWeight": "600"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "rectangle",
+              "id": "QYzcV",
+              "name": "div3",
+              "fill": "#E5E5E5",
+              "width": "fill_container",
+              "height": 1
+            },
+            {
+              "type": "frame",
+              "id": "PF3Oy",
+              "name": "Programming",
+              "width": "fill_container",
+              "layout": "vertical",
+              "gap": 10,
+              "children": [
+                {
+                  "type": "text",
+                  "id": "zORSH",
+                  "name": "progLabel",
+                  "fill": "#000000",
+                  "content": "Programming",
+                  "fontFamily": "Inter",
+                  "fontSize": 14,
+                  "fontWeight": "600"
+                },
+                {
+                  "type": "text",
+                  "id": "cdenG",
+                  "name": "wodTitle",
+                  "fill": "#000000",
+                  "content": "WOD: \"Fran\"",
+                  "fontFamily": "Inter",
+                  "fontSize": 14,
+                  "fontWeight": "600"
+                },
+                {
+                  "type": "text",
+                  "id": "L4uhP",
+                  "name": "wodDetail",
+                  "fill": "#666666",
+                  "content": "21-15-9 Thrusters & Pull-ups",
+                  "fontFamily": "Inter",
+                  "fontSize": 13,
+                  "fontWeight": "normal"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "frame",
+          "id": "95jNk",
+          "name": "Action Button",
+          "width": "fill_container",
+          "layout": "vertical",
+          "padding": [
+            12,
+            20,
+            32,
+            20
+          ],
+          "children": [
+            {
+              "type": "frame",
+              "id": "3YtMo",
+              "name": "joinWaitlistBtn",
+              "width": "fill_container",
+              "height": 50,
+              "fill": "#1A1A1A",
+              "cornerRadius": 12,
+              "justifyContent": "center",
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "text",
+                  "id": "wbVJQ",
+                  "name": "joinBtnText",
+                  "fill": "#FFFFFF",
+                  "content": "JOIN WAITLIST",
+                  "fontFamily": "Inter",
+                  "fontSize": 15,
+                  "fontWeight": "700",
+                  "letterSpacing": 0.5
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "frame",
+          "id": "dhZVE",
+          "name": "stateLabel",
+          "width": "fill_container",
+          "padding": [
+            0,
+            0,
+            8,
+            0
+          ],
+          "justifyContent": "center",
+          "children": [
+            {
+              "type": "text",
+              "id": "gfCgy",
+              "name": "labelText",
+              "fill": "#999999",
+              "content": "State A: At capacity, NOT on waitlist",
+              "fontFamily": "Inter",
+              "fontSize": 11,
+              "fontWeight": "normal"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "frame",
+      "id": "Yadmr",
+      "x": 443,
+      "y": 1886,
+      "name": "Class Details — State B: On Waitlist",
+      "width": 393,
+      "height": 980,
+      "fill": "#FFFFFF",
+      "layout": "vertical",
+      "children": [
+        {
+          "type": "frame",
+          "id": "ZWPpK",
+          "name": "statusBar",
+          "width": "fill_container",
+          "height": 62,
+          "padding": [
+            0,
+            24
+          ],
+          "justifyContent": "space_between",
+          "alignItems": "center",
+          "children": [
+            {
+              "type": "text",
+              "id": "iRSl6",
+              "name": "time",
+              "fill": "#000000",
+              "content": "9:41",
+              "fontFamily": "Inter",
+              "fontSize": 16,
+              "fontWeight": "600"
+            },
+            {
+              "type": "frame",
+              "id": "ioJeR",
+              "name": "icons",
+              "gap": 6,
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "icon_font",
+                  "id": "4gJSZ",
+                  "name": "wifi",
+                  "width": 18,
+                  "height": 18,
+                  "iconFontName": "wifi",
+                  "iconFontFamily": "lucide",
+                  "fill": "#000000"
+                },
+                {
+                  "type": "icon_font",
+                  "id": "25m6W",
+                  "name": "battery",
+                  "width": 18,
+                  "height": 18,
+                  "iconFontName": "battery",
+                  "iconFontFamily": "lucide",
+                  "fill": "#000000"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "frame",
+          "id": "VREhQ",
+          "name": "Header",
+          "width": "fill_container",
+          "gap": 12,
+          "padding": [
+            12,
+            16
+          ],
+          "alignItems": "center",
+          "children": [
+            {
+              "type": "icon_font",
+              "id": "NVIFJ",
+              "name": "backBtn",
+              "width": 24,
+              "height": 24,
+              "iconFontName": "chevron-left",
+              "iconFontFamily": "lucide",
+              "fill": "#000000"
+            },
+            {
+              "type": "text",
+              "id": "t7CBo",
+              "name": "headerTitle",
+              "fill": "#000000",
+              "content": "Class Details",
+              "fontFamily": "Inter",
+              "fontSize": 18,
+              "fontWeight": "600"
+            }
+          ]
+        },
+        {
+          "type": "frame",
+          "id": "vQtr6",
+          "name": "Content",
+          "clip": true,
+          "width": "fill_container",
+          "height": 648,
+          "layout": "vertical",
+          "gap": 24,
+          "padding": [
+            0,
+            20,
+            24,
+            20
+          ],
+          "children": [
+            {
+              "type": "text",
+              "id": "xYc4s",
+              "name": "classType",
+              "fill": "#000000",
+              "content": "CrossFit WOD",
+              "fontFamily": "Inter",
+              "fontSize": 24,
+              "fontWeight": "700"
+            },
+            {
+              "type": "frame",
+              "id": "j50Vj",
+              "name": "metaInfo",
+              "width": "fill_container",
+              "layout": "vertical",
+              "gap": 8,
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "o4r4P",
+                  "name": "metaDate",
+                  "gap": 8,
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "icon_font",
+                      "id": "p6Qfd",
+                      "name": "calIcon",
+                      "width": 16,
+                      "height": 16,
+                      "iconFontName": "calendar",
+                      "iconFontFamily": "lucide",
+                      "fill": "#666666"
+                    },
+                    {
+                      "type": "text",
+                      "id": "VDsVs",
+                      "name": "dateText",
+                      "fill": "#666666",
+                      "content": "Mon, Apr 21 · 07:00 – 08:00",
+                      "fontFamily": "Inter",
+                      "fontSize": 14,
+                      "fontWeight": "normal"
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "afnKq",
+                  "name": "metaLoc",
+                  "gap": 8,
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "icon_font",
+                      "id": "UQaWA",
+                      "name": "locIcon",
+                      "width": 16,
+                      "height": 16,
+                      "iconFontName": "map-pin",
+                      "iconFontFamily": "lucide",
+                      "fill": "#666666"
+                    },
+                    {
+                      "type": "text",
+                      "id": "FnXzQ",
+                      "name": "locText",
+                      "fill": "#666666",
+                      "content": "Main Box – Room A",
+                      "fontFamily": "Inter",
+                      "fontSize": 14,
+                      "fontWeight": "normal"
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "Tio6L",
+                  "name": "metaCoach",
+                  "gap": 8,
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "icon_font",
+                      "id": "aWiuP",
+                      "name": "coachIcon",
+                      "width": 16,
+                      "height": 16,
+                      "iconFontName": "user",
+                      "iconFontFamily": "lucide",
+                      "fill": "#666666"
+                    },
+                    {
+                      "type": "text",
+                      "id": "4oWMR",
+                      "name": "coachText",
+                      "fill": "#666666",
+                      "content": "Coach: Maria Santos",
+                      "fontFamily": "Inter",
+                      "fontSize": 14,
+                      "fontWeight": "normal"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "rectangle",
+              "id": "RyBuG",
+              "name": "div1",
+              "fill": "#E5E5E5",
+              "width": "fill_container",
+              "height": 1
+            },
+            {
+              "type": "frame",
+              "id": "HkqDG",
+              "name": "Capacity",
+              "width": "fill_container",
+              "layout": "vertical",
+              "gap": 8,
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "IcaQW",
+                  "name": "capHeader",
+                  "width": "fill_container",
+                  "justifyContent": "space_between",
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "YOzKk",
+                      "name": "capLabel",
+                      "fill": "#000000",
+                      "content": "Capacity",
+                      "fontFamily": "Inter",
+                      "fontSize": 14,
+                      "fontWeight": "600"
+                    },
+                    {
+                      "type": "text",
+                      "id": "U93yh",
+                      "name": "capCount",
+                      "fill": "#000000",
+                      "content": "20 / 20",
+                      "fontFamily": "Inter",
+                      "fontSize": 14,
+                      "fontWeight": "600"
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "clSG0",
+                  "name": "barBg",
+                  "width": "fill_container",
+                  "height": 8,
+                  "fill": "#E5E5E5",
+                  "cornerRadius": 4,
+                  "children": [
+                    {
+                      "type": "rectangle",
+                      "cornerRadius": 4,
+                      "id": "DvVyH",
+                      "name": "barFill",
+                      "fill": "#DC2626",
+                      "width": "fill_container",
+                      "height": 8
+                    }
+                  ]
+                },
+                {
+                  "type": "text",
+                  "id": "ZEtgb",
+                  "name": "capNote",
+                  "fill": "#DC2626",
+                  "content": "Class is full · Waitlist available",
+                  "fontFamily": "Inter",
+                  "fontSize": 12,
+                  "fontWeight": "normal"
+                }
+              ]
+            },
+            {
+              "type": "rectangle",
+              "id": "1dNZY",
+              "name": "div2",
+              "fill": "#E5E5E5",
+              "width": "fill_container",
+              "height": 1
+            },
+            {
+              "type": "frame",
+              "id": "C0LaL",
+              "name": "Booking Status",
+              "width": "fill_container",
+              "layout": "vertical",
+              "gap": 8,
+              "children": [
+                {
+                  "type": "text",
+                  "id": "5dQjd",
+                  "name": "bsLabel",
+                  "fill": "#000000",
+                  "content": "Booking Status",
+                  "fontFamily": "Inter",
+                  "fontSize": 14,
+                  "fontWeight": "600"
+                },
+                {
+                  "type": "frame",
+                  "id": "q3N11",
+                  "name": "statusBadge",
+                  "width": "fill_container",
+                  "fill": "#FFF3E0",
+                  "cornerRadius": 8,
+                  "gap": 8,
+                  "padding": [
+                    12,
+                    16
+                  ],
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "icon_font",
+                      "id": "FlnKS",
+                      "name": "hourglassIcon",
+                      "width": 18,
+                      "height": 18,
+                      "iconFontName": "hourglass",
+                      "iconFontFamily": "lucide",
+                      "fill": "#E65100"
+                    },
+                    {
+                      "type": "text",
+                      "id": "YX2E5",
+                      "name": "statusText",
+                      "fill": "#E65100",
+                      "content": "WAITLIST #3 – You are #3 in line",
+                      "fontFamily": "Inter",
+                      "fontSize": 14,
+                      "fontWeight": "600"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "rectangle",
+              "id": "TRq1z",
+              "name": "div3",
+              "fill": "#E5E5E5",
+              "width": "fill_container",
+              "height": 1
+            },
+            {
+              "type": "frame",
+              "id": "7dv1j",
+              "name": "Programming",
+              "width": "fill_container",
+              "layout": "vertical",
+              "gap": 10,
+              "children": [
+                {
+                  "type": "text",
+                  "id": "T4n6D",
+                  "name": "progLabel",
+                  "fill": "#000000",
+                  "content": "Programming",
+                  "fontFamily": "Inter",
+                  "fontSize": 14,
+                  "fontWeight": "600"
+                },
+                {
+                  "type": "text",
+                  "id": "KAxhj",
+                  "name": "wodTitle",
+                  "fill": "#000000",
+                  "content": "WOD: \"Fran\"",
+                  "fontFamily": "Inter",
+                  "fontSize": 14,
+                  "fontWeight": "600"
+                },
+                {
+                  "type": "text",
+                  "id": "h4Rkx",
+                  "name": "wodDetail",
+                  "fill": "#666666",
+                  "content": "21-15-9 Thrusters & Pull-ups",
+                  "fontFamily": "Inter",
+                  "fontSize": 13,
+                  "fontWeight": "normal"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "frame",
+          "id": "bTFrl",
+          "name": "Action Button",
+          "width": "fill_container",
+          "layout": "vertical",
+          "gap": 8,
+          "padding": [
+            12,
+            20,
+            32,
+            20
+          ],
+          "children": [
+            {
+              "type": "frame",
+              "id": "b2wtX",
+              "name": "waitlistPositionRow",
+              "width": "fill_container",
+              "gap": 8,
+              "padding": [
+                8,
+                0
+              ],
+              "justifyContent": "center",
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "icon_font",
+                  "id": "lWwK2",
+                  "name": "hourglassPos",
+                  "width": 20,
+                  "height": 20,
+                  "iconFontName": "hourglass",
+                  "iconFontFamily": "lucide",
+                  "fill": "#E65100"
+                },
+                {
+                  "type": "text",
+                  "id": "JzXkU",
+                  "name": "posText",
+                  "fill": "#E65100",
+                  "content": "You are #3 on the waitlist",
+                  "fontFamily": "Inter",
+                  "fontSize": 14,
+                  "fontWeight": "600"
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "ZG2KV",
+              "name": "leaveWaitlistBtn",
+              "width": "fill_container",
+              "height": 50,
+              "fill": "#FFFFFF",
+              "cornerRadius": 12,
+              "stroke": {
+                "align": "inside",
+                "thickness": 2,
+                "fill": "#DC2626"
+              },
+              "justifyContent": "center",
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "text",
+                  "id": "eCpmD",
+                  "name": "leaveBtnText",
+                  "fill": "#DC2626",
+                  "content": "LEAVE WAITLIST",
+                  "fontFamily": "Inter",
+                  "fontSize": 15,
+                  "fontWeight": "700",
+                  "letterSpacing": 0.5
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "frame",
+          "id": "9thAA",
+          "name": "stateLabel",
+          "width": "fill_container",
+          "padding": [
+            0,
+            0,
+            8,
+            0
+          ],
+          "justifyContent": "center",
+          "children": [
+            {
+              "type": "text",
+              "id": "FSGZL",
+              "name": "labelText",
+              "fill": "#999999",
+              "content": "State B: At capacity, ON waitlist (#3)",
+              "fontFamily": "Inter",
+              "fontSize": 11,
+              "fontWeight": "normal"
             }
           ]
         }

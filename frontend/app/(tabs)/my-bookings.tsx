@@ -46,6 +46,7 @@ type FilterTab = 'upcoming' | 'past';
 interface BookingWithClassDetails extends ClassScheduleItem {
   bookingId: string;
   bookingStatus: UserBookingItem['status'];
+  waitlistPosition: number | null;
 }
 
 // ─── Badge config ───────────────────────────────────────────────────────────────
@@ -58,12 +59,14 @@ interface BadgeConfig {
 function getUpcomingBadgeConfig(
   bookingStatus: UserBookingItem['status'],
   classState: ClassScheduleItem['state'],
+  waitlistPosition: number | null,
 ): BadgeConfig {
   if (classState === 'in_progress') {
     return { label: 'IN PROGRESS', color: COLORS.badgeInProgress, bg: COLORS.badgeInProgressBg };
   }
   if (bookingStatus === 'waitlisted') {
-    return { label: 'WAITLISTED', color: COLORS.badgeWaitlisted, bg: COLORS.badgeWaitlistedBg };
+    const label = waitlistPosition != null ? `WAITLISTED #${waitlistPosition}` : 'WAITLISTED';
+    return { label, color: COLORS.badgeWaitlisted, bg: COLORS.badgeWaitlistedBg };
   }
   return { label: 'BOOKED', color: COLORS.badgeBooked, bg: COLORS.badgeBookedBg };
 }
@@ -96,7 +99,7 @@ interface UpcomingCardProps {
 }
 
 function UpcomingCard({ item, isCancelling, onViewDetails, onCancel }: UpcomingCardProps) {
-  const badgeConfig = getUpcomingBadgeConfig(item.bookingStatus, item.state);
+  const badgeConfig = getUpcomingBadgeConfig(item.bookingStatus, item.state, item.waitlistPosition);
   const isInProgress = item.state === 'in_progress';
 
   return (
@@ -132,7 +135,9 @@ function UpcomingCard({ item, isCancelling, onViewDetails, onCancel }: UpcomingC
             {isCancelling ? (
               <ActivityIndicator size="small" color={COLORS.danger} />
             ) : (
-              <Text style={styles.cancelButtonText}>Cancel</Text>
+              <Text style={styles.cancelButtonText}>
+                {item.bookingStatus === 'waitlisted' ? 'Leave Waitlist' : 'Cancel'}
+              </Text>
             )}
           </TouchableOpacity>
         )}
@@ -289,6 +294,7 @@ export default function MyBookingsScreen() {
             ...classDetails,
             bookingId: booking.id,
             bookingStatus: booking.status,
+            waitlistPosition: booking.waitlistPosition ?? null,
           };
         })
         .filter((b): b is BookingWithClassDetails => b !== null);
@@ -325,13 +331,16 @@ export default function MyBookingsScreen() {
   };
 
   const handleCancelBooking = (booking: BookingWithClassDetails) => {
+    const isWaitlisted = booking.bookingStatus === 'waitlisted';
     showConfirm(
-      'Cancel Booking',
-      `Cancel booking for ${booking.classTypeName} on ${booking.scheduledDate}?`,
+      isWaitlisted ? 'Leave Waitlist' : 'Cancel Booking',
+      isWaitlisted
+        ? `Leave waitlist for ${booking.classTypeName} on ${booking.scheduledDate}?`
+        : `Cancel booking for ${booking.classTypeName} on ${booking.scheduledDate}?`,
       [
-        { text: 'Keep Booking', style: 'cancel', onPress: () => {} },
+        { text: isWaitlisted ? 'Stay on Waitlist' : 'Keep Booking', style: 'cancel', onPress: () => {} },
         {
-          text: 'Cancel Booking',
+          text: isWaitlisted ? 'Leave Waitlist' : 'Cancel Booking',
           style: 'destructive',
           onPress: async () => {
             try {

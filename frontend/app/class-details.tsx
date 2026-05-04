@@ -96,18 +96,33 @@ function CapacitySection({
   );
 }
 
-function BookingStatusSection({ status }: { status: BookingStatus }) {
+function BookingStatusSection({
+  status,
+  waitlistPosition,
+}: {
+  status: BookingStatus;
+  waitlistPosition: number | null;
+}) {
   const isBooked = status === 'booked';
   const isWaitlisted = status === 'waitlisted';
+  const isFull = status === 'full';
 
-  if (!isBooked && !isWaitlisted) return null;
+  if (!isBooked && !isWaitlisted && !isFull) return null;
 
   const badgeColor = isBooked ? COLORS.badgeBooked : COLORS.badgeWaitlisted;
   const badgeBg = isBooked ? COLORS.badgeBookedBg : COLORS.badgeWaitlistedBg;
-  const labelText = isBooked ? 'BOOKED – Confirmed' : 'WAITLISTED';
+  const waitlistLabel =
+    waitlistPosition != null
+      ? `WAITLIST #${waitlistPosition} – You are #${waitlistPosition} in line`
+      : 'WAITLISTED – You are on the waitlist';
+  const labelText = isBooked
+    ? 'BOOKED – Confirmed'
+    : isFull
+      ? 'Class is full – not booked'
+      : waitlistLabel;
   const iconName: keyof typeof Ionicons.glyphMap = isBooked
     ? 'checkmark-circle'
-    : 'time-outline';
+    : 'ban';
 
   return (
     <View style={styles.sectionGap8}>
@@ -173,6 +188,7 @@ export default function ClassDetailsScreen() {
   const [classData, setClassData] = useState<ClassDetailsItem | null>(null);
   const [bookingStatus, setBookingStatus] = useState<BookingStatus>('open');
   const [bookingId, setBookingId] = useState<string | null>(null);
+  const [waitlistPosition, setWaitlistPosition] = useState<number | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [fetchError, setFetchError] = useState<string | null>(null);
@@ -211,6 +227,7 @@ export default function ClassDetailsScreen() {
         setClassData(found);
         setBookingStatus(resolved);
         setBookingId(booking?.id ?? null);
+        setWaitlistPosition(booking?.waitlistPosition ?? null);
       } catch (err) {
         setFetchError(err instanceof Error ? err.message : 'Failed to load class details');
       } finally {
@@ -236,6 +253,7 @@ export default function ClassDetailsScreen() {
       if (booking) {
         setBookingStatus(booking.status);
         setBookingId(booking.id);
+        setWaitlistPosition(booking.waitlistPosition ?? null);
       }
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'Failed to book class';
@@ -247,10 +265,16 @@ export default function ClassDetailsScreen() {
   };
 
   const handleCancel = () => {
-    showConfirm('Cancel Booking', 'Are you sure you want to cancel this booking?', [
-      { text: 'Keep Booking', style: 'cancel', onPress: () => {} },
+    const isWaitlisted = bookingStatus === 'waitlisted';
+    showConfirm(
+      isWaitlisted ? 'Leave Waitlist' : 'Cancel Booking',
+      isWaitlisted
+        ? 'Are you sure you want to leave the waitlist?'
+        : 'Are you sure you want to cancel this booking?',
+      [
+      { text: isWaitlisted ? 'Stay on Waitlist' : 'Keep Booking', style: 'cancel', onPress: () => {} },
       {
-        text: 'Cancel Booking',
+        text: isWaitlisted ? 'Leave Waitlist' : 'Cancel Booking',
         style: 'destructive',
         onPress: async () => {
           if (!token || !currentGymId || !bookingId) {
@@ -267,8 +291,10 @@ export default function ClassDetailsScreen() {
             if (booking) {
               setBookingStatus(booking.status);
               setBookingId(booking.id);
+              setWaitlistPosition(booking.waitlistPosition ?? null);
             } else {
               setBookingId(null);
+              setWaitlistPosition(null);
               setBookingStatus(
                 classData && classData.bookedCount >= classData.capacity ? 'full' : 'open',
               );
@@ -339,9 +365,9 @@ export default function ClassDetailsScreen() {
         <Divider />
 
         {/* Booking Status */}
-        <BookingStatusSection status={bookingStatus} />
+        <BookingStatusSection status={bookingStatus} waitlistPosition={waitlistPosition} />
 
-        {canCancel && <Divider />}
+        {(canCancel || bookingStatus === 'full') && <Divider />}
 
         {/* Programming */}
         <ProgrammingSection />
@@ -361,7 +387,21 @@ export default function ClassDetailsScreen() {
 
       {/* Action button */}
       <View style={styles.actionContainer}>
-        {canCancel && (
+        {bookingStatus === 'waitlisted' && (
+          <TouchableOpacity
+            style={styles.leaveWaitlistBtn}
+            onPress={handleCancel}
+            disabled={isSubmitting}
+            activeOpacity={0.85}>
+            {isSubmitting ? (
+              <ActivityIndicator color={COLORS.danger} size="small" />
+            ) : (
+              <Text style={styles.leaveWaitlistBtnText}>LEAVE WAITLIST</Text>
+            )}
+          </TouchableOpacity>
+        )}
+
+        {bookingStatus === 'booked' && (
           <TouchableOpacity
             style={styles.cancelBtn}
             onPress={handleCancel}
@@ -566,6 +606,22 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingBottom: 32,
     gap: 12,
+  },
+  leaveWaitlistBtn: {
+    height: 50,
+    borderRadius: 12,
+    backgroundColor: COLORS.white,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 2,
+    borderColor: COLORS.danger,
+  },
+  leaveWaitlistBtnText: {
+    fontFamily: 'Inter',
+    fontSize: 15,
+    fontWeight: '700',
+    color: COLORS.danger,
+    letterSpacing: 0.5,
   },
   cancelBtn: {
     height: 50,

@@ -1557,6 +1557,11 @@ export interface components {
              * @enum {string}
              */
             status: "booked" | "waitlisted";
+            /**
+             * @description Position in the waitlist. Null if the booking status is not waitlisted.
+             * @example 2
+             */
+            waitlistPosition: number | null;
         };
         GetUserBookingsResponseDto: {
             /** @description List of the user's active bookings */

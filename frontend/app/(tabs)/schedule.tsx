@@ -79,6 +79,13 @@ function getSpotsText(bookedCount: number, capacity: number): string {
   return `${bookedCount} / ${capacity} spots`;
 }
 
+function getCapacityDetailText(bookedCount: number, capacity: number, status: BookingStatus): { text: string; isFullWaitlist: boolean } {
+  if (status === 'full' || (status !== 'booked' && status !== 'waitlisted' && bookedCount >= capacity)) {
+    return { text: 'Full · Waitlist Open', isFullWaitlist: true };
+  }
+  return { text: getSpotsText(bookedCount, capacity), isFullWaitlist: false };
+}
+
 function deriveBookingStatus(
   cls: ClassScheduleItem,
   bookingMap: Map<string, UserBookingItem>
@@ -191,7 +198,12 @@ function ClassCard({ item, onPress, onCancel, isCancelling }: ClassCardProps) {
       <View style={styles.cardDetails}>
         <View style={styles.detailRow}>
           <Text style={styles.detailIcon}>👥</Text>
-          <Text style={styles.detailText}>{getSpotsText(item.bookedCount, item.capacity)}</Text>
+          {(() => {
+            const { text, isFullWaitlist } = getCapacityDetailText(item.bookedCount, item.capacity, item.userBookingStatus);
+            return (
+              <Text style={[styles.detailText, isFullWaitlist && styles.detailTextFull]}>{text}</Text>
+            );
+          })()}
         </View>
         <View style={styles.detailRow}>
           <Text style={styles.detailIcon}>👤</Text>
@@ -492,6 +504,10 @@ const styles = StyleSheet.create({
     fontFamily: FONT.family,
     fontSize: 13,
     color: COLORS.fontSecondary,
+  },
+  detailTextFull: {
+    color: COLORS.badgeWaitlistedText,
+    fontWeight: '600',
   },
   // Badge
   badge: {

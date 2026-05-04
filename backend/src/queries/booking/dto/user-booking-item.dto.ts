@@ -25,4 +25,13 @@ export class UserBookingItemDto {
     description: 'Current status of the booking',
   })
   status: 'booked' | 'waitlisted';
+
+  @ApiProperty({
+    example: 2,
+    description:
+      'Position in the waitlist. Null if the booking status is not waitlisted.',
+    nullable: true,
+    type: Number,
+  })
+  waitlistPosition: number | null;
 }

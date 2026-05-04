@@ -30,6 +30,7 @@ The agent assumes:
 - **ROLE FILE** — the role-level `.pen` file to add screens into (e.g. `designs/coach-screens.pen`). If the file does not exist yet, create it. Never create per-screen files.
 
 The three canonical role files are:
+
 - `designs/athlete-screens.pen`
 - `designs/gym-owner-screens.pen`
 - `designs/coach-screens.pen`
@@ -82,17 +83,6 @@ For each screen in the prompt:
    - Match component patterns from reference (navigation bars, cards, buttons, lists, modals)
    - Implement only the primary actions defined in the epic — no extra UI
 3. Use `mcp__pencil__get_screenshot()` to verify visual output after each screen
-
-### 5. Save and verify output
-
-After all screens are designed:
-
-1. Save the file using the Pencil MCP tool: `mcp__pencil__batch_design()` with a save operation, OR use the Bash tool to trigger a save if a CLI save is available. If neither works, use `mcp__pencil__get_editor_state()` to check if the file is marked as unsaved and warn accordingly.
-2. Verify the role file exists on disk using the Bash tool: `ls <roleFilePath>` and check its modification timestamp with `stat <roleFilePath>` to confirm it was just written.
-3. If the file timestamp has NOT updated (Pencil has not flushed to disk), use `osascript -e 'tell application "Pencil" to save'` to trigger a save via AppleScript.
-4. If the file DOES exist and the timestamp is recent, confirm the path and list every frame name added.
-5. If saving cannot be confirmed, state:
-   > "⚠️ FILE NOT SAVED: `<path>` — Pencil has the design open but has not written it to disk. Run: `osascript -e 'tell application \"Pencil\" to save'` or press Cmd+S in the Pencil app before frontend tasks can begin."
 
 ---
 

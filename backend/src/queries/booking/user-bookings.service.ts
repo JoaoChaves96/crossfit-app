@@ -33,6 +33,7 @@ export class UserBookingsService {
       id: booking.id,
       classId: booking.classId,
       status: booking.status as 'booked' | 'waitlisted',
+      waitlistPosition: booking.bookedPosition ?? null,
     }));
 
     return {
