@@ -6,12 +6,21 @@
 **→ See `epics/AUTH_FLOWS_EPIC.md` for completed epic details**  
 **→ See `epics/ATHLETE_SCREENS_EPIC.md` for completed epic details**
 **→ See `epics/INVITE_ONBOARDING_EPIC.md` for completed epic details**
+**→ See `epics/LOG_RESULTS_EPIC.md` for current epic (in progress)**
 
 ## Product
 
 Crossfit class booking application.
 
 ## Current Phase (2026-05-04)
+
+**EPIC:** Log Results & Training History (Epic D) — 🔄 IN PROGRESS  
+**→ See `epics/LOG_RESULTS_EPIC.md` for full task breakdown**  
+- ⏳ Task #1: Backend — training history endpoint  
+- ⏳ Task #2: UX Design — Log Results + Training History frames  
+- ⏳ Task #3: Frontend — Log Results screen  
+- ⏳ Task #4: Frontend — Training History screen  
+- ⏳ Task #5: Frontend — My Bookings → Log Results CTA  
 
 **Waitlist UI** — ✅ COMPLETE (2026-05-04)
 - ✅ UX design: waitlist state variants added to `designs/athlete-screens.pen` (Class Details State A/B, Schedule full card, My Bookings waitlisted badge)
