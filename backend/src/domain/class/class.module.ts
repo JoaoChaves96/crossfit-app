@@ -32,6 +32,7 @@ import { SpaceModule } from '../space/space.module';
 import { ClassTypeModule } from '../class-type/class-type.module';
 import { GymMembershipModule } from '../gym-membership/gym-membership.module';
 import { AthleteMembershipPlanModule } from '../athlete-membership-plan/athlete-membership-plan.module';
+import { ClassLifecycleScheduler } from './class-lifecycle.scheduler';
 
 const CommandHandlers = [
   CreateClassHandler,
@@ -74,6 +75,7 @@ const CommandHandlers = [
     GetClassResultsService,
     GetClassProgrammingService,
     GetClassBookingsService,
+    ClassLifecycleScheduler,
     ...CommandHandlers,
   ],
   exports: [

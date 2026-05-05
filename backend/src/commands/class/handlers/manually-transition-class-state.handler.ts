@@ -129,6 +129,7 @@ export class ManuallyTransitionClassStateHandler implements ICommandHandler<Manu
       scheduledDate: classEntity.scheduledDate,
       scheduledTime: classEntity.scheduledTime,
       capacity: classEntity.capacity,
+      duration: classEntity.duration,
       loggable: classEntity.loggable,
       state: classEntity.state,
       createdAt: classEntity.createdAt,

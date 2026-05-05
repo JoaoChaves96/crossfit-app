@@ -104,6 +104,7 @@ export class ClassScheduleService {
           coachName: cls.coach?.name || 'Unknown Coach',
           spaceName: cls.space?.name || 'Unknown Space',
           capacity: cls.capacity,
+          duration: cls.duration,
           bookedCount,
           state: cls.state,
         };
@@ -154,6 +155,7 @@ export class ClassScheduleService {
           coachName: cls.coach?.name || 'Unknown Coach',
           spaceName: cls.space?.name || 'Unknown Space',
           capacity: cls.capacity,
+          duration: cls.duration,
           bookedCount,
           state: cls.state,
         };
@@ -210,6 +212,7 @@ export class ClassScheduleService {
           spaceName: cls.space?.name || 'Unknown Space',
           classTypeName: cls.classType?.name || 'Unknown',
           capacity: cls.capacity,
+          duration: cls.duration,
           bookedCount,
           state: cls.state,
         };
@@ -251,6 +254,7 @@ export class ClassScheduleService {
       coachName: cls.coach?.name || 'Unknown Coach',
       spaceName: cls.space?.name || 'Unknown Space',
       capacity: cls.capacity,
+      duration: cls.duration,
       bookedCount,
       state: cls.state,
     };

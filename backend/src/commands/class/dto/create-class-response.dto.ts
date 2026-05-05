@@ -25,6 +25,9 @@ export class CreateClassResponseDto {
   @ApiProperty({ example: 20 })
   capacity: number;
 
+  @ApiProperty({ example: 60, description: 'Duration of the class in minutes' })
+  duration: number;
+
   @ApiProperty({
     example: 'published',
     enum: [

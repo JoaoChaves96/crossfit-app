@@ -10,5 +10,6 @@ export class CreateClassCommand implements ICommand {
     readonly scheduledDate: Date,
     readonly scheduledTime: string,
     readonly capacity?: number,
+    readonly duration?: number,
   ) {}
 }

@@ -47,6 +47,9 @@ export class ClassEntity {
   @Column('integer')
   capacity: number;
 
+  @Column('integer', { default: 60 })
+  duration: number;
+
   @Column('boolean', { default: true })
   loggable: boolean;
 

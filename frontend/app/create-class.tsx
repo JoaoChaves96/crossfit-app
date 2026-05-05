@@ -185,6 +185,7 @@ interface FormState {
   scheduledDate: string;
   scheduledTime: string;
   capacity: string;
+  duration: string;
 }
 
 interface FormErrors {
@@ -194,6 +195,7 @@ interface FormErrors {
   scheduledDate?: string;
   scheduledTime?: string;
   capacity?: string;
+  duration?: string;
 }
 
 function validate(form: FormState): FormErrors {
@@ -215,6 +217,12 @@ function validate(form: FormState): FormErrors {
     const cap = Number(form.capacity);
     if (isNaN(cap) || cap <= 0) {
       errors.capacity = 'Capacity must be a positive number';
+    }
+  }
+  if (form.duration.trim()) {
+    const dur = Number(form.duration);
+    if (isNaN(dur) || dur <= 0) {
+      errors.duration = 'Duration must be a positive number';
     }
   }
   return errors;
@@ -242,6 +250,7 @@ export default function CreateClassScreen() {
     scheduledDate: '',
     scheduledTime: '',
     capacity: '',
+    duration: '',
   });
 
   const [formErrors, setFormErrors] = useState<FormErrors>({});
@@ -317,6 +326,7 @@ export default function CreateClassScreen() {
         scheduledDate: form.scheduledDate.trim(),
         scheduledTime: form.scheduledTime.trim(),
         ...(form.capacity.trim() ? { capacity: Number(form.capacity) } : {}),
+        ...(form.duration.trim() ? { duration: Number(form.duration) } : {}),
       };
       await client.post<CreateClassResponse>(
         `/api/gyms/${currentGymId}/classes`,
@@ -430,6 +440,21 @@ export default function CreateClassScreen() {
                 error={formErrors.capacity}
               />
             </View>
+          </View>
+
+          {/* Row 4 — Duration */}
+          <View style={styles.row}>
+            <View style={styles.rowItem}>
+              <TextField
+                label="Duration (minutes)"
+                value={form.duration}
+                onChangeText={(v) => setForm((s) => ({ ...s, duration: v }))}
+                placeholder="e.g. 60"
+                keyboardType="numeric"
+                error={formErrors.duration}
+              />
+            </View>
+            <View style={styles.rowItem} />
           </View>
 
           {/* Divider */}

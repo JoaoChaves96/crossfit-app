@@ -9,12 +9,19 @@
 **→ See `epics/LOG_RESULTS_EPIC.md` for completed epic details**
 **→ See `epics/CLASS_MANAGEMENT_EPIC.md` for completed epic details**
 **→ See `epics/GYM_SETTINGS_EPIC.md` for completed epic details**
+**→ See `epics/CLASS_LIFECYCLE_EPIC.md` for completed epic details**
 
 ## Product
 
 Crossfit class booking application.
 
 ## Current Phase (2026-05-05)
+
+**EPIC:** Class Lifecycle & Duration (Epic G) — ✅ COMPLETE (2026-05-05)
+**→ See `epics/CLASS_LIFECYCLE_EPIC.md` for full task breakdown**
+- ✅ Task #1: Backend — Add `duration` field to ClassEntity + migration + all DTOs
+- ✅ Task #2: Backend — Lifecycle scheduler (auto-transitions every minute)
+- ✅ Task #3: Frontend — Duration field in Create Class + Class Management info card
 
 **EPIC:** Gym Settings (Epic F) — ✅ COMPLETE (2026-05-05)
 **→ See `epics/GYM_SETTINGS_EPIC.md` for full task breakdown**

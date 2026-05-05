@@ -206,6 +206,7 @@ export class ClassController {
       new Date(createClassDto.scheduledDate),
       createClassDto.scheduledTime,
       createClassDto.capacity,
+      createClassDto.duration,
     );
 
     return this.commandBus.execute(command);

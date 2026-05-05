@@ -1,4 +1,5 @@
 import { Module } from '@nestjs/common';
+import { ScheduleModule } from '@nestjs/schedule';
 import { DatabaseModule } from './config/database.module';
 import { HttpModule } from './http/http.module';
 import { AuthModule } from './api/auth/auth.module';
@@ -19,6 +20,7 @@ import { AuthModule } from './api/auth/auth.module';
  */
 @Module({
   imports: [
+    ScheduleModule.forRoot(), // Enables @Cron decorators
     DatabaseModule, // TypeORM setup
     HttpModule, // Controllers + feature modules
     AuthModule, // Authentication

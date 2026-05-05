@@ -223,7 +223,7 @@ function InfoCard({ classDetail }: InfoCardProps) {
   const items: { label: string; value: string }[] = [
     { label: 'CLASS TYPE', value: classDetail.classTypeName },
     { label: 'COACH', value: classDetail.coachName || '—' },
-    { label: 'DURATION', value: '—' },
+    { label: 'DURATION', value: `${classDetail.duration} min` },
     {
       label: 'CAPACITY',
       value: `${classDetail.bookedCount} / ${classDetail.capacity}`,

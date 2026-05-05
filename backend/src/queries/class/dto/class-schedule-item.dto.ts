@@ -48,6 +48,12 @@ export class ClassScheduleItemDto {
   capacity: number;
 
   @ApiProperty({
+    example: 60,
+    description: 'Duration of the class in minutes',
+  })
+  duration: number;
+
+  @ApiProperty({
     example: 12,
     description: 'Number of booked (confirmed) spots',
   })

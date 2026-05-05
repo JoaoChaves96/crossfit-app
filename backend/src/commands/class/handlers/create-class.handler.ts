@@ -121,6 +121,7 @@ export class CreateClassHandler implements ICommandHandler<CreateClassCommand> {
     classEntity.scheduledTime = command.scheduledTime;
     classEntity.capacity = capacity;
     classEntity.state = 'published'; // ← Initial state decided here
+    classEntity.duration = command.duration ?? 60;
     classEntity.createdAt = now;
     classEntity.lastModifiedAt = now;
     classEntity.deletedAt = null;
@@ -156,6 +157,7 @@ export class CreateClassHandler implements ICommandHandler<CreateClassCommand> {
       scheduledDate: classEntity.scheduledDate,
       scheduledTime: classEntity.scheduledTime,
       capacity: classEntity.capacity,
+      duration: classEntity.duration,
       state: classEntity.state,
       createdAt: classEntity.createdAt,
       lastModifiedAt: classEntity.lastModifiedAt,

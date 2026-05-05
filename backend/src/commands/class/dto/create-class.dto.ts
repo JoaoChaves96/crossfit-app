@@ -41,4 +41,16 @@ export class CreateClassDto {
   @IsInt()
   @Min(1, { message: 'capacity must be at least 1' })
   capacity?: number;
+
+  @ApiProperty({
+    example: 60,
+    minimum: 1,
+    required: false,
+    description: 'Duration of the class in minutes. Defaults to 60.',
+  })
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(1, { message: 'duration must be at least 1' })
+  duration?: number;
 }

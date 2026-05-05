@@ -715,6 +715,11 @@ export interface components {
              */
             capacity: number;
             /**
+             * @description Duration of the class in minutes
+             * @example 60
+             */
+            duration: number;
+            /**
              * @description Number of booked (confirmed) spots
              * @example 12
              */
@@ -754,6 +759,11 @@ export interface components {
             scheduledTime: string;
             /** @example 20 */
             capacity?: number;
+            /**
+             * @description Duration of the class in minutes. Defaults to 60.
+             * @example 60
+             */
+            duration?: number;
         };
         CreateClassResponseDto: {
             /** @example uuid-class-id */
@@ -775,6 +785,11 @@ export interface components {
             scheduledTime: string;
             /** @example 20 */
             capacity: number;
+            /**
+             * @description Duration of the class in minutes
+             * @example 60
+             */
+            duration: number;
             /**
              * @example published
              * @enum {string}
@@ -1024,6 +1039,11 @@ export interface components {
             scheduledTime: string;
             /** @example 20 */
             capacity: number;
+            /**
+             * @description Duration of the class in minutes
+             * @example 60
+             */
+            duration: number;
             /** @example true */
             loggable: boolean;
             /**
@@ -1794,6 +1814,11 @@ export interface components {
              * @example 20
              */
             capacity: number;
+            /**
+             * @description Duration of the class in minutes
+             * @example 60
+             */
+            duration: number;
             /**
              * @description Number of booked (confirmed) spots
              * @example 12
