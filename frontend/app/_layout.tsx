@@ -69,6 +69,7 @@ export default function RootLayout() {
               options={{ title: 'Create Class', headerShown: false }}
             />
             <Stack.Screen name="class-management" options={{ headerShown: false }} />
+            <Stack.Screen name="gym-settings" options={{ headerShown: false }} />
             {__DEV__ && (
               <Stack.Screen
                 name="dev-bootstrap"

@@ -101,7 +101,7 @@ const NAV_ITEMS: { label: string; key: string; enabled: boolean }[] = [
   { label: 'Classes', key: 'classes', enabled: true },
   { label: 'Athletes', key: 'athletes', enabled: false },
   { label: 'Coaches', key: 'coaches', enabled: true },
-  { label: 'Settings', key: 'settings', enabled: false },
+  { label: 'Settings', key: 'settings', enabled: true },
 ];
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -452,6 +452,7 @@ export default function ClassManagement() {
       if (key === 'schedule') router.push('/schedule-dashboard' as never);
       if (key === 'coaches') router.push('/coaches' as never);
       if (key === 'classes') router.push('/schedule-dashboard' as never);
+      if (key === 'settings') router.push('/gym-settings' as never);
     },
     [router]
   );

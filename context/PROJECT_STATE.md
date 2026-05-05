@@ -7,13 +7,21 @@
 **→ See `epics/ATHLETE_SCREENS_EPIC.md` for completed epic details**
 **→ See `epics/INVITE_ONBOARDING_EPIC.md` for completed epic details**
 **→ See `epics/LOG_RESULTS_EPIC.md` for completed epic details**
-**→ See `epics/CLASS_MANAGEMENT_EPIC.md` for current epic (in progress)**
+**→ See `epics/CLASS_MANAGEMENT_EPIC.md` for completed epic details**
+**→ See `epics/GYM_SETTINGS_EPIC.md` for completed epic details**
 
 ## Product
 
 Crossfit class booking application.
 
-## Current Phase (2026-05-04)
+## Current Phase (2026-05-05)
+
+**EPIC:** Gym Settings (Epic F) — ✅ COMPLETE (2026-05-05)
+**→ See `epics/GYM_SETTINGS_EPIC.md` for full task breakdown**
+- ✅ Task #1: UX Design — Spaces + Class Types list/form states in `gym-owner-screens.pen`
+- ✅ Task #2: Frontend — Gym Settings screen, Spaces tab (CRUD)
+- ✅ Task #3: Frontend — Class Types tab (CRUD)
+- ✅ Task #4: Frontend — Enable sidebar Settings nav item
 
 **EPIC:** Gym Owner Class Management (Epic E) — ✅ COMPLETE (2026-05-05)
 **→ See `epics/CLASS_MANAGEMENT_EPIC.md` for full task breakdown**

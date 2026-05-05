@@ -114,7 +114,7 @@ const NAV_ITEMS: { label: string; key: string; enabled: boolean }[] = [
   { label: 'Classes', key: 'classes', enabled: false },
   { label: 'Athletes', key: 'athletes', enabled: false },
   { label: 'Coaches', key: 'coaches', enabled: true },
-  { label: 'Settings', key: 'settings', enabled: false },
+  { label: 'Settings', key: 'settings', enabled: true },
 ];
 
 function Sidebar({ activeItem, onNavigate }: SidebarProps) {
@@ -329,6 +329,7 @@ export default function ScheduleDashboard() {
         activeItem="schedule"
         onNavigate={(key) => {
           if (key === 'coaches') router.push('/coaches');
+          if (key === 'settings') router.push('/gym-settings');
         }}
       />
 
