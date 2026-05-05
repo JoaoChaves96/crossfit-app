@@ -28,6 +28,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/gyms/{gymId}/classes/{classId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get a single class by ID
+         * @description Retrieve the detail of a single class scoped to the gym. Accessible by coaches and gym owners. Returns 404 if the class does not exist or does not belong to the gym.
+         */
+        get: operations["ClassController_getClassDetail"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/gyms/{gymId}/classes/{classId}/bookings": {
         parameters: {
             query?: never;
@@ -83,7 +103,7 @@ export interface paths {
         put?: never;
         /**
          * Mark class attendance
-         * @description Record which athletes attended a class. Coaches only. Can mark attendance while class is in progress or completed.
+         * @description Record which athletes attended a class. Accessible by coaches and gym owners. Can mark attendance while class is in progress or completed.
          */
         post: operations["ClassController_markAttendance"];
         delete?: never;
@@ -171,7 +191,7 @@ export interface paths {
         head?: never;
         /**
          * Update class structure
-         * @description Adjust class capacity and/or space during the publish/booking phase. Coaches only. Cannot reduce capacity below current booked athletes.
+         * @description Adjust class capacity and/or space during the publish/booking phase. Accessible by coaches and gym owners. Cannot reduce capacity below current booked athletes.
          */
         patch: operations["ClassController_updateClassStructure"];
         trace?: never;
@@ -699,6 +719,11 @@ export interface components {
              * @example 12
              */
             bookedCount: number;
+            /**
+             * @description Name of the space where the class takes place
+             * @example Main Floor
+             */
+            spaceName: string;
             /**
              * @description Current state of the class in its lifecycle
              * @example published
@@ -2046,6 +2071,52 @@ export interface operations {
             };
         };
     };
+    ClassController_getClassDetail: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Gym ID */
+                gymId: string;
+                /** @description Class ID */
+                classId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Class detail returned */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ClassScheduleItemDto"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Forbidden - Coach or owner role required */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Class not found in gym */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
     ClassController_getClassBookings: {
         parameters: {
             query?: never;
@@ -2208,7 +2279,7 @@ export interface operations {
                 };
                 content?: never;
             };
-            /** @description Forbidden - Coach role required */
+            /** @description Forbidden - Coach or owner role required */
             403: {
                 headers: {
                     [name: string]: unknown;
@@ -2426,7 +2497,7 @@ export interface operations {
                 };
                 content?: never;
             };
-            /** @description Forbidden - Coach role required */
+            /** @description Forbidden - Coach or owner role required */
             403: {
                 headers: {
                     [name: string]: unknown;

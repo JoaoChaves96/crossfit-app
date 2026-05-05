@@ -167,14 +167,17 @@ function Sidebar({ activeItem, onNavigate }: SidebarProps) {
 interface ClassCardProps {
   gymClass: GymClass;
   colorIndex: number;
+  onPress: () => void;
 }
 
-function ClassCard({ gymClass, colorIndex }: ClassCardProps) {
+function ClassCard({ gymClass, colorIndex, onPress }: ClassCardProps) {
   const color = getClassColor(colorIndex);
   const isFull = gymClass.bookedCount >= gymClass.capacity;
 
   return (
-    <View
+    <TouchableOpacity
+      activeOpacity={0.75}
+      onPress={onPress}
       style={[
         styles.classCard,
         { backgroundColor: color.bg, borderColor: color.border },
@@ -193,7 +196,7 @@ function ClassCard({ gymClass, colorIndex }: ClassCardProps) {
         ]}>
         {gymClass.bookedCount}/{gymClass.capacity} spots
       </Text>
-    </View>
+    </TouchableOpacity>
   );
 }
 
@@ -204,9 +207,10 @@ interface DayColumnProps {
   dayDate: number;
   classes: GymClass[];
   colorOffset: number;
+  onClassPress: (classId: string) => void;
 }
 
-function DayColumn({ dayLabel, dayDate, classes, colorOffset }: DayColumnProps) {
+function DayColumn({ dayLabel, dayDate, classes, colorOffset, onClassPress }: DayColumnProps) {
   return (
     <View style={styles.dayColumn}>
       <View style={styles.dayHeader}>
@@ -219,7 +223,12 @@ function DayColumn({ dayLabel, dayDate, classes, colorOffset }: DayColumnProps) 
         </View>
       ) : (
         classes.map((cls, idx) => (
-          <ClassCard key={cls.id} gymClass={cls} colorIndex={colorOffset + idx} />
+          <ClassCard
+            key={cls.id}
+            gymClass={cls}
+            colorIndex={colorOffset + idx}
+            onPress={() => onClassPress(cls.id)}
+          />
         ))
       )}
     </View>
@@ -403,6 +412,9 @@ export default function ScheduleDashboard() {
                   dayDate={day.getDate()}
                   classes={classesByDay[dayIdx]}
                   colorOffset={offset}
+                  onClassPress={(classId) =>
+                    router.push(`/class-management?classId=${classId}` as never)
+                  }
                 />
               );
             })}

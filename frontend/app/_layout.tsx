@@ -68,6 +68,7 @@ export default function RootLayout() {
               name="create-class"
               options={{ title: 'Create Class', headerShown: false }}
             />
+            <Stack.Screen name="class-management" options={{ headerShown: false }} />
             {__DEV__ && (
               <Stack.Screen
                 name="dev-bootstrap"

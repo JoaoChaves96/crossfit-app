@@ -1,4 +1,4 @@
-import { Injectable, ForbiddenException } from '@nestjs/common';
+import { Injectable, ForbiddenException, NotFoundException } from '@nestjs/common';
 import { ClassRepository } from '../../repositories/class.repository';
 import { BookingRepository } from '../../repositories/booking.repository';
 import { GymMembershipRepository } from '../../repositories/gym-membership.repository';
@@ -102,6 +102,7 @@ export class ClassScheduleService {
           scheduledDate: this.formatDate(cls.scheduledDate),
           scheduledTime: cls.scheduledTime,
           coachName: cls.coach?.name || 'Unknown Coach',
+          spaceName: cls.space?.name || 'Unknown Space',
           capacity: cls.capacity,
           bookedCount,
           state: cls.state,
@@ -151,6 +152,7 @@ export class ClassScheduleService {
           scheduledDate: this.formatDate(cls.scheduledDate),
           scheduledTime: cls.scheduledTime,
           coachName: cls.coach?.name || 'Unknown Coach',
+          spaceName: cls.space?.name || 'Unknown Space',
           capacity: cls.capacity,
           bookedCount,
           state: cls.state,
@@ -215,6 +217,43 @@ export class ClassScheduleService {
     );
 
     return { classes: classItems };
+  }
+
+  /**
+   * Get a single class by ID, scoped to the gym.
+   * Intended for gym owners and coaches.
+   *
+   * @param gymId - The gym the class must belong to
+   * @param classId - The class to retrieve
+   * @returns The class detail including spaceName
+   * @throws NotFoundException if the class does not exist or does not belong to the gym
+   */
+  async getClassDetail(
+    gymId: string,
+    classId: string,
+  ): Promise<ClassScheduleItemDto> {
+    const cls = await this.classRepository.getClassById(classId, gymId);
+
+    if (!cls) {
+      throw new NotFoundException(
+        `Class ${classId} not found in gym ${gymId}`,
+      );
+    }
+
+    const bookedCount = await this.bookingRepository.countBookedBookings(cls.id);
+
+    return {
+      id: cls.id,
+      classTypeId: cls.classTypeId,
+      classTypeName: cls.classType?.name || 'Unknown',
+      scheduledDate: this.formatDate(cls.scheduledDate),
+      scheduledTime: cls.scheduledTime,
+      coachName: cls.coach?.name || 'Unknown Coach',
+      spaceName: cls.space?.name || 'Unknown Space',
+      capacity: cls.capacity,
+      bookedCount,
+      state: cls.state,
+    };
   }
 
   /**

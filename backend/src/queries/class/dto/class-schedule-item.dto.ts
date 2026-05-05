@@ -54,6 +54,12 @@ export class ClassScheduleItemDto {
   bookedCount: number;
 
   @ApiProperty({
+    example: 'Main Floor',
+    description: 'Name of the space where the class takes place',
+  })
+  spaceName: string;
+
+  @ApiProperty({
     enum: [
       'published',
       'booking_closed',

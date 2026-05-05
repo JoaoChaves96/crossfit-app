@@ -6,13 +6,20 @@
 **→ See `epics/AUTH_FLOWS_EPIC.md` for completed epic details**  
 **→ See `epics/ATHLETE_SCREENS_EPIC.md` for completed epic details**
 **→ See `epics/INVITE_ONBOARDING_EPIC.md` for completed epic details**
-**→ See `epics/LOG_RESULTS_EPIC.md` for current epic (in progress)**
+**→ See `epics/LOG_RESULTS_EPIC.md` for completed epic details**
+**→ See `epics/CLASS_MANAGEMENT_EPIC.md` for current epic (in progress)**
 
 ## Product
 
 Crossfit class booking application.
 
 ## Current Phase (2026-05-04)
+
+**EPIC:** Gym Owner Class Management (Epic E) — ✅ COMPLETE (2026-05-05)
+**→ See `epics/CLASS_MANAGEMENT_EPIC.md` for full task breakdown**
+- ✅ Task #1: Backend — `GET /api/gyms/:gymId/classes/:classId` + owners can mark attendance/structure
+- ✅ Task #2: Frontend — Class Management screen (`app/class-management.tsx`)
+- ✅ Task #3: Frontend — Schedule Dashboard class cards navigate to Class Management
 
 **EPIC:** Log Results & Training History (Epic D) — ✅ COMPLETE (2026-05-04)  
 **→ See `epics/LOG_RESULTS_EPIC.md` for full task breakdown**  

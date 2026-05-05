@@ -59,6 +59,7 @@ import {
 } from '@nestjs/swagger';
 import { ClassScheduleService } from '../../queries/class/class-schedule.service';
 import { GetClassScheduleResponseDto } from '../../queries/class/dto/get-class-schedule-response.dto';
+import { ClassScheduleItemDto } from '../../queries/class/dto/class-schedule-item.dto';
 import { GetClassResultsService } from '../../queries/class/get-class-results.service';
 import { GetClassResultsResponseDto } from '../../queries/class/dto/get-class-results-response.dto';
 import { GetClassProgrammingService } from '../../queries/class/get-class-programming.service';
@@ -115,6 +116,43 @@ export class ClassController {
     @CurrentUser() userId: string,
   ): Promise<GetClassScheduleResponseDto> {
     return this.classScheduleService.getClassScheduleForAthlete(gymId, userId);
+  }
+
+  /**
+   * Get a single class by ID (Coach or Owner)
+   *
+   * **Preconditions:**
+   * - User must be authenticated as a coach or gym owner
+   * - Class must belong to the gym specified in the route
+   *
+   * **Postconditions:**
+   * - Returns full class detail including spaceName
+   */
+  @Get('/:classId')
+  @Role(['coach', 'owner'])
+  @ApiOperation({
+    summary: 'Get a single class by ID',
+    description:
+      'Retrieve the detail of a single class scoped to the gym. Accessible by coaches and gym owners. Returns 404 if the class does not exist or does not belong to the gym.',
+  })
+  @ApiParam({ name: 'gymId', description: 'Gym ID' })
+  @ApiParam({ name: 'classId', description: 'Class ID' })
+  @ApiResponse({
+    status: 200,
+    description: 'Class detail returned',
+    type: ClassScheduleItemDto,
+  })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiResponse({
+    status: 403,
+    description: 'Forbidden - Coach or owner role required',
+  })
+  @ApiResponse({ status: 404, description: 'Class not found in gym' })
+  async getClassDetail(
+    @Param('gymId') gymId: string,
+    @Param('classId') classId: string,
+  ): Promise<ClassScheduleItemDto> {
+    return this.classScheduleService.getClassDetail(gymId, classId);
   }
 
   /**
@@ -346,11 +384,11 @@ export class ClassController {
    * - Athlete becomes eligible for result logging if marked present
    */
   @Post('/:classId/attendance')
-  @Role('coach')
+  @Role(['coach', 'owner'])
   @ApiOperation({
     summary: 'Mark class attendance',
     description:
-      'Record which athletes attended a class. Coaches only. Can mark attendance while class is in progress or completed.',
+      'Record which athletes attended a class. Accessible by coaches and gym owners. Can mark attendance while class is in progress or completed.',
   })
   @ApiParam({ name: 'gymId', description: 'Gym ID' })
   @ApiParam({ name: 'classId', description: 'Class ID' })
@@ -361,7 +399,7 @@ export class ClassController {
     type: MarkAttendanceResponseDto,
   })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
-  @ApiResponse({ status: 403, description: 'Forbidden - Coach role required' })
+  @ApiResponse({ status: 403, description: 'Forbidden - Coach or owner role required' })
   async markAttendance(
     @Param('gymId') gymId: string,
     @Param('classId') classId: string,
@@ -620,11 +658,11 @@ export class ClassController {
    * - Structural changes are allowed until in_progress
    */
   @Patch('/:classId/structure')
-  @Role('coach')
+  @Role(['coach', 'owner'])
   @ApiOperation({
     summary: 'Update class structure',
     description:
-      'Adjust class capacity and/or space during the publish/booking phase. Coaches only. Cannot reduce capacity below current booked athletes.',
+      'Adjust class capacity and/or space during the publish/booking phase. Accessible by coaches and gym owners. Cannot reduce capacity below current booked athletes.',
   })
   @ApiParam({ name: 'gymId', description: 'Gym ID' })
   @ApiParam({ name: 'classId', description: 'Class ID' })
@@ -635,7 +673,7 @@ export class ClassController {
     type: UpdateClassStructureResponseDto,
   })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
-  @ApiResponse({ status: 403, description: 'Forbidden - Coach role required' })
+  @ApiResponse({ status: 403, description: 'Forbidden - Coach or owner role required' })
   async updateClassStructure(
     @Param('gymId') gymId: string,
     @Param('classId') classId: string,
