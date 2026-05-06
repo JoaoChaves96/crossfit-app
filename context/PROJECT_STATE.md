@@ -13,12 +13,19 @@
 **→ See `epics/MEMBERS_EPIC.md` for completed epic details**
 **→ See `epics/EDIT_CLASS_EPIC.md` for completed epic details**
 **→ See `epics/REVOKE_COACH_EPIC.md` for completed epic details**
+**→ See `epics/ATHLETE_PROFILE_EPIC.md` for completed epic details**
 
 ## Product
 
 Crossfit class booking application.
 
 ## Current Phase (2026-05-05)
+
+**EPIC:** Athlete Profile (Epic K) — ✅ COMPLETE (2026-05-06)
+**→ See `epics/ATHLETE_PROFILE_EPIC.md` for full task breakdown**
+- ✅ Task #1: Backend — `GET /api/me` + `PATCH /api/me`
+- ✅ Task #2: UX Design — Profile screen frame in `athlete-screens.pen`
+- ✅ Task #3: Frontend — `profile.tsx` tab screen replacing `explore` tab
 
 **EPIC:** Revoke Coach Access (Epic J) — ✅ COMPLETE (2026-05-06)
 **→ See `epics/REVOKE_COACH_EPIC.md` for full task breakdown**

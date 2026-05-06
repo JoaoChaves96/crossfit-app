@@ -25,6 +25,9 @@ import { ResultEntity } from '../domain/result/entities/result.entity';
 import { GymScheduleController } from '../api/gym-schedule/gym-schedule.controller';
 import { CoachClassesController } from '../api/coach/coach-classes.controller';
 import { InviteModule } from '../api/invite/invite.module';
+import { GetUserProfileService } from '../queries/user/get-user-profile.service';
+import { UpdateUserProfileHandler } from '../commands/user/handlers/update-user-profile.handler';
+import { UserModule } from '../domain/user/user.module';
 
 /**
  * HttpModule: Registers all HTTP controllers
@@ -44,6 +47,7 @@ import { InviteModule } from '../api/invite/invite.module';
     GymConfigurationModule,
     GymFeatureModule,
     InviteModule,
+    UserModule,
     TypeOrmModule.forFeature([
       GymMembershipEntity,
       BookingEntity,
@@ -69,6 +73,8 @@ import { InviteModule } from '../api/invite/invite.module';
     AttendanceRepository,
     ResultRepository,
     GymMembershipRepository,
+    GetUserProfileService,
+    UpdateUserProfileHandler,
   ],
 })
 export class HttpModule {}

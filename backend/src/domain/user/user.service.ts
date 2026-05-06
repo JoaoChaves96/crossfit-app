@@ -13,4 +13,8 @@ export class UserService {
   async getUserById(userId: string): Promise<UserEntity | null> {
     return this.userRepository.findOne({ where: { id: userId } });
   }
+
+  async saveUser(user: UserEntity): Promise<UserEntity> {
+    return this.userRepository.save(user);
+  }
 }

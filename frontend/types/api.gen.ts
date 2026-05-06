@@ -504,6 +504,30 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/me": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get authenticated user profile
+         * @description Returns the profile of the currently authenticated user (id, name, email, createdAt). Available to athletes, gym owners, and coaches.
+         */
+        get: operations["UserController_getUserProfile"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /**
+         * Update authenticated user profile
+         * @description Updates the name of the currently authenticated user. Email is read-only and cannot be changed.
+         */
+        patch: operations["UserController_updateUserProfile"];
+        trace?: never;
+    };
     "/api/gyms/{gymId}/athletes/me/history": {
         parameters: {
             query?: never;
@@ -1871,6 +1895,23 @@ export interface components {
         GetUserBookingsResponseDto: {
             /** @description List of the user's active bookings */
             bookings: components["schemas"]["UserBookingItemDto"][];
+        };
+        UserProfileDto: {
+            /** @description Unique user identifier (UUID) */
+            id: string;
+            /** @description Display name of the user */
+            name: string;
+            /** @description Email address of the user (read-only) */
+            email: string;
+            /**
+             * Format: date-time
+             * @description Date the user account was created
+             */
+            createdAt: string;
+        };
+        UpdateUserProfileDto: {
+            /** @description New display name for the user */
+            name: string;
         };
         TrainingHistoryResultDto: {
             /**
@@ -3583,6 +3624,99 @@ export interface operations {
             };
             /** @description Forbidden - Athlete, owner, or coach role required */
             403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    UserController_getUserProfile: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description User profile returned */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UserProfileDto"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Forbidden - Athlete, owner, or coach role required */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description User not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    UserController_updateUserProfile: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateUserProfileDto"];
+            };
+        };
+        responses: {
+            /** @description Updated user profile returned */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UserProfileDto"];
+                };
+            };
+            /** @description Validation error - name is required and must be non-empty */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Forbidden - Athlete, owner, or coach role required */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description User not found */
+            404: {
                 headers: {
                     [name: string]: unknown;
                 };
