@@ -456,6 +456,26 @@ export interface paths {
         patch: operations["GymConfigurationController_changeCoachStatus"];
         trace?: never;
     };
+    "/api/gyms/{gymId}/members": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List active members
+         * @description Returns all active members for the gym, sorted by join date descending. Gym owners only.
+         */
+        get: operations["GymMembersController_getMembers"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/me/bookings": {
         parameters: {
             query?: never;
@@ -1660,6 +1680,44 @@ export interface components {
              * @example 2024-01-01T00:00:00.000Z
              */
             assignedAt: string;
+        };
+        GymMemberItemDto: {
+            /**
+             * @description Unique identifier for the gym membership record
+             * @example uuid-membership-id
+             */
+            id: string;
+            /**
+             * @description User ID of the member
+             * @example uuid-user-id
+             */
+            userId: string;
+            /**
+             * @description Full name of the member
+             * @example Jane Doe
+             */
+            name: string;
+            /**
+             * @description Email address of the member
+             * @example jane@example.com
+             */
+            email: string;
+            /**
+             * @description Current membership status
+             * @example active
+             * @enum {string}
+             */
+            status: "active" | "inactive";
+            /**
+             * Format: date-time
+             * @description Date and time the member joined the gym
+             * @example 2024-01-15T10:00:00.000Z
+             */
+            joinedAt: string;
+        };
+        GetGymMembersResponseDto: {
+            /** @description List of active members for the gym, sorted by join date descending */
+            members: components["schemas"]["GymMemberItemDto"][];
         };
         UserBookingItemDto: {
             /**
@@ -3207,6 +3265,43 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ChangeCoachStatusResponseDto"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Forbidden - Owner role required */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    GymMembersController_getMembers: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Gym ID */
+                gymId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Active members list returned */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GetGymMembersResponseDto"];
                 };
             };
             /** @description Unauthorized */

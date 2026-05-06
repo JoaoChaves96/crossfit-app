@@ -10,12 +10,30 @@
 **→ See `epics/CLASS_MANAGEMENT_EPIC.md` for completed epic details**
 **→ See `epics/GYM_SETTINGS_EPIC.md` for completed epic details**
 **→ See `epics/CLASS_LIFECYCLE_EPIC.md` for completed epic details**
+**→ See `epics/MEMBERS_EPIC.md` for completed epic details**
+**→ See `epics/EDIT_CLASS_EPIC.md` for current epic (not started)**
 
 ## Product
 
 Crossfit class booking application.
 
 ## Current Phase (2026-05-05)
+
+**EPIC:** Edit & Delete Class (Epic I) — ⏳ NOT STARTED
+**→ See `epics/EDIT_CLASS_EPIC.md` for full task breakdown**
+- ⏳ Task #1: Backend — `PATCH` + `DELETE` `/api/gyms/:gymId/classes/:classId`
+- ⏳ Task #2: UX Design — Edit Class form frame in `gym-owner-screens.pen`
+- ⏳ Task #3: Frontend — `edit-class.tsx` + Edit/Delete wiring in Class Management
+
+**EPIC:** Members List (Epic H) — ✅ COMPLETE (2026-05-06)
+**→ See `epics/MEMBERS_EPIC.md` for full task breakdown**
+- ✅ Task #1: Backend — `GET /api/gyms/:gymId/members` endpoint
+- ✅ Task #2: UX Design — Members screen frame in `gym-owner-screens.pen`
+- ✅ Task #3: Frontend — `members.tsx` screen + sidebar nav wiring
+
+**Results panel in Class Management** — ✅ COMPLETE (2026-05-05)
+- ✅ UX — `Class Management / Results` frame added to `gym-owner-screens.pen` (node `9ZqYx`)
+- ✅ Frontend — Results panel added to `class-management.tsx`; fetches `GET /:classId/results` in parallel with bookings
 
 **EPIC:** Class Lifecycle & Duration (Epic G) — ✅ COMPLETE (2026-05-05)
 **→ See `epics/CLASS_LIFECYCLE_EPIC.md` for full task breakdown**

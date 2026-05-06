@@ -22,6 +22,8 @@ type ClassState = ClassDetail['state'];
 type GetClassBookingsResponse = components['schemas']['GetClassBookingsResponseDto'];
 type ManuallyTransitionDto = components['schemas']['ManuallyTransitionClassStateDto'];
 type ManuallyTransitionResponse = components['schemas']['ManuallyTransitionClassStateResponseDto'];
+type ClassResultItem = components['schemas']['ClassResultItemDto'];
+type GetClassResultsResponse = components['schemas']['GetClassResultsResponseDto'];
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -64,6 +66,15 @@ const COLOR = {
   tableHeaderBg: '#F9FAFB',
   avatarBg: '#E5E7EB',
 
+  // Results badge (matches Attendance badge)
+  resBadgeBg: '#DBEAFE',
+  resBadgeText: '#1D4ED8',
+
+  // Result value
+  resultMetricText: '#374151',
+  resultValueText: '#111827',
+  resultNotesText: '#6B7280',
+
   // Buttons
   primaryBtnBg: '#111827',
   primaryBtnText: '#FFFFFF',
@@ -99,7 +110,7 @@ const NAV_ITEMS: { label: string; key: string; enabled: boolean }[] = [
   { label: 'Dashboard', key: 'dashboard', enabled: false },
   { label: 'Schedule', key: 'schedule', enabled: true },
   { label: 'Classes', key: 'classes', enabled: true },
-  { label: 'Athletes', key: 'athletes', enabled: false },
+  { label: 'Members', key: 'members', enabled: true },
   { label: 'Coaches', key: 'coaches', enabled: true },
   { label: 'Settings', key: 'settings', enabled: true },
 ];
@@ -350,6 +361,85 @@ function Waitlist({ bookings }: WaitlistProps) {
   );
 }
 
+// ─── Results List ─────────────────────────────────────────────────────────────
+
+const METRIC_LABEL: Record<ClassResultItem['metricType'], string> = {
+  time: 'Time',
+  reps: 'Reps',
+  weight: 'Weight',
+  rounds: 'Rounds',
+  note: 'Note',
+};
+
+interface ResultsListProps {
+  results: ClassResultItem[];
+}
+
+function ResultsList({ results }: ResultsListProps) {
+  return (
+    <View style={styles.listSection}>
+      <View style={styles.listHeader}>
+        <Text style={styles.listTitle}>Results</Text>
+        <View style={styles.resBadge}>
+          <Text style={styles.resBadgeText}>{results.length} logged</Text>
+        </View>
+      </View>
+      <View style={styles.table}>
+        <View style={styles.tableHeader}>
+          <Text style={[styles.tableHeaderText, styles.tableColFill]}>Athlete</Text>
+          <Text style={[styles.tableHeaderText, styles.resColMetric]}>Metric</Text>
+          <Text style={[styles.tableHeaderText, styles.resColValue]}>Value</Text>
+          <Text style={[styles.tableHeaderText, styles.resColNotes]}>Notes</Text>
+        </View>
+        {results.length === 0 ? (
+          <View style={styles.tableEmpty}>
+            <Text style={styles.tableEmptyText}>No results logged yet</Text>
+          </View>
+        ) : (
+          results.map((result) => {
+            const valueWithUnit =
+              result.unit !== 'none' ? `${result.value} ${result.unit}` : result.value;
+            const rawNotes = result.notes as unknown;
+            const notesStr =
+              rawNotes != null && typeof rawNotes === 'string' && rawNotes.length > 0
+                ? rawNotes
+                : null;
+            const truncatedNotes =
+              notesStr != null && notesStr.length > 12
+                ? `${notesStr.slice(0, 12)}…`
+                : (notesStr ?? '—');
+            return (
+              <View key={result.id} style={styles.tableRow}>
+                <View style={[styles.tableRowName, styles.tableColFill]}>
+                  <View style={styles.avatar}>
+                    <Text style={styles.avatarText}>
+                      {result.userId.slice(0, 2).toUpperCase()}
+                    </Text>
+                  </View>
+                  <Text style={styles.athleteName} numberOfLines={1}>
+                    {result.userId}
+                  </Text>
+                </View>
+                <View style={styles.resColMetric}>
+                  <Text style={styles.resMetricText}>
+                    {METRIC_LABEL[result.metricType] ?? result.metricType}
+                  </Text>
+                </View>
+                <View style={styles.resColValue}>
+                  <Text style={styles.resValueText}>{valueWithUnit}</Text>
+                </View>
+                <View style={styles.resColNotes}>
+                  <Text style={styles.resNotesText}>{truncatedNotes}</Text>
+                </View>
+              </View>
+            );
+          })
+        )}
+      </View>
+    </View>
+  );
+}
+
 // ─── Main Screen ──────────────────────────────────────────────────────────────
 
 export default function ClassManagement() {
@@ -360,10 +450,13 @@ export default function ClassManagement() {
 
   const [classDetail, setClassDetail] = useState<ClassDetail | null>(null);
   const [allBookings, setAllBookings] = useState<ClassBookingItem[]>([]);
+  const [results, setResults] = useState<ClassResultItem[]>([]);
   const [isLoadingClass, setIsLoadingClass] = useState(false);
   const [isLoadingBookings, setIsLoadingBookings] = useState(false);
+  const [isLoadingResults, setIsLoadingResults] = useState(false);
   const [classError, setClassError] = useState<string | null>(null);
   const [bookingsError, setBookingsError] = useState<string | null>(null);
+  const [resultsError, setResultsError] = useState<string | null>(null);
   const [isTransitioning, setIsTransitioning] = useState(false);
 
   const fetchClassDetail = useCallback(async () => {
@@ -402,10 +495,29 @@ export default function ClassManagement() {
     }
   }, [token, currentGymId, classId]);
 
+  const fetchResults = useCallback(async () => {
+    if (!token || !currentGymId || !classId) return;
+    setIsLoadingResults(true);
+    setResultsError(null);
+    try {
+      const client = createApiClient({ token });
+      const data = await client.get<GetClassResultsResponse>(
+        `/api/gyms/${currentGymId}/classes/${classId}/results`
+      );
+      setResults(data.results ?? []);
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : 'Failed to load results';
+      setResultsError(msg);
+    } finally {
+      setIsLoadingResults(false);
+    }
+  }, [token, currentGymId, classId]);
+
   useEffect(() => {
     fetchClassDetail();
     fetchBookings();
-  }, [fetchClassDetail, fetchBookings]);
+    fetchResults();
+  }, [fetchClassDetail, fetchBookings, fetchResults]);
 
   const bookedList = allBookings.filter((b) => b.status === 'booked');
   const waitlistedList = allBookings.filter((b) => b.status === 'waitlisted');
@@ -452,6 +564,7 @@ export default function ClassManagement() {
       if (key === 'schedule') router.push('/schedule-dashboard' as never);
       if (key === 'coaches') router.push('/coaches' as never);
       if (key === 'classes') router.push('/schedule-dashboard' as never);
+      if (key === 'members') router.push('/members' as never);
       if (key === 'settings') router.push('/gym-settings' as never);
     },
     [router]
@@ -521,21 +634,34 @@ export default function ClassManagement() {
             </View>
 
             {/* Lists row */}
-            {isLoadingBookings ? (
+            {isLoadingBookings || isLoadingResults ? (
               <View style={styles.centeredFeedback}>
                 <ActivityIndicator size="small" color={COLOR.subText} />
               </View>
-            ) : bookingsError ? (
+            ) : bookingsError || resultsError ? (
               <View style={styles.centeredFeedback}>
-                <Text style={styles.errorText}>{bookingsError}</Text>
-                <TouchableOpacity style={styles.retryBtn} onPress={fetchBookings}>
-                  <Text style={styles.retryBtnText}>Retry</Text>
-                </TouchableOpacity>
+                {bookingsError ? (
+                  <>
+                    <Text style={styles.errorText}>{bookingsError}</Text>
+                    <TouchableOpacity style={styles.retryBtn} onPress={fetchBookings}>
+                      <Text style={styles.retryBtnText}>Retry</Text>
+                    </TouchableOpacity>
+                  </>
+                ) : null}
+                {resultsError ? (
+                  <>
+                    <Text style={styles.errorText}>{resultsError}</Text>
+                    <TouchableOpacity style={styles.retryBtn} onPress={fetchResults}>
+                      <Text style={styles.retryBtnText}>Retry</Text>
+                    </TouchableOpacity>
+                  </>
+                ) : null}
               </View>
             ) : (
               <View style={styles.listsRow}>
                 <AttendanceList bookings={bookedList} />
                 <Waitlist bookings={waitlistedList} />
+                <ResultsList results={results} />
               </View>
             )}
           </>
@@ -921,6 +1047,52 @@ const styles = StyleSheet.create({
   bookingBadgeText: {
     fontSize: 11,
     fontWeight: '500',
+    fontFamily: 'Inter',
+  },
+
+  // Results badge
+  resBadge: {
+    backgroundColor: COLOR.resBadgeBg,
+    borderRadius: 12,
+    paddingHorizontal: 10,
+    paddingVertical: 3,
+  },
+  resBadgeText: {
+    fontSize: 12,
+    fontWeight: '500',
+    color: COLOR.resBadgeText,
+    fontFamily: 'Inter',
+  },
+
+  // Results table columns
+  resColMetric: {
+    width: 90,
+    justifyContent: 'center',
+  },
+  resColValue: {
+    width: 90,
+    justifyContent: 'center',
+  },
+  resColNotes: {
+    width: 100,
+    justifyContent: 'center',
+  },
+
+  // Results row cell text
+  resMetricText: {
+    fontSize: 13,
+    color: COLOR.resultMetricText,
+    fontFamily: 'Inter',
+  },
+  resValueText: {
+    fontSize: 13,
+    fontWeight: '500',
+    color: COLOR.resultValueText,
+    fontFamily: 'Inter',
+  },
+  resNotesText: {
+    fontSize: 13,
+    color: COLOR.resultNotesText,
     fontFamily: 'Inter',
   },
 });

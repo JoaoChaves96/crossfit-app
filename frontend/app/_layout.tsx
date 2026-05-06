@@ -70,6 +70,7 @@ export default function RootLayout() {
             />
             <Stack.Screen name="class-management" options={{ headerShown: false }} />
             <Stack.Screen name="gym-settings" options={{ headerShown: false }} />
+            <Stack.Screen name="members" options={{ headerShown: false }} />
             {__DEV__ && (
               <Stack.Screen
                 name="dev-bootstrap"
