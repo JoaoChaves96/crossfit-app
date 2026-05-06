@@ -31,7 +31,10 @@ type ConfigureClassTypesDto = components['schemas']['ConfigureClassTypesDto'];
 type ConfigureClassTypesResponse = components['schemas']['ConfigureClassTypesResponseDto'];
 type ResultMetric = ClassTypeItem['resultMetrics'];
 
-type ActiveTab = 'spaces' | 'class-types' | 'booking-rules';
+type GymProfileDto = components['schemas']['GymProfileDto'];
+type UpdateGymProfileDto = components['schemas']['UpdateGymProfileDto'];
+
+type ActiveTab = 'spaces' | 'class-types' | 'booking-rules' | 'profile';
 type FormMode = 'add' | 'edit' | null;
 
 // ─── Constants ────────────────────────────────────────────────────────────────
@@ -161,6 +164,7 @@ const TABS: { key: ActiveTab; label: string }[] = [
   { key: 'spaces', label: 'Spaces' },
   { key: 'class-types', label: 'Class Types' },
   { key: 'booking-rules', label: 'Booking Rules' },
+  { key: 'profile', label: 'Profile' },
 ];
 
 function TabBar({ activeTab, onTabChange }: TabBarProps) {
@@ -882,6 +886,174 @@ function ClassTypesTab({ gymId, token }: ClassTypesTabProps) {
   );
 }
 
+// ─── Profile Tab ──────────────────────────────────────────────────────────────
+
+interface ProfileTabProps {
+  gymId: string;
+  token: string;
+}
+
+function formatCreatedDate(isoDate: string): string {
+  const date = new Date(isoDate);
+  return date.toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
+}
+
+function resolveDescription(value: GymProfileDto['description']): string {
+  if (value === null || value === undefined) return '';
+  if (typeof value === 'string') return value;
+  return '';
+}
+
+function ProfileTab({ gymId, token }: ProfileTabProps) {
+  const [profile, setProfile] = useState<GymProfileDto | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
+
+  const [name, setName] = useState('');
+  const [description, setDescription] = useState('');
+  const [location, setLocation] = useState('');
+
+  const isDirty =
+    profile !== null &&
+    (name !== profile.name ||
+      description !== resolveDescription(profile.description) ||
+      location !== profile.location);
+
+  const fetchProfile = useCallback(async () => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      const client = createApiClient({ token });
+      const data = await client.get<GymProfileDto>(`/api/gyms/${gymId}/profile`);
+      setProfile(data);
+      setName(data.name);
+      setDescription(resolveDescription(data.description));
+      setLocation(data.location);
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : 'Failed to load gym profile';
+      setError(msg);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [token, gymId]);
+
+  useEffect(() => {
+    fetchProfile();
+  }, [fetchProfile]);
+
+  const handleSave = useCallback(async () => {
+    setIsSaving(true);
+    try {
+      const client = createApiClient({ token });
+      const body: UpdateGymProfileDto = { name, description, location };
+      const updated = await client.patch<GymProfileDto>(
+        `/api/gyms/${gymId}/profile`,
+        body as unknown as Record<string, unknown>
+      );
+      setProfile(updated);
+      setName(updated.name);
+      setDescription(resolveDescription(updated.description));
+      setLocation(updated.location);
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : 'Failed to save gym profile';
+      Alert.alert('Error', msg);
+    } finally {
+      setIsSaving(false);
+    }
+  }, [token, gymId, name, description, location]);
+
+  if (isLoading) {
+    return (
+      <View style={styles.feedbackContainer}>
+        <ActivityIndicator size="large" color={COLOR.bodyText} />
+      </View>
+    );
+  }
+
+  if (error) {
+    return (
+      <View style={styles.feedbackContainer}>
+        <Text style={styles.errorText}>{error}</Text>
+        <TouchableOpacity style={styles.retryBtn} onPress={fetchProfile}>
+          <Text style={styles.retryBtnText}>Retry</Text>
+        </TouchableOpacity>
+      </View>
+    );
+  }
+
+  return (
+    <View style={styles.content}>
+      <View style={styles.sectionRow}>
+        <Text style={styles.sectionTitle}>Gym Profile</Text>
+        <TouchableOpacity
+          style={[styles.profileSaveBtn, (!isDirty || isSaving) && styles.profileSaveBtnDisabled]}
+          onPress={handleSave}
+          disabled={!isDirty || isSaving}
+          activeOpacity={0.8}>
+          {isSaving ? (
+            <ActivityIndicator size="small" color={COLOR.primaryBtnText} />
+          ) : (
+            <Text style={styles.profileSaveBtnText}>Save Changes</Text>
+          )}
+        </TouchableOpacity>
+      </View>
+
+      <View style={styles.profileFormCard}>
+        <Text style={styles.inputLabel}>Gym Name</Text>
+        <TextInput
+          style={styles.input}
+          placeholder="e.g. CrossFit Downtown"
+          placeholderTextColor={COLOR.inputPlaceholder}
+          value={name}
+          onChangeText={setName}
+          editable={!isSaving}
+        />
+
+        <Text style={styles.inputLabel}>Description</Text>
+        <TextInput
+          style={styles.profileDescInput}
+          placeholder="A community-driven CrossFit box..."
+          placeholderTextColor={COLOR.inputPlaceholder}
+          value={description}
+          onChangeText={setDescription}
+          multiline
+          editable={!isSaving}
+          textAlignVertical="top"
+        />
+
+        <Text style={styles.inputLabel}>Location</Text>
+        <TextInput
+          style={styles.input}
+          placeholder="e.g. 123 Main St, New York, NY"
+          placeholderTextColor={COLOR.inputPlaceholder}
+          value={location}
+          onChangeText={setLocation}
+          editable={!isSaving}
+        />
+
+        <View style={styles.profileInfoRow}>
+          <View style={styles.profileActiveBadge}>
+            <Text style={styles.profileActiveBadgeText}>Active</Text>
+          </View>
+          {profile && (
+            <Text style={styles.profileCreatedLabel}>
+              Created {formatCreatedDate(profile.createdAt)}
+            </Text>
+          )}
+        </View>
+
+        <View style={styles.profileLogoSection}>
+          <Text style={styles.inputLabel}>Logo</Text>
+          <View style={styles.profileLogoPlaceholder}>
+            <Text style={styles.profileLogoPlaceholderText}>{'Logo upload\ncoming soon'}</Text>
+          </View>
+        </View>
+      </View>
+    </View>
+  );
+}
+
 // ─── Placeholder Tab ──────────────────────────────────────────────────────────
 
 function PlaceholderTab({ label }: { label: string }) {
@@ -928,6 +1100,12 @@ export default function GymSettings() {
           ) : activeTab === 'class-types' && token && currentGymId ? (
             <ClassTypesTab gymId={currentGymId} token={token} />
           ) : activeTab === 'class-types' ? (
+            <View style={styles.feedbackContainer}>
+              <ActivityIndicator size="large" color={COLOR.bodyText} />
+            </View>
+          ) : activeTab === 'profile' && token && currentGymId ? (
+            <ProfileTab gymId={currentGymId} token={token} />
+          ) : activeTab === 'profile' ? (
             <View style={styles.feedbackContainer}>
               <ActivityIndicator size="large" color={COLOR.bodyText} />
             </View>
@@ -1442,6 +1620,88 @@ const styles = StyleSheet.create({
   placeholderText: {
     fontSize: 14,
     color: COLOR.mutedText,
+    fontFamily: 'Inter',
+  },
+
+  // Profile tab
+  profileFormCard: {
+    backgroundColor: COLOR.formCardBg,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: COLOR.formCardBorder,
+    padding: 28,
+    gap: 20,
+    width: 480,
+  },
+  profileDescInput: {
+    height: 96,
+    borderWidth: 1,
+    borderColor: COLOR.inputBorder,
+    borderRadius: 8,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    fontSize: 14,
+    color: COLOR.bodyText,
+    fontFamily: 'Inter',
+  },
+  profileInfoRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    height: 24,
+  },
+  profileActiveBadge: {
+    backgroundColor: '#D1FAE5',
+    borderRadius: 10,
+    paddingHorizontal: 10,
+    paddingVertical: 3,
+  },
+  profileActiveBadgeText: {
+    fontSize: 11,
+    fontWeight: '600',
+    color: '#065F46',
+    fontFamily: 'Inter',
+  },
+  profileCreatedLabel: {
+    fontSize: 12,
+    color: COLOR.mutedText,
+    fontFamily: 'Inter',
+  },
+  profileLogoSection: {
+    gap: 8,
+  },
+  profileLogoPlaceholder: {
+    width: 120,
+    height: 80,
+    backgroundColor: '#F3F4F6',
+    borderRadius: 6,
+    borderWidth: 1,
+    borderColor: COLOR.inputBorder,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  profileLogoPlaceholderText: {
+    fontSize: 11,
+    color: COLOR.mutedText,
+    fontFamily: 'Inter',
+    textAlign: 'center',
+  },
+  profileSaveBtn: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: COLOR.primaryBtnBg,
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    borderRadius: 6,
+    minWidth: 120,
+  },
+  profileSaveBtnDisabled: {
+    opacity: 0.4,
+  },
+  profileSaveBtnText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: COLOR.primaryBtnText,
     fontFamily: 'Inter',
   },
 });

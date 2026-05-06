@@ -484,6 +484,30 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/gyms/{gymId}/profile": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get gym profile
+         * @description Returns the gym profile including name, description, location, status, and creation date. Gym owners only.
+         */
+        get: operations["GymProfileController_getProfile"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /**
+         * Update gym profile
+         * @description Updates editable gym profile fields (name, description, location). Returns the updated profile. Gym owners only.
+         */
+        patch: operations["GymProfileController_updateProfile"];
+        trace?: never;
+    };
     "/api/me/bookings": {
         parameters: {
             query?: never;
@@ -1868,6 +1892,57 @@ export interface components {
         GetGymMembersResponseDto: {
             /** @description List of active members for the gym, sorted by join date descending */
             members: components["schemas"]["GymMemberItemDto"][];
+        };
+        GymProfileDto: {
+            /**
+             * @description Unique identifier for the gym
+             * @example uuid-gym-id
+             */
+            id: string;
+            /**
+             * @description Name of the gym
+             * @example CrossFit Downtown
+             */
+            name: string;
+            /**
+             * @description Optional description of the gym
+             * @example A community-driven CrossFit box focused on functional fitness.
+             */
+            description: Record<string, never> | null;
+            /**
+             * @description Physical location of the gym
+             * @example 123 Main St, New York, NY
+             */
+            location: string;
+            /**
+             * @description Current lifecycle status of the gym
+             * @example active
+             * @enum {string}
+             */
+            status: "active" | "pending_approval" | "suspended";
+            /**
+             * Format: date-time
+             * @description Timestamp when the gym was created
+             * @example 2024-01-15T10:00:00.000Z
+             */
+            createdAt: string;
+        };
+        UpdateGymProfileDto: {
+            /**
+             * @description Updated name of the gym
+             * @example CrossFit Downtown
+             */
+            name?: string;
+            /**
+             * @description Updated description of the gym
+             * @example A community-driven CrossFit box focused on functional fitness.
+             */
+            description?: string;
+            /**
+             * @description Updated physical location of the gym
+             * @example 123 Main St, New York, NY
+             */
+            location?: string;
         };
         UserBookingItemDto: {
             /**
@@ -3590,6 +3665,105 @@ export interface operations {
             };
             /** @description Forbidden - Owner role required */
             403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    GymProfileController_getProfile: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Gym ID */
+                gymId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Gym profile returned */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GymProfileDto"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Forbidden - Owner role required */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Gym not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    GymProfileController_updateProfile: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Gym ID */
+                gymId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateGymProfileDto"];
+            };
+        };
+        responses: {
+            /** @description Gym profile updated */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GymProfileDto"];
+                };
+            };
+            /** @description Validation error */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Forbidden - Owner role required */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Gym not found */
+            404: {
                 headers: {
                     [name: string]: unknown;
                 };

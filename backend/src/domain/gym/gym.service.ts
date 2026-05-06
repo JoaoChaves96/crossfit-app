@@ -27,4 +27,8 @@ export class GymService {
       where: { status: 'active' },
     });
   }
+
+  async saveGym(gym: GymEntity): Promise<GymEntity> {
+    return this.gymRepository.save(gym);
+  }
 }

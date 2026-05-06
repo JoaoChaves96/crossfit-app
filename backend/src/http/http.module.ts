@@ -7,6 +7,7 @@ import { GymStaffModule } from '../domain/gym-staff/gym-staff.module';
 import { GymConfigurationModule } from '../domain/gym-configuration/gym-configuration.module';
 import { GymConfigurationController } from '../api/gym-configuration/gym-configuration.controller';
 import { GymMembersController } from '../api/gym-configuration/gym-members.controller';
+import { GymProfileController } from '../api/gym-configuration/gym-profile.controller';
 import { GymFeatureModule } from '../domain/gym/gym-feature.module';
 import { GymController } from '../api/gym/gym.controller';
 import { RolesGuard } from '../auth/guards/roles.guard';
@@ -59,6 +60,7 @@ import { UserModule } from '../domain/user/user.module';
     ClassController,
     GymConfigurationController,
     GymMembersController,
+    GymProfileController,
     UserController,
     AthleteController,
     GymController,

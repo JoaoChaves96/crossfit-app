@@ -14,12 +14,19 @@
 **→ See `epics/EDIT_CLASS_EPIC.md` for completed epic details**
 **→ See `epics/REVOKE_COACH_EPIC.md` for completed epic details**
 **→ See `epics/ATHLETE_PROFILE_EPIC.md` for completed epic details**
+**→ See `epics/GYM_PROFILE_EPIC.md` for completed epic details**
 
 ## Product
 
 Crossfit class booking application.
 
 ## Current Phase (2026-05-05)
+
+**EPIC:** Gym Profile Editing (Epic L) — ✅ COMPLETE (2026-05-06)
+**→ See `epics/GYM_PROFILE_EPIC.md` for full task breakdown**
+- ✅ Task #1: Backend — `GET` + `PATCH /api/gyms/:gymId/profile`
+- ✅ Task #2: UX Design — Gym Profile tab frame in `gym-owner-screens.pen`
+- ✅ Task #3: Frontend — Profile tab added to `gym-settings.tsx`
 
 **EPIC:** Athlete Profile (Epic K) — ✅ COMPLETE (2026-05-06)
 **→ See `epics/ATHLETE_PROFILE_EPIC.md` for full task breakdown**

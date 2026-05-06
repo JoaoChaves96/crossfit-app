@@ -18136,6 +18136,446 @@
           ]
         }
       ]
+    },
+    {
+      "type": "frame",
+      "id": "uCk8i",
+      "x": 8800,
+      "y": -539,
+      "name": "Gym Settings / Profile",
+      "width": 960,
+      "height": 700,
+      "fill": "#FFFFFF",
+      "layout": "vertical",
+      "gap": 24,
+      "padding": [
+        40,
+        48
+      ],
+      "children": [
+        {
+          "type": "text",
+          "id": "H6kPj",
+          "name": "hdr",
+          "fill": "#1A1A1A",
+          "content": "Gym Settings",
+          "fontFamily": "Inter",
+          "fontSize": 22,
+          "fontWeight": "700"
+        },
+        {
+          "type": "frame",
+          "id": "geHLW",
+          "name": "tabs",
+          "width": "fill_container",
+          "children": [
+            {
+              "type": "frame",
+              "id": "VcMBJ",
+              "name": "t1",
+              "stroke": {
+                "thickness": {
+                  "bottom": 1
+                },
+                "fill": "#D9D9D9"
+              },
+              "padding": [
+                10,
+                20
+              ],
+              "children": [
+                {
+                  "type": "text",
+                  "id": "BRsdN",
+                  "name": "t1txt",
+                  "fill": "#888888",
+                  "content": "Spaces",
+                  "fontFamily": "Inter",
+                  "fontSize": 14,
+                  "fontWeight": "normal"
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "cvl4c",
+              "name": "t2",
+              "stroke": {
+                "thickness": {
+                  "bottom": 1
+                },
+                "fill": "#D9D9D9"
+              },
+              "padding": [
+                10,
+                20
+              ],
+              "children": [
+                {
+                  "type": "text",
+                  "id": "uSEO4",
+                  "name": "t2txt",
+                  "fill": "#888888",
+                  "content": "Class Types",
+                  "fontFamily": "Inter",
+                  "fontSize": 14,
+                  "fontWeight": "normal"
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "AlXFi",
+              "name": "t3",
+              "stroke": {
+                "thickness": {
+                  "bottom": 1
+                },
+                "fill": "#D9D9D9"
+              },
+              "padding": [
+                10,
+                20
+              ],
+              "children": [
+                {
+                  "type": "text",
+                  "id": "S8eNn",
+                  "name": "t3txt",
+                  "fill": "#888888",
+                  "content": "Booking Rules",
+                  "fontFamily": "Inter",
+                  "fontSize": 14,
+                  "fontWeight": "normal"
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "RbTXp",
+              "name": "tFill",
+              "stroke": {
+                "thickness": {
+                  "bottom": 2
+                },
+                "fill": "#1A1A1A"
+              },
+              "padding": [
+                10,
+                20
+              ],
+              "children": [
+                {
+                  "type": "text",
+                  "id": "KnjYF",
+                  "name": "profileTxt",
+                  "fill": "#1A1A1A",
+                  "content": "Profile",
+                  "fontFamily": "Inter",
+                  "fontSize": 14,
+                  "fontWeight": "600"
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "eSyFw",
+              "name": "tFillEnd",
+              "width": "fill_container",
+              "height": 38,
+              "stroke": {
+                "thickness": {
+                  "bottom": 1
+                },
+                "fill": "#D9D9D9"
+              }
+            }
+          ]
+        },
+        {
+          "type": "frame",
+          "id": "4KnzM",
+          "name": "secRow",
+          "width": "fill_container",
+          "justifyContent": "space_between",
+          "alignItems": "center",
+          "children": [
+            {
+              "type": "text",
+              "id": "Cdod9",
+              "name": "secTitle",
+              "fill": "#111827",
+              "content": "Gym Profile",
+              "fontFamily": "Inter",
+              "fontSize": 16,
+              "fontWeight": "600"
+            },
+            {
+              "type": "frame",
+              "id": "ZjHbt",
+              "name": "saveBtn",
+              "fill": "#1A1A1A",
+              "cornerRadius": 6,
+              "padding": [
+                10,
+                20
+              ],
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "text",
+                  "id": "9RNym",
+                  "name": "addTxt",
+                  "fill": "#FFFFFF",
+                  "content": "Save Changes",
+                  "fontFamily": "Inter",
+                  "fontSize": 14,
+                  "fontWeight": "600"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "frame",
+          "id": "RtgnP",
+          "name": "formCard",
+          "width": 480,
+          "fill": "#FFFFFF",
+          "cornerRadius": 12,
+          "stroke": {
+            "align": "inside",
+            "thickness": 1,
+            "fill": "#E5E7EB"
+          },
+          "layout": "vertical",
+          "gap": 20,
+          "padding": 28,
+          "children": [
+            {
+              "type": "text",
+              "id": "wUKUr",
+              "name": "gymNameLbl",
+              "fill": "#111827",
+              "content": "Gym Name",
+              "fontFamily": "Inter",
+              "fontSize": 13,
+              "fontWeight": "600"
+            },
+            {
+              "type": "frame",
+              "id": "4cPEA",
+              "name": "gymNameInput",
+              "width": "fill_container",
+              "height": 42,
+              "cornerRadius": 8,
+              "stroke": {
+                "align": "inside",
+                "thickness": 1,
+                "fill": "#D1D5DB"
+              },
+              "padding": [
+                0,
+                14
+              ],
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "text",
+                  "id": "X5MBe",
+                  "name": "gymNameVal",
+                  "fill": "#111827",
+                  "content": "CrossFit Downtown",
+                  "fontFamily": "Inter",
+                  "fontSize": 14,
+                  "fontWeight": "normal"
+                }
+              ]
+            },
+            {
+              "type": "text",
+              "id": "MJDvj",
+              "name": "descLbl",
+              "fill": "#111827",
+              "content": "Description",
+              "fontFamily": "Inter",
+              "fontSize": 13,
+              "fontWeight": "600"
+            },
+            {
+              "type": "frame",
+              "id": "QCDz2",
+              "name": "descInput",
+              "width": "fill_container",
+              "height": 96,
+              "cornerRadius": 8,
+              "stroke": {
+                "align": "inside",
+                "thickness": 1,
+                "fill": "#D1D5DB"
+              },
+              "padding": [
+                12,
+                14
+              ],
+              "children": [
+                {
+                  "type": "text",
+                  "id": "EhF1W",
+                  "name": "descVal",
+                  "fill": "#111827",
+                  "content": "A community-driven CrossFit box in the heart of downtown.",
+                  "fontFamily": "Inter",
+                  "fontSize": 14,
+                  "fontWeight": "normal"
+                }
+              ]
+            },
+            {
+              "type": "text",
+              "id": "p98Ct",
+              "name": "locationLbl",
+              "fill": "#111827",
+              "content": "Location",
+              "fontFamily": "Inter",
+              "fontSize": 13,
+              "fontWeight": "600"
+            },
+            {
+              "type": "frame",
+              "id": "JrNHY",
+              "name": "bottomSection",
+              "width": "fill_container",
+              "layout": "vertical",
+              "gap": 20,
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "XfqDd",
+                  "name": "locationInput",
+                  "width": "fill_container",
+                  "height": 42,
+                  "cornerRadius": 8,
+                  "stroke": {
+                    "align": "inside",
+                    "thickness": 1,
+                    "fill": "#D1D5DB"
+                  },
+                  "padding": [
+                    0,
+                    14
+                  ],
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "PkZ8d",
+                      "name": "locationVal",
+                      "fill": "#111827",
+                      "content": "123 Main St, New York, NY",
+                      "fontFamily": "Inter",
+                      "fontSize": 14,
+                      "fontWeight": "normal"
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "wFR1N",
+                  "name": "infoRow",
+                  "width": "fill_container",
+                  "height": 24,
+                  "gap": 12,
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "frame",
+                      "id": "1eXhM",
+                      "name": "activeBadge",
+                      "fill": "#D1FAE5",
+                      "cornerRadius": 10,
+                      "padding": [
+                        3,
+                        10
+                      ],
+                      "children": [
+                        {
+                          "type": "text",
+                          "id": "8IjiJ",
+                          "name": "badgeTxt",
+                          "fill": "#065F46",
+                          "content": "Active",
+                          "fontFamily": "Inter",
+                          "fontSize": 11,
+                          "fontWeight": "600"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "text",
+                      "id": "FopTh",
+                      "name": "createdLbl",
+                      "fill": "#9CA3AF",
+                      "content": "Created Jan 2026",
+                      "fontFamily": "Inter",
+                      "fontSize": 12,
+                      "fontWeight": "normal"
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "i4XSW",
+                  "name": "logoSection",
+                  "width": "fill_container",
+                  "layout": "vertical",
+                  "gap": 8,
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "Zvy8L",
+                      "name": "logoLbl",
+                      "fill": "#111827",
+                      "content": "Logo",
+                      "fontFamily": "Inter",
+                      "fontSize": 13,
+                      "fontWeight": "600"
+                    },
+                    {
+                      "type": "frame",
+                      "id": "YCiDA",
+                      "name": "logoPlaceholder",
+                      "width": 120,
+                      "height": 80,
+                      "fill": "#F3F4F6",
+                      "cornerRadius": 6,
+                      "stroke": {
+                        "align": "inside",
+                        "thickness": 1,
+                        "fill": "#D1D5DB"
+                      },
+                      "justifyContent": "center",
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "text",
+                          "id": "u176o",
+                          "name": "logoTxt",
+                          "fill": "#9CA3AF",
+                          "content": "Logo upload\ncoming soon",
+                          "fontFamily": "Inter",
+                          "fontSize": 11,
+                          "fontWeight": "normal"
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
     }
   ],
   "variables": {
