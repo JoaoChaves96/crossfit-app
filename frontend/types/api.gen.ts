@@ -42,10 +42,18 @@ export interface paths {
         get: operations["ClassController_getClassDetail"];
         put?: never;
         post?: never;
-        delete?: never;
+        /**
+         * Soft-delete a published class
+         * @description Soft-delete a class by setting its deletedAt timestamp. Only gym owners can delete classes. Only classes in published state can be deleted.
+         */
+        delete: operations["ClassController_deleteClass"];
         options?: never;
         head?: never;
-        patch?: never;
+        /**
+         * Edit a published class
+         * @description Partially update a published class. Only gym owners can edit classes. Only classes in published state can be edited. All body fields are optional.
+         */
+        patch: operations["ClassController_editClass"];
         trace?: never;
     };
     "/api/gyms/{gymId}/classes/{classId}/bookings": {
@@ -1128,6 +1136,114 @@ export interface components {
              */
             lastModifiedAt: string;
         };
+        EditClassDto: {
+            /**
+             * @description Class type to assign to the class
+             * @example uuid-class-type-id
+             */
+            classTypeId?: string;
+            /**
+             * @description Coach user ID to assign to the class
+             * @example uuid-coach-user-id
+             */
+            coachUserId?: string;
+            /**
+             * @description Space ID to assign to the class
+             * @example uuid-space-id
+             */
+            spaceId?: string;
+            /**
+             * @description ISO date string (YYYY-MM-DD)
+             * @example 2024-06-15
+             */
+            scheduledDate?: string;
+            /**
+             * @description Time in HH:mm format
+             * @example 07:00
+             */
+            scheduledTime?: string;
+            /**
+             * @description Maximum number of athletes that can attend the class
+             * @example 20
+             */
+            capacity?: number;
+            /**
+             * @description Duration of the class in minutes
+             * @example 60
+             */
+            duration?: number;
+        };
+        EditClassResponseDto: {
+            /**
+             * @description Unique identifier for the class
+             * @example uuid-class-id
+             */
+            id: string;
+            /**
+             * @description The type of class (e.g., CrossFit, Gymnastics)
+             * @example uuid-class-type-id
+             */
+            classTypeId: string;
+            /**
+             * @description Human-readable name of the class type
+             * @example CrossFit
+             */
+            classTypeName: string;
+            /**
+             * @description Date the class is scheduled, YYYY-MM-DD format
+             * @example 2024-06-15
+             */
+            scheduledDate: string;
+            /**
+             * @description Time the class starts, HH:mm format
+             * @example 07:00
+             */
+            scheduledTime: string;
+            /**
+             * @description Full name of the coach leading the class
+             * @example John Doe
+             */
+            coachName: string;
+            /**
+             * @description Total capacity of the class
+             * @example 20
+             */
+            capacity: number;
+            /**
+             * @description Duration of the class in minutes
+             * @example 60
+             */
+            duration: number;
+            /**
+             * @description Number of booked (confirmed) spots
+             * @example 12
+             */
+            bookedCount: number;
+            /**
+             * @description Name of the space where the class takes place
+             * @example Main Floor
+             */
+            spaceName: string;
+            /**
+             * @description Current state of the class in its lifecycle
+             * @example published
+             * @enum {string}
+             */
+            state: "published" | "booking_closed" | "in_progress" | "completed" | "archived";
+        };
+        DeleteClassResponseDto: {
+            /**
+             * @description Unique identifier of the deleted class
+             * @example uuid-class-id
+             */
+            id: string;
+            /**
+             * Format: date-time
+             * @description Timestamp when the class was soft-deleted
+             * @example 2024-06-15T10:00:00.000Z
+             */
+            deletedAt: string;
+        };
         ClassResultItemDto: {
             /**
              * @description Unique identifier for the result
@@ -2185,6 +2301,116 @@ export interface operations {
                 content?: never;
             };
             /** @description Forbidden - Coach or owner role required */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Class not found in gym */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    ClassController_deleteClass: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Gym ID */
+                gymId: string;
+                /** @description Class ID */
+                classId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Class soft-deleted */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DeleteClassResponseDto"];
+                };
+            };
+            /** @description Class is not in published state */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Forbidden - Owner role required */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Class not found in gym */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    ClassController_editClass: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Gym ID */
+                gymId: string;
+                /** @description Class ID */
+                classId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["EditClassDto"];
+            };
+        };
+        responses: {
+            /** @description Class updated */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EditClassResponseDto"];
+                };
+            };
+            /** @description Class is not in published state or validation failed */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Forbidden - Owner role required */
             403: {
                 headers: {
                     [name: string]: unknown;

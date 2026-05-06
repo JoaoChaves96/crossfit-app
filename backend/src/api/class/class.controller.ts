@@ -49,6 +49,11 @@ import { ManuallyTransitionClassStateResponseDto } from '../../commands/class/dt
 import { UpdateClassStructureDto } from '../../commands/class/dto/update-class-structure.dto';
 import { UpdateClassStructureCommand } from '../../commands/class/update-class-structure.command';
 import { UpdateClassStructureResponseDto } from '../../commands/class/dto/update-class-structure-response.dto';
+import { EditClassDto } from '../../commands/class/dto/edit-class.dto';
+import { EditClassCommand } from '../../commands/class/edit-class.command';
+import { EditClassResponseDto } from '../../commands/class/dto/edit-class-response.dto';
+import { DeleteClassCommand } from '../../commands/class/delete-class.command';
+import { DeleteClassResponseDto } from '../../commands/class/dto/delete-class-response.dto';
 import {
   ApiTags,
   ApiBearerAuth,
@@ -698,6 +703,108 @@ export class ClassController {
       updateClassStructureDto.capacity,
       updateClassStructureDto.spaceId,
     );
+
+    return this.commandBus.execute(command);
+  }
+
+  /**
+   * Edit a published class (Gym Owner)
+   *
+   * **Preconditions:**
+   * - User must be authenticated as a gym owner
+   * - Class must belong to the gym
+   * - Class must be in 'published' state
+   *
+   * **Postconditions:**
+   * - Provided fields are updated on the class
+   * - Returns the updated class as ClassScheduleItemDto
+   */
+  @Patch('/:classId')
+  @Role('owner')
+  @ApiOperation({
+    summary: 'Edit a published class',
+    description:
+      'Partially update a published class. Only gym owners can edit classes. Only classes in published state can be edited. All body fields are optional.',
+  })
+  @ApiParam({ name: 'gymId', description: 'Gym ID' })
+  @ApiParam({ name: 'classId', description: 'Class ID' })
+  @ApiBody({ type: EditClassDto })
+  @ApiResponse({
+    status: 200,
+    description: 'Class updated',
+    type: EditClassResponseDto,
+  })
+  @ApiResponse({ status: 400, description: 'Class is not in published state or validation failed' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiResponse({ status: 403, description: 'Forbidden - Owner role required' })
+  @ApiResponse({ status: 404, description: 'Class not found in gym' })
+  async editClass(
+    @Param('gymId') gymId: string,
+    @Param('classId') classId: string,
+    @Body(ValidationPipe) editClassDto: EditClassDto,
+    @CurrentGym() currentGymId: string,
+  ): Promise<EditClassResponseDto> {
+    if (gymId !== currentGymId) {
+      throw new Error('Gym ID mismatch');
+    }
+
+    const command = new EditClassCommand(
+      gymId,
+      classId,
+      editClassDto.classTypeId,
+      editClassDto.coachUserId,
+      editClassDto.spaceId,
+      editClassDto.scheduledDate !== undefined
+        ? new Date(editClassDto.scheduledDate)
+        : undefined,
+      editClassDto.scheduledTime,
+      editClassDto.capacity,
+      editClassDto.duration,
+    );
+
+    return this.commandBus.execute(command);
+  }
+
+  /**
+   * Soft-delete a published class (Gym Owner)
+   *
+   * **Preconditions:**
+   * - User must be authenticated as a gym owner
+   * - Class must belong to the gym
+   * - Class must be in 'published' state
+   *
+   * **Postconditions:**
+   * - Class deletedAt is set to now
+   * - Class is no longer returned in schedule queries
+   */
+  @Delete('/:classId')
+  @Role('owner')
+  @ApiOperation({
+    summary: 'Soft-delete a published class',
+    description:
+      'Soft-delete a class by setting its deletedAt timestamp. Only gym owners can delete classes. Only classes in published state can be deleted.',
+  })
+  @ApiParam({ name: 'gymId', description: 'Gym ID' })
+  @ApiParam({ name: 'classId', description: 'Class ID' })
+  @ApiResponse({
+    status: 200,
+    description: 'Class soft-deleted',
+    type: DeleteClassResponseDto,
+  })
+  @ApiResponse({ status: 400, description: 'Class is not in published state' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiResponse({ status: 403, description: 'Forbidden - Owner role required' })
+  @ApiResponse({ status: 404, description: 'Class not found in gym' })
+  async deleteClass(
+    @Param('gymId') gymId: string,
+    @Param('classId') classId: string,
+    @CurrentGym() currentGymId: string,
+  ): Promise<DeleteClassResponseDto> {
+    if (gymId !== currentGymId) {
+      throw new Error('Gym ID mismatch');
+    }
+
+    const command = new DeleteClassCommand(gymId, classId);
 
     return this.commandBus.execute(command);
   }

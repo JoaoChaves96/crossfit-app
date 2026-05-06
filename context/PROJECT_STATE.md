@@ -11,7 +11,7 @@
 **→ See `epics/GYM_SETTINGS_EPIC.md` for completed epic details**
 **→ See `epics/CLASS_LIFECYCLE_EPIC.md` for completed epic details**
 **→ See `epics/MEMBERS_EPIC.md` for completed epic details**
-**→ See `epics/EDIT_CLASS_EPIC.md` for current epic (not started)**
+**→ See `epics/EDIT_CLASS_EPIC.md` for completed epic details**
 
 ## Product
 
@@ -19,11 +19,12 @@ Crossfit class booking application.
 
 ## Current Phase (2026-05-05)
 
-**EPIC:** Edit & Delete Class (Epic I) — ⏳ NOT STARTED
+**EPIC:** Edit & Delete Class (Epic I) — ✅ COMPLETE (2026-05-06)
 **→ See `epics/EDIT_CLASS_EPIC.md` for full task breakdown**
-- ⏳ Task #1: Backend — `PATCH` + `DELETE` `/api/gyms/:gymId/classes/:classId`
-- ⏳ Task #2: UX Design — Edit Class form frame in `gym-owner-screens.pen`
-- ⏳ Task #3: Frontend — `edit-class.tsx` + Edit/Delete wiring in Class Management
+- ✅ Task #1: Backend — `PATCH` + `DELETE` `/api/gyms/:gymId/classes/:classId`
+- ✅ Task #2: UX Design — Edit Class form frame in `gym-owner-screens.pen`
+- ✅ Task #3: Frontend — `edit-class.tsx` + Edit/Delete wiring in Class Management
+- ⚠️ Known gap: Coach + Space pickers can't pre-fill (ClassScheduleItemDto lacks coachUserId/spaceId)
 
 **EPIC:** Members List (Epic H) — ✅ COMPLETE (2026-05-06)
 **→ See `epics/MEMBERS_EPIC.md` for full task breakdown**

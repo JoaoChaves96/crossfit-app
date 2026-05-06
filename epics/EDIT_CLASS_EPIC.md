@@ -1,6 +1,6 @@
 # EPIC: Edit & Delete Class (Epic I)
 
-**Status:** ⏳ NOT STARTED  
+**Status:** ✅ COMPLETE (2026-05-06)  
 **Start Date:** TBD  
 **Owner:** Backend + Frontend team  
 **Depends on:** `epics/CLASS_MANAGEMENT_EPIC.md` — ✅ Complete  
@@ -79,7 +79,7 @@ Gym owners can create classes but cannot fix mistakes — wrong coach, wrong tim
 - Wire both in `class.controller.ts` with full Swagger decorators
 - Verify at `/api-docs`
 
-**Status:** ⏳ Not started
+**Status:** ✅ Complete
 
 ---
 
@@ -91,7 +91,7 @@ Gym owners can create classes but cannot fix mistakes — wrong coach, wrong tim
 - Header: "Edit Class" title + Save (primary) + Cancel (outlined) + Delete (red text link or destructive button)
 - Match card, input, button tokens from existing owner screens
 
-**Status:** ⏳ Not started
+**Status:** ✅ Complete
 
 ---
 
@@ -109,7 +109,7 @@ Gym owners can create classes but cannot fix mistakes — wrong coach, wrong tim
 - Types from `@/types/api.gen.ts`
 - TypeScript strict mode; `npx tsc --noEmit` must pass
 
-**Status:** ⏳ Not started
+**Status:** ✅ Complete
 
 ---
 
@@ -121,13 +121,19 @@ Gym owners can create classes but cannot fix mistakes — wrong coach, wrong tim
 
 ---
 
+## Known Limitation
+
+`ClassScheduleItemDto` returns `coachName` and `spaceName` (strings) but not `coachUserId` or `spaceId`. As a result, the Edit Class form cannot pre-fill the Coach and Space pickers — they start unselected. To fix this, `GET /:classId` would need to return the IDs alongside the names. Deferred to a future cleanup.
+
+---
+
 ## Done When
 
-- [ ] `PATCH /api/gyms/:gymId/classes/:classId` updates published classes correctly
-- [ ] `DELETE /api/gyms/:gymId/classes/:classId` soft-deletes published classes correctly
-- [ ] Both return `400` for non-published classes
-- [ ] Swagger schema accurate for both endpoints
-- [ ] Edit Class frame exists in `gym-owner-screens.pen`
-- [ ] `edit-class.tsx` pre-fills and submits correctly
-- [ ] Delete confirm dialog works and navigates back on success
-- [ ] TypeScript compiles cleanly across backend and frontend
+- [x] `PATCH /api/gyms/:gymId/classes/:classId` updates published classes correctly
+- [x] `DELETE /api/gyms/:gymId/classes/:classId` soft-deletes published classes correctly
+- [x] Both return `400` for non-published classes
+- [x] Swagger schema accurate for both endpoints
+- [x] Edit Class frame exists in `gym-owner-screens.pen`
+- [x] `edit-class.tsx` pre-fills and submits correctly
+- [x] Delete confirm dialog works and navigates back on success
+- [x] TypeScript compiles cleanly across backend and frontend

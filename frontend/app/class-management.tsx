@@ -584,6 +584,11 @@ export default function ClassManagement() {
     );
   }, [router, classId, currentGymId]);
 
+  const handleEditClass = useCallback(() => {
+    if (!classId || !currentGymId) return;
+    router.push(`/edit-class?classId=${classId}&gymId=${currentGymId}` as never);
+  }, [router, classId, currentGymId]);
+
   return (
     <View style={styles.root}>
       <Sidebar onNavigate={handleNavigate} />
@@ -630,6 +635,9 @@ export default function ClassManagement() {
               </TouchableOpacity>
               <TouchableOpacity style={styles.outlinedBtn} onPress={handleAddProgramming}>
                 <Text style={styles.outlinedBtnText}>ADD PROGRAMMING</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.outlinedBtn} onPress={handleEditClass}>
+                <Text style={styles.outlinedBtnText}>EDIT</Text>
               </TouchableOpacity>
             </View>
 

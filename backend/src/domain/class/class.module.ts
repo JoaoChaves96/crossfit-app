@@ -21,6 +21,8 @@ import { AddOrEditProgrammingHandler } from '../../commands/class/handlers/add-o
 import { ToggleLoggableStatusHandler } from '../../commands/class/handlers/toggle-loggable-status.handler';
 import { ManuallyTransitionClassStateHandler } from '../../commands/class/handlers/manually-transition-class-state.handler';
 import { UpdateClassStructureHandler } from '../../commands/class/handlers/update-class-structure.handler';
+import { EditClassHandler } from '../../commands/class/handlers/edit-class.handler';
+import { DeleteClassHandler } from '../../commands/class/handlers/delete-class.handler';
 import { ClassScheduleService } from '../../queries/class/class-schedule.service';
 import { GetClassResultsService } from '../../queries/class/get-class-results.service';
 import { GetClassProgrammingService } from '../../queries/class/get-class-programming.service';
@@ -45,6 +47,8 @@ const CommandHandlers = [
   UpdateClassStructureHandler,
   LogResultHandler,
   EditResultHandler,
+  EditClassHandler,
+  DeleteClassHandler,
 ];
 
 @Module({
