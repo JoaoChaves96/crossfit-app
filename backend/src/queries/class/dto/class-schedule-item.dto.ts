@@ -39,6 +39,12 @@ export class ClassScheduleItemDto {
   scheduledTime: string;
 
   @ApiProperty({
+    example: 'uuid-coach-user-id',
+    description: 'User ID of the coach leading the class',
+  })
+  coachUserId: string;
+
+  @ApiProperty({
     example: 'John Doe',
     description: 'Full name of the coach leading the class',
   })
@@ -58,6 +64,12 @@ export class ClassScheduleItemDto {
     description: 'Number of booked (confirmed) spots',
   })
   bookedCount: number;
+
+  @ApiProperty({
+    example: 'uuid-space-id',
+    description: 'ID of the space where the class takes place',
+  })
+  spaceId: string;
 
   @ApiProperty({
     example: 'Main Floor',

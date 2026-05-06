@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import {
   ActivityIndicator,
+  Alert,
   Modal,
   ScrollView,
   StyleSheet,
@@ -22,6 +23,8 @@ type InviteCoachResponse = components['schemas']['InviteCoachResponseDto'];
 
 type CoachListItem = components['schemas']['CoachListItemDto'];
 type CoachesListResponse = components['schemas']['GetCoachesResponseDto'];
+type ChangeCoachStatusResponse = components['schemas']['ChangeCoachStatusResponseDto'];
+type CoachStatus = 'active' | 'inactive';
 
 // ─── Design Tokens ────────────────────────────────────────────────────────────
 
@@ -49,6 +52,10 @@ const COLOR = {
   modalBg: '#FFFFFF',
   cancelBtnBorder: '#D1D5DB',
   cancelBtnText: '#374151',
+  deactivateBtnText: '#DC2626',
+  deactivateBtnBorder: '#FCA5A5',
+  reactivateBtnText: '#374151',
+  reactivateBtnBorder: '#D1D5DB',
 };
 
 // ─── Sidebar ──────────────────────────────────────────────────────────────────
@@ -137,13 +144,68 @@ function StatusBadge({ status }: StatusBadgeProps) {
   );
 }
 
+// ─── Action Button ────────────────────────────────────────────────────────────
+
+interface ActionButtonProps {
+  label: string;
+  onPress: () => void;
+  variant: 'deactivate' | 'reactivate';
+  disabled: boolean;
+}
+
+function ActionButton({ label, onPress, variant, disabled }: ActionButtonProps) {
+  const isDeactivate = variant === 'deactivate';
+  return (
+    <TouchableOpacity
+      style={[
+        styles.actionBtn,
+        isDeactivate ? styles.actionBtnDeactivate : styles.actionBtnReactivate,
+        disabled && styles.actionBtnDisabled,
+      ]}
+      onPress={onPress}
+      disabled={disabled}
+      activeOpacity={0.7}>
+      <Text
+        style={[
+          styles.actionBtnText,
+          isDeactivate ? styles.actionBtnTextDeactivate : styles.actionBtnTextReactivate,
+        ]}>
+        {label}
+      </Text>
+    </TouchableOpacity>
+  );
+}
+
 // ─── Coach Row ────────────────────────────────────────────────────────────────
 
 interface CoachRowProps {
   coach: CoachListItem;
+  onChangeStatus: (coachUserId: string, status: CoachStatus) => Promise<void>;
+  isChangingStatus: boolean;
 }
 
-function CoachRow({ coach }: CoachRowProps) {
+function CoachRow({ coach, onChangeStatus, isChangingStatus }: CoachRowProps) {
+  const isActive = coach.status === 'active';
+
+  function handleDeactivate() {
+    Alert.alert(
+      'Deactivate Coach',
+      `Are you sure you want to deactivate ${coach.email}? They will no longer be assigned to new classes.`,
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Deactivate',
+          style: 'destructive',
+          onPress: () => onChangeStatus(coach.userId, 'inactive'),
+        },
+      ],
+    );
+  }
+
+  function handleReactivate() {
+    onChangeStatus(coach.userId, 'active');
+  }
+
   return (
     <View style={styles.coachRow}>
       <View style={styles.coachAvatar}>
@@ -156,6 +218,23 @@ function CoachRow({ coach }: CoachRowProps) {
         <Text style={styles.coachRole}>{coach.role}</Text>
       </View>
       <StatusBadge status={coach.status} />
+      <View style={styles.colActions}>
+        {isActive ? (
+          <ActionButton
+            label="Deactivate"
+            onPress={handleDeactivate}
+            variant="deactivate"
+            disabled={isChangingStatus}
+          />
+        ) : (
+          <ActionButton
+            label="Reactivate"
+            onPress={handleReactivate}
+            variant="reactivate"
+            disabled={isChangingStatus}
+          />
+        )}
+      </View>
     </View>
   );
 }
@@ -279,6 +358,7 @@ export default function CoachesScreen() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [modalVisible, setModalVisible] = useState(false);
+  const [changingStatusId, setChangingStatusId] = useState<string | null>(null);
 
   const fetchCoaches = useCallback(async () => {
     if (!token || !currentGymId) return;
@@ -303,6 +383,26 @@ export default function CoachesScreen() {
   useEffect(() => {
     fetchCoaches();
   }, [fetchCoaches]);
+
+  async function handleChangeStatus(coachUserId: string, status: CoachStatus) {
+    if (!token || !currentGymId) return;
+
+    setChangingStatusId(coachUserId);
+
+    try {
+      const client = createApiClient({ token });
+      await client.patch<ChangeCoachStatusResponse>(
+        `/api/gyms/${currentGymId}/configuration/coaches/${coachUserId}`,
+        { status } as Record<string, unknown>,
+      );
+      await fetchCoaches();
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : 'Failed to update coach status.';
+      Alert.alert('Error', msg);
+    } finally {
+      setChangingStatusId(null);
+    }
+  }
 
   function handleInviteSuccess() {
     setModalVisible(false);
@@ -369,11 +469,19 @@ export default function CoachesScreen() {
               <Text style={[styles.tableHeaderCell, styles.colStatus]}>
                 Status
               </Text>
+              <Text style={[styles.tableHeaderCell, styles.colActionsHeader]}>
+                Actions
+              </Text>
             </View>
 
             <ScrollView showsVerticalScrollIndicator={false}>
               {coaches.map((coach) => (
-                <CoachRow key={coach.id} coach={coach} />
+                <CoachRow
+                  key={coach.id}
+                  coach={coach}
+                  onChangeStatus={handleChangeStatus}
+                  isChangingStatus={changingStatusId === coach.userId}
+                />
               ))}
             </ScrollView>
           </View>
@@ -586,7 +694,14 @@ const styles = StyleSheet.create({
   },
   colStatus: {
     width: 90,
+  },
+  colActionsHeader: {
+    width: 140,
     textAlign: 'right',
+  },
+  colActions: {
+    width: 140,
+    alignItems: 'flex-end',
   },
 
   // Coach row
@@ -625,6 +740,35 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: COLOR.subText,
     textTransform: 'capitalize',
+  },
+
+  // Action button
+  actionBtn: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 6,
+    borderWidth: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  actionBtnDeactivate: {
+    borderColor: COLOR.deactivateBtnBorder,
+  },
+  actionBtnReactivate: {
+    borderColor: COLOR.reactivateBtnBorder,
+  },
+  actionBtnDisabled: {
+    opacity: 0.5,
+  },
+  actionBtnText: {
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  actionBtnTextDeactivate: {
+    color: COLOR.deactivateBtnText,
+  },
+  actionBtnTextReactivate: {
+    color: COLOR.reactivateBtnText,
   },
 
   // Badge

@@ -121,11 +121,6 @@ Gym owners can create classes but cannot fix mistakes — wrong coach, wrong tim
 
 ---
 
-## Known Limitation
-
-`ClassScheduleItemDto` returns `coachName` and `spaceName` (strings) but not `coachUserId` or `spaceId`. As a result, the Edit Class form cannot pre-fill the Coach and Space pickers — they start unselected. To fix this, `GET /:classId` would need to return the IDs alongside the names. Deferred to a future cleanup.
-
----
 
 ## Done When
 

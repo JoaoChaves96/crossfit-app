@@ -281,8 +281,8 @@ export default function EditClassScreen() {
         setClassLoadState({ status: 'success', data });
         setForm({
           classTypeId: data.classTypeId,
-          coachUserId: '',
-          spaceId: '',
+          coachUserId: data.coachUserId,
+          spaceId: data.spaceId,
           scheduledDate: data.scheduledDate,
           scheduledTime: data.scheduledTime,
           capacity: String(data.capacity),

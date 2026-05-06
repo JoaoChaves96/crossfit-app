@@ -733,6 +733,11 @@ export interface components {
              */
             scheduledTime: string;
             /**
+             * @description User ID of the coach leading the class
+             * @example uuid-coach-user-id
+             */
+            coachUserId: string;
+            /**
              * @description Full name of the coach leading the class
              * @example John Doe
              */
@@ -752,6 +757,11 @@ export interface components {
              * @example 12
              */
             bookedCount: number;
+            /**
+             * @description ID of the space where the class takes place
+             * @example uuid-space-id
+             */
+            spaceId: string;
             /**
              * @description Name of the space where the class takes place
              * @example Main Floor
