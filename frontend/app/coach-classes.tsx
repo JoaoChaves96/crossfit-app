@@ -2,7 +2,6 @@ import React, { useCallback, useEffect, useState } from 'react';
 import {
   ActivityIndicator,
   ScrollView,
-  StyleSheet,
   Text,
   TouchableOpacity,
   View,
@@ -12,6 +11,8 @@ import { useAuth } from '@/hooks/useAuth';
 import { useGym } from '@/hooks/useGym';
 import { createApiClient } from '@/utils/api-client';
 import { components } from '@/types/api.gen';
+import { AppColors } from '@/constants/theme';
+import { styles } from './coach-classes.styles';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -19,60 +20,6 @@ type CoachClassItem = components['schemas']['CoachClassItemDto'];
 type GetCoachClassesResponse = components['schemas']['GetCoachClassesResponseDto'];
 
 type FilterMode = 'upcoming' | 'past';
-
-// ─── Design Tokens ────────────────────────────────────────────────────────────
-
-const COLOR = {
-  // Root & layout
-  rootBg: '#F2F3F5',
-  white: '#FFFFFF',
-
-  // Sidebar (dark theme)
-  sidebarBg: '#1E1E2D',
-  sidebarLogoText: '#FFFFFF',
-  navActiveItemBg: '#2D2D42',
-  navActiveText: '#FFFFFF',
-  navInactiveText: '#8888A0',
-
-  // Main content
-  titleText: '#1A1A2E',
-  bodyText: '#1A1A2E',
-  secondaryText: '#555568',
-  mutedText: '#8888A0',
-
-  // Card / table
-  cardBg: '#FFFFFF',
-  cardBorder: '#E4E4EA',
-  tableHeaderBg: '#F7F7F9',
-  tableHeaderText: '#8888A0',
-  rowAltBg: '#EEF0FF',
-  rowBorder: '#E4E4EA',
-
-  // Filter buttons
-  filterActiveBg: '#1A1A2E',
-  filterActiveText: '#FFFFFF',
-  filterInactiveBg: '#FFFFFF',
-  filterInactiveText: '#8888A0',
-  filterInactiveBorder: '#E4E4EA',
-
-  // Action button
-  actionBtnBg: '#1A1A2E',
-  actionBtnText: '#FFFFFF',
-
-  // Status badges
-  statusPublishedBg: '#D4EDDA',
-  statusPublishedText: '#1A1A2E',
-  statusBookingClosedBg: '#FFF3CD',
-  statusBookingClosedText: '#856404',
-  statusInProgressBg: '#CCE5FF',
-  statusInProgressText: '#004085',
-  statusCompletedBg: '#E2E3E5',
-  statusCompletedText: '#383D41',
-
-  // Error
-  errorText: '#DC2626',
-  borderMid: '#D1D5DB',
-};
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -105,15 +52,15 @@ interface StatusConfig {
 function getStatusConfig(state: CoachClassItem['state']): StatusConfig {
   switch (state) {
     case 'published':
-      return { label: 'Published', bg: COLOR.statusPublishedBg, textColor: COLOR.statusPublishedText };
+      return { label: 'Published', bg: AppColors.successBgLight, textColor: AppColors.darkSurface };
     case 'booking_closed':
-      return { label: 'Booking Closed', bg: COLOR.statusBookingClosedBg, textColor: COLOR.statusBookingClosedText };
+      return { label: 'Booking Closed', bg: AppColors.warningBgAmber, textColor: AppColors.warningLabel };
     case 'in_progress':
-      return { label: 'In Progress', bg: COLOR.statusInProgressBg, textColor: COLOR.statusInProgressText };
+      return { label: 'In Progress', bg: AppColors.badgeBlueBgLight, textColor: AppColors.actionBlueDarker };
     case 'completed':
-      return { label: 'Completed', bg: COLOR.statusCompletedBg, textColor: COLOR.statusCompletedText };
+      return { label: 'Completed', bg: AppColors.borderFaint, textColor: AppColors.errorLabel };
     case 'archived':
-      return { label: 'Archived', bg: COLOR.statusCompletedBg, textColor: COLOR.statusCompletedText };
+      return { label: 'Archived', bg: AppColors.borderFaint, textColor: AppColors.errorLabel };
   }
 }
 
@@ -314,7 +261,7 @@ export default function CoachClassesScreen() {
         {/* Classes card */}
         {isLoading ? (
           <View style={styles.centered}>
-            <ActivityIndicator size="large" color={COLOR.bodyText} />
+            <ActivityIndicator size="large" color={AppColors.darkSurface} />
           </View>
         ) : error !== null ? (
           <View style={styles.centered}>
@@ -373,255 +320,3 @@ export default function CoachClassesScreen() {
     </View>
   );
 }
-
-// ─── Styles ───────────────────────────────────────────────────────────────────
-
-const COL_CLASS_TYPE = 180;
-const COL_DATE_TIME = 200;
-const COL_SPACE = 100;
-const COL_CAPACITY = 100;
-const COL_STATUS = 160;
-const COL_ACTION = 90;
-
-const styles = StyleSheet.create({
-  root: {
-    flex: 1,
-    flexDirection: 'row',
-    backgroundColor: COLOR.rootBg,
-  },
-
-  // Sidebar
-  sidebar: {
-    width: 220,
-    backgroundColor: COLOR.sidebarBg,
-    paddingHorizontal: 16,
-    paddingVertical: 24,
-    gap: 4,
-  },
-  sidebarLogo: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: COLOR.sidebarLogoText,
-    letterSpacing: 0.5,
-  },
-  navSpacer: {
-    height: 24,
-  },
-  navGroup: {
-    gap: 4,
-  },
-  navItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: 6,
-    height: 40,
-  },
-  navItemActive: {
-    backgroundColor: COLOR.navActiveItemBg,
-  },
-  navLabel: {
-    fontSize: 14,
-  },
-  navLabelActive: {
-    fontWeight: '600',
-    color: COLOR.navActiveText,
-  },
-  navLabelInactive: {
-    fontWeight: '400',
-    color: COLOR.navInactiveText,
-  },
-
-  // Main area
-  main: {
-    flex: 1,
-    paddingHorizontal: 28,
-    paddingVertical: 24,
-    gap: 20,
-  },
-
-  // Header
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  },
-  headerTitle: {
-    fontSize: 24,
-    fontWeight: '700',
-    color: COLOR.titleText,
-  },
-
-  // Filter row
-  filterRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-  },
-  filterBtn: {
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 8,
-    backgroundColor: COLOR.filterInactiveBg,
-    borderWidth: 1,
-    borderColor: COLOR.filterInactiveBorder,
-  },
-  filterBtnActive: {
-    backgroundColor: COLOR.filterActiveBg,
-    borderColor: COLOR.filterActiveBg,
-  },
-  filterBtnText: {
-    fontSize: 13,
-    fontWeight: '400',
-    color: COLOR.filterInactiveText,
-  },
-  filterBtnTextActive: {
-    fontWeight: '600',
-    color: COLOR.filterActiveText,
-  },
-
-  // Classes card
-  classesCard: {
-    flex: 1,
-    backgroundColor: COLOR.cardBg,
-    borderRadius: 10,
-    borderWidth: 1,
-    borderColor: COLOR.cardBorder,
-    overflow: 'hidden',
-  },
-
-  // Table header
-  tableHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    height: 44,
-    paddingHorizontal: 16,
-    backgroundColor: COLOR.tableHeaderBg,
-    borderBottomWidth: 1,
-    borderBottomColor: COLOR.rowBorder,
-  },
-  tableHeaderCell: {
-    fontSize: 11,
-    fontWeight: '700',
-    color: COLOR.tableHeaderText,
-    letterSpacing: 0.8,
-    textTransform: 'uppercase',
-  },
-
-  // Table rows
-  tableRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    height: 48,
-    paddingHorizontal: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: COLOR.rowBorder,
-  },
-  tableRowAlt: {
-    backgroundColor: COLOR.rowAltBg,
-  },
-  rowCell: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: COLOR.bodyText,
-  },
-  rowCellSecondary: {
-    fontSize: 13,
-    fontWeight: '400',
-    color: COLOR.secondaryText,
-  },
-
-  // Column widths
-  colClassType: {
-    width: COL_CLASS_TYPE,
-  },
-  colDateTime: {
-    width: COL_DATE_TIME,
-  },
-  colSpace: {
-    width: COL_SPACE,
-  },
-  colCapacity: {
-    width: COL_CAPACITY,
-  },
-  colStatus: {
-    width: COL_STATUS,
-  },
-  colAction: {
-    width: COL_ACTION,
-    alignItems: 'flex-start',
-  },
-
-  // Status badge
-  statusBadge: {
-    borderRadius: 10,
-    paddingHorizontal: 10,
-    paddingVertical: 3,
-    alignSelf: 'flex-start',
-  },
-  statusBadgeText: {
-    fontSize: 12,
-    fontWeight: '600',
-  },
-
-  // Action button
-  viewBtn: {
-    backgroundColor: COLOR.actionBtnBg,
-    borderRadius: 6,
-    paddingHorizontal: 14,
-    paddingVertical: 6,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  viewBtnText: {
-    fontSize: 13,
-    fontWeight: '600',
-    color: COLOR.actionBtnText,
-  },
-
-  // Loading / error
-  centered: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 12,
-  },
-  errorText: {
-    fontSize: 14,
-    color: COLOR.errorText,
-    textAlign: 'center',
-  },
-  retryBtn: {
-    paddingHorizontal: 20,
-    paddingVertical: 8,
-    borderRadius: 6,
-    borderWidth: 1,
-    borderColor: COLOR.borderMid,
-  },
-  retryBtnText: {
-    fontSize: 14,
-    color: COLOR.bodyText,
-  },
-
-  // Empty state
-  emptyState: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 48,
-    gap: 8,
-  },
-  emptyTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: COLOR.bodyText,
-  },
-  emptySubtitle: {
-    fontSize: 14,
-    color: COLOR.secondaryText,
-    textAlign: 'center',
-    paddingHorizontal: 24,
-  },
-});

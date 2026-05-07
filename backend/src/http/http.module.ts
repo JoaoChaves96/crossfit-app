@@ -1,7 +1,10 @@
 import { Module } from '@nestjs/common';
 import { CqrsModule } from '@nestjs/cqrs';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { ClassController } from '../api/class/class.controller';
+import { ClassSchedulingController } from '../api/class/class-scheduling.controller';
+import { ClassBookingController } from '../api/class/class-booking.controller';
+import { ClassProgrammingController } from '../api/class/class-programming.controller';
+import { ClassResultsController } from '../api/class/class-results.controller';
 import { ClassModule } from '../domain/class/class.module';
 import { GymStaffModule } from '../domain/gym-staff/gym-staff.module';
 import { GymConfigurationModule } from '../domain/gym-configuration/gym-configuration.module';
@@ -11,6 +14,7 @@ import { GymProfileController } from '../api/gym-configuration/gym-profile.contr
 import { GymFeatureModule } from '../domain/gym/gym-feature.module';
 import { GymController } from '../api/gym/gym.controller';
 import { RolesGuard } from '../auth/guards/roles.guard';
+import { GymOwnershipGuard } from '../auth/guards/gym-ownership.guard';
 import { UserController } from '../api/user/user.controller';
 import { AthleteController } from '../api/user/athlete.controller';
 import { UserBookingsService } from '../queries/booking/user-bookings.service';
@@ -57,7 +61,10 @@ import { UserModule } from '../domain/user/user.module';
     ]),
   ],
   controllers: [
-    ClassController,
+    ClassSchedulingController,
+    ClassBookingController,
+    ClassProgrammingController,
+    ClassResultsController,
     GymConfigurationController,
     GymMembersController,
     GymProfileController,
@@ -69,6 +76,7 @@ import { UserModule } from '../domain/user/user.module';
   ],
   providers: [
     RolesGuard,
+    GymOwnershipGuard,
     UserBookingsService,
     TrainingHistoryService,
     BookingRepository,

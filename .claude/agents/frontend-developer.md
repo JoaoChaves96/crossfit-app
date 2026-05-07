@@ -206,6 +206,14 @@ These apply to every code change regardless of TASK TYPE:
 - No hardcoded strings, colours, or numeric values in component code — use constants or design tokens.
 - Route paths must come from a central constants file, not be inlined as strings.
 
+### Styling (MANDATORY)
+- **Never put `StyleSheet.create()` inside a `.tsx` file.** All stylesheets live in a co-located sibling file named `[screen].styles.ts` and are imported into the component.
+- **All style values must reference design tokens** from `frontend/constants/theme.ts` — `AppColors`, `FontSizes`, `FontWeights`, `LineHeights`, `Spacing`, `BorderRadius`. No hardcoded hex strings or numeric literals for color, font size, font weight, line height, padding, margin, gap, or border radius.
+- If a value is needed but has no matching token, add the token to `theme.ts` first, then reference it.
+
+### Screen Size
+- If a screen file grows past ~300 lines, convert it to a folder: `app/[screen]/index.tsx` (orchestration only) with logical sections extracted into named sub-components inside the same folder (e.g. `SpacesTab.tsx`, `BookingsPanel.tsx`). Sub-components are screen-specific — not shared globally.
+
 ### Tests (TEST_ONLY tasks)
 - Structure every test as **Arrange → Act → Assert** with a clear boundary between phases.
 - One behaviour per test — a test that asserts multiple things at once is not one test.

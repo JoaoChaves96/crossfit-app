@@ -4,7 +4,6 @@ import {
   KeyboardAvoidingView,
   Platform,
   ScrollView,
-  StyleSheet,
   Text,
   TextInput,
   TouchableOpacity,
@@ -13,6 +12,8 @@ import {
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { AuthContext } from '@/context/AuthContext';
 import { ApiError, createApiClient } from '@/utils/api-client';
+import { AppColors } from '@/constants/theme';
+import { styles } from './register.styles';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -99,7 +100,7 @@ export default function RegisterScreen() {
               <TextInput
                 style={styles.input}
                 placeholder="Your full name"
-                placeholderTextColor="#999999"
+                placeholderTextColor={AppColors.textGray500}
                 value={name}
                 onChangeText={setName}
                 autoCapitalize="words"
@@ -114,7 +115,7 @@ export default function RegisterScreen() {
               <TextInput
                 style={[styles.input, fromInvite && styles.inputReadOnly]}
                 placeholder="your@email.com"
-                placeholderTextColor="#999999"
+                placeholderTextColor={AppColors.textGray500}
                 value={email}
                 onChangeText={fromInvite ? undefined : setEmail}
                 editable={!fromInvite}
@@ -131,7 +132,7 @@ export default function RegisterScreen() {
               <TextInput
                 style={styles.input}
                 placeholder="••••••••"
-                placeholderTextColor="#999999"
+                placeholderTextColor={AppColors.textGray500}
                 value={password}
                 onChangeText={setPassword}
                 secureTextEntry
@@ -154,7 +155,7 @@ export default function RegisterScreen() {
               disabled={isLoading}
               activeOpacity={0.85}>
               {isLoading ? (
-                <ActivityIndicator size="small" color="#FFFFFF" />
+                <ActivityIndicator size="small" color={AppColors.backgroundWhite} />
               ) : (
                 <Text style={styles.registerBtnLabel}>Create Account</Text>
               )}
@@ -174,129 +175,3 @@ export default function RegisterScreen() {
   );
 }
 
-// ─── Styles ───────────────────────────────────────────────────────────────────
-
-const styles = StyleSheet.create({
-  screen: {
-    flex: 1,
-    backgroundColor: '#F5F5F5',
-  },
-  scrollContent: {
-    flexGrow: 1,
-  },
-  statusBar: {
-    height: 62,
-  },
-  content: {
-    flex: 1,
-    paddingHorizontal: 24,
-    paddingBottom: 32,
-  },
-
-  // Brand
-  brand: {
-    alignItems: 'center',
-    paddingTop: 32,
-    paddingBottom: 40,
-    gap: 8,
-  },
-  brandIcon: {
-    fontSize: 32,
-  },
-  brandName: {
-    fontFamily: 'Inter',
-    fontSize: 24,
-    fontWeight: '700',
-    color: '#1A1A1A',
-  },
-  brandTagline: {
-    fontFamily: 'Inter',
-    fontSize: 15,
-    fontWeight: '400',
-    color: '#666666',
-  },
-
-  // Form Card
-  formCard: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: '#E8E8E8',
-    padding: 20,
-    gap: 16,
-  },
-
-  // Fields
-  field: {
-    gap: 6,
-  },
-  fieldLabel: {
-    fontFamily: 'Inter',
-    fontSize: 13,
-    fontWeight: '600',
-    color: '#1A1A1A',
-  },
-  input: {
-    height: 48,
-    backgroundColor: '#FFFFFF',
-    borderRadius: 10,
-    borderWidth: 1,
-    borderColor: '#E0E0E0',
-    paddingHorizontal: 14,
-    fontFamily: 'Inter',
-    fontSize: 15,
-    color: '#1A1A1A',
-  },
-  inputReadOnly: {
-    backgroundColor: '#F5F5F5',
-    color: '#666666',
-  },
-
-  // Error
-  errorText: {
-    fontFamily: 'Inter',
-    fontSize: 13,
-    color: '#D32F2F',
-    lineHeight: 18,
-  },
-
-  // Register Button
-  registerBtn: {
-    height: 50,
-    backgroundColor: '#1A1A1A',
-    borderRadius: 12,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  registerBtnDisabled: {
-    opacity: 0.6,
-  },
-  registerBtnLabel: {
-    fontFamily: 'Inter',
-    fontSize: 15,
-    fontWeight: '700',
-    color: '#FFFFFF',
-    letterSpacing: 0.5,
-  },
-
-  // Footer
-  footer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingTop: 20,
-    gap: 4,
-  },
-  footerText: {
-    fontFamily: 'Inter',
-    fontSize: 14,
-    fontWeight: '400',
-    color: '#666666',
-  },
-  loginLink: {
-    fontFamily: 'Inter',
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#1A1A1A',
-  },
-});

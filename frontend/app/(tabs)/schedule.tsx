@@ -2,7 +2,6 @@ import React, { useCallback, useState } from 'react';
 import {
   View,
   Text,
-  StyleSheet,
   FlatList,
   TouchableOpacity,
   ActivityIndicator,
@@ -13,41 +12,8 @@ import { useGym } from '@/hooks/useGym';
 import { createApiClient } from '@/utils/api-client';
 import { showConfirm, showError } from '@/utils/alert';
 import { components } from '@/types/api.gen';
-
-// ─── Design tokens ────────────────────────────────────────────────────────────
-const COLORS = {
-  bg: '#F5F5F5',
-  white: '#FFFFFF',
-  fontPrimary: '#1A1A1A',
-  fontSecondary: '#666666',
-  fontTertiary: '#999999',
-  border: '#E0E0E0',
-  cardBorder: '#E8E8E8',
-  toggleBg: '#E0E0E0',
-  filterBorderInactive: '#CCCCCC',
-  dateLine: '#E0E0E0',
-  // Status badges
-  badgeOpenBg: '#E8F5E9',
-  badgeOpenText: '#2E7D32',
-  badgeBookedBg: '#E3F2FD',
-  badgeBookedText: '#1565C0',
-  badgeWaitlistedBg: '#FFF3E0',
-  badgeWaitlistedText: '#E65100',
-  badgeFullBg: '#F5F5F5',
-  badgeFullText: '#999999',
-  // Action buttons
-  btnPrimaryFill: '#1A1A1A',
-  btnPrimaryText: '#FFFFFF',
-  btnCancelBorder: '#DC3545',
-  btnCancelText: '#DC3545',
-  btnWaitlistBorder: '#1A1A1A',
-  btnWaitlistText: '#1A1A1A',
-  danger: '#D32F2F',
-} as const;
-
-const FONT = {
-  family: 'Inter' as const,
-};
+import { AppColors } from '@/constants/theme';
+import { styles } from './schedule.styles';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 type ClassScheduleItem = components['schemas']['ClassScheduleItemDto'];
@@ -64,10 +30,10 @@ interface EnrichedClass extends ClassScheduleItem {
 
 // ─── Badge config ─────────────────────────────────────────────────────────────
 const BADGE_CONFIG: Record<BookingStatus, { bg: string; text: string; label: string }> = {
-  open: { bg: COLORS.badgeOpenBg, text: COLORS.badgeOpenText, label: 'Open' },
-  booked: { bg: COLORS.badgeBookedBg, text: COLORS.badgeBookedText, label: 'Booked' },
-  waitlisted: { bg: COLORS.badgeWaitlistedBg, text: COLORS.badgeWaitlistedText, label: 'Waitlisted' },
-  full: { bg: COLORS.badgeFullBg, text: COLORS.badgeFullText, label: 'Full' },
+  open: { bg: AppColors.successBgFaint, text: AppColors.successMaterial, label: 'Open' },
+  booked: { bg: AppColors.surfaceBlueLight, text: AppColors.actionBlueDark, label: 'Booked' },
+  waitlisted: { bg: AppColors.warningBgOrange, text: AppColors.warningOrange, label: 'Waitlisted' },
+  full: { bg: AppColors.backgroundSubtle, text: AppColors.textGray500, label: 'Full' },
 };
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -133,13 +99,13 @@ function CardActionButton({
     if (isCancelling) {
       return (
         <View style={[styles.actionBtn, styles.actionBtnCancel]}>
-          <ActivityIndicator size="small" color={COLORS.btnCancelText} />
+          <ActivityIndicator size="small" color={AppColors.errorBootstrap} />
         </View>
       );
     }
     return (
       <TouchableOpacity style={[styles.actionBtn, styles.actionBtnCancel]} onPress={onCancel} activeOpacity={0.7}>
-        <Text style={[styles.actionBtnText, { color: COLORS.btnCancelText }]}>Cancel Booking</Text>
+        <Text style={[styles.actionBtnText, { color: AppColors.errorBootstrap }]}>Cancel Booking</Text>
       </TouchableOpacity>
     );
   }
@@ -148,13 +114,13 @@ function CardActionButton({
     if (isCancelling) {
       return (
         <View style={[styles.actionBtn, styles.actionBtnWaitlist]}>
-          <ActivityIndicator size="small" color={COLORS.btnWaitlistText} />
+          <ActivityIndicator size="small" color={AppColors.textPrimary} />
         </View>
       );
     }
     return (
       <TouchableOpacity style={[styles.actionBtn, styles.actionBtnWaitlist]} onPress={onCancel} activeOpacity={0.7}>
-        <Text style={[styles.actionBtnText, { color: COLORS.btnWaitlistText }]}>Leave Waitlist</Text>
+        <Text style={[styles.actionBtnText, { color: AppColors.textPrimary }]}>Leave Waitlist</Text>
       </TouchableOpacity>
     );
   }
@@ -162,7 +128,7 @@ function CardActionButton({
   if (status === 'full') {
     return (
       <TouchableOpacity style={[styles.actionBtn, styles.actionBtnWaitlist]} onPress={onWaitlist} activeOpacity={0.7}>
-        <Text style={[styles.actionBtnText, { color: COLORS.btnWaitlistText }]}>Join Waitlist</Text>
+        <Text style={[styles.actionBtnText, { color: AppColors.textPrimary }]}>Join Waitlist</Text>
       </TouchableOpacity>
     );
   }
@@ -170,7 +136,7 @@ function CardActionButton({
   // open
   return (
     <TouchableOpacity style={[styles.actionBtn, styles.actionBtnPrimary]} onPress={onBook} activeOpacity={0.7}>
-      <Text style={[styles.actionBtnText, { color: COLORS.btnPrimaryText }]}>Book Class</Text>
+      <Text style={[styles.actionBtnText, { color: AppColors.backgroundWhite }]}>Book Class</Text>
     </TouchableOpacity>
   );
 }
@@ -323,7 +289,7 @@ export default function ScheduleScreen() {
     return (
       <View style={styles.screen}>
         <View style={styles.centeredState}>
-          <ActivityIndicator size="large" color={COLORS.fontPrimary} />
+          <ActivityIndicator size="large" color={AppColors.textPrimary} />
         </View>
       </View>
     );
@@ -403,191 +369,3 @@ export default function ScheduleScreen() {
     </View>
   );
 }
-
-// ─── Styles ───────────────────────────────────────────────────────────────────
-const styles = StyleSheet.create({
-  screen: {
-    flex: 1,
-    backgroundColor: COLORS.bg,
-  },
-  // Header
-  header: {
-    backgroundColor: COLORS.white,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: 20,
-    paddingVertical: 12,
-  },
-  gymSelector: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  gymName: {
-    fontFamily: FONT.family,
-    fontSize: 18,
-    fontWeight: '700',
-    color: COLORS.fontPrimary,
-  },
-  gymDropdownCaret: {
-    fontFamily: FONT.family,
-    fontSize: 10,
-    color: COLORS.fontSecondary,
-  },
-  // List
-  listContent: {
-    paddingHorizontal: 20,
-    paddingTop: 12,
-    paddingBottom: 20,
-    gap: 12,
-  },
-  // Date separator
-  dateSep: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    paddingTop: 4,
-    marginBottom: 4,
-  },
-  dateLabel: {
-    fontFamily: FONT.family,
-    fontSize: 13,
-    fontWeight: '600',
-    color: COLORS.fontPrimary,
-  },
-  dateLine: {
-    flex: 1,
-    height: 1,
-    backgroundColor: COLORS.dateLine,
-  },
-  // Card
-  card: {
-    backgroundColor: COLORS.white,
-    borderRadius: 12,
-    padding: 16,
-    gap: 12,
-    borderWidth: 1,
-    borderColor: COLORS.cardBorder,
-  },
-  cardTop: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  cardTime: {
-    fontFamily: FONT.family,
-    fontSize: 14,
-    fontWeight: '600',
-    color: COLORS.fontPrimary,
-  },
-  cardTitle: {
-    fontFamily: FONT.family,
-    fontSize: 16,
-    fontWeight: '700',
-    color: COLORS.fontPrimary,
-  },
-  cardDetails: {
-    gap: 6,
-  },
-  detailRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-  },
-  detailIcon: {
-    fontSize: 13,
-    width: 14,
-    textAlign: 'center',
-  },
-  detailText: {
-    fontFamily: FONT.family,
-    fontSize: 13,
-    color: COLORS.fontSecondary,
-  },
-  detailTextFull: {
-    color: COLORS.badgeWaitlistedText,
-    fontWeight: '600',
-  },
-  // Badge
-  badge: {
-    borderRadius: 10,
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-  },
-  badgeText: {
-    fontFamily: FONT.family,
-    fontSize: 11,
-    fontWeight: '600',
-  },
-  // Action buttons
-  actionBtn: {
-    height: 40,
-    borderRadius: 8,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  actionBtnPrimary: {
-    backgroundColor: COLORS.btnPrimaryFill,
-  },
-  actionBtnCancel: {
-    backgroundColor: COLORS.white,
-    borderWidth: 1,
-    borderColor: COLORS.btnCancelBorder,
-  },
-  actionBtnWaitlist: {
-    backgroundColor: COLORS.white,
-    borderWidth: 1,
-    borderColor: COLORS.btnWaitlistBorder,
-  },
-  actionBtnText: {
-    fontFamily: FONT.family,
-    fontSize: 14,
-    fontWeight: '600',
-  },
-  // States
-  centeredState: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingHorizontal: 40,
-  },
-  errorText: {
-    fontFamily: FONT.family,
-    fontSize: 16,
-    color: COLORS.danger,
-    textAlign: 'center',
-  },
-  emptyContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingHorizontal: 40,
-    gap: 16,
-  },
-  emptyIconCircle: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    backgroundColor: '#E8E8E8',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  emptyIconText: {
-    fontSize: 36,
-  },
-  emptyTitle: {
-    fontFamily: FONT.family,
-    fontSize: 18,
-    fontWeight: '700',
-    color: COLORS.fontPrimary,
-    textAlign: 'center',
-  },
-  emptyDesc: {
-    fontFamily: FONT.family,
-    fontSize: 14,
-    color: COLORS.fontTertiary,
-    textAlign: 'center',
-    lineHeight: 21,
-  },
-});

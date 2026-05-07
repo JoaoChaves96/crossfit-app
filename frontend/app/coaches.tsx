@@ -4,7 +4,6 @@ import {
   Alert,
   Modal,
   ScrollView,
-  StyleSheet,
   Text,
   TextInput,
   TouchableOpacity,
@@ -15,6 +14,8 @@ import { useAuth } from '@/hooks/useAuth';
 import { useGym } from '@/hooks/useGym';
 import { createApiClient } from '@/utils/api-client';
 import { components } from '@/types/api.gen';
+import { AppColors } from '@/constants/theme';
+import { styles } from './coaches.styles';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -25,38 +26,6 @@ type CoachListItem = components['schemas']['CoachListItemDto'];
 type CoachesListResponse = components['schemas']['GetCoachesResponseDto'];
 type ChangeCoachStatusResponse = components['schemas']['ChangeCoachStatusResponseDto'];
 type CoachStatus = 'active' | 'inactive';
-
-// ─── Design Tokens ────────────────────────────────────────────────────────────
-
-const COLOR = {
-  white: '#FFFFFF',
-  sidebarBg: '#F3F4F6',
-  bodyText: '#111827',
-  subText: '#6B7280',
-  mutedText: '#9CA3AF',
-  borderLight: '#E5E7EB',
-  borderMid: '#D1D5DB',
-  activeNavBg: '#E5E7EB',
-  activeNavText: '#111827',
-  inactiveNavText: '#6B7280',
-  primaryBtnBg: '#111827',
-  primaryBtnText: '#FFFFFF',
-  activeBadgeBg: '#D1FAE5',
-  activeBadgeText: '#065F46',
-  inactiveBadgeBg: '#F3F4F6',
-  inactiveBadgeText: '#6B7280',
-  errorText: '#DC2626',
-  inputBorder: '#D1D5DB',
-  inputBorderFocused: '#111827',
-  overlayBg: 'rgba(0,0,0,0.4)',
-  modalBg: '#FFFFFF',
-  cancelBtnBorder: '#D1D5DB',
-  cancelBtnText: '#374151',
-  deactivateBtnText: '#DC2626',
-  deactivateBtnBorder: '#FCA5A5',
-  reactivateBtnText: '#374151',
-  reactivateBtnBorder: '#D1D5DB',
-};
 
 // ─── Sidebar ──────────────────────────────────────────────────────────────────
 
@@ -274,7 +243,7 @@ function InviteModal({ visible, onClose, onSuccess, gymId, token }: InviteModalP
     try {
       const client = createApiClient({ token });
       const body: InviteCoachRequest = { coachEmail: trimmedEmail };
-      const result = await client.post<InviteCoachResponse>(
+      await client.post<InviteCoachResponse>(
         `/api/gyms/${gymId}/configuration/coaches`,
         body as Record<string, unknown>,
       );
@@ -306,7 +275,7 @@ function InviteModal({ visible, onClose, onSuccess, gymId, token }: InviteModalP
             <TextInput
               style={styles.input}
               placeholder="coach@example.com"
-              placeholderTextColor={COLOR.mutedText}
+              placeholderTextColor={AppColors.textDisabled}
               value={email}
               onChangeText={(text) => {
                 setEmail(text);
@@ -335,7 +304,7 @@ function InviteModal({ visible, onClose, onSuccess, gymId, token }: InviteModalP
               onPress={handleSubmit}
               disabled={isSubmitting}>
               {isSubmitting ? (
-                <ActivityIndicator size="small" color={COLOR.white} />
+                <ActivityIndicator size="small" color={AppColors.backgroundWhite} />
               ) : (
                 <Text style={styles.submitBtnText}>Send Invite</Text>
               )}
@@ -437,7 +406,7 @@ export default function CoachesScreen() {
         {/* Content */}
         {isLoading ? (
           <View style={styles.centered}>
-            <ActivityIndicator size="large" color={COLOR.bodyText} />
+            <ActivityIndicator size="large" color={AppColors.textHeading} />
           </View>
         ) : error !== null ? (
           <View style={styles.centered}>
@@ -500,387 +469,3 @@ export default function CoachesScreen() {
     </View>
   );
 }
-
-// ─── Styles ───────────────────────────────────────────────────────────────────
-
-const styles = StyleSheet.create({
-  root: {
-    flex: 1,
-    flexDirection: 'row',
-    backgroundColor: COLOR.white,
-  },
-
-  // Sidebar
-  sidebar: {
-    width: 220,
-    backgroundColor: COLOR.sidebarBg,
-    paddingHorizontal: 16,
-    paddingVertical: 24,
-    gap: 4,
-  },
-  sidebarLogo: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    paddingBottom: 20,
-  },
-  sidebarLogoIcon: {
-    width: 28,
-    height: 28,
-    borderRadius: 6,
-    backgroundColor: '#6B7280',
-  },
-  sidebarLogoText: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: COLOR.bodyText,
-  },
-  navGroup: {
-    gap: 2,
-  },
-  navItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-    borderRadius: 6,
-  },
-  navItemActive: {
-    backgroundColor: COLOR.activeNavBg,
-  },
-  navIcon: {
-    width: 16,
-    height: 16,
-    borderRadius: 3,
-  },
-  navIconActive: {
-    backgroundColor: '#374151',
-  },
-  navIconInactive: {
-    backgroundColor: '#9CA3AF',
-  },
-  navLabel: {
-    fontSize: 14,
-  },
-  navLabelActive: {
-    fontWeight: '500',
-    color: COLOR.activeNavText,
-  },
-  navLabelInactive: {
-    fontWeight: '400',
-    color: COLOR.inactiveNavText,
-  },
-  navItemDisabled: {
-    opacity: 0.4,
-  },
-  navIconDisabled: {
-    backgroundColor: '#9CA3AF',
-  },
-  navLabelDisabled: {
-    color: COLOR.mutedText,
-  },
-
-  // Main
-  main: {
-    flex: 1,
-    paddingHorizontal: 32,
-    paddingVertical: 24,
-    gap: 24,
-  },
-
-  // Header
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  },
-  headerLeft: {
-    gap: 4,
-  },
-  headerTitle: {
-    fontSize: 22,
-    fontWeight: '700',
-    color: COLOR.bodyText,
-  },
-  headerSubtitle: {
-    fontSize: 13,
-    color: COLOR.subText,
-  },
-  inviteBtn: {
-    backgroundColor: COLOR.primaryBtnBg,
-    paddingHorizontal: 20,
-    paddingVertical: 10,
-    borderRadius: 8,
-  },
-  inviteBtnText: {
-    fontSize: 14,
-    fontWeight: '500',
-    color: COLOR.primaryBtnText,
-  },
-
-  // Loading / error
-  centered: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 12,
-  },
-  errorText: {
-    fontSize: 14,
-    color: COLOR.errorText,
-    textAlign: 'center',
-  },
-  retryBtn: {
-    paddingHorizontal: 20,
-    paddingVertical: 8,
-    borderRadius: 6,
-    borderWidth: 1,
-    borderColor: COLOR.borderMid,
-  },
-  retryBtnText: {
-    fontSize: 14,
-    color: COLOR.bodyText,
-  },
-
-  // Empty state
-  emptyState: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 12,
-  },
-  emptyTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: COLOR.bodyText,
-  },
-  emptySubtitle: {
-    fontSize: 14,
-    color: COLOR.subText,
-    marginBottom: 4,
-  },
-
-  // List card
-  listCard: {
-    flex: 1,
-    borderWidth: 1,
-    borderColor: COLOR.borderLight,
-    borderRadius: 10,
-    overflow: 'hidden',
-  },
-
-  // Table header
-  tableHeader: {
-    flexDirection: 'row',
-    paddingHorizontal: 20,
-    paddingVertical: 12,
-    backgroundColor: COLOR.sidebarBg,
-    borderBottomWidth: 1,
-    borderBottomColor: COLOR.borderLight,
-  },
-  tableHeaderCell: {
-    fontSize: 12,
-    fontWeight: '600',
-    color: COLOR.subText,
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
-  },
-  colEmail: {
-    flex: 1,
-  },
-  colRole: {
-    width: 100,
-  },
-  colStatus: {
-    width: 90,
-  },
-  colActionsHeader: {
-    width: 140,
-    textAlign: 'right',
-  },
-  colActions: {
-    width: 140,
-    alignItems: 'flex-end',
-  },
-
-  // Coach row
-  coachRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 20,
-    paddingVertical: 14,
-    borderBottomWidth: 1,
-    borderBottomColor: COLOR.borderLight,
-    gap: 12,
-  },
-  coachAvatar: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: COLOR.activeNavBg,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  coachAvatarText: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: COLOR.bodyText,
-  },
-  coachInfo: {
-    flex: 1,
-    gap: 2,
-  },
-  coachEmail: {
-    fontSize: 14,
-    fontWeight: '500',
-    color: COLOR.bodyText,
-  },
-  coachRole: {
-    fontSize: 12,
-    color: COLOR.subText,
-    textTransform: 'capitalize',
-  },
-
-  // Action button
-  actionBtn: {
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 6,
-    borderWidth: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  actionBtnDeactivate: {
-    borderColor: COLOR.deactivateBtnBorder,
-  },
-  actionBtnReactivate: {
-    borderColor: COLOR.reactivateBtnBorder,
-  },
-  actionBtnDisabled: {
-    opacity: 0.5,
-  },
-  actionBtnText: {
-    fontSize: 12,
-    fontWeight: '600',
-  },
-  actionBtnTextDeactivate: {
-    color: COLOR.deactivateBtnText,
-  },
-  actionBtnTextReactivate: {
-    color: COLOR.reactivateBtnText,
-  },
-
-  // Badge
-  badge: {
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 12,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  badgeActive: {
-    backgroundColor: COLOR.activeBadgeBg,
-  },
-  badgeInactive: {
-    backgroundColor: COLOR.inactiveBadgeBg,
-  },
-  badgeText: {
-    fontSize: 12,
-    fontWeight: '500',
-  },
-  badgeTextActive: {
-    color: COLOR.activeBadgeText,
-  },
-  badgeTextInactive: {
-    color: COLOR.inactiveBadgeText,
-  },
-
-  // Modal overlay
-  overlay: {
-    flex: 1,
-    backgroundColor: COLOR.overlayBg,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  modalCard: {
-    width: 440,
-    backgroundColor: COLOR.modalBg,
-    borderRadius: 12,
-    padding: 28,
-    gap: 16,
-  },
-  modalTitle: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: COLOR.bodyText,
-  },
-  modalSubtitle: {
-    fontSize: 14,
-    color: COLOR.subText,
-    marginTop: -8,
-  },
-
-  // Form field
-  fieldGroup: {
-    gap: 6,
-  },
-  fieldLabel: {
-    fontSize: 13,
-    fontWeight: '500',
-    color: COLOR.bodyText,
-  },
-  input: {
-    borderWidth: 1,
-    borderColor: COLOR.inputBorder,
-    borderRadius: 8,
-    paddingHorizontal: 14,
-    paddingVertical: 10,
-    fontSize: 14,
-    color: COLOR.bodyText,
-  },
-
-  // Inline error
-  inlineError: {
-    fontSize: 13,
-    color: COLOR.errorText,
-    marginTop: -4,
-  },
-
-  // Modal actions
-  modalActions: {
-    flexDirection: 'row',
-    gap: 10,
-    marginTop: 4,
-    justifyContent: 'flex-end',
-  },
-  cancelBtn: {
-    paddingHorizontal: 18,
-    paddingVertical: 10,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: COLOR.cancelBtnBorder,
-  },
-  cancelBtnText: {
-    fontSize: 14,
-    fontWeight: '500',
-    color: COLOR.cancelBtnText,
-  },
-  submitBtn: {
-    paddingHorizontal: 20,
-    paddingVertical: 10,
-    borderRadius: 8,
-    backgroundColor: COLOR.primaryBtnBg,
-    minWidth: 110,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  submitBtnDisabled: {
-    opacity: 0.6,
-  },
-  submitBtnText: {
-    fontSize: 14,
-    fontWeight: '500',
-    color: COLOR.primaryBtnText,
-  },
-});

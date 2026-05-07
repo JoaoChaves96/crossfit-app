@@ -4,7 +4,6 @@ import {
   KeyboardAvoidingView,
   Platform,
   ScrollView,
-  StyleSheet,
   Text,
   TextInput,
   TouchableOpacity,
@@ -15,6 +14,8 @@ import { useAuth } from '@/hooks/useAuth';
 import { useGym } from '@/hooks/useGym';
 import { createApiClient } from '@/utils/api-client';
 import { components } from '@/types/api.gen';
+import { AppColors } from '@/constants/theme';
+import { styles } from './create-class.styles';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -35,33 +36,6 @@ type FetchState<T> =
   | { status: 'error'; message: string }
   | { status: 'success'; data: T };
 
-// ─── Design Tokens ────────────────────────────────────────────────────────────
-
-const COLOR = {
-  white: '#FFFFFF',
-  bodyText: '#111827',
-  labelText: '#374151',
-  subText: '#6B7280',
-  mutedText: '#9CA3AF',
-  borderLight: '#E5E7EB',
-  borderMid: '#D1D5DB',
-  sidebarBg: '#F3F4F6',
-  saveBtnBg: '#111827',
-  saveBtnText: '#FFFFFF',
-  cancelBtnText: '#374151',
-  errorText: '#DC2626',
-  errorBg: '#FEF2F2',
-  errorBorder: '#FCA5A5',
-};
-
-const FONT = {
-  title: { fontFamily: 'Inter', fontSize: 22, fontWeight: '700' as const },
-  subtitle: { fontFamily: 'Inter', fontSize: 13, fontWeight: '400' as const },
-  label: { fontFamily: 'Inter', fontSize: 13, fontWeight: '500' as const },
-  inputValue: { fontFamily: 'Inter', fontSize: 14, fontWeight: '400' as const },
-  btnText: { fontFamily: 'Inter', fontSize: 14, fontWeight: '500' as const },
-};
-
 // ─── Picker Field ──────────────────────────────────────────────────────────────
 
 interface PickerFieldProps {
@@ -81,15 +55,15 @@ function PickerField({ label, items, selectedId, onSelect, fetchState }: PickerF
       <Text style={styles.fieldLabel}>{label}</Text>
       {fetchState.status === 'loading' && (
         <View style={[styles.inputBox, styles.inputBoxDisabled]}>
-          <ActivityIndicator size="small" color={COLOR.mutedText} />
-          <Text style={[FONT.inputValue, { color: COLOR.mutedText, marginLeft: 8 }]}>
+          <ActivityIndicator size="small" color={AppColors.textDisabled} />
+          <Text style={[styles.inputBoxText, { color: AppColors.textDisabled, marginLeft: 8 }]}>
             Loading…
           </Text>
         </View>
       )}
       {fetchState.status === 'error' && (
         <View style={[styles.inputBox, styles.inputBoxError]}>
-          <Text style={[FONT.inputValue, { color: COLOR.errorText, flex: 1 }]} numberOfLines={1}>
+          <Text style={[styles.inputBoxText, { color: AppColors.errorDefault, flex: 1 }]} numberOfLines={1}>
             {fetchState.message}
           </Text>
         </View>
@@ -102,19 +76,19 @@ function PickerField({ label, items, selectedId, onSelect, fetchState }: PickerF
             activeOpacity={0.7}>
             <Text
               style={[
-                FONT.inputValue,
-                { flex: 1, color: selectedLabel ? COLOR.bodyText : COLOR.mutedText },
+                styles.inputBoxText,
+                { flex: 1, color: selectedLabel ? AppColors.textHeading : AppColors.textDisabled },
               ]}
               numberOfLines={1}>
               {selectedLabel || `Select ${label}`}
             </Text>
-            <Text style={[FONT.inputValue, { color: COLOR.mutedText }]}>v</Text>
+            <Text style={[styles.inputBoxText, { color: AppColors.textDisabled }]}>v</Text>
           </TouchableOpacity>
           {open && (
             <View style={styles.dropdownList}>
               {items.length === 0 ? (
                 <View style={styles.dropdownItem}>
-                  <Text style={[FONT.inputValue, { color: COLOR.mutedText }]}>
+                  <Text style={[styles.inputBoxText, { color: AppColors.textDisabled }]}>
                     No options available
                   </Text>
                 </View>
@@ -130,11 +104,7 @@ function PickerField({ label, items, selectedId, onSelect, fetchState }: PickerF
                       onSelect(item.id);
                       setOpen(false);
                     }}>
-                    <Text
-                      style={[
-                        FONT.inputValue,
-                        { color: item.id === selectedId ? COLOR.saveBtnBg : COLOR.bodyText },
-                      ]}>
+                    <Text style={[styles.inputBoxText, { color: AppColors.textHeading }]}>
                       {item.label}
                     </Text>
                   </TouchableOpacity>
@@ -168,7 +138,7 @@ function TextField({ label, value, onChangeText, placeholder, keyboardType, erro
         value={value}
         onChangeText={onChangeText}
         placeholder={placeholder}
-        placeholderTextColor={COLOR.mutedText}
+        placeholderTextColor={AppColors.textDisabled}
         keyboardType={keyboardType ?? 'default'}
       />
       {error ? <Text style={styles.validationErrorText}>{error}</Text> : null}
@@ -357,8 +327,8 @@ export default function CreateClassScreen() {
 
         {/* Header */}
         <View style={styles.header}>
-          <Text style={[FONT.title, { color: COLOR.bodyText }]}>Create New Class</Text>
-          <Text style={[FONT.subtitle, { color: COLOR.subText, marginTop: 4 }]}>
+          <Text style={styles.headerTitle}>Create New Class</Text>
+          <Text style={styles.headerSubtitle}>
             Schedule a new class session
           </Text>
         </View>
@@ -473,16 +443,16 @@ export default function CreateClassScreen() {
               style={styles.cancelBtn}
               onPress={() => router.back()}
               disabled={isSubmitting}>
-              <Text style={[FONT.btnText, { color: COLOR.cancelBtnText }]}>Cancel</Text>
+              <Text style={styles.cancelBtnText}>Cancel</Text>
             </TouchableOpacity>
             <TouchableOpacity
               style={[styles.saveBtn, isSubmitting && styles.saveBtnDisabled]}
               onPress={handleSubmit}
               disabled={isSubmitting}>
               {isSubmitting ? (
-                <ActivityIndicator size="small" color={COLOR.saveBtnText} />
+                <ActivityIndicator size="small" color={AppColors.backgroundWhite} />
               ) : (
-                <Text style={[FONT.btnText, { color: COLOR.saveBtnText }]}>Save Class</Text>
+                <Text style={styles.saveBtnText}>Save Class</Text>
               )}
             </TouchableOpacity>
           </View>
@@ -491,132 +461,3 @@ export default function CreateClassScreen() {
     </KeyboardAvoidingView>
   );
 }
-
-// ─── Styles ───────────────────────────────────────────────────────────────────
-
-const styles = StyleSheet.create({
-  screen: {
-    flex: 1,
-    backgroundColor: COLOR.white,
-  },
-  scrollContent: {
-    padding: 24,
-    paddingBottom: 48,
-  },
-  header: {
-    marginBottom: 24,
-  },
-  formCard: {
-    backgroundColor: COLOR.white,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: COLOR.borderLight,
-    padding: 28,
-    gap: 20,
-  },
-  row: {
-    flexDirection: 'row',
-    gap: 16,
-  },
-  rowItem: {
-    flex: 1,
-  },
-  fieldContainer: {
-    gap: 6,
-  },
-  fieldLabel: {
-    ...FONT.label,
-    color: COLOR.labelText,
-  },
-  inputBox: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: COLOR.borderMid,
-    borderRadius: 8,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-    backgroundColor: COLOR.white,
-    minHeight: 42,
-  },
-  inputBoxText: {
-    flexDirection: 'column',
-    alignItems: undefined,
-    color: COLOR.bodyText,
-    ...FONT.inputValue,
-  },
-  inputBoxDisabled: {
-    backgroundColor: COLOR.sidebarBg,
-  },
-  inputBoxError: {
-    borderColor: COLOR.errorBorder,
-    backgroundColor: COLOR.errorBg,
-  },
-  inputBoxValidationError: {
-    borderColor: COLOR.errorBorder,
-  },
-  validationErrorText: {
-    fontSize: 12,
-    color: COLOR.errorText,
-    marginTop: 4,
-  },
-  dropdownList: {
-    borderWidth: 1,
-    borderColor: COLOR.borderMid,
-    borderRadius: 8,
-    backgroundColor: COLOR.white,
-    overflow: 'hidden',
-    marginTop: 4,
-  },
-  dropdownItem: {
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-    borderBottomWidth: 1,
-    borderBottomColor: COLOR.borderLight,
-  },
-  dropdownItemSelected: {
-    backgroundColor: COLOR.sidebarBg,
-  },
-  divider: {
-    height: 1,
-    backgroundColor: COLOR.borderLight,
-  },
-  submitErrorBanner: {
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: COLOR.errorBorder,
-    backgroundColor: COLOR.errorBg,
-    padding: 12,
-  },
-  submitErrorText: {
-    fontSize: 13,
-    color: COLOR.errorText,
-    lineHeight: 18,
-  },
-  btnRow: {
-    flexDirection: 'row',
-    justifyContent: 'flex-end',
-    gap: 12,
-  },
-  cancelBtn: {
-    borderWidth: 1,
-    borderColor: COLOR.borderMid,
-    borderRadius: 8,
-    paddingHorizontal: 20,
-    paddingVertical: 10,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  saveBtn: {
-    backgroundColor: COLOR.saveBtnBg,
-    borderRadius: 8,
-    paddingHorizontal: 24,
-    paddingVertical: 10,
-    alignItems: 'center',
-    justifyContent: 'center',
-    minHeight: 42,
-  },
-  saveBtnDisabled: {
-    opacity: 0.6,
-  },
-});

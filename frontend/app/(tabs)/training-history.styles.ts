@@ -1,0 +1,109 @@
+import { StyleSheet } from 'react-native';
+import { AppColors, BorderRadius, FontSizes, FontWeights, LineHeights, Spacing } from '@/constants/theme';
+
+export const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: AppColors.backgroundWhite,
+  },
+  centerContent: {
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: Spacing.lg,
+  },
+  contentWrap: {
+    flex: 1,
+    paddingHorizontal: Spacing.lg,
+    paddingTop: Spacing.sm,
+    paddingBottom: Spacing.lg,
+    gap: Spacing.lg,
+  },
+  header: {
+    justifyContent: 'space-between',
+  },
+  headerTitle: {
+    fontSize: FontSizes.titleLg,
+    fontWeight: FontWeights.bold,
+    color: AppColors.textPrimary,
+  },
+  listContent: {
+    gap: Spacing.md,
+  },
+  card: {
+    backgroundColor: AppColors.backgroundWhite,
+    borderRadius: BorderRadius.lg,
+    padding: Spacing.base,
+    gap: Spacing.md,
+    borderWidth: 1,
+    borderColor: AppColors.borderDefault,
+  },
+  cardTop: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    width: '100%',
+  },
+  cardTitleGroup: {
+    flex: 1,
+    gap: Spacing.hairline,
+    marginRight: Spacing.sm,
+  },
+  cardTitle: {
+    fontSize: FontSizes.md,
+    fontWeight: FontWeights.semibold,
+    color: AppColors.textPrimary,
+  },
+  cardDate: {
+    fontSize: FontSizes.mdSm,
+    color: AppColors.textGray600,
+  },
+  badge: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: BorderRadius.lg,
+    paddingHorizontal: Spacing.smMd,
+    paddingVertical: Spacing.tight,
+  },
+  badgeText: {
+    fontSize: FontSizes.smMd,
+    fontWeight: FontWeights.semibold,
+  },
+  cardBottom: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    alignItems: 'center',
+    width: '100%',
+  },
+  cardChevron: {
+    fontSize: FontSizes.xl,
+    color: AppColors.textGray500,
+    lineHeight: LineHeights.comfortable,
+  },
+  emptyContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: Spacing.lg,
+    gap: Spacing.base,
+  },
+  emptyIcon: {
+    fontSize: FontSizes.jumbo,
+  },
+  emptyTitle: {
+    fontSize: FontSizes.lg,
+    fontWeight: FontWeights.semibold,
+    color: AppColors.textPrimary,
+    textAlign: 'center',
+  },
+  emptyDesc: {
+    fontSize: FontSizes.body,
+    color: AppColors.textGray600,
+    textAlign: 'center',
+    maxWidth: 220,
+  },
+  errorText: {
+    fontSize: FontSizes.md,
+    color: AppColors.errorMaterial,
+    textAlign: 'center',
+  },
+});

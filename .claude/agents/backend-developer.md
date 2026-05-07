@@ -62,6 +62,37 @@ If no TASK TYPE is present, the agent MUST stop and ask for clarification.
 
 ---
 
+## Established Patterns (MANDATORY)
+
+These patterns are already in the codebase. Always use them — never re-implement what they already do.
+
+### GymId Ownership Validation
+**Never write inline gymId ownership checks** (`if (gymId !== currentGymId) throw ...`).
+Use `GymOwnershipGuard` from `backend/src/auth/guards/gym-ownership.guard.ts`.
+Apply it at controller level alongside `JwtAuthGuard` and `RolesGuard`.
+Guard order must be: `JwtAuthGuard → GymOwnershipGuard → RolesGuard`.
+
+### DTO Inheritance
+When creating a pair of Create + Edit DTOs that share fields, use a shared `BaseDto` and extend it:
+- `CreateXDto extends BaseXDto` — fields required
+- `EditXDto extends PartialType(BaseXDto)` — fields optional, Swagger `required: false` applied automatically
+
+See `backend/src/commands/class/dto/base-class.dto.ts` as the reference implementation.
+
+### Exception Factory
+**Never throw `new NotFoundException/ForbiddenException/BadRequestException` inline** in command handlers.
+Use the factory functions from `backend/src/http/exceptions.ts`:
+- `notFound(message)` — 404
+- `forbidden(message)` — 403
+- `invalidState(message)` — 400
+
+`ConflictException` and other distinct patterns may still be thrown directly.
+
+### Controller Size
+If a controller grows past ~300 lines, split it by responsibility into focused sub-controllers, each registered in the module. See `backend/src/api/class/` (4 controllers) as the reference.
+
+---
+
 ## Behavior by TASK TYPE
 
 ### TEST_ONLY

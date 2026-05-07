@@ -7,12 +7,8 @@ import { GymMembershipRepository } from '../../../repositories/gym-membership.re
 import { AthleteMembershipPlanRepository } from '../../../repositories/athlete-membership-plan.repository';
 import { GymService } from '../../../domain/gym/gym.service';
 import { BookingEntity } from '../../../domain/booking/entities/booking.entity';
-import {
-  BadRequestException,
-  ConflictException,
-  ForbiddenException,
-  NotFoundException,
-} from '@nestjs/common';
+import { ConflictException } from '@nestjs/common';
+import { notFound, forbidden, invalidState } from '../../../http/exceptions';
 import { Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
 import { v4 as uuid } from 'uuid';
@@ -45,10 +41,10 @@ export class BookClassHandler implements ICommandHandler<BookClassCommand> {
     // Precondition 1: Verify gym exists and is active
     const gym = await this.gymService.getGymById(command.gymId);
     if (!gym) {
-      throw new NotFoundException('Gym not found');
+      throw notFound('Gym not found');
     }
     if (gym.status !== 'active') {
-      throw new ForbiddenException('Gym is suspended');
+      throw forbidden('Gym is suspended');
     }
 
     // Precondition 2: Verify class exists, is in published state, and belongs to the gym
@@ -56,15 +52,13 @@ export class BookClassHandler implements ICommandHandler<BookClassCommand> {
       command.classId,
     );
     if (!classEntity) {
-      throw new NotFoundException('Class not found');
+      throw notFound('Class not found');
     }
     if (classEntity.state !== 'published') {
-      throw new BadRequestException(
-        'Class is not available for booking (not in published state)',
-      );
+      throw invalidState('Class is not available for booking (not in published state)');
     }
     if (classEntity.gymId !== command.gymId) {
-      throw new BadRequestException('Class does not belong to this gym');
+      throw invalidState('Class does not belong to this gym');
     }
 
     // Preconditions 3–5: Membership and plan checks — skipped for gym owners and coaches
@@ -80,9 +74,7 @@ export class BookClassHandler implements ICommandHandler<BookClassCommand> {
           command.gymId,
         );
       if (!gymMembership) {
-        throw new ForbiddenException(
-          'Athlete does not have an active membership in this gym',
-        );
+        throw forbidden('Athlete does not have an active membership in this gym');
       }
 
       // Precondition 4: Verify athlete has active AthleteMembershipPlan for this gym
@@ -91,17 +83,13 @@ export class BookClassHandler implements ICommandHandler<BookClassCommand> {
           gymMembership.id,
         );
       if (!activePlan) {
-        throw new ForbiddenException(
-          'Athlete does not have an active membership plan for this gym',
-        );
+        throw forbidden('Athlete does not have an active membership plan for this gym');
       }
 
       // Precondition 5: Verify the plan's class_types includes this class's class_type_id
       const plan = activePlan.membershipPlan;
       if (!plan.classTypes.includes(classEntity.classTypeId)) {
-        throw new ForbiddenException(
-          'Athlete membership plan does not include this class type',
-        );
+        throw forbidden('Athlete membership plan does not include this class type');
       }
     }
 

@@ -5,7 +5,6 @@ import {
   ScrollView,
   TouchableOpacity,
   ActivityIndicator,
-  StyleSheet,
 } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
@@ -14,28 +13,8 @@ import { useGym } from '@/hooks/useGym';
 import { createApiClient } from '@/utils/api-client';
 import { showConfirm, showError } from '@/utils/alert';
 import { components } from '@/types/api.gen';
-
-// --- Design tokens ---
-const COLORS = {
-  bg: '#FFFFFF',
-  fontPrimary: '#1A1A1A',
-  fontSecondary: '#666666',
-  fontTertiary: '#999999',
-  border: '#E0E0E0',
-  divider: '#E5E5E5',
-  accent: '#333333',
-  danger: '#DC2626',
-  badgeBooked: '#059669',
-  badgeBookedBg: '#ECFDF5',
-  badgeWaitlisted: '#E65100',
-  badgeWaitlistedBg: '#FFF3E0',
-  capacityBar: '#F59E0B',
-  capacityBarBg: '#E5E5E5',
-  black: '#000000',
-  white: '#FFFFFF',
-  errorBg: '#FFEBEE',
-  errorText: '#C62828',
-} as const;
+import { AppColors } from '@/constants/theme';
+import { styles } from './class-details.styles';
 
 // --- Types ---
 type ClassDetailsItem = components['schemas']['ClassScheduleItemDto'];
@@ -55,7 +34,7 @@ function MetaRow({
 }) {
   return (
     <View style={styles.metaRow}>
-      <Ionicons name={iconName} size={16} color={COLORS.fontSecondary} />
+      <Ionicons name={iconName} size={16} color={AppColors.textGray600} />
       <Text style={styles.metaText}>{text}</Text>
     </View>
   );
@@ -109,8 +88,8 @@ function BookingStatusSection({
 
   if (!isBooked && !isWaitlisted && !isFull) return null;
 
-  const badgeColor = isBooked ? COLORS.badgeBooked : COLORS.badgeWaitlisted;
-  const badgeBg = isBooked ? COLORS.badgeBookedBg : COLORS.badgeWaitlistedBg;
+  const badgeColor = isBooked ? AppColors.successDefault : AppColors.warningOrange;
+  const badgeBg = isBooked ? AppColors.successBg50 : AppColors.warningBgOrange;
   const waitlistLabel =
     waitlistPosition != null
       ? `WAITLIST #${waitlistPosition} – You are #${waitlistPosition} in line`
@@ -161,7 +140,7 @@ function ResultsSection() {
 function LoadingScreen() {
   return (
     <View style={styles.centered}>
-      <ActivityIndicator size="large" color={COLORS.accent} />
+      <ActivityIndicator size="large" color={AppColors.textDark3} />
     </View>
   );
 }
@@ -337,7 +316,7 @@ export default function ClassDetailsScreen() {
       {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity onPress={() => router.back()} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
-          <Ionicons name="chevron-back" size={24} color={COLORS.black} />
+          <Ionicons name="chevron-back" size={24} color={AppColors.black} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Class Details</Text>
       </View>
@@ -394,7 +373,7 @@ export default function ClassDetailsScreen() {
             disabled={isSubmitting}
             activeOpacity={0.85}>
             {isSubmitting ? (
-              <ActivityIndicator color={COLORS.danger} size="small" />
+              <ActivityIndicator color={AppColors.errorDefault} size="small" />
             ) : (
               <Text style={styles.leaveWaitlistBtnText}>LEAVE WAITLIST</Text>
             )}
@@ -408,7 +387,7 @@ export default function ClassDetailsScreen() {
             disabled={isSubmitting}
             activeOpacity={0.85}>
             {isSubmitting ? (
-              <ActivityIndicator color={COLORS.white} size="small" />
+              <ActivityIndicator color={AppColors.backgroundWhite} size="small" />
             ) : (
               <Text style={styles.cancelBtnText}>CANCEL BOOKING</Text>
             )}
@@ -422,7 +401,7 @@ export default function ClassDetailsScreen() {
             disabled={isSubmitting}
             activeOpacity={0.85}>
             {isSubmitting ? (
-              <ActivityIndicator color={COLORS.white} size="small" />
+              <ActivityIndicator color={AppColors.backgroundWhite} size="small" />
             ) : (
               <Text style={styles.bookBtnText}>{bookBtnLabel}</Text>
             )}
@@ -432,244 +411,3 @@ export default function ClassDetailsScreen() {
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  screen: {
-    flex: 1,
-    backgroundColor: COLORS.bg,
-  },
-  centered: {
-    flex: 1,
-    backgroundColor: COLORS.bg,
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingHorizontal: 20,
-  },
-
-  // Header
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-  },
-  headerTitle: {
-    fontFamily: 'Inter',
-    fontSize: 18,
-    fontWeight: '600',
-    color: COLORS.black,
-  },
-
-  // Scroll
-  scrollView: {
-    flex: 1,
-  },
-  contentContainer: {
-    paddingHorizontal: 20,
-    paddingBottom: 24,
-    gap: 24,
-  },
-
-  // Class name
-  className: {
-    fontFamily: 'Inter',
-    fontSize: 24,
-    fontWeight: '700',
-    color: COLORS.black,
-  },
-
-  // Meta rows
-  metaGroup: {
-    gap: 8,
-  },
-  metaRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  metaText: {
-    fontFamily: 'Inter',
-    fontSize: 14,
-    fontWeight: '400',
-    color: COLORS.fontSecondary,
-  },
-
-  // Divider
-  divider: {
-    height: 1,
-    backgroundColor: COLORS.divider,
-  },
-
-  // Section groups
-  sectionGap8: {
-    gap: 8,
-  },
-  sectionGap10: {
-    gap: 10,
-  },
-  sectionLabel: {
-    fontFamily: 'Inter',
-    fontSize: 14,
-    fontWeight: '600',
-    color: COLORS.black,
-  },
-
-  // Capacity
-  capacityHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  capacityCount: {
-    fontFamily: 'Inter',
-    fontSize: 14,
-    fontWeight: '600',
-    color: COLORS.black,
-  },
-  capacityBarBg: {
-    flexDirection: 'row',
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: COLORS.capacityBarBg,
-    overflow: 'hidden',
-  },
-  capacityBarFill: {
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: COLORS.capacityBar,
-  },
-  capacityNote: {
-    fontFamily: 'Inter',
-    fontSize: 12,
-    fontWeight: '400',
-    color: COLORS.capacityBar,
-  },
-
-  // Booking status badge
-  statusBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    borderRadius: 8,
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-  },
-  statusBadgeText: {
-    fontFamily: 'Inter',
-    fontSize: 14,
-    fontWeight: '600',
-  },
-
-  // Programming
-  wodTitle: {
-    fontFamily: 'Inter',
-    fontSize: 14,
-    fontWeight: '600',
-    color: COLORS.accent,
-  },
-  programBlock: {
-    gap: 4,
-  },
-  programSubLabel: {
-    fontFamily: 'Inter',
-    fontSize: 12,
-    fontWeight: '600',
-    color: COLORS.fontTertiary,
-  },
-  programText: {
-    fontFamily: 'Inter',
-    fontSize: 13,
-    fontWeight: '400',
-    color: '#444444',
-    lineHeight: 13 * 1.4,
-  },
-
-  // Mutation error
-  mutationErrorCard: {
-    backgroundColor: COLORS.errorBg,
-    borderLeftWidth: 4,
-    borderLeftColor: COLORS.danger,
-    borderRadius: 6,
-    padding: 12,
-  },
-  mutationErrorText: {
-    fontFamily: 'Inter',
-    fontSize: 14,
-    fontWeight: '500',
-    color: COLORS.errorText,
-  },
-
-  // Action button area
-  actionContainer: {
-    paddingTop: 12,
-    paddingHorizontal: 20,
-    paddingBottom: 32,
-    gap: 12,
-  },
-  leaveWaitlistBtn: {
-    height: 50,
-    borderRadius: 12,
-    backgroundColor: COLORS.white,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 2,
-    borderColor: COLORS.danger,
-  },
-  leaveWaitlistBtnText: {
-    fontFamily: 'Inter',
-    fontSize: 15,
-    fontWeight: '700',
-    color: COLORS.danger,
-    letterSpacing: 0.5,
-  },
-  cancelBtn: {
-    height: 50,
-    borderRadius: 12,
-    backgroundColor: COLORS.danger,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  cancelBtnText: {
-    fontFamily: 'Inter',
-    fontSize: 15,
-    fontWeight: '700',
-    color: COLORS.white,
-    letterSpacing: 0.5,
-  },
-  bookBtn: {
-    height: 50,
-    borderRadius: 12,
-    backgroundColor: COLORS.accent,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  bookBtnText: {
-    fontFamily: 'Inter',
-    fontSize: 15,
-    fontWeight: '700',
-    color: COLORS.white,
-    letterSpacing: 0.5,
-  },
-
-  // Error screen
-  errorText: {
-    fontFamily: 'Inter',
-    fontSize: 16,
-    color: COLORS.errorText,
-    textAlign: 'center',
-    marginBottom: 16,
-  },
-  errorBackBtn: {
-    paddingVertical: 12,
-    paddingHorizontal: 24,
-    borderRadius: 8,
-    backgroundColor: COLORS.divider,
-  },
-  errorBackBtnText: {
-    fontFamily: 'Inter',
-    fontSize: 14,
-    fontWeight: '600',
-    color: COLORS.black,
-  },
-});

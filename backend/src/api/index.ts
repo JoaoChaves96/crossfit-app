@@ -10,5 +10,8 @@
  * Controllers MUST be thin - no business logic, only transport.
  */
 
-export { ClassController } from './class/class.controller';
+export { ClassSchedulingController } from './class/class-scheduling.controller';
+export { ClassBookingController } from './class/class-booking.controller';
+export { ClassProgrammingController } from './class/class-programming.controller';
+export { ClassResultsController } from './class/class-results.controller';
 export { UserController } from './user/user.controller';

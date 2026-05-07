@@ -20,7 +20,18 @@
 
 Crossfit class booking application.
 
-## Current Phase (2026-05-05)
+## Current Phase (2026-05-07)
+
+**EPIC:** Codebase Refactor (Epic M) — ✅ COMPLETE (2026-05-07)  
+**→ See `epics/REFACTOR_EPIC.md` for full task breakdown**
+- ✅ Task #1: Frontend — Design tokens expansion (`theme.ts`)
+- ✅ Task #2: Frontend — Styles extraction to `.styles.ts` files
+- ✅ Task #3: Frontend — Component decomposition of `gym-settings` + `class-management`
+- ✅ Task #4: Backend — GymId ownership guard extraction
+- ✅ Task #5: Backend — DTO consolidation + exception factory
+- ✅ Task #6: Backend — Class controller decomposition
+
+## Previous Phase (2026-05-05)
 
 **EPIC:** Gym Profile Editing (Epic L) — ✅ COMPLETE (2026-05-06)
 **→ See `epics/GYM_PROFILE_EPIC.md` for full task breakdown**

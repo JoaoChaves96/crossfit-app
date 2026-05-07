@@ -11,8 +11,8 @@ import {
 import { CommandBus } from '@nestjs/cqrs';
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../../auth/guards/roles.guard';
+import { GymOwnershipGuard } from '../../auth/guards/gym-ownership.guard';
 import { Role } from '../../auth/decorators/role.decorator';
-import { CurrentGym } from '../../auth/decorators/current-gym.decorator';
 import {
   ApiTags,
   ApiBearerAuth,
@@ -21,7 +21,6 @@ import {
   ApiParam,
   ApiBody,
 } from '@nestjs/swagger';
-import { ForbiddenException } from '@nestjs/common';
 import { GetGymProfileService } from '../../queries/gym-configuration/get-gym-profile.service';
 import { GymProfileDto } from '../../queries/gym-configuration/dto/gym-profile.dto';
 import { UpdateGymProfileCommand } from '../../commands/gym-configuration/update-gym-profile.command';
@@ -30,7 +29,7 @@ import { UpdateGymProfileDto } from '../../commands/gym-configuration/dto/update
 @Controller('/api/gyms/:gymId/profile')
 @ApiTags('Gym Profile')
 @ApiBearerAuth()
-@UseGuards(JwtAuthGuard, RolesGuard)
+@UseGuards(JwtAuthGuard, GymOwnershipGuard, RolesGuard)
 export class GymProfileController {
   constructor(
     @Inject(CommandBus) private readonly commandBus: CommandBus,
@@ -55,12 +54,7 @@ export class GymProfileController {
   @ApiResponse({ status: 404, description: 'Gym not found' })
   async getProfile(
     @Param('gymId') gymId: string,
-    @CurrentGym() currentGymId: string,
   ): Promise<GymProfileDto> {
-    if (gymId !== currentGymId) {
-      throw new ForbiddenException('Gym ID mismatch');
-    }
-
     return this.getGymProfileService.getProfile(gymId);
   }
 
@@ -85,12 +79,7 @@ export class GymProfileController {
   async updateProfile(
     @Param('gymId') gymId: string,
     @Body(ValidationPipe) updateGymProfileDto: UpdateGymProfileDto,
-    @CurrentGym() currentGymId: string,
   ): Promise<GymProfileDto> {
-    if (gymId !== currentGymId) {
-      throw new ForbiddenException('Gym ID mismatch');
-    }
-
     const command = new UpdateGymProfileCommand(
       gymId,
       updateGymProfileDto.name,

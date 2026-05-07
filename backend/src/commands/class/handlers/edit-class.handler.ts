@@ -1,6 +1,5 @@
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { Inject } from '@nestjs/common';
-import { BadRequestException, NotFoundException } from '@nestjs/common';
 import { EditClassCommand } from '../edit-class.command';
 import { EditClassResponseDto } from '../dto/edit-class-response.dto';
 import { ClassRepository } from '../../../repositories/class.repository';
@@ -8,6 +7,7 @@ import { BookingRepository } from '../../../repositories/booking.repository';
 import { ClassTypeService } from '../../../domain/class-type/class-type.service';
 import { GymStaffService } from '../../../domain/gym-staff/gym-staff.service';
 import { SpaceService } from '../../../domain/space/space.service';
+import { notFound, invalidState } from '../../../http/exceptions';
 
 @CommandHandler(EditClassCommand)
 export class EditClassHandler implements ICommandHandler<EditClassCommand> {
@@ -29,15 +29,11 @@ export class EditClassHandler implements ICommandHandler<EditClassCommand> {
     );
 
     if (!cls) {
-      throw new NotFoundException(
-        `Class ${command.classId} not found in gym ${command.gymId}`,
-      );
+      throw notFound(`Class ${command.classId} not found in gym ${command.gymId}`);
     }
 
     if (cls.state !== 'published') {
-      throw new BadRequestException(
-        'Only published classes can be edited',
-      );
+      throw invalidState('Only published classes can be edited');
     }
 
     if (command.classTypeId !== undefined) {
@@ -45,10 +41,10 @@ export class EditClassHandler implements ICommandHandler<EditClassCommand> {
         command.classTypeId,
       );
       if (!classType) {
-        throw new NotFoundException('ClassType not found');
+        throw notFound('ClassType not found');
       }
       if (classType.gymId !== command.gymId) {
-        throw new BadRequestException('ClassType does not belong to this gym');
+        throw invalidState('ClassType does not belong to this gym');
       }
       cls.classTypeId = command.classTypeId;
     }
@@ -59,13 +55,13 @@ export class EditClassHandler implements ICommandHandler<EditClassCommand> {
         command.gymId,
       );
       if (!coachStaff) {
-        throw new NotFoundException('Coach is not assigned to this gym');
+        throw notFound('Coach is not assigned to this gym');
       }
       if (coachStaff.role !== 'coach') {
-        throw new BadRequestException('Staff member is not a coach');
+        throw invalidState('Staff member is not a coach');
       }
       if (coachStaff.status !== 'active') {
-        throw new BadRequestException('Coach is not active');
+        throw invalidState('Coach is not active');
       }
       cls.coachUserId = command.coachUserId;
     }
@@ -73,23 +69,23 @@ export class EditClassHandler implements ICommandHandler<EditClassCommand> {
     if (command.spaceId !== undefined) {
       const space = await this.spaceService.getSpaceById(command.spaceId);
       if (!space) {
-        throw new NotFoundException('Space not found');
+        throw notFound('Space not found');
       }
       if (space.gymId !== command.gymId) {
-        throw new BadRequestException('Space does not belong to this gym');
+        throw invalidState('Space does not belong to this gym');
       }
       cls.spaceId = command.spaceId;
     }
 
     if (command.capacity !== undefined) {
       if (command.capacity < 1) {
-        throw new BadRequestException('Capacity must be at least 1');
+        throw invalidState('Capacity must be at least 1');
       }
       const bookedCount = await this.bookingRepository.countBookedBookings(
         cls.id,
       );
       if (command.capacity < bookedCount) {
-        throw new BadRequestException(
+        throw invalidState(
           `Cannot reduce capacity to ${command.capacity}: ${bookedCount} athletes are already booked`,
         );
       }

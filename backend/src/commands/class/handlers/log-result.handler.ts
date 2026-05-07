@@ -6,12 +6,8 @@ import { ClassRepository } from '../../../repositories/class.repository';
 import { AttendanceRepository } from '../../../repositories/attendance.repository';
 import { ResultRepository } from '../../../repositories/result.repository';
 import { ResultEntity } from '../../../domain/result/entities/result.entity';
-import {
-  BadRequestException,
-  ConflictException,
-  ForbiddenException,
-  NotFoundException,
-} from '@nestjs/common';
+import { ConflictException } from '@nestjs/common';
+import { notFound, forbidden, invalidState } from '../../../http/exceptions';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { v4 as uuid } from 'uuid';
@@ -45,12 +41,10 @@ export class LogResultHandler implements ICommandHandler<LogResultCommand> {
       command.classId,
     );
     if (!classEntity) {
-      throw new NotFoundException('Class not found');
+      throw notFound('Class not found');
     }
     if (classEntity.state !== 'completed') {
-      throw new BadRequestException(
-        'Results can only be logged for completed classes',
-      );
+      throw invalidState('Results can only be logged for completed classes');
     }
 
     // Precondition 2: Verify athlete has Attendance record with present = true
@@ -60,17 +54,13 @@ export class LogResultHandler implements ICommandHandler<LogResultCommand> {
         command.classId,
       );
     if (!attendance || !attendance.present) {
-      throw new ForbiddenException(
-        'Athlete was not marked present for this class',
-      );
+      throw forbidden('Athlete was not marked present for this class');
     }
 
     // Precondition 3: Verify class type is loggable
     const classType = classEntity.classType;
     if (!classType.loggable) {
-      throw new BadRequestException(
-        'This class type does not allow result logging',
-      );
+      throw invalidState('This class type does not allow result logging');
     }
 
     // Precondition 4: Verify result does not already exist for this (class, athlete) pair
@@ -79,21 +69,17 @@ export class LogResultHandler implements ICommandHandler<LogResultCommand> {
       command.classId,
     );
     if (existingResult) {
-      throw new ConflictException(
-        'Result has already been logged for this class',
-      );
+      throw new ConflictException('Result has already been logged for this class');
     }
 
     // Precondition 5: Verify metric type aligns with class_type.result_metrics
     // If resultMetrics is 'none', no results can be logged
     if (classType.resultMetrics === 'none') {
-      throw new BadRequestException(
-        'This class type does not allow result logging',
-      );
+      throw invalidState('This class type does not allow result logging');
     }
     // Metric type must match the class_type.resultMetrics
     if (command.metricType !== classType.resultMetrics) {
-      throw new BadRequestException(
+      throw invalidState(
         `Metric type must be ${classType.resultMetrics} for this class type`,
       );
     }
@@ -134,9 +120,7 @@ export class LogResultHandler implements ICommandHandler<LogResultCommand> {
 
     const allowed = validUnits[metricType];
     if (!allowed || !allowed.includes(unit)) {
-      throw new BadRequestException(
-        `Unit ${unit} is not valid for metric type ${metricType}`,
-      );
+      throw invalidState(`Unit ${unit} is not valid for metric type ${metricType}`);
     }
   }
 

@@ -7,11 +7,7 @@ import { BookingRepository } from '../../../repositories/booking.repository';
 import { ClassEntity } from '../../../domain/class/entities/class.entity';
 import { GymStaffService } from '../../../domain/gym-staff/gym-staff.service';
 import { SpaceService } from '../../../domain/space/space.service';
-import {
-  BadRequestException,
-  ForbiddenException,
-  NotFoundException,
-} from '@nestjs/common';
+import { notFound, forbidden, invalidState } from '../../../http/exceptions';
 
 /**
  * UpdateClassStructureHandler: Orchestrates class capacity and space updates
@@ -47,12 +43,12 @@ export class UpdateClassStructureHandler implements ICommandHandler<UpdateClassS
       command.classId,
     );
     if (!classEntity) {
-      throw new NotFoundException('Class not found');
+      throw notFound('Class not found');
     }
 
     // Precondition 2: Verify coach is assigned to the class
     if (classEntity.coachUserId !== command.userId) {
-      throw new ForbiddenException('Coach is not assigned to this class');
+      throw forbidden('Coach is not assigned to this class');
     }
 
     // Verify coach is active in the gym
@@ -62,7 +58,7 @@ export class UpdateClassStructureHandler implements ICommandHandler<UpdateClassS
       classEntity.gymId,
     );
     if (!isCoachActive) {
-      throw new ForbiddenException('Coach is not active for this gym');
+      throw forbidden('Coach is not active for this gym');
     }
 
     // Precondition 3: Verify class is in editable state (published or booking_closed)
@@ -70,9 +66,7 @@ export class UpdateClassStructureHandler implements ICommandHandler<UpdateClassS
       classEntity.state !== 'published' &&
       classEntity.state !== 'booking_closed'
     ) {
-      throw new BadRequestException(
-        'Class structure can only be modified while class is published or booking closed',
-      );
+      throw invalidState('Class structure can only be modified while class is published or booking closed');
     }
 
     // Validate and apply capacity update if provided
@@ -105,7 +99,7 @@ export class UpdateClassStructureHandler implements ICommandHandler<UpdateClassS
   ): Promise<void> {
     // Validate new capacity
     if (newCapacity <= 0) {
-      throw new BadRequestException('Capacity must be greater than 0');
+      throw invalidState('Capacity must be greater than 0');
     }
 
     // If reducing capacity, check for conflicts
@@ -114,7 +108,7 @@ export class UpdateClassStructureHandler implements ICommandHandler<UpdateClassS
         classEntity.id,
       );
       if (bookedCount > newCapacity) {
-        throw new BadRequestException(
+        throw invalidState(
           `Cannot reduce capacity to ${newCapacity}: ${bookedCount} athletes are already booked. Capacity reduction would conflict with existing bookings.`,
         );
       }
@@ -134,10 +128,10 @@ export class UpdateClassStructureHandler implements ICommandHandler<UpdateClassS
     // Verify space exists and belongs to the same gym
     const space = await this.spaceService.getSpaceById(newSpaceId);
     if (!space) {
-      throw new NotFoundException('Space not found');
+      throw notFound('Space not found');
     }
     if (space.gymId !== classEntity.gymId) {
-      throw new BadRequestException('Space does not belong to this gym');
+      throw invalidState('Space does not belong to this gym');
     }
 
     classEntity.spaceId = newSpaceId;

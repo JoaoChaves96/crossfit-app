@@ -5,12 +5,8 @@ import { CancelBookingResponseDto } from '../dto/cancel-booking-response.dto';
 import { ClassRepository } from '../../../repositories/class.repository';
 import { BookingRepository } from '../../../repositories/booking.repository';
 import { BookingEntity } from '../../../domain/booking/entities/booking.entity';
-import {
-  BadRequestException,
-  ConflictException,
-  ForbiddenException,
-  NotFoundException,
-} from '@nestjs/common';
+import { ConflictException } from '@nestjs/common';
+import { notFound, forbidden, invalidState } from '../../../http/exceptions';
 import { Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
 
@@ -44,10 +40,10 @@ export class CancelBookingHandler implements ICommandHandler<CancelBookingComman
       command.bookingId,
     );
     if (!booking) {
-      throw new NotFoundException('Booking not found');
+      throw notFound('Booking not found');
     }
     if (booking.userId !== command.userId) {
-      throw new ForbiddenException('Booking does not belong to this athlete');
+      throw forbidden('Booking does not belong to this athlete');
     }
 
     // Precondition 2: Verify booking status is booked or waitlisted
@@ -65,15 +61,13 @@ export class CancelBookingHandler implements ICommandHandler<CancelBookingComman
       booking.classId,
     );
     if (!classEntity) {
-      throw new NotFoundException('Class not found');
+      throw notFound('Class not found');
     }
     if (classEntity.gymId !== command.gymId) {
-      throw new ForbiddenException('Class does not belong to the expected gym');
+      throw forbidden('Class does not belong to the expected gym');
     }
     if (classEntity.state !== 'published') {
-      throw new BadRequestException(
-        'Cancellations are only allowed while the class is in published state',
-      );
+      throw invalidState('Cancellations are only allowed while the class is in published state');
     }
 
     // Precondition 4: Verify booking hasn't already been cancelled

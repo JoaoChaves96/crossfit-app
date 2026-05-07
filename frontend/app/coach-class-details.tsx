@@ -2,7 +2,6 @@ import React, { useEffect, useState } from 'react';
 import {
   ActivityIndicator,
   ScrollView,
-  StyleSheet,
   Text,
   TextInput,
   TouchableOpacity,
@@ -13,65 +12,14 @@ import { useAuth } from '@/hooks/useAuth';
 import { useGym } from '@/hooks/useGym';
 import { createApiClient } from '@/utils/api-client';
 import { components } from '@/types/api.gen';
+import { AppColors } from '@/constants/theme';
+import { styles } from './coach-class-details.styles';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 type CoachClassItem = components['schemas']['CoachClassItemDto'];
 type AddOrEditProgrammingResponse = components['schemas']['AddOrEditProgrammingResponseDto'];
 type GetClassProgrammingResponse = components['schemas']['GetClassProgrammingResponseDto'];
-
-// ─── Design Tokens ────────────────────────────────────────────────────────────
-
-const COLOR = {
-  rootBg: '#F2F3F5',
-  white: '#FFFFFF',
-
-  sidebarBg: '#1E1E2D',
-  sidebarLogoText: '#FFFFFF',
-  navActiveItemBg: '#2D2D42',
-  navActiveText: '#FFFFFF',
-  navInactiveText: '#8888A0',
-
-  titleText: '#1A1A2E',
-  bodyText: '#1A1A2E',
-  secondaryText: '#555568',
-  mutedText: '#8888A0',
-  darkBodyText: '#333345',
-
-  cardBg: '#FFFFFF',
-  cardBorder: '#E4E4EA',
-  separator: '#E4E4EA',
-
-  infoFieldBg: '#F2F3F5',
-  inputBg: '#FFFFFF',
-  inputBorder: '#E4E4EA',
-  placeholderText: '#8888A0',
-
-  actionBtnBg: '#1A1A2E',
-  actionBtnText: '#FFFFFF',
-
-  backBtnBg: '#FFFFFF',
-  backBtnBorder: '#E4E4EA',
-  backBtnText: '#555568',
-
-  statusPublishedBg: '#D4EDDA',
-  statusPublishedText: '#1A1A2E',
-  statusBookingClosedBg: '#FFF3CD',
-  statusBookingClosedText: '#856404',
-  statusInProgressBg: '#CCE5FF',
-  statusInProgressText: '#004085',
-  statusCompletedBg: '#E2E3E5',
-  statusCompletedText: '#383D41',
-
-  errorText: '#DC2626',
-  successBg: '#D4EDDA',
-  successText: '#155724',
-
-  toggleOnBg: '#1A1A2E',
-  toggleKnob: '#FFFFFF',
-
-  borderMid: '#D1D5DB',
-};
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -115,15 +63,15 @@ interface StatusConfig {
 function getStatusConfig(state: CoachClassItem['state']): StatusConfig {
   switch (state) {
     case 'published':
-      return { label: 'Published', bg: COLOR.statusPublishedBg, textColor: COLOR.statusPublishedText };
+      return { label: 'Published', bg: AppColors.successBgLight, textColor: AppColors.darkSurface };
     case 'booking_closed':
-      return { label: 'Booking Closed', bg: COLOR.statusBookingClosedBg, textColor: COLOR.statusBookingClosedText };
+      return { label: 'Booking Closed', bg: AppColors.warningBgAmber, textColor: AppColors.warningLabel };
     case 'in_progress':
-      return { label: 'In Progress', bg: COLOR.statusInProgressBg, textColor: COLOR.statusInProgressText };
+      return { label: 'In Progress', bg: AppColors.badgeBlueBgLight, textColor: AppColors.actionBlueDarker };
     case 'completed':
-      return { label: 'Completed', bg: COLOR.statusCompletedBg, textColor: COLOR.statusCompletedText };
+      return { label: 'Completed', bg: AppColors.borderFaint, textColor: AppColors.errorLabel };
     case 'archived':
-      return { label: 'Archived', bg: COLOR.statusCompletedBg, textColor: COLOR.statusCompletedText };
+      return { label: 'Archived', bg: AppColors.borderFaint, textColor: AppColors.errorLabel };
   }
 }
 
@@ -383,7 +331,7 @@ export default function CoachClassDetailsScreen() {
               {/* Saved programming display */}
               {isProgrammingLoading ? (
                 <View style={styles.programmingLoadingContainer}>
-                  <ActivityIndicator size="small" color={COLOR.mutedText} />
+                  <ActivityIndicator size="small" color={AppColors.darkTextMuted} />
                 </View>
               ) : savedProgramming !== null ? (
                 <>
@@ -417,7 +365,7 @@ export default function CoachClassDetailsScreen() {
               <TextInput
                 style={styles.textInputLarge}
                 placeholder="Describe the workout…"
-                placeholderTextColor={COLOR.placeholderText}
+                placeholderTextColor={AppColors.darkTextMuted}
                 value={wodContent}
                 onChangeText={setWodContent}
                 multiline
@@ -428,7 +376,7 @@ export default function CoachClassDetailsScreen() {
               <TextInput
                 style={styles.textInputSmall}
                 placeholder="Add notes or scaling instructions…"
-                placeholderTextColor={COLOR.placeholderText}
+                placeholderTextColor={AppColors.darkTextMuted}
                 value={notesContent}
                 onChangeText={setNotesContent}
                 multiline
@@ -451,7 +399,7 @@ export default function CoachClassDetailsScreen() {
                 disabled={isSubmitting}
                 activeOpacity={0.8}>
                 {isSubmitting ? (
-                  <ActivityIndicator size="small" color={COLOR.actionBtnText} />
+                  <ActivityIndicator size="small" color={AppColors.backgroundWhite} />
                 ) : (
                   <Text style={styles.actionBtnText}>Save Programming</Text>
                 )}
@@ -463,316 +411,3 @@ export default function CoachClassDetailsScreen() {
     </View>
   );
 }
-
-// ─── Styles ───────────────────────────────────────────────────────────────────
-
-const styles = StyleSheet.create({
-  root: {
-    flex: 1,
-    flexDirection: 'row',
-    backgroundColor: COLOR.rootBg,
-  },
-
-  // Sidebar
-  sidebar: {
-    width: 220,
-    backgroundColor: COLOR.sidebarBg,
-    paddingHorizontal: 16,
-    paddingVertical: 24,
-    gap: 4,
-  },
-  sidebarLogo: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: COLOR.sidebarLogoText,
-    letterSpacing: 0.5,
-  },
-  navSpacer: {
-    height: 24,
-  },
-  navGroup: {
-    gap: 4,
-  },
-  navItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: 6,
-    height: 40,
-  },
-  navLabel: {
-    fontSize: 14,
-  },
-  navLabelInactive: {
-    fontWeight: '400',
-    color: COLOR.navInactiveText,
-  },
-
-  // Main area
-  main: {
-    flex: 1,
-    paddingHorizontal: 28,
-    paddingVertical: 24,
-    gap: 20,
-  },
-
-  // Header
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: 16,
-  },
-  backBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    paddingHorizontal: 14,
-    paddingVertical: 8,
-    borderRadius: 6,
-    backgroundColor: COLOR.backBtnBg,
-    borderWidth: 1,
-    borderColor: COLOR.backBtnBorder,
-  },
-  backBtnText: {
-    fontSize: 13,
-    color: COLOR.backBtnText,
-    fontWeight: '400',
-  },
-  headerTitle: {
-    flex: 1,
-    fontSize: 22,
-    fontWeight: '700',
-    color: COLOR.titleText,
-    textAlign: 'center',
-  },
-  statusBadge: {
-    borderRadius: 10,
-    paddingHorizontal: 14,
-    paddingVertical: 5,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  statusBadgeText: {
-    fontSize: 13,
-    fontWeight: '600',
-  },
-
-  // Content row
-  contentRow: {
-    flex: 1,
-    flexDirection: 'row',
-    gap: 20,
-  },
-
-  // Info panel
-  infoPanel: {
-    width: 320,
-    backgroundColor: COLOR.cardBg,
-    borderRadius: 10,
-    borderWidth: 1,
-    borderColor: COLOR.cardBorder,
-    padding: 24,
-  },
-  panelTitle: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: COLOR.titleText,
-    marginBottom: 16,
-  },
-  separator: {
-    height: 1,
-    backgroundColor: COLOR.separator,
-  },
-  separatorSpacing: {
-    marginTop: 16,
-  },
-  fieldLabel: {
-    fontSize: 11,
-    fontWeight: '700',
-    color: COLOR.mutedText,
-    letterSpacing: 0.8,
-    textTransform: 'uppercase',
-    marginTop: 16,
-  },
-  fieldLabelSpacing: {
-    marginTop: 16,
-  },
-  fieldValueBold: {
-    fontSize: 15,
-    fontWeight: '600',
-    color: COLOR.titleText,
-    marginTop: 4,
-  },
-  fieldValue: {
-    fontSize: 14,
-    fontWeight: '400',
-    color: COLOR.secondaryText,
-    marginTop: 4,
-  },
-  bookedRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    backgroundColor: COLOR.infoFieldBg,
-    borderRadius: 6,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    marginTop: 4,
-  },
-  bookedRowText: {
-    fontSize: 13,
-    color: COLOR.darkBodyText,
-  },
-  actionBtn: {
-    backgroundColor: COLOR.actionBtnBg,
-    borderRadius: 8,
-    paddingVertical: 10,
-    paddingHorizontal: 18,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginTop: 16,
-  },
-  actionBtnDisabled: {
-    opacity: 0.6,
-  },
-  actionBtnText: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: COLOR.actionBtnText,
-  },
-
-  // Programming panel
-  progPanel: {
-    flex: 1,
-    backgroundColor: COLOR.cardBg,
-    borderRadius: 10,
-    borderWidth: 1,
-    borderColor: COLOR.cardBorder,
-    padding: 24,
-  },
-  progHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: 16,
-  },
-  loggableRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-  },
-  loggableLabel: {
-    fontSize: 13,
-    color: COLOR.mutedText,
-    fontWeight: '400',
-  },
-  toggle: {
-    width: 44,
-    height: 24,
-    borderRadius: 12,
-    paddingHorizontal: 2,
-    justifyContent: 'center',
-  },
-  toggleOn: {
-    backgroundColor: COLOR.toggleOnBg,
-    alignItems: 'flex-end',
-  },
-  toggleOff: {
-    backgroundColor: COLOR.mutedText,
-    alignItems: 'flex-start',
-  },
-  toggleKnob: {
-    width: 20,
-    height: 20,
-    borderRadius: 10,
-    backgroundColor: COLOR.toggleKnob,
-  },
-  toggleKnobRight: {},
-  toggleKnobLeft: {},
-
-  // Programming loading
-  programmingLoadingContainer: {
-    paddingVertical: 24,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-
-  // WOD display
-  wodContent: {
-    backgroundColor: COLOR.infoFieldBg,
-    borderRadius: 8,
-    padding: 16,
-    marginTop: 8,
-  },
-  wodText: {
-    fontSize: 14,
-    color: COLOR.darkBodyText,
-    lineHeight: 22,
-  },
-  emptyProgramming: {
-    backgroundColor: COLOR.infoFieldBg,
-    borderRadius: 8,
-    padding: 16,
-    marginTop: 8,
-    alignItems: 'center',
-  },
-  emptyProgrammingText: {
-    fontSize: 14,
-    color: COLOR.mutedText,
-    fontStyle: 'italic',
-  },
-
-  // Form
-  formTitle: {
-    fontSize: 15,
-    fontWeight: '600',
-    color: COLOR.titleText,
-    marginTop: 16,
-  },
-  textInputLarge: {
-    height: 80,
-    backgroundColor: COLOR.inputBg,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: COLOR.inputBorder,
-    paddingHorizontal: 14,
-    paddingVertical: 12,
-    fontSize: 13,
-    color: COLOR.darkBodyText,
-    marginTop: 8,
-  },
-  textInputSmall: {
-    height: 56,
-    backgroundColor: COLOR.inputBg,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: COLOR.inputBorder,
-    paddingHorizontal: 14,
-    paddingVertical: 12,
-    fontSize: 13,
-    color: COLOR.darkBodyText,
-    marginTop: 8,
-  },
-
-  // Success / error
-  successBanner: {
-    backgroundColor: COLOR.successBg,
-    borderRadius: 6,
-    paddingHorizontal: 14,
-    paddingVertical: 10,
-    marginTop: 12,
-  },
-  successText: {
-    fontSize: 13,
-    color: COLOR.successText,
-    fontWeight: '500',
-  },
-  errorText: {
-    fontSize: 13,
-    color: COLOR.errorText,
-    marginTop: 12,
-  },
-});

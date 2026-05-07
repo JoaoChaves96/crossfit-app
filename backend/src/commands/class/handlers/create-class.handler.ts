@@ -8,11 +8,7 @@ import { GymStaffService } from '../../../domain/gym-staff/gym-staff.service';
 import { SpaceService } from '../../../domain/space/space.service';
 import { ClassTypeService } from '../../../domain/class-type/class-type.service';
 import { CreateClassResponseDto } from '../dto/create-class-response.dto';
-import {
-  BadRequestException,
-  ForbiddenException,
-  NotFoundException,
-} from '@nestjs/common';
+import { notFound, forbidden, invalidState } from '../../../http/exceptions';
 import { v4 as uuid } from 'uuid';
 
 /**
@@ -44,16 +40,16 @@ export class CreateClassHandler implements ICommandHandler<CreateClassCommand> {
       command.gymId,
     );
     if (!isOwner) {
-      throw new ForbiddenException('User is not a gym owner for this gym');
+      throw forbidden('User is not a gym owner for this gym');
     }
 
     // Precondition 2: Verify gym exists and is active
     const gym = await this.gymService.getGymById(command.gymId);
     if (!gym) {
-      throw new NotFoundException('Gym not found');
+      throw notFound('Gym not found');
     }
     if (gym.status !== 'active') {
-      throw new BadRequestException('Gym is not active');
+      throw invalidState('Gym is not active');
     }
 
     // Precondition 3: Verify class type exists and belongs to gym
@@ -61,10 +57,10 @@ export class CreateClassHandler implements ICommandHandler<CreateClassCommand> {
       command.classTypeId,
     );
     if (!classType) {
-      throw new NotFoundException('ClassType not found');
+      throw notFound('ClassType not found');
     }
     if (classType.gymId !== command.gymId) {
-      throw new BadRequestException('ClassType does not belong to this gym');
+      throw invalidState('ClassType does not belong to this gym');
     }
 
     // Precondition 4: Verify coach is active GymStaff with role = coach
@@ -73,22 +69,22 @@ export class CreateClassHandler implements ICommandHandler<CreateClassCommand> {
       command.gymId,
     );
     if (!coachStaff) {
-      throw new NotFoundException('Coach is not assigned to this gym');
+      throw notFound('Coach is not assigned to this gym');
     }
     if (coachStaff.role !== 'coach') {
-      throw new BadRequestException('Staff member is not a coach');
+      throw invalidState('Staff member is not a coach');
     }
     if (coachStaff.status !== 'active') {
-      throw new BadRequestException('Coach is not active');
+      throw invalidState('Coach is not active');
     }
 
     // Precondition 5: Verify space exists and belongs to gym
     const space = await this.spaceService.getSpaceById(command.spaceId);
     if (!space) {
-      throw new NotFoundException('Space not found');
+      throw notFound('Space not found');
     }
     if (space.gymId !== command.gymId) {
-      throw new BadRequestException('Space does not belong to this gym');
+      throw invalidState('Space does not belong to this gym');
     }
 
     // Precondition 6: Verify scheduled_date + scheduled_time is in the future
@@ -98,15 +94,13 @@ export class CreateClassHandler implements ICommandHandler<CreateClassCommand> {
     );
     const now = new Date();
     if (scheduledDateTime <= now) {
-      throw new BadRequestException(
-        'Scheduled date/time must be in the future',
-      );
+      throw invalidState('Scheduled date/time must be in the future');
     }
 
     // Precondition 7: Determine capacity (use provided or default to space.base_capacity)
     const capacity = command.capacity ?? space.baseCapacity;
     if (capacity <= 0) {
-      throw new BadRequestException('Capacity must be greater than 0');
+      throw invalidState('Capacity must be greater than 0');
     }
 
     // State Change: Create ClassEntity with initial state = published

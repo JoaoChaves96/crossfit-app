@@ -1,7 +1,6 @@
 import React, { useContext, useState } from "react";
 import {
   View,
-  StyleSheet,
   TouchableOpacity,
   Text,
   ScrollView,
@@ -11,6 +10,8 @@ import { useRouter } from "expo-router";
 import { AuthContext } from "@/context/AuthContext";
 import { GymContext } from "@/context/GymContext";
 import { createApiClient, ApiError } from "@/utils/api-client";
+import { AppColors } from "@/constants/theme";
+import { styles } from "./dev-bootstrap.styles";
 
 // DEV-ONLY: This screen is for local development testing
 if (!__DEV__) {
@@ -31,19 +32,6 @@ const ROLE_ROUTES: Record<string, string> = {
   owner: "/(tabs)/schedule",
   coach: "/coach-classes",
   athlete: "/(tabs)/schedule",
-};
-
-const COLOR = {
-  bg: "#f5f5f5",
-  white: "#fff",
-  black: "#000",
-  subText: "#666",
-  border: "#ddd",
-  error: "#DC2626",
-  accent: "#0a7ea4",
-  warning: "#ff9800",
-  warningBg: "#fff3e0",
-  warningText: "#e65100",
 };
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -98,7 +86,7 @@ function UserCard({ role, email, isLoading, error, onPress }: UserCardProps) {
           <Text style={styles.cardEmail}>{email}</Text>
         </View>
         {isLoading ? (
-          <ActivityIndicator size="small" color={COLOR.accent} />
+          <ActivityIndicator size="small" color={AppColors.brandPrimary} />
         ) : null}
       </View>
       {error !== null ? <Text style={styles.cardError}>{error}</Text> : null}
@@ -186,76 +174,3 @@ export default function DevBootstrapScreen() {
     </ScrollView>
   );
 }
-
-// ─── Styles ───────────────────────────────────────────────────────────────────
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: COLOR.bg,
-  },
-  content: {
-    padding: 20,
-    paddingTop: 40,
-  },
-  header: {
-    marginBottom: 24,
-  },
-  headerText: {
-    fontSize: 28,
-    fontWeight: "bold",
-    color: COLOR.black,
-    marginBottom: 4,
-  },
-  subtitle: {
-    fontSize: 14,
-    color: COLOR.subText,
-  },
-  list: {
-    gap: 12,
-    marginBottom: 24,
-  },
-  card: {
-    backgroundColor: COLOR.white,
-    borderRadius: 10,
-    borderWidth: 1,
-    borderColor: COLOR.border,
-    padding: 16,
-  },
-  cardDisabled: {
-    opacity: 0.6,
-  },
-  cardContent: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-  },
-  cardRole: {
-    fontSize: 16,
-    fontWeight: "600",
-    color: COLOR.black,
-    marginBottom: 2,
-  },
-  cardEmail: {
-    fontSize: 13,
-    color: COLOR.subText,
-  },
-  cardError: {
-    fontSize: 12,
-    color: COLOR.error,
-    marginTop: 8,
-  },
-  warningBox: {
-    backgroundColor: COLOR.warningBg,
-    borderRadius: 8,
-    borderLeftWidth: 4,
-    borderLeftColor: COLOR.warning,
-    padding: 12,
-  },
-  warningText: {
-    fontSize: 13,
-    color: COLOR.warningText,
-    fontWeight: "500",
-    lineHeight: 18,
-  },
-});

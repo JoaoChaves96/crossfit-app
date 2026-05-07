@@ -2,7 +2,6 @@ import React, { useCallback, useEffect, useState } from 'react';
 import {
   ActivityIndicator,
   ScrollView,
-  StyleSheet,
   Text,
   TextInput,
   TouchableOpacity,
@@ -11,24 +10,11 @@ import {
 import { useAuth } from '@/hooks/useAuth';
 import { createApiClient } from '@/utils/api-client';
 import type { components } from '@/types/api.gen';
+import { AppColors } from '@/constants/theme';
+import { styles } from './profile.styles';
 
 type UserProfileDto = components['schemas']['UserProfileDto'];
 type UpdateUserProfileDto = components['schemas']['UpdateUserProfileDto'];
-
-const COLORS = {
-  bg: '#FFFFFF',
-  fontPrimary: '#1A1A1A',
-  fontSecondary: '#666666',
-  fontTertiary: '#999999',
-  accent: '#333333',
-  border: '#E0E0E0',
-  avatarBg: '#F0F0F0',
-  avatarText: '#6B7280',
-  nameText: '#111827',
-  white: '#FFFFFF',
-} as const;
-
-const FONT_FAMILY = 'Inter';
 
 function getInitials(name: string): string {
   const parts = name.trim().split(/\s+/);
@@ -96,7 +82,7 @@ export default function ProfileScreen() {
   if (screenState.status === 'loading') {
     return (
       <View style={styles.centered}>
-        <ActivityIndicator size="large" color={COLORS.accent} />
+        <ActivityIndicator size="large" color={AppColors.textDark3} />
       </View>
     );
   }
@@ -196,7 +182,7 @@ export default function ProfileScreen() {
             activeOpacity={0.8}
           >
             {isSaving ? (
-              <ActivityIndicator size="small" color={COLORS.white} />
+              <ActivityIndicator size="small" color={AppColors.backgroundWhite} />
             ) : (
               <Text style={styles.saveButtonLabel}>Save Changes</Text>
             )}
@@ -217,204 +203,3 @@ export default function ProfileScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  screen: {
-    flex: 1,
-    backgroundColor: COLORS.bg,
-  },
-  contentWrap: {
-    paddingHorizontal: 24,
-    paddingBottom: 20,
-  },
-  centered: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: COLORS.bg,
-    paddingHorizontal: 24,
-    gap: 16,
-  },
-  errorText: {
-    fontFamily: FONT_FAMILY,
-    fontSize: 14,
-    color: COLORS.fontSecondary,
-    textAlign: 'center',
-  },
-  retryButton: {
-    paddingHorizontal: 24,
-    paddingVertical: 12,
-    backgroundColor: COLORS.accent,
-    borderRadius: 8,
-  },
-  retryButtonLabel: {
-    fontFamily: FONT_FAMILY,
-    fontSize: 14,
-    fontWeight: '600',
-    color: COLORS.white,
-  },
-  statusBar: {
-    height: 44,
-  },
-  pageHeader: {
-    width: '100%',
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingBottom: 12,
-  },
-  headerTitle: {
-    fontFamily: FONT_FAMILY,
-    fontSize: 24,
-    fontWeight: '700',
-    color: COLORS.fontPrimary,
-  },
-  avatarSection: {
-    width: '100%',
-    alignItems: 'center',
-    paddingTop: 8,
-    paddingBottom: 16,
-  },
-  avatarBg: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    backgroundColor: COLORS.avatarBg,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  initialsText: {
-    fontFamily: FONT_FAMILY,
-    fontSize: 28,
-    fontWeight: '700',
-    color: COLORS.avatarText,
-  },
-  nameRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    paddingTop: 14,
-    paddingBottom: 4,
-  },
-  nameText: {
-    fontFamily: FONT_FAMILY,
-    fontSize: 18,
-    fontWeight: '700',
-    color: COLORS.nameText,
-  },
-  editIconText: {
-    fontSize: 14,
-    color: COLORS.fontSecondary,
-  },
-  emailText: {
-    fontFamily: FONT_FAMILY,
-    fontSize: 14,
-    color: COLORS.fontSecondary,
-  },
-  memberSinceRow: {
-    width: '100%',
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingTop: 4,
-  },
-  memberSince: {
-    fontFamily: FONT_FAMILY,
-    fontSize: 12,
-    color: COLORS.fontTertiary,
-  },
-  dividerWrap: {
-    width: '100%',
-    paddingBottom: 16,
-  },
-  divider: {
-    height: 1,
-    backgroundColor: COLORS.border,
-  },
-  infoCard: {
-    width: '100%',
-    backgroundColor: COLORS.bg,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: COLORS.border,
-    paddingHorizontal: 16,
-  },
-  nameFieldRow: {
-    width: '100%',
-    gap: 6,
-    paddingVertical: 16,
-  },
-  fieldLabel: {
-    fontFamily: FONT_FAMILY,
-    fontSize: 12,
-    fontWeight: '600',
-    color: COLORS.fontTertiary,
-    letterSpacing: 0.3,
-  },
-  fieldInputWrap: {
-    width: '100%',
-    height: 44,
-    borderRadius: 8,
-    backgroundColor: COLORS.bg,
-    justifyContent: 'center',
-    paddingHorizontal: 12,
-    borderWidth: 1.5,
-    borderColor: COLORS.border,
-  },
-  fieldInputWrapActive: {
-    borderColor: COLORS.accent,
-  },
-  fieldInputText: {
-    fontFamily: FONT_FAMILY,
-    fontSize: 14,
-    color: COLORS.fontPrimary,
-  },
-  cardDivider: {
-    height: 1,
-    backgroundColor: COLORS.border,
-    width: '100%',
-  },
-  emailFieldRow: {
-    width: '100%',
-    gap: 6,
-    paddingVertical: 16,
-  },
-  emailValueRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-  },
-  saveButtonWrap: {
-    width: '100%',
-    paddingTop: 20,
-  },
-  saveButton: {
-    width: '100%',
-    height: 48,
-    backgroundColor: COLORS.accent,
-    borderRadius: 12,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  saveButtonLabel: {
-    fontFamily: FONT_FAMILY,
-    fontSize: 16,
-    fontWeight: '600',
-    color: COLORS.white,
-  },
-  saveErrorText: {
-    fontFamily: FONT_FAMILY,
-    fontSize: 12,
-    color: '#D32F2F',
-    textAlign: 'center',
-    paddingTop: 8,
-  },
-  noteRow: {
-    width: '100%',
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingTop: 10,
-  },
-  noteText: {
-    fontFamily: FONT_FAMILY,
-    fontSize: 12,
-    color: COLORS.fontTertiary,
-  },
-});

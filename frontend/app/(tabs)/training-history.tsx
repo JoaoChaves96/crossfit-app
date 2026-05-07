@@ -2,7 +2,6 @@ import React, { useCallback, useEffect, useState } from 'react';
 import {
   ActivityIndicator,
   FlatList,
-  StyleSheet,
   Text,
   TouchableOpacity,
   View,
@@ -12,21 +11,8 @@ import { useAuth } from '@/hooks/useAuth';
 import { useGym } from '@/hooks/useGym';
 import { createApiClient } from '@/utils/api-client';
 import { components } from '@/types/api.gen';
-
-// ─── Design tokens from designs/athlete-screens.pen ───────────────────────────
-const COLORS = {
-  bg: '#FFFFFF',
-  accent: '#333333',
-  fontPrimary: '#1A1A1A',
-  fontSecondary: '#666666',
-  fontTertiary: '#999999',
-  border: '#E0E0E0',
-  danger: '#D32F2F',
-  badgeLogged: '#2E7D32',
-  badgeLoggedBg: '#E8F5E9',
-  badgeNotLogged: '#999999',
-  badgeNotLoggedBg: '#F5F5F5',
-} as const;
+import { AppColors } from '@/constants/theme';
+import { styles } from './training-history.styles';
 
 // ─── Types ─────────────────────────────────────────────────────────────────────
 type TrainingHistoryItem = components['schemas']['TrainingHistoryItemDto'];
@@ -49,8 +35,8 @@ interface ResultBadgeProps {
 
 function ResultBadge({ hasResult }: ResultBadgeProps) {
   const label = hasResult ? 'Logged' : 'Not Logged';
-  const color = hasResult ? COLORS.badgeLogged : COLORS.badgeNotLogged;
-  const bg = hasResult ? COLORS.badgeLoggedBg : COLORS.badgeNotLoggedBg;
+  const color = hasResult ? AppColors.successMaterial : AppColors.textGray500;
+  const bg = hasResult ? AppColors.successBgFaint : AppColors.backgroundSubtle;
 
   return (
     <View style={[styles.badge, { backgroundColor: bg }]}>
@@ -154,7 +140,7 @@ export default function TrainingHistoryScreen() {
   if (isLoading) {
     return (
       <View style={[styles.container, styles.centerContent]}>
-        <ActivityIndicator size="large" color={COLORS.accent} />
+        <ActivityIndicator size="large" color={AppColors.textDark3} />
       </View>
     );
   }
@@ -192,110 +178,3 @@ export default function TrainingHistoryScreen() {
   );
 }
 
-// ─── Styles ─────────────────────────────────────────────────────────────────────
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: COLORS.bg,
-  },
-  centerContent: {
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingHorizontal: 20,
-  },
-  contentWrap: {
-    flex: 1,
-    paddingHorizontal: 20,
-    paddingTop: 8,
-    paddingBottom: 20,
-    gap: 20,
-  },
-  header: {
-    justifyContent: 'space-between',
-  },
-  headerTitle: {
-    fontSize: 24,
-    fontWeight: '700',
-    color: COLORS.fontPrimary,
-  },
-  listContent: {
-    gap: 12,
-  },
-  card: {
-    backgroundColor: COLORS.bg,
-    borderRadius: 12,
-    padding: 16,
-    gap: 12,
-    borderWidth: 1,
-    borderColor: COLORS.border,
-  },
-  cardTop: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
-    width: '100%',
-  },
-  cardTitleGroup: {
-    flex: 1,
-    gap: 2,
-    marginRight: 8,
-  },
-  cardTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: COLORS.fontPrimary,
-  },
-  cardDate: {
-    fontSize: 13,
-    color: COLORS.fontSecondary,
-  },
-  badge: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderRadius: 12,
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-  },
-  badgeText: {
-    fontSize: 12,
-    fontWeight: '600',
-  },
-  cardBottom: {
-    flexDirection: 'row',
-    justifyContent: 'flex-end',
-    alignItems: 'center',
-    width: '100%',
-  },
-  cardChevron: {
-    fontSize: 20,
-    color: COLORS.fontTertiary,
-    lineHeight: 22,
-  },
-  emptyContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingHorizontal: 20,
-    gap: 16,
-  },
-  emptyIcon: {
-    fontSize: 56,
-  },
-  emptyTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: COLORS.fontPrimary,
-    textAlign: 'center',
-  },
-  emptyDesc: {
-    fontSize: 14,
-    color: COLORS.fontSecondary,
-    textAlign: 'center',
-    maxWidth: 220,
-  },
-  errorText: {
-    fontSize: 16,
-    color: COLORS.danger,
-    textAlign: 'center',
-  },
-});

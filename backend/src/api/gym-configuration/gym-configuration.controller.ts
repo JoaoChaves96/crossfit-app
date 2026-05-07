@@ -13,9 +13,9 @@ import {
 import { CommandBus } from '@nestjs/cqrs';
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../../auth/guards/roles.guard';
+import { GymOwnershipGuard } from '../../auth/guards/gym-ownership.guard';
 import { Role } from '../../auth/decorators/role.decorator';
 import { CurrentUser } from '../../auth/decorators/current-user.decorator';
-import { CurrentGym } from '../../auth/decorators/current-gym.decorator';
 import {
   ApiTags,
   ApiBearerAuth,
@@ -78,7 +78,7 @@ import { GetSpacesResponseDto } from '../../queries/gym-configuration/dto/get-sp
 @Controller('/api/gyms/:gymId/configuration')
 @ApiTags('Gym Configuration')
 @ApiBearerAuth()
-@UseGuards(JwtAuthGuard, RolesGuard)
+@UseGuards(JwtAuthGuard, GymOwnershipGuard, RolesGuard)
 export class GymConfigurationController {
   constructor(
     @Inject(CommandBus) private readonly commandBus: CommandBus,
@@ -115,12 +115,7 @@ export class GymConfigurationController {
   @ApiResponse({ status: 403, description: 'Forbidden - Owner role required' })
   async getSpaces(
     @Param('gymId') gymId: string,
-    @CurrentGym() currentGymId: string,
   ): Promise<GetSpacesResponseDto> {
-    if (gymId !== currentGymId) {
-      throw new Error('Gym ID mismatch');
-    }
-
     return this.spacesQueryService.getSpacesByGym(gymId);
   }
 
@@ -156,12 +151,7 @@ export class GymConfigurationController {
     @Param('gymId') gymId: string,
     @Body(ValidationPipe) createSpaceDto: CreateSpaceDto,
     @CurrentUser() userId: string,
-    @CurrentGym() currentGymId: string,
   ): Promise<CreateSpaceResponseDto> {
-    if (gymId !== currentGymId) {
-      throw new Error('Gym ID mismatch');
-    }
-
     const command = new CreateSpaceCommand(
       userId,
       gymId,
@@ -206,12 +196,7 @@ export class GymConfigurationController {
     @Param('spaceId') spaceId: string,
     @Body(ValidationPipe) updateSpaceDto: UpdateSpaceDto,
     @CurrentUser() userId: string,
-    @CurrentGym() currentGymId: string,
   ): Promise<UpdateSpaceResponseDto> {
-    if (gymId !== currentGymId) {
-      throw new Error('Gym ID mismatch');
-    }
-
     const command = new UpdateSpaceCommand(
       userId,
       spaceId,
@@ -253,12 +238,7 @@ export class GymConfigurationController {
     @Param('gymId') gymId: string,
     @Param('spaceId') spaceId: string,
     @CurrentUser() userId: string,
-    @CurrentGym() currentGymId: string,
   ): Promise<DeleteSpaceResponseDto> {
-    if (gymId !== currentGymId) {
-      throw new Error('Gym ID mismatch');
-    }
-
     const command = new DeleteSpaceCommand(userId, spaceId);
 
     return this.commandBus.execute(command);
@@ -292,12 +272,7 @@ export class GymConfigurationController {
   @ApiResponse({ status: 403, description: 'Forbidden - Owner role required' })
   async getClassTypes(
     @Param('gymId') gymId: string,
-    @CurrentGym() currentGymId: string,
   ): Promise<GetClassTypesResponseDto> {
-    if (gymId !== currentGymId) {
-      throw new Error('Gym ID mismatch');
-    }
-
     return this.classTypesQueryService.getClassTypesByGym(gymId);
   }
 
@@ -333,12 +308,7 @@ export class GymConfigurationController {
     @Param('gymId') gymId: string,
     @Body(ValidationPipe) configureClassTypesDto: ConfigureClassTypesDto,
     @CurrentUser() userId: string,
-    @CurrentGym() currentGymId: string,
   ): Promise<ConfigureClassTypesResponseDto> {
-    if (gymId !== currentGymId) {
-      throw new Error('Gym ID mismatch');
-    }
-
     const command = new ConfigureClassTypesCommand(
       userId,
       gymId,
@@ -388,12 +358,7 @@ export class GymConfigurationController {
     @Param('gymId') gymId: string,
     @Body(ValidationPipe) createMembershipPlanDto: CreateMembershipPlanDto,
     @CurrentUser() userId: string,
-    @CurrentGym() currentGymId: string,
   ): Promise<CreateMembershipPlanResponseDto> {
-    if (gymId !== currentGymId) {
-      throw new Error('Gym ID mismatch');
-    }
-
     const command = new CreateMembershipPlanCommand(
       userId,
       gymId,
@@ -441,12 +406,7 @@ export class GymConfigurationController {
     @Param('membershipPlanId') membershipPlanId: string,
     @Body(ValidationPipe) updateMembershipPlanDto: UpdateMembershipPlanDto,
     @CurrentUser() userId: string,
-    @CurrentGym() currentGymId: string,
   ): Promise<UpdateMembershipPlanResponseDto> {
-    if (gymId !== currentGymId) {
-      throw new Error('Gym ID mismatch');
-    }
-
     const command = new UpdateMembershipPlanCommand(
       userId,
       gymId,
@@ -492,12 +452,7 @@ export class GymConfigurationController {
     @Param('gymId') gymId: string,
     @Param('membershipPlanId') membershipPlanId: string,
     @CurrentUser() userId: string,
-    @CurrentGym() currentGymId: string,
   ): Promise<ArchiveMembershipPlanResponseDto> {
-    if (gymId !== currentGymId) {
-      throw new Error('Gym ID mismatch');
-    }
-
     const command = new ArchiveMembershipPlanCommand(
       userId,
       gymId,
@@ -544,12 +499,7 @@ export class GymConfigurationController {
     @Param('membershipPlanId') membershipPlanId: string,
     @Body(ValidationPipe) purchaseMembershipPlanDto: PurchaseMembershipPlanDto,
     @CurrentUser() userId: string,
-    @CurrentGym() currentGymId: string,
   ): Promise<PurchaseMembershipPlanResponseDto> {
-    if (gymId !== currentGymId) {
-      throw new Error('Gym ID mismatch');
-    }
-
     // Verify membershipPlanId in path matches DTO (if provided)
     if (
       purchaseMembershipPlanDto.membershipPlanId &&
@@ -603,12 +553,7 @@ export class GymConfigurationController {
     @Param('gymId') gymId: string,
     @Body(ValidationPipe) manuallyAddMemberDto: ManuallyAddMemberDto,
     @CurrentUser() userId: string,
-    @CurrentGym() currentGymId: string,
   ): Promise<ManuallyAddMemberResponseDto> {
-    if (gymId !== currentGymId) {
-      throw new Error('Gym ID mismatch');
-    }
-
     const command = new ManuallyAddMemberCommand(
       userId,
       gymId,
@@ -645,12 +590,7 @@ export class GymConfigurationController {
   @ApiResponse({ status: 403, description: 'Forbidden - Owner role required' })
   async getCoaches(
     @Param('gymId') gymId: string,
-    @CurrentGym() currentGymId: string,
   ): Promise<GetCoachesResponseDto> {
-    if (gymId !== currentGymId) {
-      throw new Error('Gym ID mismatch');
-    }
-
     return this.coachesQueryService.getCoachesByGym(gymId);
   }
 
@@ -687,12 +627,7 @@ export class GymConfigurationController {
     @Param('gymId') gymId: string,
     @Body(ValidationPipe) inviteCoachDto: InviteCoachDto,
     @CurrentUser() userId: string,
-    @CurrentGym() currentGymId: string,
   ): Promise<InviteCoachResponseDto> {
-    if (gymId !== currentGymId) {
-      throw new Error('Gym ID mismatch');
-    }
-
     const command = new InviteCoachCommand(
       userId,
       gymId,
@@ -736,12 +671,7 @@ export class GymConfigurationController {
     @Body(ValidationPipe)
     changeCoachStatusDto: { status: 'active' | 'inactive' },
     @CurrentUser() userId: string,
-    @CurrentGym() currentGymId: string,
   ): Promise<ChangeCoachStatusResponseDto> {
-    if (gymId !== currentGymId) {
-      throw new Error('Gym ID mismatch');
-    }
-
     const command = new ChangeCoachStatusCommand(
       userId,
       gymId,

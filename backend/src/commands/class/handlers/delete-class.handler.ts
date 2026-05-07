@@ -1,9 +1,9 @@
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { Inject } from '@nestjs/common';
-import { BadRequestException, NotFoundException } from '@nestjs/common';
 import { DeleteClassCommand } from '../delete-class.command';
 import { DeleteClassResponseDto } from '../dto/delete-class-response.dto';
 import { ClassRepository } from '../../../repositories/class.repository';
+import { notFound, invalidState } from '../../../http/exceptions';
 
 @CommandHandler(DeleteClassCommand)
 export class DeleteClassHandler implements ICommandHandler<DeleteClassCommand> {
@@ -18,15 +18,11 @@ export class DeleteClassHandler implements ICommandHandler<DeleteClassCommand> {
     );
 
     if (!cls) {
-      throw new NotFoundException(
-        `Class ${command.classId} not found in gym ${command.gymId}`,
-      );
+      throw notFound(`Class ${command.classId} not found in gym ${command.gymId}`);
     }
 
     if (cls.state !== 'published') {
-      throw new BadRequestException(
-        'Only published classes can be deleted',
-      );
+      throw invalidState('Only published classes can be deleted');
     }
 
     const deletedAt = new Date();

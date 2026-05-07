@@ -1,7 +1,6 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import {
   View,
-  StyleSheet,
   FlatList,
   TouchableOpacity,
   ActivityIndicator,
@@ -13,27 +12,9 @@ import { useGym } from '@/hooks/useGym';
 import { createApiClient } from '@/utils/api-client';
 import { showConfirm, showError } from '@/utils/alert';
 import { components } from '@/types/api.gen';
+import { AppColors } from '@/constants/theme';
+import { styles } from './my-bookings.styles';
 
-// ─── Design tokens from designs/athlete-screens.pen ───────────────────────────
-const COLORS = {
-  bg: '#FFFFFF',
-  accent: '#333333',
-  accentLight: '#F0F0F0',
-  fontPrimary: '#1A1A1A',
-  fontSecondary: '#666666',
-  fontTertiary: '#999999',
-  border: '#E0E0E0',
-  danger: '#D32F2F',
-  white: '#FFFFFF',
-  badgeBooked: '#2E7D32',
-  badgeBookedBg: '#E8F5E9',
-  badgeWaitlisted: '#E65100',
-  badgeWaitlistedBg: '#FFF3E0',
-  badgeInProgress: '#1565C0',
-  badgeInProgressBg: '#E3F2FD',
-  badgeCancelled: '#999999',
-  badgeCancelledBg: '#F5F5F5',
-} as const;
 
 // ─── Types ─────────────────────────────────────────────────────────────────────
 type ClassScheduleItem = components['schemas']['ClassScheduleItemDto'];
@@ -62,20 +43,20 @@ function getUpcomingBadgeConfig(
   waitlistPosition: number | null,
 ): BadgeConfig {
   if (classState === 'in_progress') {
-    return { label: 'IN PROGRESS', color: COLORS.badgeInProgress, bg: COLORS.badgeInProgressBg };
+    return { label: 'IN PROGRESS', color: AppColors.actionBlueDark, bg: AppColors.surfaceBlueLight };
   }
   if (bookingStatus === 'waitlisted') {
     const label = waitlistPosition != null ? `WAITLISTED #${waitlistPosition}` : 'WAITLISTED';
-    return { label, color: COLORS.badgeWaitlisted, bg: COLORS.badgeWaitlistedBg };
+    return { label, color: AppColors.warningOrange, bg: AppColors.warningBgOrange };
   }
-  return { label: 'BOOKED', color: COLORS.badgeBooked, bg: COLORS.badgeBookedBg };
+  return { label: 'BOOKED', color: AppColors.successMaterial, bg: AppColors.successBgFaint };
 }
 
 function getPastBadgeConfig(classState: ClassScheduleItem['state']): BadgeConfig {
   if (classState === 'completed') {
-    return { label: 'ATTENDED', color: COLORS.badgeBooked, bg: COLORS.badgeBookedBg };
+    return { label: 'ATTENDED', color: AppColors.successMaterial, bg: AppColors.successBgFaint };
   }
-  return { label: 'CANCELLED', color: COLORS.badgeCancelled, bg: COLORS.badgeCancelledBg };
+  return { label: 'CANCELLED', color: AppColors.textGray500, bg: AppColors.backgroundSubtle };
 }
 
 // ─── Sub-components ─────────────────────────────────────────────────────────────
@@ -401,7 +382,7 @@ export default function MyBookingsScreen() {
   if (isLoading) {
     return (
       <View style={[styles.container, styles.centerContent]}>
-        <ActivityIndicator size="large" color={COLORS.accent} />
+        <ActivityIndicator size="large" color={AppColors.textDark3} />
       </View>
     );
   }
@@ -461,213 +442,3 @@ export default function MyBookingsScreen() {
   );
 }
 
-// ─── Styles ─────────────────────────────────────────────────────────────────────
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: COLORS.bg,
-  },
-  centerContent: {
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingHorizontal: 20,
-  },
-  contentWrap: {
-    flex: 1,
-    paddingHorizontal: 20,
-    paddingTop: 8,
-    paddingBottom: 20,
-    gap: 20,
-  },
-  header: {
-    justifyContent: 'space-between',
-  },
-  headerTitle: {
-    fontSize: 24,
-    fontWeight: '700',
-    color: COLORS.fontPrimary,
-  },
-  // Filter toggle
-  filterRow: {
-    flexDirection: 'row',
-    backgroundColor: COLORS.accentLight,
-    borderRadius: 20,
-    height: 40,
-    padding: 4,
-  },
-  filterTab: {
-    flex: 1,
-    borderRadius: 20,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  filterTabActive: {
-    backgroundColor: COLORS.accent,
-  },
-  filterTabText: {
-    fontSize: 14,
-    fontWeight: '500',
-  },
-  filterTabTextActive: {
-    color: COLORS.white,
-    fontWeight: '600',
-  },
-  filterTabTextInactive: {
-    color: COLORS.fontSecondary,
-  },
-  // List
-  listContent: {
-    gap: 12,
-  },
-  // Card
-  card: {
-    backgroundColor: COLORS.bg,
-    borderRadius: 12,
-    padding: 16,
-    gap: 12,
-    borderWidth: 1,
-    borderColor: COLORS.border,
-  },
-  cardCancelled: {
-    backgroundColor: COLORS.badgeCancelledBg,
-    opacity: 0.7,
-  },
-  cardTop: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    width: '100%',
-  },
-  cardTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: COLORS.fontPrimary,
-    flex: 1,
-    marginRight: 8,
-  },
-  cardTitleMuted: {
-    color: COLORS.fontTertiary,
-  },
-  // Badge
-  badge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 12,
-    gap: 4,
-  },
-  badgeText: {
-    fontSize: 10,
-    fontWeight: '600',
-    letterSpacing: 0.5,
-  },
-  // Card details
-  cardDetails: {
-    gap: 6,
-  },
-  detailRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-  },
-  detailIcon: {
-    fontSize: 14,
-    width: 18,
-    textAlign: 'center',
-  },
-  detailText: {
-    fontSize: 13,
-    color: COLORS.fontSecondary,
-    flex: 1,
-  },
-  // Card actions
-  cardActions: {
-    flexDirection: 'row',
-    gap: 8,
-  },
-  viewButton: {
-    flex: 1,
-    height: 36,
-    backgroundColor: COLORS.accentLight,
-    borderRadius: 8,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  viewButtonText: {
-    fontSize: 13,
-    fontWeight: '500',
-    color: COLORS.fontPrimary,
-  },
-  cancelButton: {
-    flex: 1,
-    height: 36,
-    borderRadius: 8,
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: COLORS.border,
-  },
-  cancelButtonDisabled: {
-    opacity: 0.5,
-  },
-  cancelButtonText: {
-    fontSize: 13,
-    fontWeight: '500',
-    color: COLORS.danger,
-  },
-  // Attended row (past cards)
-  attendedRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-  },
-  attendedText: {
-    fontSize: 13,
-    fontWeight: '500',
-  },
-  // Empty state
-  emptyContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingHorizontal: 20,
-    gap: 16,
-  },
-  emptyIcon: {
-    fontSize: 56,
-  },
-  emptyTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: COLORS.fontPrimary,
-    textAlign: 'center',
-  },
-  emptyDesc: {
-    fontSize: 14,
-    color: COLORS.fontSecondary,
-    textAlign: 'center',
-    maxWidth: 220,
-  },
-  emptyButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: COLORS.accent,
-    borderRadius: 22,
-    height: 44,
-    paddingHorizontal: 24,
-    gap: 8,
-    justifyContent: 'center',
-  },
-  emptyButtonText: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: COLORS.white,
-  },
-  // Error
-  errorText: {
-    fontSize: 16,
-    color: COLORS.danger,
-    textAlign: 'center',
-  },
-});

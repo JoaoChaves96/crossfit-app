@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import {
   ActivityIndicator,
   ScrollView,
-  StyleSheet,
   Text,
   TouchableOpacity,
   View,
@@ -12,6 +11,8 @@ import { useAuth } from '@/hooks/useAuth';
 import { useGym } from '@/hooks/useGym';
 import { createApiClient } from '@/utils/api-client';
 import { components } from '@/types/api.gen';
+import { AppColors } from '@/constants/theme';
+import { styles } from './coach-mark-attendance.styles';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -27,56 +28,6 @@ interface AthleteSlot {
   label: string;
   present: boolean;
 }
-
-// ─── Design Tokens ────────────────────────────────────────────────────────────
-
-const COLOR = {
-  rootBg: '#F2F3F5',
-  white: '#FFFFFF',
-
-  sidebarBg: '#1E1E2D',
-  sidebarLogoText: '#FFFFFF',
-  navActiveItemBg: '#2D2D42',
-  navActiveText: '#FFFFFF',
-  navInactiveText: '#8888A0',
-
-  titleText: '#111827',
-  bodyText: '#1A1A2E',
-  secondaryText: '#6B7280',
-  mutedText: '#9CA3AF',
-
-  cardBg: '#FFFFFF',
-  cardBorder: '#E5E7EB',
-  tableHeaderBg: '#F9FAFB',
-  rowBorder: '#E5E7EB',
-
-  statCardBg: '#F9FAFB',
-  statCardBorder: '#E5E7EB',
-
-  presentBg: '#DCFCE7',
-  presentText: '#15803D',
-  absentBg: '#FEE2E2',
-  absentText: '#991B1B',
-  unmarkedBg: '#F3F4F6',
-  unmarkedText: '#6B7280',
-
-  actionBtnBg: '#111827',
-  actionBtnText: '#FFFFFF',
-  actionBtnDisabledOpacity: 0.6,
-
-  backBtnBg: '#FFFFFF',
-  backBtnBorder: '#E4E4EA',
-  backBtnText: '#555568',
-
-  successBg: '#DCFCE7',
-  successText: '#15803D',
-  errorText: '#DC2626',
-
-  borderMid: '#D1D5DB',
-
-  infoLabelText: '#9CA3AF',
-  infoValueText: '#111827',
-};
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -357,20 +308,20 @@ export default function CoachMarkAttendanceScreen() {
           <StatCard
             label="Booked"
             value={bookedCountNum}
-            valueBg="#DBEAFE"
-            valueColor="#1D4ED8"
+            valueBg={AppColors.badgeBlueBg}
+            valueColor={AppColors.actionBlue}
           />
           <StatCard
             label="Marked Present"
             value={markedPresentCount}
-            valueBg={COLOR.presentBg}
-            valueColor={COLOR.presentText}
+            valueBg={AppColors.successBgVivid}
+            valueColor={AppColors.successDefault}
           />
           <StatCard
             label="Marked Absent"
             value={markedAbsentCount}
-            valueBg={COLOR.absentBg}
-            valueColor={COLOR.absentText}
+            valueBg={AppColors.errorBgSoft}
+            valueColor={AppColors.errorDarkest}
           />
         </View>
 
@@ -386,7 +337,7 @@ export default function CoachMarkAttendanceScreen() {
 
           {isLoadingBookings ? (
             <View style={styles.emptyState}>
-              <ActivityIndicator size="small" color={COLOR.secondaryText} />
+              <ActivityIndicator size="small" color={AppColors.darkTextDim} />
             </View>
           ) : bookingsError !== null ? (
             <View style={styles.emptyState}>
@@ -436,7 +387,7 @@ export default function CoachMarkAttendanceScreen() {
               disabled={isSubmitting}
               activeOpacity={0.8}>
               {isSubmitting ? (
-                <ActivityIndicator size="small" color={COLOR.actionBtnText} />
+                <ActivityIndicator size="small" color={AppColors.backgroundWhite} />
               ) : (
                 <Text style={styles.submitBtnText}>Submit Attendance</Text>
               )}
@@ -447,325 +398,3 @@ export default function CoachMarkAttendanceScreen() {
     </View>
   );
 }
-
-// ─── Styles ───────────────────────────────────────────────────────────────────
-
-const styles = StyleSheet.create({
-  root: {
-    flex: 1,
-    flexDirection: 'row',
-    backgroundColor: COLOR.rootBg,
-  },
-
-  // Sidebar
-  sidebar: {
-    width: 220,
-    backgroundColor: COLOR.sidebarBg,
-    paddingHorizontal: 16,
-    paddingVertical: 24,
-    gap: 4,
-  },
-  sidebarLogo: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: COLOR.sidebarLogoText,
-    letterSpacing: 0.5,
-  },
-  navSpacer: {
-    height: 24,
-  },
-  navGroup: {
-    gap: 4,
-  },
-  navItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: 6,
-    height: 40,
-  },
-  navLabel: {
-    fontSize: 14,
-  },
-  navLabelInactive: {
-    fontWeight: '400',
-    color: COLOR.navInactiveText,
-  },
-
-  // Main area
-  main: {
-    flex: 1,
-    paddingHorizontal: 32,
-    paddingVertical: 24,
-    gap: 20,
-  },
-
-  // Header
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: 16,
-  },
-  backBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    paddingHorizontal: 14,
-    paddingVertical: 8,
-    borderRadius: 6,
-    backgroundColor: COLOR.backBtnBg,
-    borderWidth: 1,
-    borderColor: COLOR.backBtnBorder,
-  },
-  backBtnText: {
-    fontSize: 13,
-    color: COLOR.backBtnText,
-    fontWeight: '400',
-  },
-  headerTitle: {
-    flex: 1,
-    fontSize: 22,
-    fontWeight: '700',
-    color: COLOR.titleText,
-    textAlign: 'center',
-  },
-  headerSpacer: {
-    width: 130,
-  },
-
-  // Info card
-  infoCard: {
-    flexDirection: 'row',
-    backgroundColor: COLOR.statCardBg,
-    borderRadius: 10,
-    borderWidth: 1,
-    borderColor: COLOR.statCardBorder,
-    paddingHorizontal: 24,
-    paddingVertical: 20,
-    gap: 32,
-  },
-  infoItem: {
-    gap: 4,
-  },
-  infoLabel: {
-    fontSize: 11,
-    fontWeight: '600',
-    color: COLOR.infoLabelText,
-    letterSpacing: 0.5,
-    textTransform: 'uppercase',
-  },
-  infoValue: {
-    fontSize: 14,
-    fontWeight: '500',
-    color: COLOR.infoValueText,
-  },
-
-  // Stats row
-  statsRow: {
-    flexDirection: 'row',
-    gap: 12,
-  },
-  statCard: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    backgroundColor: COLOR.cardBg,
-    borderRadius: 10,
-    borderWidth: 1,
-    borderColor: COLOR.cardBorder,
-    paddingHorizontal: 20,
-    paddingVertical: 16,
-  },
-  statLabel: {
-    fontSize: 13,
-    fontWeight: '500',
-    color: COLOR.secondaryText,
-  },
-  statValueBadge: {
-    borderRadius: 12,
-    paddingHorizontal: 12,
-    paddingVertical: 4,
-    minWidth: 36,
-    alignItems: 'center',
-  },
-  statValueText: {
-    fontSize: 14,
-    fontWeight: '700',
-  },
-
-  // Attendance card
-  attendanceCard: {
-    flex: 1,
-    backgroundColor: COLOR.cardBg,
-    borderRadius: 10,
-    borderWidth: 1,
-    borderColor: COLOR.cardBorder,
-    paddingHorizontal: 20,
-    paddingVertical: 16,
-    gap: 12,
-  },
-  sectionHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  },
-  sectionTitle: {
-    fontSize: 15,
-    fontWeight: '600',
-    color: COLOR.titleText,
-  },
-  sectionBadge: {
-    backgroundColor: '#DBEAFE',
-    borderRadius: 12,
-    paddingHorizontal: 10,
-    paddingVertical: 3,
-  },
-  sectionBadgeText: {
-    fontSize: 12,
-    fontWeight: '500',
-    color: '#1D4ED8',
-  },
-
-  // Table
-  tableHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: COLOR.tableHeaderBg,
-    paddingHorizontal: 14,
-    paddingVertical: 10,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: COLOR.rowBorder,
-  },
-  tableHeaderCell: {
-    fontSize: 12,
-    fontWeight: '600',
-    color: COLOR.secondaryText,
-  },
-  tableBody: {
-    flex: 1,
-  },
-  tableRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 14,
-    paddingVertical: 10,
-    borderTopWidth: 1,
-    borderTopColor: COLOR.rowBorder,
-  },
-  tableRowAlt: {
-    backgroundColor: '#F9FAFB',
-  },
-
-  // Column widths
-  colAthlete: {
-    flex: 1,
-  },
-  colStatus: {
-    width: 120,
-    textAlign: 'right',
-  },
-
-  // Athlete cell
-  athleteNameCell: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  avatarPlaceholder: {
-    width: 24,
-    height: 24,
-    borderRadius: 12,
-    backgroundColor: '#E5E7EB',
-  },
-  athleteNameText: {
-    fontSize: 13,
-    fontWeight: '400',
-    color: COLOR.titleText,
-  },
-
-  // Toggle cell
-  attendanceToggleCell: {
-    width: 120,
-    alignItems: 'flex-end',
-  },
-  toggleBtn: {
-    borderRadius: 10,
-    paddingHorizontal: 12,
-    paddingVertical: 4,
-  },
-  toggleBtnPresent: {
-    backgroundColor: COLOR.presentBg,
-  },
-  toggleBtnAbsent: {
-    backgroundColor: COLOR.absentBg,
-  },
-  toggleBtnText: {
-    fontSize: 11,
-    fontWeight: '500',
-  },
-  toggleBtnTextPresent: {
-    color: COLOR.presentText,
-  },
-  toggleBtnTextAbsent: {
-    color: COLOR.absentText,
-  },
-
-  // Submit button
-  submitBtn: {
-    backgroundColor: COLOR.actionBtnBg,
-    borderRadius: 8,
-    paddingVertical: 12,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  submitBtnDisabled: {
-    opacity: COLOR.actionBtnDisabledOpacity,
-  },
-  submitBtnText: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: COLOR.actionBtnText,
-  },
-
-  // Feedback
-  successBanner: {
-    backgroundColor: COLOR.successBg,
-    borderRadius: 6,
-    paddingHorizontal: 14,
-    paddingVertical: 10,
-  },
-  successText: {
-    fontSize: 13,
-    fontWeight: '500',
-    color: COLOR.successText,
-  },
-  errorText: {
-    fontSize: 13,
-    color: COLOR.errorText,
-  },
-
-  // Empty state
-  emptyState: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 48,
-    gap: 8,
-  },
-  emptyTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: COLOR.bodyText,
-  },
-  emptySubtitle: {
-    fontSize: 14,
-    color: COLOR.secondaryText,
-    textAlign: 'center',
-  },
-});

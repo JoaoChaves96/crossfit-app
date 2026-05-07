@@ -4,7 +4,6 @@ import {
   KeyboardAvoidingView,
   Platform,
   ScrollView,
-  StyleSheet,
   Text,
   TextInput,
   TouchableOpacity,
@@ -14,25 +13,14 @@ import { useRouter } from 'expo-router';
 import { AuthContext } from '@/context/AuthContext';
 import { GymContext } from '@/context/GymContext';
 import { createApiClient, ApiError } from '@/utils/api-client';
+import { AppColors } from '@/constants/theme';
+import { styles } from './login.styles';
 
 // ─── Local type for login response (not in Swagger schema) ────────────────────
 
 interface LoginResponse {
   accessToken: string;
 }
-
-// ─── Design tokens ────────────────────────────────────────────────────────────
-
-const COLOR = {
-  bg: '#F5F5F5',
-  white: '#FFFFFF',
-  black: '#1A1A1A',
-  subText: '#666666',
-  placeholder: '#999999',
-  border: '#E0E0E0',
-  cardBorder: '#E8E8E8',
-  error: '#DC2626',
-};
 
 // ─── Screen ───────────────────────────────────────────────────────────────────
 
@@ -115,7 +103,7 @@ export default function LoginScreen() {
             <TextInput
               style={styles.input}
               placeholder="your@email.com"
-              placeholderTextColor={COLOR.placeholder}
+              placeholderTextColor={AppColors.textGray500}
               value={email}
               onChangeText={(text) => {
                 setEmail(text);
@@ -134,7 +122,7 @@ export default function LoginScreen() {
             <TextInput
               style={styles.input}
               placeholder="••••••••"
-              placeholderTextColor={COLOR.placeholder}
+              placeholderTextColor={AppColors.textGray500}
               value={password}
               onChangeText={(text) => {
                 setPassword(text);
@@ -159,7 +147,7 @@ export default function LoginScreen() {
             disabled={isLoading}
             activeOpacity={0.8}>
             {isLoading ? (
-              <ActivityIndicator size="small" color={COLOR.white} />
+              <ActivityIndicator size="small" color={AppColors.backgroundWhite} />
             ) : (
               <Text style={styles.loginBtnLabel}>Log In</Text>
             )}
@@ -203,114 +191,3 @@ function getGymIdFromToken(token: string): string | null {
   }
 }
 
-// ─── Styles ───────────────────────────────────────────────────────────────────
-
-const styles = StyleSheet.create({
-  root: {
-    flex: 1,
-    backgroundColor: COLOR.bg,
-  },
-  scroll: {
-    flexGrow: 1,
-    paddingHorizontal: 24,
-    paddingBottom: 32,
-  },
-
-  // Brand
-  brand: {
-    alignItems: 'center',
-    paddingTop: 32,
-    paddingBottom: 40,
-    gap: 8,
-  },
-  appIcon: {
-    width: 40,
-    height: 40,
-    borderRadius: 8,
-    backgroundColor: COLOR.black,
-  },
-  appName: {
-    fontSize: 24,
-    fontWeight: '700',
-    color: COLOR.black,
-  },
-  tagline: {
-    fontSize: 15,
-    fontWeight: '400',
-    color: COLOR.subText,
-  },
-
-  // Card
-  card: {
-    backgroundColor: COLOR.white,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: COLOR.cardBorder,
-    padding: 20,
-    gap: 16,
-  },
-
-  // Field
-  field: {
-    gap: 6,
-  },
-  label: {
-    fontSize: 13,
-    fontWeight: '600',
-    color: COLOR.black,
-  },
-  input: {
-    height: 48,
-    borderRadius: 10,
-    borderWidth: 1,
-    borderColor: COLOR.border,
-    backgroundColor: COLOR.white,
-    paddingHorizontal: 14,
-    fontSize: 15,
-    color: COLOR.black,
-  },
-
-  // Error
-  errorText: {
-    fontSize: 13,
-    color: COLOR.error,
-    marginTop: -4,
-  },
-
-  // Button
-  loginBtn: {
-    height: 50,
-    borderRadius: 12,
-    backgroundColor: COLOR.black,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  loginBtnDisabled: {
-    opacity: 0.6,
-  },
-  loginBtnLabel: {
-    fontSize: 15,
-    fontWeight: '700',
-    color: COLOR.white,
-    letterSpacing: 0.5,
-  },
-
-  // Footer
-  footer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingTop: 20,
-    gap: 4,
-  },
-  footerText: {
-    fontSize: 14,
-    fontWeight: '400',
-    color: COLOR.subText,
-  },
-  signupLink: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: COLOR.black,
-  },
-});

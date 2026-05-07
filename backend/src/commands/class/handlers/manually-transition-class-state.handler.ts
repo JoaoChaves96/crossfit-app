@@ -5,11 +5,7 @@ import { ManuallyTransitionClassStateResponseDto } from '../dto/manually-transit
 import { ClassRepository } from '../../../repositories/class.repository';
 import { ClassEntity } from '../../../domain/class/entities/class.entity';
 import { GymStaffService } from '../../../domain/gym-staff/gym-staff.service';
-import {
-  BadRequestException,
-  ForbiddenException,
-  NotFoundException,
-} from '@nestjs/common';
+import { notFound, forbidden, invalidState } from '../../../http/exceptions';
 
 /**
  * ManuallyTransitionClassStateHandler: Orchestrates class state transitions
@@ -41,19 +37,17 @@ export class ManuallyTransitionClassStateHandler implements ICommandHandler<Manu
       command.gymId,
     );
     if (!classEntity) {
-      throw new NotFoundException('Class not found');
+      throw notFound('Class not found');
     }
 
     // Ownership guard: class must belong to the gym supplied in the command
     if (classEntity.gymId !== command.gymId) {
-      throw new ForbiddenException(
-        'Class does not belong to the specified gym',
-      );
+      throw forbidden('Class does not belong to the specified gym');
     }
 
     // Precondition 2: Verify coach is assigned to the class
     if (classEntity.coachUserId !== command.userId) {
-      throw new ForbiddenException('Coach is not assigned to this class');
+      throw forbidden('Coach is not assigned to this class');
     }
 
     // Verify coach is active in the gym
@@ -63,7 +57,7 @@ export class ManuallyTransitionClassStateHandler implements ICommandHandler<Manu
       classEntity.gymId,
     );
     if (!isCoachActive) {
-      throw new ForbiddenException('Coach is not active for this gym');
+      throw forbidden('Coach is not active for this gym');
     }
 
     // Precondition 3: Verify target state is valid progression (unidirectional)
@@ -111,7 +105,7 @@ export class ManuallyTransitionClassStateHandler implements ICommandHandler<Manu
 
     // Target must be exactly the next state in sequence
     if (targetIndex !== currentIndex + 1) {
-      throw new BadRequestException(
+      throw invalidState(
         `Cannot transition from ${currentState} to ${targetState}. Classes must follow state progression: published → booking_closed → in_progress → completed → archived`,
       );
     }
