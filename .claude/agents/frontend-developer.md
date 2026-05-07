@@ -66,6 +66,17 @@ If no TASK TYPE is present, the agent MUST stop and ask for clarification.
 - MUST NOT invent new screens or flows
 - Minimal implementation first
 
+### Testing Requirements (FEATURE tasks)
+Writing tests is part of completing a FEATURE task — not optional, not a follow-up.
+
+- **New custom hook** → always write a unit test. Cover all state branches, API call outcomes (success, error, loading), and side effects.
+- **New screen or component with non-trivial logic** → write a unit test. Non-trivial means: API calls, conditional rendering based on business rules, form validation, or state that changes based on user interaction beyond simple show/hide.
+- **Dumb render-only components** → no test required. A component is dumb if it only renders props with no branching, no API calls, and no managed state.
+
+Follow the test utilities in `frontend/test-utils/` and the patterns established in Epic O specs. Use Jest + React Native Testing Library.
+
+A FEATURE task is NOT done until its tests exist and pass (`npm test`).
+
 ### REFACTOR
 
 - Change structure without changing behavior

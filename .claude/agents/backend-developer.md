@@ -119,6 +119,14 @@ If a controller grows past ~300 lines, split it by responsibility into focused s
 - No phase‑2 functionality
 - Minimal viable implementation first
 
+### Testing Requirements (FEATURE tasks)
+Writing tests is part of completing a FEATURE task — not optional, not a follow-up.
+
+- **New command handler** → write a unit test spec alongside it (`.handler.spec.ts` sibling). Cover every branching condition: guard clauses, happy path, edge cases. Mock all repositories. Follow `create-class.handler.spec.ts` as the reference pattern.
+- **New HTTP endpoint** → add integration tests to the relevant file in `backend/test/`. Cover: happy path, no auth (401), wrong role (403), gymId mismatch (401), invalid state (400) where applicable. Follow existing `*.e2e-spec.ts` files as the reference pattern.
+
+A FEATURE task is NOT done until its tests exist and pass.
+
 ### REFACTOR
 
 - Change structure without changing behavior

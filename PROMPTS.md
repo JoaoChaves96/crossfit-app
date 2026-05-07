@@ -86,6 +86,8 @@ Scope:
 Done when:
 
 - <Clear completion condition>
+- For FEATURE tasks (backend): unit tests for any new command handler; integration tests for any new HTTP endpoint
+- For FEATURE tasks (frontend): unit tests for any new hook or component with non-trivial logic
 
 Claude must NOT execute the task itself.
 Claude must route it to the specified agent.

@@ -22,6 +22,35 @@ Crossfit class booking application.
 
 ## Current Phase (2026-05-07)
 
+**EPIC:** Backend Test Coverage (Epic N) — ✅ COMPLETE (2026-05-07)  
+**→ See `epics/BACKEND_TESTS_EPIC.md` for full task breakdown**
+- ✅ Task #1: Unit tests — booking & cancellation handlers (21 tests)
+- ✅ Task #2: Unit tests — state machine & lifecycle handlers (46 tests)
+- ✅ Task #3: Unit tests — guards (GymOwnership, Roles, JWT) (27 tests)
+- ✅ Task #4: Unit tests — remaining priority handlers (24 tests)
+- ✅ Task #5: Integration tests — results, attendance, programming
+- ✅ Task #6: Integration tests — class lifecycle & gym configuration
+- ✅ Task #7: Integration tests — invitations & profiles
+
+**EPIC:** Frontend Unit Tests (Epic O) — 🔲 Not Started  
+**→ See `epics/FRONTEND_TESTS_EPIC.md` for full task breakdown**
+- 🔲 Task #1: Jest + React Native Testing Library setup
+- 🔲 Task #2: Unit tests — auth & API hooks
+- 🔲 Task #3: Unit tests — gym & class transition hooks
+- 🔲 Task #4: Unit tests — schedule & class details logic
+- 🔲 Task #5: Unit tests — form screens (create/edit class)
+- 🔲 Task #6: Unit tests — gym settings tabs
+
+**EPIC:** Playwright E2E Suite (Epic P) — 🔲 Not Started  
+**→ See `epics/PLAYWRIGHT_EPIC.md` for full task breakdown**
+- 🔲 Task #1: Playwright setup + auth helpers + DB reset
+- 🔲 Task #2: Athlete flows
+- 🔲 Task #3: Gym owner flows
+- 🔲 Task #4: Coach flows
+- 🔲 Task #5: Cross-role regression flows
+
+## Previous Phase (2026-05-07)
+
 **EPIC:** Codebase Refactor (Epic M) — ✅ COMPLETE (2026-05-07)  
 **→ See `epics/REFACTOR_EPIC.md` for full task breakdown**
 - ✅ Task #1: Frontend — Design tokens expansion (`theme.ts`)
