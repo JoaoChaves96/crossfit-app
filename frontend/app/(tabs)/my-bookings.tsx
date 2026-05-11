@@ -114,7 +114,7 @@ function UpcomingCard({ item, isCancelling, onViewDetails, onCancel }: UpcomingC
             disabled={isCancelling}
             activeOpacity={0.7}>
             {isCancelling ? (
-              <ActivityIndicator size="small" color={COLORS.danger} />
+              <ActivityIndicator size="small" color={AppColors.errorDefault} />
             ) : (
               <Text style={styles.cancelButtonText}>
                 {item.bookingStatus === 'waitlisted' ? 'Leave Waitlist' : 'Cancel'}
@@ -163,11 +163,11 @@ function PastCard({ item, onViewDetails, onLogResult }: PastCardProps) {
 
       {attended ? (
         <View style={styles.attendedRow}>
-          <Text style={[styles.attendedText, { color: COLORS.badgeBooked }]}>✓ You attended</Text>
+          <Text style={[styles.attendedText, { color: AppColors.successMaterial }]}>✓ You attended</Text>
         </View>
       ) : (
         <View style={styles.attendedRow}>
-          <Text style={[styles.attendedText, { color: COLORS.fontTertiary }]}>
+          <Text style={[styles.attendedText, { color: AppColors.textGray500 }]}>
             You did not attend
           </Text>
         </View>

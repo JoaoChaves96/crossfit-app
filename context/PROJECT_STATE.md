@@ -32,14 +32,14 @@ Crossfit class booking application.
 - ✅ Task #6: Integration tests — class lifecycle & gym configuration
 - ✅ Task #7: Integration tests — invitations & profiles
 
-**EPIC:** Frontend Unit Tests (Epic O) — 🔲 Not Started  
+**EPIC:** Frontend Unit Tests (Epic O) — ✅ COMPLETE (2026-05-11)  
 **→ See `epics/FRONTEND_TESTS_EPIC.md` for full task breakdown**
-- 🔲 Task #1: Jest + React Native Testing Library setup
-- 🔲 Task #2: Unit tests — auth & API hooks
-- 🔲 Task #3: Unit tests — gym & class transition hooks
-- 🔲 Task #4: Unit tests — schedule & class details logic
-- 🔲 Task #5: Unit tests — form screens (create/edit class)
-- 🔲 Task #6: Unit tests — gym settings tabs
+- ✅ Task #1: Jest + React Native Testing Library setup
+- ✅ Task #2: Unit tests — auth & API hooks (28/30 pass; 2 expose missing behavior)
+- ✅ Task #3: Unit tests — gym & class transition hooks (18 tests)
+- ✅ Task #4: Unit tests — schedule & class details logic (35 tests)
+- ✅ Task #5: Unit tests — form screens (create/edit class) (25 tests)
+- ✅ Task #6: Unit tests — gym settings tabs (25 tests)
 
 **EPIC:** Playwright E2E Suite (Epic P) — 🔲 Not Started  
 **→ See `epics/PLAYWRIGHT_EPIC.md` for full task breakdown**

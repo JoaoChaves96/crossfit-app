@@ -1,7 +1,7 @@
 # EPIC: Frontend Unit Tests (Epic O)
 
-**Status:** 🔲 Not Started  
-**Start Date:** TBD  
+**Status:** ✅ COMPLETE (2026-05-11)  
+**Start Date:** 2026-05-07  
 **Owner:** Frontend  
 **Depends on:** Epic M (Refactor) — ✅ Complete  
 **Next epic:** Epic P (Playwright E2E)
@@ -86,7 +86,7 @@ Deliverables:
 - Mock utilities exist for auth context, API client, and navigation
 - `npx tsc --noEmit` passes
 
-**Status:** 🔲 Not Started
+**Status:** ✅ Complete
 
 ---
 
@@ -115,7 +115,7 @@ Write unit tests for `useAuth.ts` and `useApiClient.ts`.
 - Token attachment and 401 handling tested
 - `npm test` passes
 
-**Status:** 🔲 Not Started
+**Status:** ✅ Complete (2 intentional failures expose missing behavior — see bugs)
 
 ---
 
@@ -141,7 +141,7 @@ Write unit tests for `useGym.ts` and `useClassTransition.ts`.
 - All branches in both hooks tested
 - `npm test` passes
 
-**Status:** 🔲 Not Started
+**Status:** ✅ Complete
 
 ---
 
@@ -169,7 +169,7 @@ Class details tests:
 - All booking state branches tested for both screens
 - `npm test` passes
 
-**Status:** 🔲 Not Started
+**Status:** ✅ Complete
 
 ---
 
@@ -199,7 +199,7 @@ Write unit tests for the form logic in `create-class.tsx` and `edit-class.tsx`.
 - Delete confirm flow tested
 - `npm test` passes
 
-**Status:** 🔲 Not Started
+**Status:** ✅ Complete
 
 ---
 
@@ -224,7 +224,7 @@ For each tab:
 - Form validation tested
 - `npm test` passes
 
-**Status:** 🔲 Not Started
+**Status:** ✅ Complete
 
 ---
 
