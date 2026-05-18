@@ -176,6 +176,7 @@ export default function ProfileScreen() {
       {isEditing && (
         <View style={styles.saveButtonWrap}>
           <TouchableOpacity
+            testID="profile-save-btn"
             style={styles.saveButton}
             onPress={handleSave}
             disabled={isSaving || editedName.trim().length === 0}

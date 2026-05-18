@@ -237,7 +237,7 @@ export default function CoachClassDetailsScreen() {
     : '—';
 
   return (
-    <View style={styles.root}>
+    <View style={styles.root} testID="coach-class-details-screen">
       <Sidebar />
 
       <View style={styles.main}>
@@ -282,6 +282,7 @@ export default function CoachClassDetailsScreen() {
               </View>
 
               <TouchableOpacity
+                testID="mark-attendance-nav-btn"
                 style={styles.actionBtn}
                 onPress={() => {
                   router.push({
@@ -336,14 +337,14 @@ export default function CoachClassDetailsScreen() {
               ) : savedProgramming !== null ? (
                 <>
                   <Text style={styles.fieldLabel}>WORKOUT DETAILS</Text>
-                  <View style={styles.wodContent}>
+                  <View testID="programming-wod-content" style={styles.wodContent}>
                     <Text style={styles.wodText}>{savedProgramming.content}</Text>
                   </View>
                 </>
               ) : existingProgramming !== null && existingProgramming.content !== null ? (
                 <>
                   <Text style={styles.fieldLabel}>WORKOUT DETAILS</Text>
-                  <View style={styles.wodContent}>
+                  <View testID="programming-wod-content" style={styles.wodContent}>
                     <Text style={styles.wodText}>{existingProgramming.content}</Text>
                   </View>
                 </>
@@ -363,6 +364,7 @@ export default function CoachClassDetailsScreen() {
 
               <Text style={[styles.fieldLabel, styles.fieldLabelSpacing]}>WORKOUT DETAILS</Text>
               <TextInput
+                testID="programming-wod-input"
                 style={styles.textInputLarge}
                 placeholder="Describe the workout…"
                 placeholderTextColor={AppColors.darkTextMuted}
@@ -374,6 +376,7 @@ export default function CoachClassDetailsScreen() {
 
               <Text style={[styles.fieldLabel, styles.fieldLabelSpacing]}>NOTES</Text>
               <TextInput
+                testID="programming-notes-input"
                 style={styles.textInputSmall}
                 placeholder="Add notes or scaling instructions…"
                 placeholderTextColor={AppColors.darkTextMuted}
@@ -394,6 +397,7 @@ export default function CoachClassDetailsScreen() {
               )}
 
               <TouchableOpacity
+                testID="programming-save-btn"
                 style={[styles.actionBtn, isSubmitting && styles.actionBtnDisabled]}
                 onPress={handleSaveProgramming}
                 disabled={isSubmitting}

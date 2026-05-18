@@ -42,7 +42,7 @@ function EmptyClassTypes({ onAddPress }: EmptyClassTypesProps) {
       <Text style={styles.emptyDesc}>
         Add your first class type to start organizing your gym's programming.
       </Text>
-      <TouchableOpacity style={styles.addBtn} onPress={onAddPress} activeOpacity={0.8}>
+      <TouchableOpacity testID="add-class-type-btn" style={styles.addBtn} onPress={onAddPress} activeOpacity={0.8}>
         <Text style={styles.addBtnPlus}>+</Text>
         <Text style={styles.addBtnText}>Add Class Type</Text>
       </TouchableOpacity>
@@ -64,7 +64,7 @@ function ClassTypesTable({ classTypes, onEdit, onDelete, onAddPress }: ClassType
     <View style={styles.content}>
       <View style={styles.sectionRow}>
         <Text style={styles.sectionTitle}>Class Types</Text>
-        <TouchableOpacity style={styles.addBtn} onPress={onAddPress} activeOpacity={0.8}>
+        <TouchableOpacity testID="add-class-type-btn" style={styles.addBtn} onPress={onAddPress} activeOpacity={0.8}>
           <Text style={styles.addBtnPlus}>+</Text>
           <Text style={styles.addBtnText}>Add Class Type</Text>
         </TouchableOpacity>
@@ -109,12 +109,14 @@ function ClassTypesTable({ classTypes, onEdit, onDelete, onAddPress }: ClassType
             </View>
             <View style={styles.colClassTypeActionsRow}>
               <TouchableOpacity
+                testID={`class-type-edit-btn-${classType.id}`}
                 style={styles.editBtn}
                 onPress={() => onEdit(classType)}
                 activeOpacity={0.7}>
                 <Text style={styles.editBtnText}>Edit</Text>
               </TouchableOpacity>
               <TouchableOpacity
+                testID={`class-type-delete-btn-${classType.id}`}
                 style={styles.deleteBtn}
                 onPress={() => onDelete(classType)}
                 activeOpacity={0.7}>
@@ -170,6 +172,7 @@ function ClassTypeForm({
       <View style={styles.classTypeFormCard}>
         <Text style={styles.inputLabel}>Name</Text>
         <TextInput
+          testID="class-type-name-input"
           style={styles.input}
           placeholder="e.g. CrossFit WOD"
           placeholderTextColor={INPUT_PLACEHOLDER_COLOR}
@@ -212,6 +215,7 @@ function ClassTypeForm({
 
         <View style={styles.formBtnRow}>
           <TouchableOpacity
+            testID="class-type-form-save-btn"
             style={[styles.saveBtn, isSaving && styles.saveBtnDisabled]}
             onPress={handleSave}
             disabled={isSaving}
@@ -223,6 +227,7 @@ function ClassTypeForm({
             )}
           </TouchableOpacity>
           <TouchableOpacity
+            testID="class-type-form-cancel-btn"
             style={styles.cancelBtn}
             onPress={onCancel}
             disabled={isSaving}

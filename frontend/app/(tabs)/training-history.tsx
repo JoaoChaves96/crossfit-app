@@ -52,7 +52,7 @@ interface HistoryCardProps {
 
 function HistoryCard({ item, onPress }: HistoryCardProps) {
   return (
-    <TouchableOpacity style={styles.card} onPress={onPress} activeOpacity={0.7}>
+    <TouchableOpacity testID={`training-history-card-${item.classId}`} style={styles.card} onPress={onPress} activeOpacity={0.7}>
       <View style={styles.cardTop}>
         <View style={styles.cardTitleGroup}>
           <Text style={styles.cardTitle}>{item.className}</Text>

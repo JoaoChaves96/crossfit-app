@@ -419,6 +419,7 @@ export default function LogResultsScreen() {
               <Text style={styles.fieldLabel}>{metricLabel}</Text>
               {isNoteType ? (
                 <TextInput
+                  testID="log-results-value-input"
                   style={[styles.metricInput, isEditMode && styles.metricInputActive]}
                   value={metricValue}
                   onChangeText={setMetricValue}
@@ -430,6 +431,7 @@ export default function LogResultsScreen() {
                 />
               ) : (
                 <TextInput
+                  testID="log-results-value-input"
                   style={[styles.metricInput, isEditMode && styles.metricInputActive]}
                   value={metricValue}
                   onChangeText={setMetricValue}
@@ -476,6 +478,7 @@ export default function LogResultsScreen() {
       {/* Action button */}
       <View style={styles.actionSection}>
         <TouchableOpacity
+          testID="log-results-save-btn"
           style={[styles.saveBtn, (!isLoggable || isSubmitting) && styles.saveBtnDisabled]}
           onPress={handleSubmit}
           disabled={!isLoggable || isSubmitting}

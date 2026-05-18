@@ -98,6 +98,7 @@ export default function RegisterScreen() {
             <View style={styles.field}>
               <Text style={styles.fieldLabel}>Name</Text>
               <TextInput
+                testID="register-name-input"
                 style={styles.input}
                 placeholder="Your full name"
                 placeholderTextColor={AppColors.textGray500}
@@ -113,6 +114,7 @@ export default function RegisterScreen() {
             <View style={styles.field}>
               <Text style={styles.fieldLabel}>Email</Text>
               <TextInput
+                testID="register-email-input"
                 style={[styles.input, fromInvite && styles.inputReadOnly]}
                 placeholder="your@email.com"
                 placeholderTextColor={AppColors.textGray500}
@@ -130,6 +132,7 @@ export default function RegisterScreen() {
             <View style={styles.field}>
               <Text style={styles.fieldLabel}>Password</Text>
               <TextInput
+                testID="register-password-input"
                 style={styles.input}
                 placeholder="••••••••"
                 placeholderTextColor={AppColors.textGray500}
@@ -150,6 +153,7 @@ export default function RegisterScreen() {
 
             {/* Submit Button */}
             <TouchableOpacity
+              testID="register-submit-btn"
               style={[styles.registerBtn, isLoading && styles.registerBtnDisabled]}
               onPress={handleRegister}
               disabled={isLoading}

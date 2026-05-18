@@ -41,13 +41,13 @@ Crossfit class booking application.
 - ✅ Task #5: Unit tests — form screens (create/edit class) (25 tests)
 - ✅ Task #6: Unit tests — gym settings tabs (25 tests)
 
-**EPIC:** Playwright E2E Suite (Epic P) — 🔲 Not Started  
+**EPIC:** Playwright E2E Suite (Epic P) — ✅ COMPLETE (2026-05-11)  
 **→ See `epics/PLAYWRIGHT_EPIC.md` for full task breakdown**
-- 🔲 Task #1: Playwright setup + auth helpers + DB reset
-- 🔲 Task #2: Athlete flows
-- 🔲 Task #3: Gym owner flows
-- 🔲 Task #4: Coach flows
-- 🔲 Task #5: Cross-role regression flows
+- ✅ Task #1: Playwright setup + auth helpers + DB reset + testIDs
+- ✅ Task #2: Athlete flows (5 flows)
+- ✅ Task #3: Gym owner flows (9 flows)
+- ✅ Task #4: Coach flows (4 flows)
+- ✅ Task #5: Cross-role regression flows (lifecycle + waitlist)
 
 ## Previous Phase (2026-05-07)
 

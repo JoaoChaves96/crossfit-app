@@ -46,6 +46,7 @@ function StateBadge({ state, isTransitioning, onPress }: StateBadgeProps) {
 
   return (
     <TouchableOpacity
+      testID="class-transition-btn"
       style={[styles.stateBadge, isTerminal && styles.stateBadgeDisabled]}
       onPress={isTerminal ? undefined : onPress}
       disabled={isTerminal || isTransitioning}
@@ -131,13 +132,13 @@ export function ClassHeader({
       <InfoCard classDetail={classDetail} />
 
       <View style={styles.actionRow}>
-        <TouchableOpacity style={styles.primaryBtn} onPress={onMarkAttendance}>
+        <TouchableOpacity testID="mark-attendance-btn" style={styles.primaryBtn} onPress={onMarkAttendance}>
           <Text style={styles.primaryBtnText}>MARK ATTENDANCE</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={styles.outlinedBtn} onPress={onAddProgramming}>
+        <TouchableOpacity testID="add-programming-btn" style={styles.outlinedBtn} onPress={onAddProgramming}>
           <Text style={styles.outlinedBtnText}>ADD PROGRAMMING</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={styles.outlinedBtn} onPress={onEditClass}>
+        <TouchableOpacity testID="edit-class-btn" style={styles.outlinedBtn} onPress={onEditClass}>
           <Text style={styles.outlinedBtnText}>EDIT</Text>
         </TouchableOpacity>
       </View>

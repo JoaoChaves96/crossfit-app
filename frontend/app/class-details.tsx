@@ -368,6 +368,7 @@ export default function ClassDetailsScreen() {
       <View style={styles.actionContainer}>
         {bookingStatus === 'waitlisted' && (
           <TouchableOpacity
+            testID="leave-waitlist-btn"
             style={styles.leaveWaitlistBtn}
             onPress={handleCancel}
             disabled={isSubmitting}
@@ -382,6 +383,7 @@ export default function ClassDetailsScreen() {
 
         {bookingStatus === 'booked' && (
           <TouchableOpacity
+            testID="cancel-booking-btn"
             style={styles.cancelBtn}
             onPress={handleCancel}
             disabled={isSubmitting}
@@ -396,6 +398,7 @@ export default function ClassDetailsScreen() {
 
         {(canBook || canJoinWaitlist) && (
           <TouchableOpacity
+            testID="book-btn"
             style={styles.bookBtn}
             onPress={handleBook}
             disabled={isSubmitting}

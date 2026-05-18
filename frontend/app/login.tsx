@@ -101,6 +101,7 @@ export default function LoginScreen() {
           <View style={styles.field}>
             <Text style={styles.label}>Email</Text>
             <TextInput
+              testID="login-email-input"
               style={styles.input}
               placeholder="your@email.com"
               placeholderTextColor={AppColors.textGray500}
@@ -120,6 +121,7 @@ export default function LoginScreen() {
           <View style={styles.field}>
             <Text style={styles.label}>Password</Text>
             <TextInput
+              testID="login-password-input"
               style={styles.input}
               placeholder="••••••••"
               placeholderTextColor={AppColors.textGray500}
@@ -142,6 +144,7 @@ export default function LoginScreen() {
 
           {/* Submit button */}
           <TouchableOpacity
+            testID="login-submit-btn"
             style={[styles.loginBtn, isLoading && styles.loginBtnDisabled]}
             onPress={handleSubmit}
             disabled={isLoading}
@@ -157,7 +160,7 @@ export default function LoginScreen() {
         {/* Footer */}
         <View style={styles.footer}>
           <Text style={styles.footerText}>{"Don't have an account?"}</Text>
-          <TouchableOpacity onPress={() => router.push('/register' as never)}>
+          <TouchableOpacity testID="login-register-link" onPress={() => router.push('/register' as never)}>
             <Text style={styles.signupLink}>Sign up</Text>
           </TouchableOpacity>
         </View>

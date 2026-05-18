@@ -122,6 +122,7 @@ function ClassRow({ gymClass, isAlt, onView }: ClassRowProps) {
 
   return (
     <View
+      testID={`coach-class-row-${gymClass.id}`}
       style={[
         styles.tableRow,
         isAlt && styles.tableRowAlt,
@@ -146,7 +147,7 @@ function ClassRow({ gymClass, isAlt, onView }: ClassRowProps) {
         </View>
       </View>
       <View style={styles.colAction}>
-        <TouchableOpacity style={styles.viewBtn} onPress={() => onView(gymClass)}>
+        <TouchableOpacity testID={`coach-class-view-btn-${gymClass.id}`} style={styles.viewBtn} onPress={() => onView(gymClass)}>
           <Text style={styles.viewBtnText}>View</Text>
         </TouchableOpacity>
       </View>
@@ -217,7 +218,7 @@ export default function CoachClassesScreen() {
   };
 
   return (
-    <View style={styles.root}>
+    <View style={styles.root} testID="coach-classes-screen">
       <Sidebar activeItem="classes" />
 
       <View style={styles.main}>
@@ -229,6 +230,7 @@ export default function CoachClassesScreen() {
         {/* Filter row */}
         <View style={styles.filterRow}>
           <TouchableOpacity
+            testID="filter-upcoming-btn"
             style={[
               styles.filterBtn,
               filterMode === 'upcoming' && styles.filterBtnActive,
@@ -243,6 +245,7 @@ export default function CoachClassesScreen() {
             </Text>
           </TouchableOpacity>
           <TouchableOpacity
+            testID="filter-past-btn"
             style={[
               styles.filterBtn,
               filterMode === 'past' && styles.filterBtnActive,
@@ -308,7 +311,7 @@ export default function CoachClassesScreen() {
                 </Text>
               </View>
             ) : (
-              <ScrollView showsVerticalScrollIndicator={false}>
+              <ScrollView testID="coach-class-list" showsVerticalScrollIndicator={false}>
                 {filteredClasses.map((cls, idx) => (
                   <ClassRow key={cls.id} gymClass={cls} isAlt={idx % 2 === 0} onView={handleView} />
                 ))}

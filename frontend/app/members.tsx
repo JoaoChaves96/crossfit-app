@@ -96,6 +96,7 @@ function Sidebar({ onNavigate }: SidebarProps) {
           return (
             <TouchableOpacity
               key={item.key}
+              testID={`sidebar-nav-${item.key}`}
               style={[
                 styles.navItem,
                 isActive && styles.navItemActive,

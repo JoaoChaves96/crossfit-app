@@ -123,6 +123,7 @@ function AthleteRow({ slot, isAlt, onToggle }: AthleteRowProps) {
       </View>
       <View style={styles.attendanceToggleCell}>
         <TouchableOpacity
+          testID={`athlete-toggle-btn-${slot.athleteUserId}`}
           style={[
             styles.toggleBtn,
             slot.present ? styles.toggleBtnPresent : styles.toggleBtnAbsent,
@@ -264,7 +265,7 @@ export default function CoachMarkAttendanceScreen() {
     : classTypeName ?? 'Mark Attendance';
 
   return (
-    <View style={styles.root}>
+    <View style={styles.root} testID="mark-attendance-screen">
       <Sidebar />
 
       <View style={styles.main}>
@@ -382,6 +383,7 @@ export default function CoachMarkAttendanceScreen() {
           {/* Submit */}
           {slots.length > 0 && !isLoadingBookings && (
             <TouchableOpacity
+              testID="submit-attendance-btn"
               style={[styles.submitBtn, isSubmitting && styles.submitBtnDisabled]}
               onPress={handleSubmit}
               disabled={isSubmitting}

@@ -24,6 +24,7 @@ export function SettingsTabBar({ activeTab, onTabChange }: SettingsTabBarProps) 
         return (
           <TouchableOpacity
             key={tab.key}
+            testID={`settings-tab-${tab.key}`}
             style={[styles.tab, isActive ? styles.tabActive : styles.tabInactive]}
             onPress={() => onTabChange(tab.key)}
             activeOpacity={0.7}>

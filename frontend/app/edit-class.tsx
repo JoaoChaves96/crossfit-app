@@ -75,9 +75,10 @@ interface PickerFieldProps {
   selectedId: string;
   onSelect: (id: string) => void;
   fetchState: FetchState<unknown>;
+  testID?: string;
 }
 
-function PickerField({ label, items, selectedId, onSelect, fetchState }: PickerFieldProps) {
+function PickerField({ label, items, selectedId, onSelect, fetchState, testID }: PickerFieldProps) {
   const [open, setOpen] = useState(false);
   const selectedLabel = items.find((i) => i.id === selectedId)?.label ?? '';
 
@@ -102,6 +103,7 @@ function PickerField({ label, items, selectedId, onSelect, fetchState }: PickerF
       {fetchState.status === 'success' && (
         <>
           <TouchableOpacity
+            testID={testID}
             style={styles.inputBox}
             onPress={() => setOpen((prev) => !prev)}
             activeOpacity={0.7}>
@@ -162,6 +164,7 @@ interface TextFieldProps {
   placeholder: string;
   keyboardType?: 'default' | 'numeric';
   error?: string;
+  testID?: string;
 }
 
 function TextField({
@@ -171,11 +174,13 @@ function TextField({
   placeholder,
   keyboardType,
   error,
+  testID,
 }: TextFieldProps) {
   return (
     <View style={styles.fieldContainer}>
       <Text style={styles.fieldLabel}>{label}</Text>
       <TextInput
+        testID={testID}
         style={[
           styles.inputBox,
           styles.inputBoxText,
@@ -444,6 +449,7 @@ export default function EditClassScreen() {
           <View style={styles.row}>
             <View style={styles.rowItem}>
               <PickerField
+                testID="edit-class-class-type-picker"
                 label="Class Type"
                 items={classTypeItems}
                 selectedId={form.classTypeId}
@@ -453,6 +459,7 @@ export default function EditClassScreen() {
             </View>
             <View style={styles.rowItem}>
               <PickerField
+                testID="edit-class-coach-picker"
                 label="Coach"
                 items={coachItems}
                 selectedId={form.coachUserId}
@@ -466,6 +473,7 @@ export default function EditClassScreen() {
           <View style={styles.row}>
             <View style={styles.rowItem}>
               <PickerField
+                testID="edit-class-space-picker"
                 label="Space"
                 items={spaceItems}
                 selectedId={form.spaceId}
@@ -475,6 +483,7 @@ export default function EditClassScreen() {
             </View>
             <View style={styles.rowItem}>
               <TextField
+                testID="edit-class-date-input"
                 label="Date"
                 value={form.scheduledDate}
                 onChangeText={(v) => setForm((s) => ({ ...s, scheduledDate: v }))}
@@ -488,6 +497,7 @@ export default function EditClassScreen() {
           <View style={styles.row}>
             <View style={styles.rowItem}>
               <TextField
+                testID="edit-class-time-input"
                 label="Time"
                 value={form.scheduledTime}
                 onChangeText={(v) => setForm((s) => ({ ...s, scheduledTime: v }))}
@@ -497,6 +507,7 @@ export default function EditClassScreen() {
             </View>
             <View style={styles.rowItem}>
               <TextField
+                testID="edit-class-capacity-input"
                 label="Capacity"
                 value={form.capacity}
                 onChangeText={(v) => setForm((s) => ({ ...s, capacity: v }))}
@@ -511,6 +522,7 @@ export default function EditClassScreen() {
           <View style={styles.row}>
             <View style={styles.rowItem}>
               <TextField
+                testID="edit-class-duration-input"
                 label="Duration (minutes)"
                 value={form.duration}
                 onChangeText={(v) => setForm((s) => ({ ...s, duration: v }))}
@@ -537,12 +549,14 @@ export default function EditClassScreen() {
             {/* Left: Cancel + Save */}
             <View style={styles.leftBtns}>
               <TouchableOpacity
+                testID="edit-class-cancel-btn"
                 style={styles.cancelBtn}
                 onPress={() => router.back()}
                 disabled={isSubmitting || isDeleting}>
                 <Text style={[FONT.btnText, { color: COLOR.cancelBtnText }]}>Cancel</Text>
               </TouchableOpacity>
               <TouchableOpacity
+                testID="edit-class-save-btn"
                 style={[styles.saveBtn, (isSubmitting || isDeleting) && styles.saveBtnDisabled]}
                 onPress={handleSave}
                 disabled={isSubmitting || isDeleting}>
@@ -557,6 +571,7 @@ export default function EditClassScreen() {
             {/* Right: Delete */}
             <View style={styles.rightGroup}>
               <TouchableOpacity
+                testID="edit-class-delete-btn"
                 style={[styles.deleteBtn, isDeleting && styles.saveBtnDisabled]}
                 onPress={handleDelete}
                 disabled={isSubmitting || isDeleting}>

@@ -44,9 +44,10 @@ interface PickerFieldProps {
   selectedId: string;
   onSelect: (id: string) => void;
   fetchState: FetchState<unknown>;
+  testID?: string;
 }
 
-function PickerField({ label, items, selectedId, onSelect, fetchState }: PickerFieldProps) {
+function PickerField({ label, items, selectedId, onSelect, fetchState, testID }: PickerFieldProps) {
   const [open, setOpen] = useState(false);
   const selectedLabel = items.find((i) => i.id === selectedId)?.label ?? '';
 
@@ -71,6 +72,7 @@ function PickerField({ label, items, selectedId, onSelect, fetchState }: PickerF
       {fetchState.status === 'success' && (
         <>
           <TouchableOpacity
+            testID={testID}
             style={styles.inputBox}
             onPress={() => setOpen((prev) => !prev)}
             activeOpacity={0.7}>
@@ -127,13 +129,15 @@ interface TextFieldProps {
   placeholder: string;
   keyboardType?: 'default' | 'numeric';
   error?: string;
+  testID?: string;
 }
 
-function TextField({ label, value, onChangeText, placeholder, keyboardType, error }: TextFieldProps) {
+function TextField({ label, value, onChangeText, placeholder, keyboardType, error, testID }: TextFieldProps) {
   return (
     <View style={styles.fieldContainer}>
       <Text style={styles.fieldLabel}>{label}</Text>
       <TextInput
+        testID={testID}
         style={[styles.inputBox, styles.inputBoxText, error ? styles.inputBoxValidationError : null]}
         value={value}
         onChangeText={onChangeText}
@@ -340,6 +344,7 @@ export default function CreateClassScreen() {
           <View style={styles.row}>
             <View style={styles.rowItem}>
               <TextField
+                testID="create-class-date-input"
                 label="Date"
                 value={form.scheduledDate}
                 onChangeText={(v) => setForm((s) => ({ ...s, scheduledDate: v }))}
@@ -349,6 +354,7 @@ export default function CreateClassScreen() {
             </View>
             <View style={styles.rowItem}>
               <TextField
+                testID="create-class-time-input"
                 label="Time"
                 value={form.scheduledTime}
                 onChangeText={(v) => setForm((s) => ({ ...s, scheduledTime: v }))}
@@ -362,6 +368,7 @@ export default function CreateClassScreen() {
           <View style={styles.row}>
             <View style={styles.rowItem}>
               <PickerField
+                testID="create-class-class-type-picker"
                 label="Class Type"
                 items={classTypeItems}
                 selectedId={form.classTypeId}
@@ -374,6 +381,7 @@ export default function CreateClassScreen() {
             </View>
             <View style={styles.rowItem}>
               <PickerField
+                testID="create-class-coach-picker"
                 label="Coach"
                 items={coachItems}
                 selectedId={form.coachUserId}
@@ -390,6 +398,7 @@ export default function CreateClassScreen() {
           <View style={styles.row}>
             <View style={styles.rowItem}>
               <PickerField
+                testID="create-class-space-picker"
                 label="Space"
                 items={spaceItems}
                 selectedId={form.spaceId}
@@ -402,6 +411,7 @@ export default function CreateClassScreen() {
             </View>
             <View style={styles.rowItem}>
               <TextField
+                testID="create-class-capacity-input"
                 label="Capacity"
                 value={form.capacity}
                 onChangeText={(v) => setForm((s) => ({ ...s, capacity: v }))}
@@ -416,6 +426,7 @@ export default function CreateClassScreen() {
           <View style={styles.row}>
             <View style={styles.rowItem}>
               <TextField
+                testID="create-class-duration-input"
                 label="Duration (minutes)"
                 value={form.duration}
                 onChangeText={(v) => setForm((s) => ({ ...s, duration: v }))}
@@ -440,12 +451,14 @@ export default function CreateClassScreen() {
           {/* Buttons */}
           <View style={styles.btnRow}>
             <TouchableOpacity
+              testID="create-class-cancel-btn"
               style={styles.cancelBtn}
               onPress={() => router.back()}
               disabled={isSubmitting}>
               <Text style={styles.cancelBtnText}>Cancel</Text>
             </TouchableOpacity>
             <TouchableOpacity
+              testID="create-class-save-btn"
               style={[styles.saveBtn, isSubmitting && styles.saveBtnDisabled]}
               onPress={handleSubmit}
               disabled={isSubmitting}>

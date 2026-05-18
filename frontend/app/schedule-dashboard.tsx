@@ -131,6 +131,7 @@ function Sidebar({ activeItem, onNavigate }: SidebarProps) {
           return (
             <TouchableOpacity
               key={item.key}
+              testID={`nav-${item.key}`}
               style={[
                 styles.navItem,
                 isActive && styles.navItemActive,
@@ -342,6 +343,7 @@ export default function ScheduleDashboard() {
             <Text style={styles.headerSubtitle}>Manage your weekly class schedule</Text>
           </View>
           <TouchableOpacity
+            testID="create-class-btn"
             style={styles.createBtn}
             onPress={() => router.push('/create-class' as never)}>
             <Text style={styles.createBtnText}>+ Create Class</Text>
@@ -351,11 +353,11 @@ export default function ScheduleDashboard() {
         {/* Toolbar */}
         <View style={styles.toolbar}>
           <View style={styles.weekNav}>
-            <TouchableOpacity style={styles.navArrowBtn} onPress={handlePrevWeek}>
+            <TouchableOpacity testID="week-nav-prev-btn" style={styles.navArrowBtn} onPress={handlePrevWeek}>
               <Text style={styles.navArrowText}>{'<'}</Text>
             </TouchableOpacity>
             <Text style={styles.weekLabel}>{formatWeekLabel(weekStart)}</Text>
-            <TouchableOpacity style={styles.navArrowBtn} onPress={handleNextWeek}>
+            <TouchableOpacity testID="week-nav-next-btn" style={styles.navArrowBtn} onPress={handleNextWeek}>
               <Text style={styles.navArrowText}>{'>'}</Text>
             </TouchableOpacity>
           </View>

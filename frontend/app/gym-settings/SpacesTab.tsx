@@ -34,7 +34,7 @@ function EmptySpaces({ onAddPress }: EmptySpacesProps) {
       <Text style={styles.emptyDesc}>
         Add your first training space to start organizing classes.
       </Text>
-      <TouchableOpacity style={styles.addBtn} onPress={onAddPress} activeOpacity={0.8}>
+      <TouchableOpacity testID="add-space-btn" style={styles.addBtn} onPress={onAddPress} activeOpacity={0.8}>
         <Text style={styles.addBtnPlus}>+</Text>
         <Text style={styles.addBtnText}>Add Space</Text>
       </TouchableOpacity>
@@ -56,7 +56,7 @@ function SpacesTable({ spaces, onEdit, onDelete, onAddPress }: SpacesTableProps)
     <View style={styles.content}>
       <View style={styles.sectionRow}>
         <Text style={styles.sectionTitle}>Spaces</Text>
-        <TouchableOpacity style={styles.addBtn} onPress={onAddPress} activeOpacity={0.8}>
+        <TouchableOpacity testID="add-space-btn" style={styles.addBtn} onPress={onAddPress} activeOpacity={0.8}>
           <Text style={styles.addBtnPlus}>+</Text>
           <Text style={styles.addBtnText}>Add Space</Text>
         </TouchableOpacity>
@@ -85,12 +85,14 @@ function SpacesTable({ spaces, onEdit, onDelete, onAddPress }: SpacesTableProps)
             </View>
             <View style={styles.colActionsRow}>
               <TouchableOpacity
+                testID={`space-edit-btn-${space.id}`}
                 style={styles.editBtn}
                 onPress={() => onEdit(space)}
                 activeOpacity={0.7}>
                 <Text style={styles.editBtnText}>Edit</Text>
               </TouchableOpacity>
               <TouchableOpacity
+                testID={`space-delete-btn-${space.id}`}
                 style={styles.deleteBtn}
                 onPress={() => onDelete(space)}
                 activeOpacity={0.7}>
@@ -141,6 +143,7 @@ function SpaceForm({ mode, initialName, initialCapacity, isSaving, onSave, onCan
 
         <Text style={styles.inputLabel}>Space Name</Text>
         <TextInput
+          testID="space-name-input"
           style={styles.input}
           placeholder="e.g. Main Floor"
           placeholderTextColor={INPUT_PLACEHOLDER_COLOR}
@@ -151,6 +154,7 @@ function SpaceForm({ mode, initialName, initialCapacity, isSaving, onSave, onCan
 
         <Text style={styles.inputLabel}>Base Capacity</Text>
         <TextInput
+          testID="space-capacity-input"
           style={styles.input}
           placeholder="e.g. 20"
           placeholderTextColor={INPUT_PLACEHOLDER_COLOR}
@@ -162,6 +166,7 @@ function SpaceForm({ mode, initialName, initialCapacity, isSaving, onSave, onCan
 
         <View style={styles.formBtnRow}>
           <TouchableOpacity
+            testID="space-form-save-btn"
             style={[styles.saveBtn, isSaving && styles.saveBtnDisabled]}
             onPress={handleSave}
             disabled={isSaving}
@@ -173,6 +178,7 @@ function SpaceForm({ mode, initialName, initialCapacity, isSaving, onSave, onCan
             )}
           </TouchableOpacity>
           <TouchableOpacity
+            testID="space-form-cancel-btn"
             style={styles.cancelBtn}
             onPress={onCancel}
             disabled={isSaving}

@@ -57,6 +57,7 @@ function Sidebar({ activeItem, onNavigate }: SidebarProps) {
           return (
             <TouchableOpacity
               key={item.key}
+              testID={`nav-${item.key}`}
               style={[
                 styles.navItem,
                 isActive && styles.navItemActive,
@@ -273,6 +274,7 @@ function InviteModal({ visible, onClose, onSuccess, gymId, token }: InviteModalP
           <View style={styles.fieldGroup}>
             <Text style={styles.fieldLabel}>Email address</Text>
             <TextInput
+              testID="invite-coach-email-input"
               style={styles.input}
               placeholder="coach@example.com"
               placeholderTextColor={AppColors.textDisabled}
@@ -294,12 +296,14 @@ function InviteModal({ visible, onClose, onSuccess, gymId, token }: InviteModalP
 
           <View style={styles.modalActions}>
             <TouchableOpacity
+              testID="modal-cancel-btn"
               style={styles.cancelBtn}
               onPress={handleClose}
               disabled={isSubmitting}>
               <Text style={styles.cancelBtnText}>Cancel</Text>
             </TouchableOpacity>
             <TouchableOpacity
+              testID="modal-confirm-btn"
               style={[styles.submitBtn, isSubmitting && styles.submitBtnDisabled]}
               onPress={handleSubmit}
               disabled={isSubmitting}>
@@ -397,6 +401,7 @@ export default function CoachesScreen() {
             </Text>
           </View>
           <TouchableOpacity
+            testID="invite-coach-btn"
             style={styles.inviteBtn}
             onPress={() => setModalVisible(true)}>
             <Text style={styles.inviteBtnText}>+ Invite Coach</Text>

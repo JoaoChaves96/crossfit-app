@@ -29,6 +29,7 @@ export function SettingsSidebar({ onNavigate }: SettingsSidebarProps) {
           return (
             <TouchableOpacity
               key={item.key}
+              testID={`sidebar-nav-${item.key}`}
               style={[
                 styles.navItem,
                 isActive && styles.navItemActive,

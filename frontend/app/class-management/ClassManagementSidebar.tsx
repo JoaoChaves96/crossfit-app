@@ -29,6 +29,7 @@ export function ClassManagementSidebar({ onNavigate }: ClassManagementSidebarPro
           return (
             <TouchableOpacity
               key={item.key}
+              testID={`nav-${item.key}`}
               style={[
                 styles.navItem,
                 isActive && styles.navItemActive,

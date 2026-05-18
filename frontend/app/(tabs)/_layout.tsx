@@ -21,6 +21,7 @@ export default function TabLayout() {
         options={{
           title: 'Home',
           tabBarIcon: ({ color }) => <IconSymbol size={28} name="house.fill" color={color} />,
+          tabBarButtonTestID: 'tab-home',
         }}
       />
       <Tabs.Screen
@@ -28,6 +29,7 @@ export default function TabLayout() {
         options={{
           title: 'Schedule',
           tabBarIcon: ({ color }) => <IconSymbol size={28} name="calendar" color={color} />,
+          tabBarButtonTestID: 'tab-schedule',
         }}
       />
       <Tabs.Screen
@@ -35,6 +37,7 @@ export default function TabLayout() {
         options={{
           title: 'My Bookings',
           tabBarIcon: ({ color }) => <IconSymbol size={28} name="checkmark.circle.fill" color={color} />,
+          tabBarButtonTestID: 'tab-my-bookings',
         }}
       />
       <Tabs.Screen
@@ -42,6 +45,7 @@ export default function TabLayout() {
         options={{
           title: 'Training',
           tabBarIcon: ({ color }) => <IconSymbol size={28} name="clock.fill" color={color} />,
+          tabBarButtonTestID: 'tab-training-history',
         }}
       />
       <Tabs.Screen
@@ -49,6 +53,7 @@ export default function TabLayout() {
         options={{
           title: 'Profile',
           tabBarIcon: ({ color }) => <IconSymbol size={28} name="person.fill" color={color} />,
+          tabBarButtonTestID: 'tab-profile',
         }}
       />
       <Tabs.Screen
@@ -56,6 +61,7 @@ export default function TabLayout() {
         options={{
           title: 'Invites',
           tabBarIcon: ({ color }) => <IconSymbol size={28} name="envelope.fill" color={color} />,
+          tabBarButtonTestID: 'tab-invites',
         }}
       />
     </Tabs>
