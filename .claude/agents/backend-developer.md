@@ -1,7 +1,6 @@
 ---
 name: "backend-developer"
 description: "Execute backend tasks exactly as instructed. No planning, no scope decisions."
-model: sonnet
 color: blue
 ---
 

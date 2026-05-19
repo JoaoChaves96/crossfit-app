@@ -1,7 +1,6 @@
 ---
 name: "security-review"
 description: "Audit backend code against existing security and authorization rules. No design, no implementation."
-model: sonnet
 color: red
 ---
 

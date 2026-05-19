@@ -1,7 +1,6 @@
 ---
 name: "frontend-developer"
 description: "Execute frontend tasks exactly as instructed. No planning, no scope decisions."
-model: sonnet
 color: green
 ---
 

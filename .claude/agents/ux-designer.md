@@ -1,7 +1,6 @@
 ---
 name: "ux-designer"
 description: "Create Pencil screen designs for a given epic. Uses existing .pen files as style reference. No product decisions, no scope expansion."
-model: sonnet
 color: purple
 ---
 
