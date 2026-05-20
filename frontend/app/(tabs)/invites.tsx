@@ -16,7 +16,9 @@ import { createApiClient } from '@/utils/api-client';
 import { showError } from '@/utils/alert';
 import { components } from '@/types/api.gen';
 import { AppColors } from '@/constants/theme';
-import { styles } from './invites.styles';
+import { useResponsiveLayout } from '@/hooks/useResponsiveLayout';
+import { DesktopTopNav } from '@/components/DesktopTopNav';
+import { styles, desktopStyles } from './invites.styles';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 type InviteResponse = components['schemas']['InviteResponseDto'];
@@ -273,6 +275,7 @@ function CreateInviteModal({ visible, gymId, token, prefillEmail = '', onClose, 
 export default function InvitesScreen() {
   const { user, token } = useAuth();
   const { currentGymId } = useGym();
+  const { isDesktop } = useResponsiveLayout();
 
   const [invites, setInvites] = useState<LocalInvite[]>([]);
   const [modalVisible, setModalVisible] = useState(false);
@@ -282,7 +285,8 @@ export default function InvitesScreen() {
   // Guard: athletes cannot access this screen
   if (!user || user.role === 'athlete') {
     return (
-      <View style={styles.screen}>
+      <View style={isDesktop ? desktopStyles.screen : styles.screen}>
+        {isDesktop && <DesktopTopNav />}
         <View style={styles.centeredState}>
           <Text style={styles.errorText}>Access denied. This screen is for gym owners and coaches only.</Text>
         </View>
@@ -292,7 +296,8 @@ export default function InvitesScreen() {
 
   if (!token || !currentGymId) {
     return (
-      <View style={styles.screen}>
+      <View style={isDesktop ? desktopStyles.screen : styles.screen}>
+        {isDesktop && <DesktopTopNav />}
         <View style={styles.centeredState}>
           <Text style={styles.errorText}>Please log in and select a gym to manage invites.</Text>
         </View>
@@ -327,6 +332,104 @@ export default function InvitesScreen() {
 
   const hasInvites = invites.length > 0;
 
+  const inviteContent = hasInvites ? (
+    <>
+      {/* Table header */}
+      <View style={styles.tableHeader}>
+        <Text style={[styles.tableHeaderCell, styles.tableHeaderCellEmail]}>Email</Text>
+        <Text style={styles.tableHeaderCell}>Date</Text>
+        <Text style={styles.tableHeaderCell}>Status</Text>
+        <Text style={styles.tableHeaderCell}>Actions</Text>
+      </View>
+      <View style={styles.tableHeaderDivider} />
+      <FlatList
+        data={invites}
+        keyExtractor={(item) => item.token}
+        renderItem={({ item, index }) => (
+          <View>
+            <InviteRow
+              invite={item}
+              onResend={handleResend}
+              onRevoke={handleRevoke}
+              isRevoking={revokingToken === item.token}
+            />
+            {index < invites.length - 1 && <View style={styles.rowDivider} />}
+          </View>
+        )}
+        contentContainerStyle={styles.tableBody}
+      />
+    </>
+  ) : (
+    <ScrollView contentContainerStyle={styles.emptyContainer}>
+      <View style={styles.emptyIconCircle}>
+        <Text style={styles.emptyIconGlyph}>{'✉'}</Text>
+      </View>
+      <Text style={styles.emptyTitle}>No invites sent yet</Text>
+      <Text style={styles.emptyDesc}>
+        Invite athletes to join your gym. They'll receive an email with a link to accept.
+      </Text>
+      <TouchableOpacity
+        style={styles.createBtn}
+        onPress={() => {
+          setModalPrefillEmail('');
+          setModalVisible(true);
+        }}
+        activeOpacity={0.7}
+      >
+        <Text style={styles.createBtnText}>+ Invite an Athlete</Text>
+      </TouchableOpacity>
+    </ScrollView>
+  );
+
+  const modal = (
+    <CreateInviteModal
+      visible={modalVisible}
+      gymId={currentGymId}
+      token={token}
+      prefillEmail={modalPrefillEmail}
+      onClose={() => {
+        setModalVisible(false);
+        setModalPrefillEmail('');
+      }}
+      onSuccess={(invite) => {
+        handleInviteCreated(invite);
+        setModalVisible(false);
+        setModalPrefillEmail('');
+      }}
+    />
+  );
+
+  // ── Desktop layout ──────────────────────────────────────────────────────────
+  if (isDesktop) {
+    return (
+      <View style={desktopStyles.screen}>
+        <DesktopTopNav />
+        <View style={desktopStyles.contentArea}>
+          <View style={desktopStyles.innerWrap}>
+            {/* Page header */}
+            <View style={styles.pageHeader}>
+              <Text style={styles.pageTitle}>Invites</Text>
+              <TouchableOpacity
+                style={styles.createBtn}
+                onPress={() => {
+                  setModalPrefillEmail('');
+                  setModalVisible(true);
+                }}
+                activeOpacity={0.7}
+              >
+                <Text style={styles.createBtnText}>+ Create Invite</Text>
+              </TouchableOpacity>
+            </View>
+            <View style={styles.headerDivider} />
+            {inviteContent}
+          </View>
+        </View>
+        {modal}
+      </View>
+    );
+  }
+
+  // ── Mobile layout ───────────────────────────────────────────────────────────
   return (
     <View style={styles.screen}>
       {/* Page header */}
@@ -346,71 +449,8 @@ export default function InvitesScreen() {
 
       <View style={styles.headerDivider} />
 
-      {/* Content */}
-      {hasInvites ? (
-        <>
-          {/* Table header */}
-          <View style={styles.tableHeader}>
-            <Text style={[styles.tableHeaderCell, styles.tableHeaderCellEmail]}>Email</Text>
-            <Text style={styles.tableHeaderCell}>Date</Text>
-            <Text style={styles.tableHeaderCell}>Status</Text>
-            <Text style={styles.tableHeaderCell}>Actions</Text>
-          </View>
-          <View style={styles.tableHeaderDivider} />
-          <FlatList
-            data={invites}
-            keyExtractor={(item) => item.token}
-            renderItem={({ item, index }) => (
-              <View>
-                <InviteRow
-                  invite={item}
-                  onResend={handleResend}
-                  onRevoke={handleRevoke}
-                  isRevoking={revokingToken === item.token}
-                />
-                {index < invites.length - 1 && <View style={styles.rowDivider} />}
-              </View>
-            )}
-            contentContainerStyle={styles.tableBody}
-          />
-        </>
-      ) : (
-        <ScrollView contentContainerStyle={styles.emptyContainer}>
-          <View style={styles.emptyIconCircle}>
-            <Text style={styles.emptyIconGlyph}>✉</Text>
-          </View>
-          <Text style={styles.emptyTitle}>No invites sent yet</Text>
-          <Text style={styles.emptyDesc}>
-            Invite athletes to join your gym. They'll receive an email with a link to accept.
-          </Text>
-          <TouchableOpacity
-            style={styles.createBtn}
-            onPress={() => {
-              setModalPrefillEmail('');
-              setModalVisible(true);
-            }}
-            activeOpacity={0.7}
-          >
-            <Text style={styles.createBtnText}>+ Invite an Athlete</Text>
-          </TouchableOpacity>
-        </ScrollView>
-      )}
-
-      <CreateInviteModal
-        visible={modalVisible}
-        gymId={currentGymId}
-        token={token}
-        prefillEmail={modalPrefillEmail}
-        onClose={() => {
-          setModalVisible(false);
-          setModalPrefillEmail('');
-        }}
-        onSuccess={(invite) => {
-          handleInviteCreated(invite);
-          setModalVisible(false);
-          setModalPrefillEmail('');
-        }}
-      />
+      {inviteContent}
+      {modal}
     </View>
   );
 }

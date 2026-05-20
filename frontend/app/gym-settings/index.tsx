@@ -1,8 +1,9 @@
 import React, { useCallback, useState } from 'react';
-import { ActivityIndicator, ScrollView, Text, View } from 'react-native';
+import { ActivityIndicator, Modal, ScrollView, Text, TouchableOpacity, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useAuth } from '@/hooks/useAuth';
 import { useGym } from '@/hooks/useGym';
+import { useResponsiveLayout } from '@/hooks/useResponsiveLayout';
 import { styles } from './gym-settings.styles';
 import { SettingsSidebar } from './SettingsSidebar';
 import { SettingsTabBar, ActiveTab } from './SettingsTabBar';
@@ -24,10 +25,13 @@ export default function GymSettings() {
   const router = useRouter();
   const { token } = useAuth();
   const { currentGymId } = useGym();
+  const { isMobile } = useResponsiveLayout();
   const [activeTab, setActiveTab] = useState<ActiveTab>('spaces');
+  const [drawerOpen, setDrawerOpen] = useState(false);
 
   const handleNavigate = useCallback(
     (key: string) => {
+      setDrawerOpen(false);
       if (key === 'schedule') router.push('/schedule-dashboard' as never);
       if (key === 'coaches') router.push('/coaches' as never);
       if (key === 'classes') router.push('/schedule-dashboard' as never);
@@ -37,10 +41,31 @@ export default function GymSettings() {
 
   return (
     <View style={styles.root}>
-      <SettingsSidebar onNavigate={handleNavigate} />
+      {!isMobile && <SettingsSidebar onNavigate={handleNavigate} />}
 
-      <View style={styles.main}>
-        <Text style={styles.pageTitle}>Gym Settings</Text>
+      {/* Mobile drawer */}
+      {isMobile && (
+        <Modal visible={drawerOpen} transparent animationType="fade" onRequestClose={() => setDrawerOpen(false)}>
+          <TouchableOpacity style={styles.drawerOverlay} activeOpacity={1} onPress={() => setDrawerOpen(false)}>
+            <View style={styles.drawerContainer}>
+              <SettingsSidebar onNavigate={handleNavigate} />
+            </View>
+          </TouchableOpacity>
+        </Modal>
+      )}
+
+      <View style={[styles.main, isMobile && styles.mainMobile]}>
+        <View style={styles.pageTitleRow}>
+          {isMobile && (
+            <TouchableOpacity
+              testID="hamburger-btn"
+              style={styles.hamburgerBtn}
+              onPress={() => setDrawerOpen(true)}>
+              <Text style={styles.hamburgerText}>☰</Text>
+            </TouchableOpacity>
+          )}
+          <Text style={styles.pageTitle}>Gym Settings</Text>
+        </View>
 
         <SettingsTabBar activeTab={activeTab} onTabChange={setActiveTab} />
 

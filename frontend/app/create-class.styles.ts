@@ -155,4 +155,27 @@ export const styles = StyleSheet.create({
     fontWeight: FontWeights.medium,
     color: AppColors.backgroundWhite,
   },
+
+  // Mobile responsive styles
+  scrollContentMobile: {
+    padding: Spacing.base,
+    paddingBottom: Spacing.jumbo,
+  },
+  formCardMobile: {
+    padding: Spacing.base,
+    borderWidth: 0,
+  },
+  rowMobile: {
+    flexDirection: 'column',
+    gap: Spacing.md,
+  },
+  btnRowMobile: {
+    flexDirection: 'column-reverse',
+    gap: Spacing.sm,
+  },
+  btnMobile: {
+    minHeight: 48,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
 });

@@ -1,8 +1,9 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import { ActivityIndicator, ScrollView, Text, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, Modal, ScrollView, Text, TouchableOpacity, View } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useAuth } from '@/hooks/useAuth';
 import { useGym } from '@/hooks/useGym';
+import { useResponsiveLayout } from '@/hooks/useResponsiveLayout';
 import { createApiClient } from '@/utils/api-client';
 import { AppColors } from '@/constants/theme';
 import { components } from '@/types/api.gen';
@@ -19,11 +20,16 @@ type GetClassBookingsResponse = components['schemas']['GetClassBookingsResponseD
 type ClassResultItem = components['schemas']['ClassResultItemDto'];
 type GetClassResultsResponse = components['schemas']['GetClassResultsResponseDto'];
 
+type MobileTab = 'info' | 'bookings' | 'results';
+
 export default function ClassManagement() {
   const router = useRouter();
   const { token } = useAuth();
   const { currentGymId } = useGym();
+  const { isMobile } = useResponsiveLayout();
   const { classId } = useLocalSearchParams<{ classId: string }>();
+  const [drawerOpen, setDrawerOpen] = useState(false);
+  const [mobileTab, setMobileTab] = useState<MobileTab>('info');
 
   const [classDetail, setClassDetail] = useState<ClassDetail | null>(null);
   const [allBookings, setAllBookings] = useState<ClassBookingItem[]>([]);
@@ -108,6 +114,7 @@ export default function ClassManagement() {
 
   const handleNavigate = useCallback(
     (key: string) => {
+      setDrawerOpen(false);
       if (key === 'schedule') router.push('/schedule-dashboard' as never);
       if (key === 'coaches') router.push('/coaches' as never);
       if (key === 'classes') router.push('/schedule-dashboard' as never);
@@ -134,12 +141,33 @@ export default function ClassManagement() {
 
   return (
     <View style={styles.root}>
-      <ClassManagementSidebar onNavigate={handleNavigate} />
+      {!isMobile && <ClassManagementSidebar onNavigate={handleNavigate} />}
+
+      {/* Mobile drawer */}
+      {isMobile && (
+        <Modal visible={drawerOpen} transparent animationType="fade" onRequestClose={() => setDrawerOpen(false)}>
+          <TouchableOpacity style={styles.drawerOverlay} activeOpacity={1} onPress={() => setDrawerOpen(false)}>
+            <View style={styles.drawerContainer}>
+              <ClassManagementSidebar onNavigate={handleNavigate} />
+            </View>
+          </TouchableOpacity>
+        </Modal>
+      )}
 
       <ScrollView
         style={styles.mainScroll}
-        contentContainerStyle={styles.mainContent}
+        contentContainerStyle={[styles.mainContent, isMobile && styles.mainContentMobile]}
         showsVerticalScrollIndicator={false}>
+
+        {isMobile && (
+          <TouchableOpacity
+            testID="hamburger-btn"
+            style={styles.hamburgerBtn}
+            onPress={() => setDrawerOpen(true)}>
+            <Text style={styles.hamburgerText}>☰</Text>
+          </TouchableOpacity>
+        )}
+
         {isLoadingClass ? (
           <View style={styles.centeredFeedback}>
             <ActivityIndicator size="large" color={AppColors.textHeading} />
@@ -184,6 +212,31 @@ export default function ClassManagement() {
                     </TouchableOpacity>
                   </>
                 ) : null}
+              </View>
+            ) : isMobile ? (
+              /* Mobile: tabbed interface for Bookings/Results */
+              <View style={styles.mobileTabsContainer}>
+                <View style={styles.mobileTabBar}>
+                  <TouchableOpacity
+                    style={[styles.mobileTab, mobileTab === 'bookings' && styles.mobileTabActive]}
+                    onPress={() => setMobileTab('bookings')}>
+                    <Text style={[styles.mobileTabText, mobileTab === 'bookings' && styles.mobileTabTextActive]}>
+                      Bookings
+                    </Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={[styles.mobileTab, mobileTab === 'results' && styles.mobileTabActive]}
+                    onPress={() => setMobileTab('results')}>
+                    <Text style={[styles.mobileTabText, mobileTab === 'results' && styles.mobileTabTextActive]}>
+                      Results
+                    </Text>
+                  </TouchableOpacity>
+                </View>
+                {mobileTab === 'bookings' ? (
+                  <BookingsPanel bookedList={bookedList} waitlistedList={waitlistedList} />
+                ) : (
+                  <ResultsPanel results={results} />
+                )}
               </View>
             ) : (
               <View style={styles.listsRow}>

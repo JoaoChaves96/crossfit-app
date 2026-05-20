@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import {
   ActivityIndicator,
+  Modal,
   ScrollView,
   Text,
   TouchableOpacity,
@@ -10,6 +11,7 @@ import { styles } from './schedule-dashboard.styles';
 import { useRouter } from 'expo-router';
 import { useAuth } from '@/hooks/useAuth';
 import { useGym } from '@/hooks/useGym';
+import { useResponsiveLayout } from '@/hooks/useResponsiveLayout';
 import { createApiClient } from '@/utils/api-client';
 import { components } from '@/types/api.gen';
 
@@ -269,6 +271,8 @@ export default function ScheduleDashboard() {
   const router = useRouter();
   const { token } = useAuth();
   const { currentGymId } = useGym();
+  const { isMobile } = useResponsiveLayout();
+  const [drawerOpen, setDrawerOpen] = useState(false);
 
   const [weekStart, setWeekStart] = useState<Date>(() => getWeekStart(new Date()));
   const [viewMode, setViewMode] = useState<ViewMode>('week');
@@ -324,47 +328,173 @@ export default function ScheduleDashboard() {
   const handlePrevWeek = () => setWeekStart((d) => addDays(d, -7));
   const handleNextWeek = () => setWeekStart((d) => addDays(d, 7));
 
+  const handleSidebarNav = (key: string) => {
+    setDrawerOpen(false);
+    if (key === 'coaches') router.push('/coaches');
+    if (key === 'members') router.push('/members' as never);
+    if (key === 'settings') router.push('/gym-settings');
+  };
+
+  const handleClassPress = (classId: string) =>
+    router.push(`/class-management?classId=${classId}` as never);
+
+  const renderContent = () => {
+    if (isLoading) {
+      return (
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color={COLOR.bodyText} />
+        </View>
+      );
+    }
+
+    if (error) {
+      return (
+        <View style={styles.errorContainer}>
+          <Text style={styles.errorText}>{error}</Text>
+          <TouchableOpacity style={styles.retryBtn} onPress={fetchClasses}>
+            <Text style={styles.retryBtnText}>Retry</Text>
+          </TouchableOpacity>
+        </View>
+      );
+    }
+
+    if (viewMode === 'list') {
+      return (
+        <ScrollView style={styles.listContainer} showsVerticalScrollIndicator={false}>
+          {weekClasses.length === 0 ? (
+            <View style={styles.emptyListContainer}>
+              <Text style={styles.emptyListText}>No classes scheduled this week</Text>
+            </View>
+          ) : (
+            weekClasses.map((cls, idx) => (
+              <ListRow key={cls.id} gymClass={cls} colorIndex={idx} />
+            ))
+          )}
+        </ScrollView>
+      );
+    }
+
+    if (isMobile) {
+      return (
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.mobileGridContainer}>
+          {weekDays.map((day, dayIdx) => {
+            const dayKey = day.toISOString().slice(0, 10);
+            const offset = classesByDay
+              .slice(0, dayIdx)
+              .reduce((sum, arr) => sum + arr.length, 0);
+            return (
+              <View key={dayKey} style={styles.mobileDayColumn}>
+                <View style={styles.dayHeader}>
+                  <Text style={styles.dayLabel}>{DAY_LABELS[dayIdx]}</Text>
+                  <Text style={styles.dayDate}>{day.getDate()}</Text>
+                </View>
+                {classesByDay[dayIdx].length === 0 ? (
+                  <View style={styles.emptyDayCard}>
+                    <Text style={styles.emptyDayText}>No classes</Text>
+                  </View>
+                ) : (
+                  classesByDay[dayIdx].map((cls, idx) => (
+                    <ClassCard
+                      key={cls.id}
+                      gymClass={cls}
+                      colorIndex={offset + idx}
+                      onPress={() => handleClassPress(cls.id)}
+                    />
+                  ))
+                )}
+              </View>
+            );
+          })}
+        </ScrollView>
+      );
+    }
+
+    return (
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={styles.gridContainer}>
+        {weekDays.map((day, dayIdx) => {
+          const dayKey = day.toISOString().slice(0, 10);
+          const offset = classesByDay
+            .slice(0, dayIdx)
+            .reduce((sum, arr) => sum + arr.length, 0);
+          return (
+            <DayColumn
+              key={dayKey}
+              dayLabel={DAY_LABELS[dayIdx]}
+              dayDate={day.getDate()}
+              classes={classesByDay[dayIdx]}
+              colorOffset={offset}
+              onClassPress={handleClassPress}
+            />
+          );
+        })}
+      </ScrollView>
+    );
+  };
+
   return (
     <View style={styles.root}>
-      <Sidebar
-        activeItem="schedule"
-        onNavigate={(key) => {
-          if (key === 'coaches') router.push('/coaches');
-          if (key === 'members') router.push('/members' as never);
-          if (key === 'settings') router.push('/gym-settings');
-        }}
-      />
+      {!isMobile && (
+        <Sidebar
+          activeItem="schedule"
+          onNavigate={handleSidebarNav}
+        />
+      )}
 
-      <View style={styles.main}>
+      {/* Mobile drawer */}
+      {isMobile && (
+        <Modal visible={drawerOpen} transparent animationType="fade" onRequestClose={() => setDrawerOpen(false)}>
+          <TouchableOpacity style={styles.drawerOverlay} activeOpacity={1} onPress={() => setDrawerOpen(false)}>
+            <View style={styles.drawerContainer}>
+              <Sidebar activeItem="schedule" onNavigate={handleSidebarNav} />
+            </View>
+          </TouchableOpacity>
+        </Modal>
+      )}
+
+      <View style={[styles.main, isMobile && styles.mainMobile]}>
         {/* Header */}
-        <View style={styles.header}>
+        <View style={[styles.header, isMobile && styles.headerMobile]}>
           <View style={styles.headerLeft}>
+            {isMobile && (
+              <TouchableOpacity
+                testID="hamburger-btn"
+                style={styles.hamburgerBtn}
+                onPress={() => setDrawerOpen(true)}>
+                <Text style={styles.hamburgerText}>☰</Text>
+              </TouchableOpacity>
+            )}
             <Text style={styles.headerTitle}>Schedule Dashboard</Text>
-            <Text style={styles.headerSubtitle}>Manage your weekly class schedule</Text>
+            {!isMobile && <Text style={styles.headerSubtitle}>Manage your weekly class schedule</Text>}
           </View>
           <TouchableOpacity
             testID="create-class-btn"
-            style={styles.createBtn}
+            style={[styles.createBtn, isMobile && styles.createBtnMobile]}
             onPress={() => router.push('/create-class' as never)}>
-            <Text style={styles.createBtnText}>+ Create Class</Text>
+            <Text style={styles.createBtnText}>{isMobile ? '+' : '+ Create Class'}</Text>
           </TouchableOpacity>
         </View>
 
         {/* Toolbar */}
-        <View style={styles.toolbar}>
+        <View style={[styles.toolbar, isMobile && styles.toolbarMobile]}>
           <View style={styles.weekNav}>
-            <TouchableOpacity testID="week-nav-prev-btn" style={styles.navArrowBtn} onPress={handlePrevWeek}>
+            <TouchableOpacity testID="week-nav-prev-btn" style={[styles.navArrowBtn, isMobile && styles.navArrowBtnMobile]} onPress={handlePrevWeek}>
               <Text style={styles.navArrowText}>{'<'}</Text>
             </TouchableOpacity>
-            <Text style={styles.weekLabel}>{formatWeekLabel(weekStart)}</Text>
-            <TouchableOpacity testID="week-nav-next-btn" style={styles.navArrowBtn} onPress={handleNextWeek}>
+            <Text style={[styles.weekLabel, isMobile && styles.weekLabelMobile]}>{formatWeekLabel(weekStart)}</Text>
+            <TouchableOpacity testID="week-nav-next-btn" style={[styles.navArrowBtn, isMobile && styles.navArrowBtnMobile]} onPress={handleNextWeek}>
               <Text style={styles.navArrowText}>{'>'}</Text>
             </TouchableOpacity>
           </View>
 
           <View style={styles.viewToggle}>
             <TouchableOpacity
-              style={[styles.toggleBtn, viewMode === 'week' && styles.toggleBtnActive]}
+              style={[styles.toggleBtn, viewMode === 'week' && styles.toggleBtnActive, isMobile && styles.toggleBtnMobile]}
               onPress={() => setViewMode('week')}>
               <Text
                 style={[
@@ -375,7 +505,7 @@ export default function ScheduleDashboard() {
               </Text>
             </TouchableOpacity>
             <TouchableOpacity
-              style={[styles.toggleBtn, viewMode === 'list' && styles.toggleBtnActive]}
+              style={[styles.toggleBtn, viewMode === 'list' && styles.toggleBtnActive, isMobile && styles.toggleBtnMobile]}
               onPress={() => setViewMode('list')}>
               <Text
                 style={[
@@ -389,53 +519,7 @@ export default function ScheduleDashboard() {
         </View>
 
         {/* Content */}
-        {isLoading ? (
-          <View style={styles.loadingContainer}>
-            <ActivityIndicator size="large" color={COLOR.bodyText} />
-          </View>
-        ) : error ? (
-          <View style={styles.errorContainer}>
-            <Text style={styles.errorText}>{error}</Text>
-            <TouchableOpacity style={styles.retryBtn} onPress={fetchClasses}>
-              <Text style={styles.retryBtnText}>Retry</Text>
-            </TouchableOpacity>
-          </View>
-        ) : viewMode === 'week' ? (
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={styles.gridContainer}>
-            {weekDays.map((day, dayIdx) => {
-              const offset = classesByDay
-                .slice(0, dayIdx)
-                .reduce((sum, arr) => sum + arr.length, 0);
-              return (
-                <DayColumn
-                  key={dayIdx}
-                  dayLabel={DAY_LABELS[dayIdx]}
-                  dayDate={day.getDate()}
-                  classes={classesByDay[dayIdx]}
-                  colorOffset={offset}
-                  onClassPress={(classId) =>
-                    router.push(`/class-management?classId=${classId}` as never)
-                  }
-                />
-              );
-            })}
-          </ScrollView>
-        ) : (
-          <ScrollView style={styles.listContainer} showsVerticalScrollIndicator={false}>
-            {weekClasses.length === 0 ? (
-              <View style={styles.emptyListContainer}>
-                <Text style={styles.emptyListText}>No classes scheduled this week</Text>
-              </View>
-            ) : (
-              weekClasses.map((cls, idx) => (
-                <ListRow key={cls.id} gymClass={cls} colorIndex={idx} />
-              ))
-            )}
-          </ScrollView>
-        )}
+        {renderContent()}
       </View>
     </View>
   );

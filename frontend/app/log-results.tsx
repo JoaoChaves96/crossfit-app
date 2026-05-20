@@ -7,12 +7,15 @@ import {
   TextInput,
   ActivityIndicator,
 } from 'react-native';
-import { styles } from './log-results.styles';
+import { styles, desktopStyles } from './log-results.styles';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '@/hooks/useAuth';
 import { useGym } from '@/hooks/useGym';
 import { createApiClient } from '@/utils/api-client';
+import { useResponsiveLayout } from '@/hooks/useResponsiveLayout';
+import { DesktopTopNav } from '@/components/DesktopTopNav';
+import { AppColors } from '@/constants/theme';
 import { components } from '@/types/api.gen';
 
 // --- Design tokens ---
@@ -206,6 +209,7 @@ export default function LogResultsScreen() {
   const router = useRouter();
   const { token, isLoading: authLoading } = useAuth();
   const { currentGymId, isLoading: gymLoading } = useGym();
+  const { isDesktop } = useResponsiveLayout();
   const params = useLocalSearchParams<{ classId: string; gymId: string }>();
   const classId = params.classId;
   const gymId = params.gymId ?? currentGymId ?? '';
@@ -348,6 +352,162 @@ export default function LogResultsScreen() {
   const isNoteType = metricType === 'note';
   const btnLabel = isEditMode ? 'UPDATE RESULT' : 'SAVE RESULT';
 
+  // ── Shared form content ────────────────────────────────────────────────────
+  const formContent = (
+    <>
+      {/* Programming section */}
+      {hasProgramming && (
+        <>
+          <ProgrammingSection content={programming!.content as string} />
+          <Divider />
+        </>
+      )}
+
+      {/* Not loggable warning */}
+      {!isLoggable && (
+        <View style={styles.warningCard}>
+          <Ionicons name="information-circle-outline" size={16} color={COLORS.fontSecondary} />
+          <Text style={styles.warningText}>
+            Result logging is not enabled for this class.
+          </Text>
+        </View>
+      )}
+
+      {/* Form section */}
+      <View style={styles.formSection}>
+        <Text style={styles.formTitle}>Your Result</Text>
+
+        {/* Edit mode indicator */}
+        {isEditMode && (
+          <View style={styles.editStateRow}>
+            <Ionicons name="pencil-outline" size={14} color={COLORS.fontTertiary} />
+            <Text style={styles.editStateLabel}>Edit state — result already logged</Text>
+          </View>
+        )}
+
+        {/* Metric type selector (only in new result mode) */}
+        {!isEditMode && (
+          <View style={styles.fieldGroup}>
+            <Text style={styles.fieldLabel}>METRIC TYPE</Text>
+            <MetricTypeSelector selected={metricType} onChange={setMetricType} />
+          </View>
+        )}
+
+        {/* Metric value input row */}
+        <View style={styles.metricRow}>
+          <View style={styles.metricInputWrap}>
+            <Text style={styles.fieldLabel}>{metricLabel}</Text>
+            {isNoteType ? (
+              <TextInput
+                testID="log-results-value-input"
+                style={[styles.metricInput, isEditMode && styles.metricInputActive]}
+                value={metricValue}
+                onChangeText={setMetricValue}
+                placeholder="Add a note…"
+                placeholderTextColor={COLORS.fontTertiary}
+                multiline
+                numberOfLines={2}
+                autoCapitalize="sentences"
+              />
+            ) : (
+              <TextInput
+                testID="log-results-value-input"
+                style={[styles.metricInput, isEditMode && styles.metricInputActive]}
+                value={metricValue}
+                onChangeText={setMetricValue}
+                keyboardType="numeric"
+                placeholder="0"
+                placeholderTextColor={COLORS.fontTertiary}
+              />
+            )}
+          </View>
+
+          {!isNoteType && (
+            <UnitSelector
+              metricType={metricType}
+              selected={unit}
+              onChange={setUnit}
+            />
+          )}
+        </View>
+
+        {/* Notes field */}
+        <View style={styles.notesWrap}>
+          <Text style={styles.fieldLabel}>NOTES (optional)</Text>
+          <TextInput
+            style={styles.notesInput}
+            value={notes}
+            onChangeText={setNotes}
+            placeholder="Add a note…"
+            placeholderTextColor={COLORS.fontTertiary}
+            multiline
+            numberOfLines={3}
+            autoCapitalize="sentences"
+          />
+        </View>
+
+        {/* Submit error */}
+        {submitError !== null && (
+          <View style={styles.errorCard}>
+            <Text style={styles.errorCardText}>{submitError}</Text>
+          </View>
+        )}
+      </View>
+    </>
+  );
+
+  const saveButton = (
+    <View style={styles.actionSection}>
+      <TouchableOpacity
+        testID="log-results-save-btn"
+        style={[styles.saveBtn, (!isLoggable || isSubmitting) && styles.saveBtnDisabled]}
+        onPress={handleSubmit}
+        disabled={!isLoggable || isSubmitting}
+        activeOpacity={0.85}
+      >
+        {isSubmitting ? (
+          <ActivityIndicator color={COLORS.white} size="small" />
+        ) : (
+          <Text style={styles.saveBtnText}>{btnLabel}</Text>
+        )}
+      </TouchableOpacity>
+    </View>
+  );
+
+  // ── Desktop layout ─────────────────────────────────────────────────────────
+  if (isDesktop) {
+    return (
+      <View style={desktopStyles.screen}>
+        <DesktopTopNav />
+        <ScrollView
+          contentContainerStyle={desktopStyles.contentArea}
+          showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
+        >
+          <View style={desktopStyles.innerWrap}>
+            {/* Back row */}
+            <TouchableOpacity style={desktopStyles.backRow} onPress={() => router.back()} activeOpacity={0.7}>
+              <Ionicons name="chevron-back" size={20} color={AppColors.textPrimary} />
+              <Text style={desktopStyles.backText}>{classTypeName}</Text>
+            </TouchableOpacity>
+
+            {/* Subtitle */}
+            {scheduledDate !== '' && (
+              <View style={styles.subtitleRow}>
+                <Ionicons name="calendar-outline" size={14} color={COLORS.fontSecondary} />
+                <Text style={styles.subtitleText}>{scheduledDate}</Text>
+              </View>
+            )}
+
+            {formContent}
+            {saveButton}
+          </View>
+        </ScrollView>
+      </View>
+    );
+  }
+
+  // ── Mobile layout ──────────────────────────────────────────────────────────
   return (
     <View style={styles.screen}>
       {/* Header */}
@@ -375,122 +535,10 @@ export default function LogResultsScreen() {
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
       >
-        {/* Programming section */}
-        {hasProgramming && (
-          <>
-            <ProgrammingSection content={programming!.content as string} />
-            <Divider />
-          </>
-        )}
-
-        {/* Not loggable warning */}
-        {!isLoggable && (
-          <View style={styles.warningCard}>
-            <Ionicons name="information-circle-outline" size={16} color={COLORS.fontSecondary} />
-            <Text style={styles.warningText}>
-              Result logging is not enabled for this class.
-            </Text>
-          </View>
-        )}
-
-        {/* Form section */}
-        <View style={styles.formSection}>
-          <Text style={styles.formTitle}>Your Result</Text>
-
-          {/* Edit mode indicator */}
-          {isEditMode && (
-            <View style={styles.editStateRow}>
-              <Ionicons name="pencil-outline" size={14} color={COLORS.fontTertiary} />
-              <Text style={styles.editStateLabel}>Edit state — result already logged</Text>
-            </View>
-          )}
-
-          {/* Metric type selector (only in new result mode) */}
-          {!isEditMode && (
-            <View style={styles.fieldGroup}>
-              <Text style={styles.fieldLabel}>METRIC TYPE</Text>
-              <MetricTypeSelector selected={metricType} onChange={setMetricType} />
-            </View>
-          )}
-
-          {/* Metric value input row */}
-          <View style={styles.metricRow}>
-            <View style={styles.metricInputWrap}>
-              <Text style={styles.fieldLabel}>{metricLabel}</Text>
-              {isNoteType ? (
-                <TextInput
-                  testID="log-results-value-input"
-                  style={[styles.metricInput, isEditMode && styles.metricInputActive]}
-                  value={metricValue}
-                  onChangeText={setMetricValue}
-                  placeholder="Add a note…"
-                  placeholderTextColor={COLORS.fontTertiary}
-                  multiline
-                  numberOfLines={2}
-                  autoCapitalize="sentences"
-                />
-              ) : (
-                <TextInput
-                  testID="log-results-value-input"
-                  style={[styles.metricInput, isEditMode && styles.metricInputActive]}
-                  value={metricValue}
-                  onChangeText={setMetricValue}
-                  keyboardType="numeric"
-                  placeholder="0"
-                  placeholderTextColor={COLORS.fontTertiary}
-                />
-              )}
-            </View>
-
-            {!isNoteType && (
-              <UnitSelector
-                metricType={metricType}
-                selected={unit}
-                onChange={setUnit}
-              />
-            )}
-          </View>
-
-          {/* Notes field */}
-          <View style={styles.notesWrap}>
-            <Text style={styles.fieldLabel}>NOTES (optional)</Text>
-            <TextInput
-              style={styles.notesInput}
-              value={notes}
-              onChangeText={setNotes}
-              placeholder="Add a note…"
-              placeholderTextColor={COLORS.fontTertiary}
-              multiline
-              numberOfLines={3}
-              autoCapitalize="sentences"
-            />
-          </View>
-
-          {/* Submit error */}
-          {submitError !== null && (
-            <View style={styles.errorCard}>
-              <Text style={styles.errorCardText}>{submitError}</Text>
-            </View>
-          )}
-        </View>
+        {formContent}
       </ScrollView>
 
-      {/* Action button */}
-      <View style={styles.actionSection}>
-        <TouchableOpacity
-          testID="log-results-save-btn"
-          style={[styles.saveBtn, (!isLoggable || isSubmitting) && styles.saveBtnDisabled]}
-          onPress={handleSubmit}
-          disabled={!isLoggable || isSubmitting}
-          activeOpacity={0.85}
-        >
-          {isSubmitting ? (
-            <ActivityIndicator color={COLORS.white} size="small" />
-          ) : (
-            <Text style={styles.saveBtnText}>{btnLabel}</Text>
-          )}
-        </TouchableOpacity>
-      </View>
+      {saveButton}
     </View>
   );
 }

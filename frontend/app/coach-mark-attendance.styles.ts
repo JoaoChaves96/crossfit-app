@@ -320,3 +320,260 @@ export const styles = StyleSheet.create({
     textAlign: 'center',
   },
 });
+
+// ─── Mobile Styles (≤768px) ────────────────────────────────────────────────
+
+export const mobileStyles = StyleSheet.create({
+  root: {
+    flex: 1,
+    flexDirection: 'column',
+    backgroundColor: AppColors.backgroundWarm,
+  },
+
+  // Main area — no sidebar
+  main: {
+    flex: 1,
+    paddingHorizontal: Spacing.lg,
+    paddingVertical: Spacing.base,
+    gap: Spacing.base,
+  },
+
+  // Header
+  header: {
+    flexDirection: 'column',
+    gap: Spacing.sm,
+  },
+  backBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.sm,
+    paddingHorizontal: Spacing.md,
+    paddingVertical: Spacing.smMd,
+    borderRadius: BorderRadius.mdSm,
+    backgroundColor: AppColors.backgroundWhite,
+    borderWidth: 1,
+    borderColor: AppColors.borderLight,
+    minHeight: 44,
+    alignSelf: 'flex-start',
+  },
+  backBtnText: {
+    fontSize: FontSizes.mdSm,
+    color: AppColors.darkTextDim,
+    fontWeight: FontWeights.regular,
+  },
+  headerTitle: {
+    fontSize: FontSizes.lg,
+    fontWeight: FontWeights.bold,
+    color: AppColors.textHeading,
+  },
+
+  // Info card — vertical on mobile
+  infoCard: {
+    backgroundColor: AppColors.backgroundScreen,
+    borderRadius: BorderRadius.lg,
+    borderWidth: 1,
+    borderColor: AppColors.backgroundDivider,
+    padding: Spacing.base,
+    gap: Spacing.md,
+  },
+  infoItem: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  infoLabel: {
+    fontSize: FontSizes.sm,
+    fontWeight: FontWeights.semibold,
+    color: AppColors.textDisabled,
+    letterSpacing: 0.5,
+    textTransform: 'uppercase',
+  },
+  infoValue: {
+    fontSize: FontSizes.body,
+    fontWeight: FontWeights.medium,
+    color: AppColors.textHeading,
+  },
+
+  // Stats row — wrap on mobile
+  statsRow: {
+    flexDirection: 'row',
+    gap: Spacing.sm,
+    flexWrap: 'wrap',
+  },
+  statCard: {
+    flex: 1,
+    minWidth: 100,
+    flexDirection: 'column',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: AppColors.backgroundWhite,
+    borderRadius: BorderRadius.lg,
+    borderWidth: 1,
+    borderColor: AppColors.backgroundDivider,
+    paddingHorizontal: Spacing.sm,
+    paddingVertical: Spacing.md,
+    gap: Spacing.sm,
+  },
+  statLabel: {
+    fontSize: FontSizes.sm,
+    fontWeight: FontWeights.medium,
+    color: AppColors.textMuted,
+    textAlign: 'center',
+  },
+  statValueBadge: {
+    borderRadius: BorderRadius.lg,
+    paddingHorizontal: Spacing.md,
+    paddingVertical: Spacing.tight,
+    minWidth: 36,
+    alignItems: 'center',
+  },
+  statValueText: {
+    fontSize: FontSizes.body,
+    fontWeight: FontWeights.bold,
+  },
+
+  // Attendance card
+  attendanceCard: {
+    flex: 1,
+    backgroundColor: AppColors.backgroundWhite,
+    borderRadius: BorderRadius.lg,
+    borderWidth: 1,
+    borderColor: AppColors.backgroundDivider,
+    paddingHorizontal: Spacing.base,
+    paddingVertical: Spacing.base,
+    gap: Spacing.md,
+  },
+  sectionHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  sectionTitle: {
+    fontSize: FontSizes.md,
+    fontWeight: FontWeights.semibold,
+    color: AppColors.textHeading,
+  },
+  sectionBadge: {
+    backgroundColor: AppColors.badgeBlueBg,
+    borderRadius: BorderRadius.lg,
+    paddingHorizontal: Spacing.smMd,
+    paddingVertical: Spacing.micro,
+  },
+  sectionBadgeText: {
+    fontSize: FontSizes.smMd,
+    fontWeight: FontWeights.medium,
+    color: AppColors.actionBlue,
+  },
+
+  // Athlete row — 64px height on mobile
+  athleteRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    minHeight: 64,
+    paddingHorizontal: Spacing.md,
+    paddingVertical: Spacing.sm,
+    borderTopWidth: 1,
+    borderTopColor: AppColors.backgroundDivider,
+  },
+  athleteRowAlt: {
+    backgroundColor: AppColors.backgroundScreen,
+  },
+  athleteNameCell: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.smMd,
+  },
+  avatarPlaceholder: {
+    width: 32,
+    height: 32,
+    borderRadius: BorderRadius.xl,
+    backgroundColor: AppColors.backgroundDivider,
+  },
+  athleteNameText: {
+    fontSize: FontSizes.body,
+    fontWeight: FontWeights.medium,
+    color: AppColors.textHeading,
+  },
+
+  // Toggle button — large touch target on mobile
+  attendanceToggleCell: {
+    alignItems: 'flex-end',
+  },
+  toggleBtn: {
+    borderRadius: BorderRadius.md,
+    paddingHorizontal: Spacing.base,
+    paddingVertical: Spacing.smMd,
+    minHeight: 44,
+    minWidth: 88,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  toggleBtnPresent: {
+    backgroundColor: AppColors.successBgVivid,
+  },
+  toggleBtnAbsent: {
+    backgroundColor: AppColors.errorBgSoft,
+  },
+  toggleBtnText: {
+    fontSize: FontSizes.body,
+    fontWeight: FontWeights.semibold,
+  },
+  toggleBtnTextPresent: {
+    color: AppColors.successDefault,
+  },
+  toggleBtnTextAbsent: {
+    color: AppColors.errorDarkest,
+  },
+
+  // Submit button
+  submitBtn: {
+    backgroundColor: AppColors.textHeading,
+    borderRadius: BorderRadius.md,
+    paddingVertical: Spacing.mdPlus,
+    alignItems: 'center',
+    justifyContent: 'center',
+    minHeight: 50,
+  },
+  submitBtnDisabled: {
+    opacity: 0.6,
+  },
+  submitBtnText: {
+    fontSize: FontSizes.bodyMd,
+    fontWeight: FontWeights.semibold,
+    color: AppColors.backgroundWhite,
+  },
+
+  // Feedback
+  successBanner: {
+    backgroundColor: AppColors.successBgVivid,
+    borderRadius: BorderRadius.mdSm,
+    paddingHorizontal: Spacing.mdPlus,
+    paddingVertical: Spacing.smMd,
+  },
+  successText: {
+    fontSize: FontSizes.mdSm,
+    fontWeight: FontWeights.medium,
+    color: AppColors.successDefault,
+  },
+  errorText: {
+    fontSize: FontSizes.mdSm,
+    color: AppColors.errorDefault,
+  },
+
+  // Empty state
+  emptyState: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: Spacing.jumboLg,
+    gap: Spacing.sm,
+  },
+  emptyTitle: {
+    fontSize: FontSizes.md,
+    fontWeight: FontWeights.semibold,
+    color: AppColors.darkSurface,
+    textAlign: 'center',
+  },
+});

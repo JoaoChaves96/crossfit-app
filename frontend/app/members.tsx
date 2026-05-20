@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import {
   ActivityIndicator,
+  Modal,
   ScrollView,
   Text,
   TouchableOpacity,
@@ -10,6 +11,7 @@ import { styles } from './members.styles';
 import { useRouter } from 'expo-router';
 import { useAuth } from '@/hooks/useAuth';
 import { useGym } from '@/hooks/useGym';
+import { useResponsiveLayout } from '@/hooks/useResponsiveLayout';
 import { createApiClient } from '@/utils/api-client';
 import { components } from '@/types/api.gen';
 
@@ -184,6 +186,32 @@ function MemberRow({ member, isAlternate }: MemberRowProps) {
   );
 }
 
+// ─── Member Card (Mobile) ────────────────────────────────────────────────────
+
+interface MemberCardProps {
+  member: GymMember;
+}
+
+function MemberCard({ member }: MemberCardProps) {
+  return (
+    <View style={styles.memberCard}>
+      <View style={styles.memberCardTop}>
+        <View style={styles.avatar}>
+          <Text style={styles.avatarText}>{getInitials(member.name)}</Text>
+        </View>
+        <View style={styles.memberCardInfo}>
+          <Text style={styles.memberName} numberOfLines={1}>{member.name}</Text>
+          <Text style={styles.cellText} numberOfLines={1}>{member.email}</Text>
+        </View>
+        <View style={styles.activeBadge}>
+          <Text style={styles.activeBadgeText}>Active</Text>
+        </View>
+      </View>
+      <Text style={styles.memberCardJoined}>Joined {formatJoinedDate(member.joinedAt)}</Text>
+    </View>
+  );
+}
+
 // ─── Empty State ──────────────────────────────────────────────────────────────
 
 function EmptyState() {
@@ -202,6 +230,8 @@ export default function MembersScreen() {
   const router = useRouter();
   const { token } = useAuth();
   const { currentGymId } = useGym();
+  const { isMobile } = useResponsiveLayout();
+  const [drawerOpen, setDrawerOpen] = useState(false);
 
   const [members, setMembers] = useState<GymMember[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -232,6 +262,7 @@ export default function MembersScreen() {
   }, [fetchMembers]);
 
   function handleNavigate(key: string) {
+    setDrawerOpen(false);
     if (key === 'schedule') router.push('/schedule-dashboard' as never);
     if (key === 'coaches') router.push('/coaches' as never);
     if (key === 'settings') router.push('/gym-settings' as never);
@@ -239,11 +270,30 @@ export default function MembersScreen() {
 
   return (
     <View style={styles.root}>
-      <Sidebar onNavigate={handleNavigate} />
+      {!isMobile && <Sidebar onNavigate={handleNavigate} />}
 
-      <View style={styles.main}>
+      {/* Mobile drawer */}
+      {isMobile && (
+        <Modal visible={drawerOpen} transparent animationType="fade" onRequestClose={() => setDrawerOpen(false)}>
+          <TouchableOpacity style={styles.drawerOverlay} activeOpacity={1} onPress={() => setDrawerOpen(false)}>
+            <View style={styles.drawerContainer}>
+              <Sidebar onNavigate={handleNavigate} />
+            </View>
+          </TouchableOpacity>
+        </Modal>
+      )}
+
+      <View style={[styles.main, isMobile && styles.mainMobile]}>
         {/* Page Header */}
         <View style={styles.pageHeader}>
+          {isMobile && (
+            <TouchableOpacity
+              testID="hamburger-btn"
+              style={styles.hamburgerBtn}
+              onPress={() => setDrawerOpen(true)}>
+              <Text style={styles.hamburgerText}>☰</Text>
+            </TouchableOpacity>
+          )}
           <Text style={styles.pageTitle}>Members</Text>
           <View style={styles.countBadge}>
             <Text style={styles.countBadgeText}>
@@ -266,6 +316,13 @@ export default function MembersScreen() {
           </View>
         ) : members.length === 0 ? (
           <EmptyState />
+        ) : isMobile ? (
+          /* Mobile: card-based list */
+          <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.memberCardList}>
+            {members.map((member) => (
+              <MemberCard key={member.id} member={member} />
+            ))}
+          </ScrollView>
         ) : (
           <View style={styles.tableCard}>
             <TableHeaderRow />

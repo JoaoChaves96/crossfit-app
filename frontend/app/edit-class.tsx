@@ -14,6 +14,7 @@ import { styles } from './edit-class.styles';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useAuth } from '@/hooks/useAuth';
 import { useGym } from '@/hooks/useGym';
+import { useResponsiveLayout } from '@/hooks/useResponsiveLayout';
 import { createApiClient } from '@/utils/api-client';
 import { components } from '@/types/api.gen';
 
@@ -245,6 +246,7 @@ export default function EditClassScreen() {
   const router = useRouter();
   const { token } = useAuth();
   const { currentGymId } = useGym();
+  const { isMobile } = useResponsiveLayout();
   const { classId } = useLocalSearchParams<{ classId: string }>();
 
   const [classLoadState, setClassLoadState] = useState<FetchState<ClassDetail>>({
@@ -437,16 +439,16 @@ export default function EditClassScreen() {
     <KeyboardAvoidingView
       style={styles.screen}
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-      <ScrollView contentContainerStyle={styles.scrollContent} keyboardShouldPersistTaps="handled">
+      <ScrollView contentContainerStyle={[styles.scrollContent, isMobile && styles.scrollContentMobile]} keyboardShouldPersistTaps="handled">
         {/* Header */}
         <View style={styles.header}>
           <Text style={[FONT.title, { color: COLOR.bodyText }]}>Edit Class</Text>
         </View>
 
         {/* Form card */}
-        <View style={styles.formCard}>
+        <View style={[styles.formCard, isMobile && styles.formCardMobile]}>
           {/* Row 1 — Class Type + Coach */}
-          <View style={styles.row}>
+          <View style={[styles.row, isMobile && styles.rowMobile]}>
             <View style={styles.rowItem}>
               <PickerField
                 testID="edit-class-class-type-picker"
@@ -470,7 +472,7 @@ export default function EditClassScreen() {
           </View>
 
           {/* Row 2 — Space + Date */}
-          <View style={styles.row}>
+          <View style={[styles.row, isMobile && styles.rowMobile]}>
             <View style={styles.rowItem}>
               <PickerField
                 testID="edit-class-space-picker"
@@ -494,7 +496,7 @@ export default function EditClassScreen() {
           </View>
 
           {/* Row 3 — Time + Capacity */}
-          <View style={styles.row}>
+          <View style={[styles.row, isMobile && styles.rowMobile]}>
             <View style={styles.rowItem}>
               <TextField
                 testID="edit-class-time-input"
@@ -519,7 +521,7 @@ export default function EditClassScreen() {
           </View>
 
           {/* Row 4 — Duration */}
-          <View style={styles.row}>
+          <View style={[styles.row, isMobile && styles.rowMobile]}>
             <View style={styles.rowItem}>
               <TextField
                 testID="edit-class-duration-input"
@@ -531,7 +533,7 @@ export default function EditClassScreen() {
                 error={formErrors.duration}
               />
             </View>
-            <View style={styles.rowItem} />
+            {!isMobile && <View style={styles.rowItem} />}
           </View>
 
           {/* Divider */}
@@ -545,19 +547,19 @@ export default function EditClassScreen() {
           ) : null}
 
           {/* Button row */}
-          <View style={styles.btnRow}>
+          <View style={[styles.btnRow, isMobile && styles.btnRowMobile]}>
             {/* Left: Cancel + Save */}
-            <View style={styles.leftBtns}>
+            <View style={[styles.leftBtns, isMobile && styles.leftBtnsMobile]}>
               <TouchableOpacity
                 testID="edit-class-cancel-btn"
-                style={styles.cancelBtn}
+                style={[styles.cancelBtn, isMobile && styles.btnMobile]}
                 onPress={() => router.back()}
                 disabled={isSubmitting || isDeleting}>
                 <Text style={[FONT.btnText, { color: COLOR.cancelBtnText }]}>Cancel</Text>
               </TouchableOpacity>
               <TouchableOpacity
                 testID="edit-class-save-btn"
-                style={[styles.saveBtn, (isSubmitting || isDeleting) && styles.saveBtnDisabled]}
+                style={[styles.saveBtn, isMobile && styles.btnMobile, (isSubmitting || isDeleting) && styles.saveBtnDisabled]}
                 onPress={handleSave}
                 disabled={isSubmitting || isDeleting}>
                 {isSubmitting ? (
@@ -569,10 +571,10 @@ export default function EditClassScreen() {
             </View>
 
             {/* Right: Delete */}
-            <View style={styles.rightGroup}>
+            <View style={[styles.rightGroup, isMobile && styles.rightGroupMobile]}>
               <TouchableOpacity
                 testID="edit-class-delete-btn"
-                style={[styles.deleteBtn, isDeleting && styles.saveBtnDisabled]}
+                style={[styles.deleteBtn, isMobile && styles.btnMobile, isDeleting && styles.saveBtnDisabled]}
                 onPress={handleDelete}
                 disabled={isSubmitting || isDeleting}>
                 {isDeleting ? (

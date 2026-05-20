@@ -1,6 +1,33 @@
 import { StyleSheet } from 'react-native';
 import { AppColors, BorderRadius, FontSizes, FontWeights, LineHeights, Spacing } from '@/constants/theme';
 
+export const desktopStyles = StyleSheet.create({
+  screen: {
+    flex: 1,
+    backgroundColor: '#F8F8F8',
+  },
+  contentArea: {
+    flex: 1,
+    alignItems: 'center',
+    paddingVertical: 32,
+    paddingHorizontal: 40,
+  },
+  innerWrap: {
+    width: 960,
+    maxWidth: '100%',
+    flex: 1,
+    gap: 20,
+  },
+  cardGrid: {
+    flexDirection: 'row',
+    gap: 16,
+  },
+  gridCol: {
+    flex: 1,
+    gap: 16,
+  },
+});
+
 export const styles = StyleSheet.create({
   screen: {
     flex: 1,

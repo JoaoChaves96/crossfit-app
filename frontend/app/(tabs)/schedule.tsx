@@ -5,6 +5,7 @@ import {
   FlatList,
   TouchableOpacity,
   ActivityIndicator,
+  ScrollView,
 } from 'react-native';
 import { useRouter, useFocusEffect } from 'expo-router';
 import { useAuth } from '@/hooks/useAuth';
@@ -13,7 +14,9 @@ import { createApiClient } from '@/utils/api-client';
 import { showConfirm, showError } from '@/utils/alert';
 import { components } from '@/types/api.gen';
 import { AppColors } from '@/constants/theme';
-import { styles } from './schedule.styles';
+import { useResponsiveLayout } from '@/hooks/useResponsiveLayout';
+import { DesktopTopNav } from '@/components/DesktopTopNav';
+import { styles, desktopStyles } from './schedule.styles';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 type ClassScheduleItem = components['schemas']['ClassScheduleItemDto'];
@@ -189,11 +192,49 @@ function ClassCard({ item, onPress, onCancel, isCancelling }: ClassCardProps) {
   );
 }
 
+// ─── Desktop Grid ─────────────────────────────────────────────────────────────
+interface DesktopGridProps {
+  classes: EnrichedClass[];
+  onClassPress: (classId: string) => void;
+  onCancelBooking: (classId: string, bookingId: string) => void;
+  cancellingBookingId: string | null;
+}
+
+function DesktopGrid({ classes, onClassPress, onCancelBooking, cancellingBookingId }: DesktopGridProps) {
+  const columns: EnrichedClass[][] = [[], [], []];
+  classes.forEach((item, index) => {
+    columns[index % 3].push(item);
+  });
+
+  return (
+    <View style={desktopStyles.cardGrid}>
+      {columns.map((col, colIdx) => (
+        <View key={colIdx} style={desktopStyles.gridCol}>
+          {col.map((item) => (
+            <ClassCard
+              key={item.id}
+              item={item}
+              onPress={() => onClassPress(item.id)}
+              onCancel={() => {
+                if (item.userBookingId) {
+                  onCancelBooking(item.id, item.userBookingId);
+                }
+              }}
+              isCancelling={cancellingBookingId === item.userBookingId}
+            />
+          ))}
+        </View>
+      ))}
+    </View>
+  );
+}
+
 // ─── Screen ───────────────────────────────────────────────────────────────────
 export default function ScheduleScreen() {
   const router = useRouter();
   const { token, isLoading: authLoading } = useAuth();
   const { currentGymId, isLoading: gymLoading } = useGym();
+  const { isDesktop } = useResponsiveLayout();
 
   const [classes, setClasses] = useState<EnrichedClass[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -277,7 +318,8 @@ export default function ScheduleScreen() {
   // ── Render states ──────────────────────────────────────────────────────────
   if (!token || !currentGymId) {
     return (
-      <View style={styles.screen}>
+      <View style={isDesktop ? desktopStyles.screen : styles.screen}>
+        {isDesktop && <DesktopTopNav />}
         <View style={styles.centeredState}>
           <Text style={styles.errorText}>Please select a gym and log in to view classes.</Text>
         </View>
@@ -287,7 +329,8 @@ export default function ScheduleScreen() {
 
   if (isLoading) {
     return (
-      <View style={styles.screen}>
+      <View style={isDesktop ? desktopStyles.screen : styles.screen}>
+        {isDesktop && <DesktopTopNav />}
         <View style={styles.centeredState}>
           <ActivityIndicator size="large" color={AppColors.textPrimary} />
         </View>
@@ -297,23 +340,14 @@ export default function ScheduleScreen() {
 
   if (error) {
     return (
-      <View style={styles.screen}>
+      <View style={isDesktop ? desktopStyles.screen : styles.screen}>
+        {isDesktop && <DesktopTopNav />}
         <View style={styles.centeredState}>
           <Text style={styles.errorText}>{error}</Text>
         </View>
       </View>
     );
   }
-
-  // ── Header ─────────────────────────────────────────────────────────────────
-  const header = (
-    <View style={styles.header}>
-      <View style={styles.gymSelector}>
-        <Text style={styles.gymName}>My Gym</Text>
-        <Text style={styles.gymDropdownCaret}>▼</Text>
-      </View>
-    </View>
-  );
 
   // ── Date separator ─────────────────────────────────────────────────────────
   const dateSeparator = (
@@ -328,8 +362,15 @@ export default function ScheduleScreen() {
   // ── Empty state ─────────────────────────────────────────────────────────────
   if (classes.length === 0) {
     return (
-      <View style={styles.screen}>
-        {header}
+      <View style={isDesktop ? desktopStyles.screen : styles.screen}>
+        {isDesktop ? <DesktopTopNav /> : (
+          <View style={styles.header}>
+            <View style={styles.gymSelector}>
+              <Text style={styles.gymName}>My Gym</Text>
+              <Text style={styles.gymDropdownCaret}>▼</Text>
+            </View>
+          </View>
+        )}
         <View style={styles.emptyContainer}>
           <View style={styles.emptyIconCircle}>
             <Text style={styles.emptyIconText}>📅</Text>
@@ -344,7 +385,38 @@ export default function ScheduleScreen() {
     );
   }
 
-  // ── Main list ──────────────────────────────────────────────────────────────
+  // ── Desktop layout ─────────────────────────────────────────────────────────
+  if (isDesktop) {
+    return (
+      <View style={desktopStyles.screen}>
+        <DesktopTopNav />
+        <View style={desktopStyles.contentArea}>
+          <View style={desktopStyles.innerWrap}>
+            {dateSeparator}
+            <ScrollView showsVerticalScrollIndicator={false} style={{ flex: 1 }}>
+              <DesktopGrid
+                classes={classes}
+                onClassPress={handleClassPress}
+                onCancelBooking={handleCancelBooking}
+                cancellingBookingId={cancellingBookingId}
+              />
+            </ScrollView>
+          </View>
+        </View>
+      </View>
+    );
+  }
+
+  // ── Mobile list ────────────────────────────────────────────────────────────
+  const header = (
+    <View style={styles.header}>
+      <View style={styles.gymSelector}>
+        <Text style={styles.gymName}>My Gym</Text>
+        <Text style={styles.gymDropdownCaret}>▼</Text>
+      </View>
+    </View>
+  );
+
   return (
     <View style={styles.screen}>
       {header}

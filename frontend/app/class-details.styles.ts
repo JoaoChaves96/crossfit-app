@@ -1,6 +1,56 @@
 import { StyleSheet } from 'react-native';
 import { AppColors, BorderRadius, FontSizes, FontWeights, Spacing } from '@/constants/theme';
 
+export const desktopStyles = StyleSheet.create({
+  screen: {
+    flex: 1,
+    backgroundColor: '#F8F8F8',
+  },
+  contentArea: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    paddingVertical: 32,
+    paddingHorizontal: 40,
+    gap: 32,
+  },
+  leftCol: {
+    width: 520,
+    gap: 24,
+  },
+  rightCol: {
+    width: 400,
+    gap: 24,
+  },
+  rightCard: {
+    backgroundColor: AppColors.backgroundWhite,
+    borderRadius: BorderRadius.lg,
+    padding: 24,
+    borderWidth: 1,
+    borderColor: AppColors.borderDefault,
+    gap: 12,
+  },
+  backRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  backText: {
+    fontFamily: 'Inter',
+    fontSize: FontSizes.body,
+    fontWeight: FontWeights.medium,
+    color: AppColors.textGray600,
+  },
+  className: {
+    fontFamily: 'Inter',
+    fontSize: FontSizes.display,
+    fontWeight: FontWeights.bold,
+    color: AppColors.textPrimary,
+  },
+  actionContainer: {
+    gap: Spacing.md,
+  },
+});
+
 export const styles = StyleSheet.create({
   screen: {
     flex: 1,

@@ -1,6 +1,24 @@
 import { StyleSheet } from 'react-native';
 import { AppColors, BorderRadius, FontSizes, FontWeights, LineHeights, Spacing } from '@/constants/theme';
 
+export const desktopStyles = StyleSheet.create({
+  screen: {
+    flex: 1,
+    backgroundColor: '#F8F8F8',
+  },
+  contentArea: {
+    flex: 1,
+    alignItems: 'center',
+    paddingVertical: 48,
+    paddingHorizontal: 40,
+  },
+  innerWrap: {
+    width: 720,
+    maxWidth: '100%',
+    flex: 1,
+  },
+});
+
 export const styles = StyleSheet.create({
   screen: {
     flex: 1,

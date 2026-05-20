@@ -5,6 +5,7 @@ import {
   TouchableOpacity,
   ActivityIndicator,
   Text,
+  ScrollView,
 } from 'react-native';
 import { useRouter, useFocusEffect } from 'expo-router';
 import { useAuth } from '@/hooks/useAuth';
@@ -13,7 +14,9 @@ import { createApiClient } from '@/utils/api-client';
 import { showConfirm, showError } from '@/utils/alert';
 import { components } from '@/types/api.gen';
 import { AppColors } from '@/constants/theme';
-import { styles } from './my-bookings.styles';
+import { useResponsiveLayout } from '@/hooks/useResponsiveLayout';
+import { DesktopTopNav } from '@/components/DesktopTopNav';
+import { styles, desktopStyles } from './my-bookings.styles';
 
 
 // ─── Types ─────────────────────────────────────────────────────────────────────
@@ -242,11 +245,66 @@ function EmptyState({ onBrowseSchedule }: EmptyStateProps) {
   );
 }
 
+// ─── Desktop Grid ─────────────────────────────────────────────────────────────
+interface DesktopBookingGridProps {
+  bookings: BookingWithClassDetails[];
+  activeTab: FilterTab;
+  gymId: string;
+  cancellingBookingId: string | null;
+  onViewDetails: (classId: string) => void;
+  onCancel: (booking: BookingWithClassDetails) => void;
+  onLogResult: (classId: string) => void;
+}
+
+function DesktopBookingGrid({
+  bookings,
+  activeTab,
+  gymId,
+  cancellingBookingId,
+  onViewDetails,
+  onCancel,
+  onLogResult,
+}: DesktopBookingGridProps) {
+  const columns: BookingWithClassDetails[][] = [[], []];
+  bookings.forEach((item, index) => {
+    columns[index % 2].push(item);
+  });
+
+  return (
+    <View style={desktopStyles.cardGrid}>
+      {columns.map((col, colIdx) => (
+        <View key={colIdx} style={desktopStyles.gridCol}>
+          {col.map((item) =>
+            activeTab === 'upcoming' ? (
+              <UpcomingCard
+                key={item.bookingId}
+                item={item}
+                isCancelling={cancellingBookingId === item.bookingId}
+                onViewDetails={() => onViewDetails(item.id)}
+                onCancel={() => onCancel(item)}
+              />
+            ) : (
+              <PastCard
+                key={item.bookingId}
+                item={item}
+                gymId={gymId}
+                onViewDetails={() => onViewDetails(item.id)}
+                onLogResult={() => onLogResult(item.id)}
+              />
+            )
+          )}
+        </View>
+      ))}
+    </View>
+  );
+}
+
 // ─── Screen ─────────────────────────────────────────────────────────────────────
 export default function MyBookingsScreen() {
   const router = useRouter();
   const { token, isLoading: authLoading } = useAuth();
   const { currentGymId, isLoading: gymLoading } = useGym();
+  const { isDesktop } = useResponsiveLayout();
 
   const [bookings, setBookings] = useState<BookingWithClassDetails[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -373,28 +431,79 @@ export default function MyBookingsScreen() {
 
   if (!token || !currentGymId) {
     return (
-      <View style={[styles.container, styles.centerContent]}>
-        <Text style={styles.errorText}>Please select a gym and log in to view your bookings.</Text>
+      <View style={isDesktop ? desktopStyles.screen : [styles.container, styles.centerContent]}>
+        {isDesktop && <DesktopTopNav />}
+        <View style={styles.centerContent}>
+          <Text style={styles.errorText}>Please select a gym and log in to view your bookings.</Text>
+        </View>
       </View>
     );
   }
 
   if (isLoading) {
     return (
-      <View style={[styles.container, styles.centerContent]}>
-        <ActivityIndicator size="large" color={AppColors.textDark3} />
+      <View style={isDesktop ? desktopStyles.screen : [styles.container, styles.centerContent]}>
+        {isDesktop && <DesktopTopNav />}
+        <View style={styles.centerContent}>
+          <ActivityIndicator size="large" color={AppColors.textDark3} />
+        </View>
       </View>
     );
   }
 
   if (error) {
     return (
-      <View style={[styles.container, styles.centerContent]}>
-        <Text style={styles.errorText}>{error}</Text>
+      <View style={isDesktop ? desktopStyles.screen : [styles.container, styles.centerContent]}>
+        {isDesktop && <DesktopTopNav />}
+        <View style={styles.centerContent}>
+          <Text style={styles.errorText}>{error}</Text>
+        </View>
       </View>
     );
   }
 
+  // ── Desktop layout ────────────────────────────────────────────────────────
+  if (isDesktop) {
+    return (
+      <View style={desktopStyles.screen}>
+        <DesktopTopNav />
+        <View style={desktopStyles.contentArea}>
+          <View style={desktopStyles.innerWrap}>
+            <View style={desktopStyles.headerRow}>
+              <Text style={styles.headerTitle}>My Bookings</Text>
+              <View style={{ width: 240 }}>
+                <FilterToggle activeTab={activeTab} onTabChange={setActiveTab} />
+              </View>
+            </View>
+
+            {activeTab === 'upcoming' && upcomingBookings.length === 0 ? (
+              <EmptyState onBrowseSchedule={handleBrowseSchedule} />
+            ) : activeTab === 'past' && pastBookings.length === 0 ? (
+              <View style={styles.emptyContainer}>
+                <Text style={styles.emptyIcon}>🗓</Text>
+                <Text style={styles.emptyTitle}>No past bookings</Text>
+                <Text style={styles.emptyDesc}>Your completed classes will appear here.</Text>
+              </View>
+            ) : (
+              <ScrollView showsVerticalScrollIndicator={false} style={{ flex: 1 }}>
+                <DesktopBookingGrid
+                  bookings={visibleBookings}
+                  activeTab={activeTab}
+                  gymId={currentGymId}
+                  cancellingBookingId={cancellingBookingId}
+                  onViewDetails={handleViewDetails}
+                  onCancel={handleCancelBooking}
+                  onLogResult={handleLogResult}
+                />
+              </ScrollView>
+            )}
+          </View>
+        </View>
+      </View>
+    );
+  }
+
+  // ── Mobile layout ─────────────────────────────────────────────────────────
   return (
     <View style={styles.container}>
       <View style={styles.contentWrap}>

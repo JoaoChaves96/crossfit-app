@@ -11,7 +11,9 @@ import { useAuth } from '@/hooks/useAuth';
 import { createApiClient } from '@/utils/api-client';
 import type { components } from '@/types/api.gen';
 import { AppColors } from '@/constants/theme';
-import { styles } from './profile.styles';
+import { useResponsiveLayout } from '@/hooks/useResponsiveLayout';
+import { DesktopTopNav } from '@/components/DesktopTopNav';
+import { styles, desktopStyles } from './profile.styles';
 
 type UserProfileDto = components['schemas']['UserProfileDto'];
 type UpdateUserProfileDto = components['schemas']['UpdateUserProfileDto'];
@@ -34,6 +36,7 @@ type ScreenState =
 
 export default function ProfileScreen() {
   const { token } = useAuth();
+  const { isDesktop } = useResponsiveLayout();
   const [screenState, setScreenState] = useState<ScreenState>({ status: 'loading' });
   const [isEditing, setIsEditing] = useState(false);
   const [editedName, setEditedName] = useState('');
@@ -81,19 +84,25 @@ export default function ProfileScreen() {
 
   if (screenState.status === 'loading') {
     return (
-      <View style={styles.centered}>
-        <ActivityIndicator size="large" color={AppColors.textDark3} />
+      <View style={isDesktop ? desktopStyles.screen : styles.centered}>
+        {isDesktop && <DesktopTopNav />}
+        <View style={styles.centered}>
+          <ActivityIndicator size="large" color={AppColors.textDark3} />
+        </View>
       </View>
     );
   }
 
   if (screenState.status === 'error') {
     return (
-      <View style={styles.centered}>
-        <Text style={styles.errorText}>{screenState.message}</Text>
-        <TouchableOpacity style={styles.retryButton} onPress={fetchProfile}>
-          <Text style={styles.retryButtonLabel}>Retry</Text>
-        </TouchableOpacity>
+      <View style={isDesktop ? desktopStyles.screen : styles.centered}>
+        {isDesktop && <DesktopTopNav />}
+        <View style={styles.centered}>
+          <Text style={styles.errorText}>{screenState.message}</Text>
+          <TouchableOpacity style={styles.retryButton} onPress={fetchProfile}>
+            <Text style={styles.retryButtonLabel}>Retry</Text>
+          </TouchableOpacity>
+        </View>
       </View>
     );
   }
@@ -101,6 +110,100 @@ export default function ProfileScreen() {
   const { profile } = screenState;
   const initials = getInitials(profile.name);
 
+  // ── Desktop layout ──────────────────────────────────────────────────────
+  if (isDesktop) {
+    return (
+      <View style={desktopStyles.screen}>
+        <DesktopTopNav />
+        <ScrollView contentContainerStyle={desktopStyles.contentArea}>
+          <View style={desktopStyles.innerWrap}>
+            {/* Avatar section */}
+            <View style={styles.avatarSection}>
+              <View style={styles.avatarBg}>
+                <Text style={styles.initialsText}>{initials}</Text>
+              </View>
+              <View style={styles.nameRow}>
+                <Text style={styles.nameText}>{isEditing ? editedName : profile.name}</Text>
+                {!isEditing && (
+                  <TouchableOpacity onPress={handleEditPress} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+                    <Text style={styles.editIconText}>{'✏'}</Text>
+                  </TouchableOpacity>
+                )}
+              </View>
+              <Text style={styles.emailText}>{profile.email}</Text>
+              <View style={styles.memberSinceRow}>
+                <Text style={styles.memberSince}>
+                  Member since {formatMemberSince(profile.createdAt)}
+                </Text>
+              </View>
+            </View>
+
+            {/* Divider */}
+            <View style={styles.dividerWrap}>
+              <View style={styles.divider} />
+            </View>
+
+            {/* Info card */}
+            <View style={styles.infoCard}>
+              <View style={styles.nameFieldRow}>
+                <Text style={styles.fieldLabel}>NAME</Text>
+                <View style={[styles.fieldInputWrap, isEditing && styles.fieldInputWrapActive]}>
+                  {isEditing ? (
+                    <TextInput
+                      style={styles.fieldInputText}
+                      value={editedName}
+                      onChangeText={setEditedName}
+                      autoFocus
+                      returnKeyType="done"
+                      onSubmitEditing={handleSave}
+                    />
+                  ) : (
+                    <Text style={styles.fieldInputText}>{profile.name}</Text>
+                  )}
+                </View>
+              </View>
+              <View style={styles.cardDivider} />
+              <View style={styles.emailFieldRow}>
+                <Text style={styles.fieldLabel}>EMAIL</Text>
+                <View style={styles.emailValueRow}>
+                  <Text style={styles.fieldInputText}>{profile.email}</Text>
+                </View>
+              </View>
+            </View>
+
+            {/* Save button */}
+            {isEditing && (
+              <View style={styles.saveButtonWrap}>
+                <TouchableOpacity
+                  testID="profile-save-btn"
+                  style={styles.saveButton}
+                  onPress={handleSave}
+                  disabled={isSaving || editedName.trim().length === 0}
+                  activeOpacity={0.8}
+                >
+                  {isSaving ? (
+                    <ActivityIndicator size="small" color={AppColors.backgroundWhite} />
+                  ) : (
+                    <Text style={styles.saveButtonLabel}>Save Changes</Text>
+                  )}
+                </TouchableOpacity>
+              </View>
+            )}
+
+            {saveError !== null && (
+              <Text style={styles.saveErrorText}>{saveError}</Text>
+            )}
+
+            <View style={styles.noteRow}>
+              <Text style={styles.noteText}>Email cannot be changed</Text>
+            </View>
+          </View>
+        </ScrollView>
+      </View>
+    );
+  }
+
+  // ── Mobile layout ─────────────────────────────────────────────────────────
   return (
     <ScrollView style={styles.screen} contentContainerStyle={styles.contentWrap}>
       {/* Status bar placeholder */}

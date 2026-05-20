@@ -14,7 +14,9 @@ import { createApiClient } from '@/utils/api-client';
 import { showConfirm, showError } from '@/utils/alert';
 import { components } from '@/types/api.gen';
 import { AppColors } from '@/constants/theme';
-import { styles } from './class-details.styles';
+import { useResponsiveLayout } from '@/hooks/useResponsiveLayout';
+import { DesktopTopNav } from '@/components/DesktopTopNav';
+import { styles, desktopStyles } from './class-details.styles';
 
 // --- Types ---
 type ClassDetailsItem = components['schemas']['ClassScheduleItemDto'];
@@ -163,6 +165,7 @@ export default function ClassDetailsScreen() {
   const { token, isLoading: authLoading } = useAuth();
   const { currentGymId, isLoading: gymLoading } = useGym();
   const { classId } = useLocalSearchParams();
+  const { isDesktop } = useResponsiveLayout();
 
   const [classData, setClassData] = useState<ClassDetailsItem | null>(null);
   const [bookingStatus, setBookingStatus] = useState<BookingStatus>('open');
@@ -311,6 +314,115 @@ export default function ClassDetailsScreen() {
   const formattedDate = `${classData.scheduledDate} · ${classData.scheduledTime}`;
   const coachLabel = `Coach: ${classData.coachName}`;
 
+  // ── Action buttons (shared) ────────────────────────────────────────────────
+  const actionButtons = (
+    <View style={isDesktop ? desktopStyles.actionContainer : styles.actionContainer}>
+      {bookingStatus === 'waitlisted' && (
+        <TouchableOpacity
+          testID="leave-waitlist-btn"
+          style={styles.leaveWaitlistBtn}
+          onPress={handleCancel}
+          disabled={isSubmitting}
+          activeOpacity={0.85}>
+          {isSubmitting ? (
+            <ActivityIndicator color={AppColors.errorDefault} size="small" />
+          ) : (
+            <Text style={styles.leaveWaitlistBtnText}>LEAVE WAITLIST</Text>
+          )}
+        </TouchableOpacity>
+      )}
+
+      {bookingStatus === 'booked' && (
+        <TouchableOpacity
+          testID="cancel-booking-btn"
+          style={styles.cancelBtn}
+          onPress={handleCancel}
+          disabled={isSubmitting}
+          activeOpacity={0.85}>
+          {isSubmitting ? (
+            <ActivityIndicator color={AppColors.backgroundWhite} size="small" />
+          ) : (
+            <Text style={styles.cancelBtnText}>CANCEL BOOKING</Text>
+          )}
+        </TouchableOpacity>
+      )}
+
+      {(canBook || canJoinWaitlist) && (
+        <TouchableOpacity
+          testID="book-btn"
+          style={styles.bookBtn}
+          onPress={handleBook}
+          disabled={isSubmitting}
+          activeOpacity={0.85}>
+          {isSubmitting ? (
+            <ActivityIndicator color={AppColors.backgroundWhite} size="small" />
+          ) : (
+            <Text style={styles.bookBtnText}>{bookBtnLabel}</Text>
+          )}
+        </TouchableOpacity>
+      )}
+    </View>
+  );
+
+  // ── Desktop layout (side-by-side) ─────────────────────────────────────────
+  if (isDesktop) {
+    return (
+      <View style={desktopStyles.screen}>
+        <DesktopTopNav />
+        <ScrollView contentContainerStyle={desktopStyles.contentArea} showsVerticalScrollIndicator={false}>
+          {/* Left column — class info + booking */}
+          <View style={desktopStyles.leftCol}>
+            {/* Back row */}
+            <TouchableOpacity style={desktopStyles.backRow} onPress={() => router.back()} activeOpacity={0.7}>
+              <Ionicons name="chevron-back" size={20} color={AppColors.textPrimary} />
+              <Text style={desktopStyles.backText}>Back to Schedule</Text>
+            </TouchableOpacity>
+
+            {/* Class name */}
+            <Text style={desktopStyles.className}>{classData.classTypeName}</Text>
+
+            {/* Meta info */}
+            <View style={styles.metaGroup}>
+              <MetaRow iconName="calendar-outline" text={formattedDate} />
+              <MetaRow iconName="person-outline" text={coachLabel} />
+            </View>
+
+            <Divider />
+
+            {/* Capacity */}
+            <CapacitySection capacity={classData.capacity} bookedCount={classData.bookedCount} />
+
+            <Divider />
+
+            {/* Booking Status */}
+            <BookingStatusSection status={bookingStatus} waitlistPosition={waitlistPosition} />
+
+            {/* Action buttons in left column */}
+            {actionButtons}
+
+            {/* Mutation error inline */}
+            {mutationError !== null && (
+              <View style={styles.mutationErrorCard}>
+                <Text style={styles.mutationErrorText}>{mutationError}</Text>
+              </View>
+            )}
+          </View>
+
+          {/* Right column — programming + results */}
+          <View style={desktopStyles.rightCol}>
+            <View style={desktopStyles.rightCard}>
+              <ProgrammingSection />
+            </View>
+            <View style={desktopStyles.rightCard}>
+              <ResultsSection />
+            </View>
+          </View>
+        </ScrollView>
+      </View>
+    );
+  }
+
+  // ── Mobile layout ──────────────────────────────────────────────────────────
   return (
     <View style={styles.screen}>
       {/* Header */}
@@ -365,52 +477,7 @@ export default function ClassDetailsScreen() {
       </ScrollView>
 
       {/* Action button */}
-      <View style={styles.actionContainer}>
-        {bookingStatus === 'waitlisted' && (
-          <TouchableOpacity
-            testID="leave-waitlist-btn"
-            style={styles.leaveWaitlistBtn}
-            onPress={handleCancel}
-            disabled={isSubmitting}
-            activeOpacity={0.85}>
-            {isSubmitting ? (
-              <ActivityIndicator color={AppColors.errorDefault} size="small" />
-            ) : (
-              <Text style={styles.leaveWaitlistBtnText}>LEAVE WAITLIST</Text>
-            )}
-          </TouchableOpacity>
-        )}
-
-        {bookingStatus === 'booked' && (
-          <TouchableOpacity
-            testID="cancel-booking-btn"
-            style={styles.cancelBtn}
-            onPress={handleCancel}
-            disabled={isSubmitting}
-            activeOpacity={0.85}>
-            {isSubmitting ? (
-              <ActivityIndicator color={AppColors.backgroundWhite} size="small" />
-            ) : (
-              <Text style={styles.cancelBtnText}>CANCEL BOOKING</Text>
-            )}
-          </TouchableOpacity>
-        )}
-
-        {(canBook || canJoinWaitlist) && (
-          <TouchableOpacity
-            testID="book-btn"
-            style={styles.bookBtn}
-            onPress={handleBook}
-            disabled={isSubmitting}
-            activeOpacity={0.85}>
-            {isSubmitting ? (
-              <ActivityIndicator color={AppColors.backgroundWhite} size="small" />
-            ) : (
-              <Text style={styles.bookBtnText}>{bookBtnLabel}</Text>
-            )}
-          </TouchableOpacity>
-        )}
-      </View>
+      {actionButtons}
     </View>
   );
 }

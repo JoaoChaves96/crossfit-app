@@ -277,4 +277,58 @@ export const styles = StyleSheet.create({
     fontSize: FontSizes.body,
     color: AppColors.textHeading,
   },
+
+  // Mobile responsive styles
+  drawerOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.4)',
+    flexDirection: 'row',
+  },
+  drawerContainer: {
+    width: 220,
+    height: '100%',
+  },
+  hamburgerBtn: {
+    width: 44,
+    height: 44,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: Spacing.sm,
+  },
+  hamburgerText: {
+    fontSize: FontSizes.xl,
+    color: AppColors.textHeading,
+  },
+  mainMobile: {
+    paddingHorizontal: Spacing.base,
+    paddingVertical: Spacing.base,
+    gap: Spacing.base,
+  },
+
+  // Member cards (mobile)
+  memberCardList: {
+    gap: Spacing.md,
+    paddingBottom: Spacing.lg,
+  },
+  memberCard: {
+    borderWidth: 1,
+    borderColor: AppColors.borderLight,
+    borderRadius: BorderRadius.mdLg,
+    padding: Spacing.base,
+    gap: Spacing.sm,
+  },
+  memberCardTop: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.md,
+  },
+  memberCardInfo: {
+    flex: 1,
+    gap: Spacing.hairline,
+  },
+  memberCardJoined: {
+    fontSize: FontSizes.smMd,
+    color: AppColors.textMuted,
+    paddingLeft: Spacing.jumboLg,
+  },
 });

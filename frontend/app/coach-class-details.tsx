@@ -6,6 +6,7 @@ import {
   TextInput,
   TouchableOpacity,
   View,
+  useWindowDimensions,
 } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useAuth } from '@/hooks/useAuth';
@@ -13,13 +14,15 @@ import { useGym } from '@/hooks/useGym';
 import { createApiClient } from '@/utils/api-client';
 import { components } from '@/types/api.gen';
 import { AppColors } from '@/constants/theme';
-import { styles } from './coach-class-details.styles';
+import { styles, mobileStyles } from './coach-class-details.styles';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 type CoachClassItem = components['schemas']['CoachClassItemDto'];
 type AddOrEditProgrammingResponse = components['schemas']['AddOrEditProgrammingResponseDto'];
 type GetClassProgrammingResponse = components['schemas']['GetClassProgrammingResponseDto'];
+
+const MOBILE_BREAKPOINT = 768;
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -117,6 +120,8 @@ export default function CoachClassDetailsScreen() {
   const router = useRouter();
   const { token } = useAuth();
   const { currentGymId } = useGym();
+  const { width } = useWindowDimensions();
+  const isMobile = width <= MOBILE_BREAKPOINT;
 
   const params = useLocalSearchParams<{
     classId: string;
@@ -235,6 +240,188 @@ export default function CoachClassDetailsScreen() {
   const formattedDateTime = scheduledDate && scheduledTime
     ? formatDateTime(scheduledDate, scheduledTime)
     : '—';
+
+  // ─── Mobile Layout ─────────────────────────────────────────────────────────
+
+  if (isMobile) {
+    const ms = mobileStyles;
+    return (
+      <View style={ms.root} testID="coach-class-details-screen">
+        <ScrollView style={ms.main} showsVerticalScrollIndicator={false}>
+          {/* Header */}
+          <View style={ms.header}>
+            <View style={ms.headerTopRow}>
+              <TouchableOpacity style={ms.backBtn} onPress={() => router.back()}>
+                <Text style={ms.backBtnText}>{'← Back'}</Text>
+              </TouchableOpacity>
+              <View style={[ms.statusBadge, { backgroundColor: statusConfig.bg }]}>
+                <Text style={[ms.statusBadgeText, { color: statusConfig.textColor }]}>
+                  {statusConfig.label}
+                </Text>
+              </View>
+            </View>
+            <Text style={ms.headerTitle} numberOfLines={2}>{headerTitle}</Text>
+          </View>
+
+          {/* Content — stacked */}
+          <View style={ms.contentColumn}>
+            {/* Info Panel */}
+            <View style={ms.infoPanel}>
+              <Text style={ms.panelTitle}>Class Info</Text>
+              <View style={ms.separator} />
+
+              <Text style={ms.fieldLabel}>CLASS TYPE</Text>
+              <Text style={ms.fieldValueBold}>{classTypeName ?? '—'}</Text>
+
+              <Text style={ms.fieldLabel}>DATE &amp; TIME</Text>
+              <Text style={ms.fieldValue}>{formattedDateTime}</Text>
+
+              <Text style={ms.fieldLabel}>SPACE</Text>
+              <Text style={ms.fieldValue}>{spaceName ?? '—'}</Text>
+
+              <Text style={ms.fieldLabel}>CAPACITY</Text>
+              <Text style={ms.fieldValue}>{bookedCountNum} booked / {capacityNum} spots</Text>
+
+              <View style={[ms.separator, ms.separatorSpacing]} />
+
+              <Text style={ms.fieldLabel}>BOOKED ATHLETES</Text>
+              <View style={ms.bookedRow}>
+                <Text style={ms.bookedRowText}>{bookedCountNum} athletes booked</Text>
+              </View>
+
+              <TouchableOpacity
+                testID="mark-attendance-nav-btn"
+                style={ms.actionBtn}
+                onPress={() => {
+                  router.push({
+                    pathname: '/coach-mark-attendance',
+                    params: {
+                      classId,
+                      gymId: currentGymId ?? '',
+                      classTypeName: classTypeName ?? '',
+                      scheduledDate: scheduledDate ?? '',
+                      scheduledTime: scheduledTime ?? '',
+                      state: classState,
+                      bookedCount: String(bookedCountNum),
+                    },
+                  });
+                }}
+                activeOpacity={0.8}>
+                <Text style={ms.actionBtnText}>Mark Attendance</Text>
+              </TouchableOpacity>
+            </View>
+
+            {/* Programming Panel */}
+            <View style={ms.progPanel}>
+              {/* Programming header row */}
+              <View style={ms.progHeader}>
+                <Text style={ms.panelTitle}>WOD Programming</Text>
+                <View style={ms.loggableRow}>
+                  <Text style={ms.loggableLabel}>Loggable</Text>
+                  <TouchableOpacity
+                    style={[
+                      ms.toggle,
+                      loggable ? ms.toggleOn : ms.toggleOff,
+                    ]}
+                    onPress={() => setLoggable((prev) => !prev)}
+                    activeOpacity={0.8}>
+                    <View style={[
+                      ms.toggleKnob,
+                      loggable ? ms.toggleKnobRight : ms.toggleKnobLeft,
+                    ]} />
+                  </TouchableOpacity>
+                </View>
+              </View>
+
+              <View style={ms.separator} />
+
+              {/* Saved programming display */}
+              {isProgrammingLoading ? (
+                <View style={ms.programmingLoadingContainer}>
+                  <ActivityIndicator size="small" color={AppColors.darkTextMuted} />
+                </View>
+              ) : savedProgramming !== null ? (
+                <>
+                  <Text style={ms.fieldLabel}>WORKOUT DETAILS</Text>
+                  <View testID="programming-wod-content" style={ms.wodContent}>
+                    <Text style={ms.wodText}>{savedProgramming.content}</Text>
+                  </View>
+                </>
+              ) : existingProgramming !== null && existingProgramming.content !== null ? (
+                <>
+                  <Text style={ms.fieldLabel}>WORKOUT DETAILS</Text>
+                  <View testID="programming-wod-content" style={ms.wodContent}>
+                    <Text style={ms.wodText}>{existingProgramming.content}</Text>
+                  </View>
+                </>
+              ) : (
+                <>
+                  <Text style={ms.fieldLabel}>WORKOUT DETAILS</Text>
+                  <View style={ms.emptyProgramming}>
+                    <Text style={ms.emptyProgrammingText}>No programming added yet.</Text>
+                  </View>
+                </>
+              )}
+
+              <View style={[ms.separator, ms.separatorSpacing]} />
+
+              {/* Edit Programming Form */}
+              <Text style={ms.formTitle}>Edit Programming</Text>
+
+              <Text style={ms.fieldLabel}>WORKOUT DETAILS</Text>
+              <TextInput
+                testID="programming-wod-input"
+                style={ms.textInputLarge}
+                placeholder="Describe the workout…"
+                placeholderTextColor={AppColors.darkTextMuted}
+                value={wodContent}
+                onChangeText={setWodContent}
+                multiline
+                textAlignVertical="top"
+              />
+
+              <Text style={ms.fieldLabel}>NOTES</Text>
+              <TextInput
+                testID="programming-notes-input"
+                style={ms.textInputSmall}
+                placeholder="Add notes or scaling instructions…"
+                placeholderTextColor={AppColors.darkTextMuted}
+                value={notesContent}
+                onChangeText={setNotesContent}
+                multiline
+                textAlignVertical="top"
+              />
+
+              {successMessage !== null && (
+                <View style={ms.successBanner}>
+                  <Text style={ms.successText}>{successMessage}</Text>
+                </View>
+              )}
+
+              {submitError !== null && (
+                <Text style={ms.errorText}>{submitError}</Text>
+              )}
+
+              <TouchableOpacity
+                testID="programming-save-btn"
+                style={[ms.actionBtn, isSubmitting && ms.actionBtnDisabled]}
+                onPress={handleSaveProgramming}
+                disabled={isSubmitting}
+                activeOpacity={0.8}>
+                {isSubmitting ? (
+                  <ActivityIndicator size="small" color={AppColors.backgroundWhite} />
+                ) : (
+                  <Text style={ms.actionBtnText}>Save Programming</Text>
+                )}
+              </TouchableOpacity>
+            </View>
+          </View>
+        </ScrollView>
+      </View>
+    );
+  }
+
+  // ─── Desktop Layout ────────────────────────────────────────────────────────
 
   return (
     <View style={styles.root} testID="coach-class-details-screen">

@@ -12,6 +12,7 @@ import {
 import { useRouter } from 'expo-router';
 import { useAuth } from '@/hooks/useAuth';
 import { useGym } from '@/hooks/useGym';
+import { useResponsiveLayout } from '@/hooks/useResponsiveLayout';
 import { createApiClient } from '@/utils/api-client';
 import { components } from '@/types/api.gen';
 import { AppColors } from '@/constants/theme';
@@ -320,18 +321,81 @@ function InviteModal({ visible, onClose, onSuccess, gymId, token }: InviteModalP
   );
 }
 
+// ─── Coach Card (Mobile) ─────────────────────────────────────────────────────
+
+interface CoachCardProps {
+  coach: CoachListItem;
+  onChangeStatus: (coachUserId: string, status: CoachStatus) => Promise<void>;
+  isChangingStatus: boolean;
+}
+
+function CoachCard({ coach, onChangeStatus, isChangingStatus }: CoachCardProps) {
+  const isActive = coach.status === 'active';
+
+  function handleDeactivate() {
+    Alert.alert(
+      'Deactivate Coach',
+      `Are you sure you want to deactivate ${coach.email}?`,
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Deactivate',
+          style: 'destructive',
+          onPress: () => onChangeStatus(coach.userId, 'inactive'),
+        },
+      ],
+    );
+  }
+
+  return (
+    <View style={styles.coachCard}>
+      <View style={styles.coachCardTop}>
+        <View style={styles.coachAvatar}>
+          <Text style={styles.coachAvatarText}>
+            {coach.email.charAt(0).toUpperCase()}
+          </Text>
+        </View>
+        <View style={styles.coachCardInfo}>
+          <Text style={styles.coachEmail} numberOfLines={1}>{coach.email}</Text>
+          <Text style={styles.coachRole}>{coach.role}</Text>
+        </View>
+        <StatusBadge status={coach.status} />
+      </View>
+      <View style={styles.coachCardActions}>
+        {isActive ? (
+          <ActionButton
+            label="Deactivate"
+            onPress={handleDeactivate}
+            variant="deactivate"
+            disabled={isChangingStatus}
+          />
+        ) : (
+          <ActionButton
+            label="Reactivate"
+            onPress={() => onChangeStatus(coach.userId, 'active')}
+            variant="reactivate"
+            disabled={isChangingStatus}
+          />
+        )}
+      </View>
+    </View>
+  );
+}
+
 // ─── Main Screen ──────────────────────────────────────────────────────────────
 
 export default function CoachesScreen() {
   const router = useRouter();
   const { token } = useAuth();
   const { currentGymId } = useGym();
+  const { isMobile } = useResponsiveLayout();
 
   const [coaches, setCoaches] = useState<CoachListItem[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [modalVisible, setModalVisible] = useState(false);
   const [changingStatusId, setChangingStatusId] = useState<string | null>(null);
+  const [drawerOpen, setDrawerOpen] = useState(false);
 
   const fetchCoaches = useCallback(async () => {
     if (!token || !currentGymId) return;
@@ -382,29 +446,55 @@ export default function CoachesScreen() {
     fetchCoaches();
   }
 
+  const handleSidebarNav = (key: string) => {
+    setDrawerOpen(false);
+    if (key === 'schedule') router.push('/schedule-dashboard');
+  };
+
   return (
     <View style={styles.root}>
-      <Sidebar
-        activeItem="coaches"
-        onNavigate={(key) => {
-          if (key === 'schedule') router.push('/schedule-dashboard');
-        }}
-      />
+      {!isMobile && (
+        <Sidebar
+          activeItem="coaches"
+          onNavigate={handleSidebarNav}
+        />
+      )}
 
-      <View style={styles.main}>
+      {/* Mobile drawer */}
+      {isMobile && (
+        <Modal visible={drawerOpen} transparent animationType="fade" onRequestClose={() => setDrawerOpen(false)}>
+          <TouchableOpacity style={styles.drawerOverlay} activeOpacity={1} onPress={() => setDrawerOpen(false)}>
+            <View style={styles.drawerContainer}>
+              <Sidebar activeItem="coaches" onNavigate={handleSidebarNav} />
+            </View>
+          </TouchableOpacity>
+        </Modal>
+      )}
+
+      <View style={[styles.main, isMobile && styles.mainMobile]}>
         {/* Header */}
         <View style={styles.header}>
           <View style={styles.headerLeft}>
+            {isMobile && (
+              <TouchableOpacity
+                testID="hamburger-btn"
+                style={styles.hamburgerBtn}
+                onPress={() => setDrawerOpen(true)}>
+                <Text style={styles.hamburgerText}>☰</Text>
+              </TouchableOpacity>
+            )}
             <Text style={styles.headerTitle}>Coaches</Text>
-            <Text style={styles.headerSubtitle}>
-              {'Manage your gym\'s coaching staff'}
-            </Text>
+            {!isMobile && (
+              <Text style={styles.headerSubtitle}>
+                {'Manage your gym\'s coaching staff'}
+              </Text>
+            )}
           </View>
           <TouchableOpacity
             testID="invite-coach-btn"
-            style={styles.inviteBtn}
+            style={[styles.inviteBtn, isMobile && styles.inviteBtnMobile]}
             onPress={() => setModalVisible(true)}>
-            <Text style={styles.inviteBtnText}>+ Invite Coach</Text>
+            <Text style={styles.inviteBtnText}>{isMobile ? '+' : '+ Invite Coach'}</Text>
           </TouchableOpacity>
         </View>
 
@@ -432,6 +522,18 @@ export default function CoachesScreen() {
               <Text style={styles.inviteBtnText}>Invite Coach</Text>
             </TouchableOpacity>
           </View>
+        ) : isMobile ? (
+          /* Mobile: card-based layout */
+          <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.coachCardList}>
+            {coaches.map((coach) => (
+              <CoachCard
+                key={coach.id}
+                coach={coach}
+                onChangeStatus={handleChangeStatus}
+                isChangingStatus={changingStatusId === coach.userId}
+              />
+            ))}
+          </ScrollView>
         ) : (
           <View style={styles.listCard}>
             {/* Table header */}

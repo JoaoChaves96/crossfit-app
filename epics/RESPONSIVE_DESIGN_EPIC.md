@@ -1,6 +1,6 @@
 # Epic Q — Responsive Design (Coach Mobile + Athlete Desktop)
 
-**Status:** 🟡 NOT STARTED  
+**Status:** ✅ COMPLETE (2026-05-19)  
 **Phase:** 1 of 2 (Phase 2: Owner screens — see Future Work below)
 
 ## Goal
@@ -45,45 +45,61 @@ Adapt athlete screens so they don't look like a phone app stretched on a laptop.
 
 ## Task Sequence
 
-### Task #1 — UX Design: Coach Mobile Frames
+### Task #1 — UX Design: Coach Mobile Frames ✅ COMPLETE (2026-05-19)
 **Agent:** `ux-designer`  
 **Deliverable:** Mobile-variant frames in `designs/coach-screens.pen` for all 3 coach screens  
-**Constraint:** Must match existing app look & feel (design tokens, spacing, typography from athlete mobile screens)
+**Constraint:** Must match existing app look & feel (design tokens, spacing, typography from athlete mobile screens)  
+**Frames:** `hnkOL` (My Classes), `gXPN7` (Class Details), `PWqpG` (Mark Attendance)
 
-### Task #2 — UX Design: Athlete Desktop Frames
+### Task #2 — UX Design: Athlete Desktop Frames ✅ COMPLETE (2026-05-19)
 **Agent:** `ux-designer`  
 **Deliverable:** Desktop-variant frames in `designs/athlete-screens.pen` for all 7 athlete screens  
-**Constraint:** Must feel like the same app — same design language, just better use of space
+**Constraint:** Must feel like the same app — same design language, just better use of space  
+**Frames:** `xINPc` (Schedule), `J3IHN` (My Bookings), `bnWAo` (Training History), `WwbkY` (Profile), `e4xgL` (Class Details), `twcwR` (Log Results), `stqJL` (Invites)  
+**Design decisions:** Top nav bar replaces bottom tabs on desktop; content centered in 960px (grids) or 480-560px (forms); multi-column grids for cards
 
-### Task #3 — Frontend: Coach Mobile Responsive
+### Task #3 — Frontend: Coach Mobile Responsive ✅ COMPLETE (2026-05-19)
 **Agent:** `frontend-developer`  
 **Deliverable:** All 3 coach screens render correctly on mobile viewports (≤768px)  
-**Approach:** Use responsive breakpoints, conditional layouts, no separate mobile routes  
+**Approach:** `useWindowDimensions()` with 768px breakpoint, mobile styles in separate `mobileStyles` exports  
 **Done when:** Coach screens usable on iPhone-sized viewport in browser
 
-### Task #4 — Frontend: Athlete Desktop Responsive
+### Task #4 — Frontend: Athlete Desktop Responsive ✅ COMPLETE (2026-05-19)
 **Agent:** `frontend-developer`  
 **Deliverable:** All 7 athlete screens render correctly on desktop viewports (≥1024px)  
-**Approach:** Max-width containers, grid layouts where appropriate, no stretched single-column  
+**Approach:** `useResponsiveLayout` hook (1024px breakpoint), `DesktopTopNav` component, desktop styles in `.styles.ts` files  
 **Done when:** Athlete screens look intentional on a 1440px wide browser window
 
 ---
 
-## Future Work — Phase 2 (NOT in scope)
+## Phase 2 — Owner Screens → Mobile
 
-### Owner Screens → Mobile
+**Status:** ✅ COMPLETE (2026-05-19)
 
-Owner screens are the most complex (sidebars, multi-panel class management, settings tabs, tables). These need mobile adaptation next.
+Owner screens are the most complex (sidebars, multi-panel class management, settings tabs, tables). These need mobile adaptation.
 
-**Screens to address in Phase 2:**
-- `schedule-dashboard.tsx` — Week view + sidebar navigation
-- `class-management/` — Multi-panel with sidebar (bookings, results, header)
-- `create-class.tsx` / `edit-class.tsx` — Complex forms
-- `gym-settings/` — Tabbed settings with sidebar
-- `coaches.tsx` — Coach list + invite modal
-- `members.tsx` — Members table
+**Screens:**
+| Screen | File | What needs to change |
+|--------|------|---------------------|
+| Schedule Dashboard | `schedule-dashboard.tsx` | Collapse sidebar, vertical week nav, stacked day view |
+| Class Management | `class-management/` | Collapse sidebar + panels into tabbed single-column |
+| Create Class | `create-class.tsx` | Full-width form, larger inputs |
+| Edit Class | `edit-class.tsx` | Full-width form, larger inputs |
+| Gym Settings | `gym-settings/` | Replace sidebar with tab bar, stack form content |
+| Coaches | `coaches.tsx` | Card list, full-screen invite modal |
+| Members | `members.tsx` | Card list replacing table |
 
-**Why deferred:** Owner tasks (creating classes, managing settings) are typically done at a desk. Coach mobile is higher priority because coaches actively use their phone during class.
+### Task #5 — UX Design: Owner Mobile Frames ✅ COMPLETE (2026-05-19)
+**Agent:** `ux-designer`  
+**Deliverable:** Mobile-variant frames in `designs/gym-owner-screens.pen` for all 7 owner screens  
+**Constraint:** Must match coach mobile + athlete mobile design language (same tokens, card styles, touch targets)  
+**Frames:** `XbXLT` (Schedule), `7iKEc` (Class Management), `VeMLd` (Create Class), `5gBZA` (Edit Class), `nU1Kb` (Gym Settings), `zPcNM` (Coaches), `ZUwOd` (Members)
+
+### Task #6 — Frontend: Owner Mobile Responsive ✅ COMPLETE (2026-05-19)
+**Agent:** `frontend-developer`  
+**Deliverable:** All 7 owner screens render correctly on mobile viewports (≤768px)  
+**Approach:** `useResponsiveLayout` hook (added `isMobile` at 768px), hamburger drawer replaces sidebars, tabbed panels, card lists replace tables  
+**Done when:** Owner screens usable on iPhone-sized viewport in browser
 
 ---
 

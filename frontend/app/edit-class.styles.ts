@@ -186,4 +186,34 @@ export const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
+
+  // Mobile responsive styles
+  scrollContentMobile: {
+    padding: Spacing.base,
+    paddingBottom: Spacing.jumbo,
+  },
+  formCardMobile: {
+    padding: Spacing.base,
+    borderWidth: 0,
+  },
+  rowMobile: {
+    flexDirection: 'column',
+    gap: Spacing.md,
+  },
+  btnRowMobile: {
+    flexDirection: 'column',
+    gap: Spacing.md,
+  },
+  leftBtnsMobile: {
+    flexDirection: 'column',
+    gap: Spacing.sm,
+  },
+  rightGroupMobile: {
+    alignItems: 'stretch',
+  },
+  btnMobile: {
+    minHeight: 48,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
 });

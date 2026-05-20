@@ -79,6 +79,27 @@ export const styles = StyleSheet.create({
     color: AppColors.textDisabled,
   },
 
+  // Mobile drawer
+  drawerOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.4)',
+    flexDirection: 'row',
+  },
+  drawerContainer: {
+    width: 220,
+    height: '100%',
+  },
+  hamburgerBtn: {
+    width: 44,
+    height: 44,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  hamburgerText: {
+    fontSize: FontSizes.xl,
+    color: AppColors.textHeading,
+  },
+
   // Main content
   mainScroll: {
     flex: 1,
@@ -88,6 +109,42 @@ export const styles = StyleSheet.create({
     paddingVertical: Spacing.xl,
     gap: Spacing.lg,
     flexGrow: 1,
+  },
+  mainContentMobile: {
+    paddingHorizontal: Spacing.base,
+    paddingVertical: Spacing.base,
+  },
+
+  // Mobile tabs
+  mobileTabsContainer: {
+    flex: 1,
+    gap: Spacing.base,
+  },
+  mobileTabBar: {
+    flexDirection: 'row',
+    borderBottomWidth: 1,
+    borderBottomColor: AppColors.backgroundDivider,
+  },
+  mobileTab: {
+    flex: 1,
+    paddingVertical: Spacing.md,
+    alignItems: 'center',
+    justifyContent: 'center',
+    minHeight: 44,
+  },
+  mobileTabActive: {
+    borderBottomWidth: 2,
+    borderBottomColor: AppColors.textHeading,
+  },
+  mobileTabText: {
+    fontSize: FontSizes.body,
+    fontWeight: FontWeights.regular,
+    color: AppColors.textMuted,
+    fontFamily: 'Inter',
+  },
+  mobileTabTextActive: {
+    fontWeight: FontWeights.semibold,
+    color: AppColors.textHeading,
   },
 
   // Loading / error

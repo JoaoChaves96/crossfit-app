@@ -79,12 +79,42 @@ export const styles = StyleSheet.create({
     color: AppColors.textDisabled,
   },
 
+  // Mobile drawer
+  drawerOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.4)',
+    flexDirection: 'row',
+  },
+  drawerContainer: {
+    width: 220,
+    height: '100%',
+  },
+  hamburgerBtn: {
+    width: 44,
+    height: 44,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  hamburgerText: {
+    fontSize: FontSizes.xl,
+    color: AppColors.textHeading,
+  },
+  pageTitleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+
   // Main area
   main: {
     flex: 1,
     paddingHorizontal: Spacing.jumboLg,
     paddingVertical: Spacing.jumbo,
     gap: Spacing.xl,
+  },
+  mainMobile: {
+    paddingHorizontal: Spacing.base,
+    paddingVertical: Spacing.base,
+    gap: Spacing.base,
   },
   pageTitle: {
     fontSize: FontSizes.title,
@@ -297,7 +327,8 @@ export const styles = StyleSheet.create({
     borderColor: AppColors.backgroundDivider,
     padding: Spacing.xxl,
     gap: Spacing.lg,
-    width: 480,
+    width: '100%',
+    maxWidth: 480,
   },
   formCardTitle: {
     fontSize: FontSizes.body,
@@ -413,7 +444,8 @@ export const styles = StyleSheet.create({
     borderColor: AppColors.backgroundDivider,
     padding: Spacing.xxl,
     gap: Spacing.lg,
-    width: 520,
+    width: '100%',
+    maxWidth: 520,
   },
 
   // Toggle row
@@ -512,7 +544,8 @@ export const styles = StyleSheet.create({
     borderColor: AppColors.backgroundDivider,
     padding: Spacing.xxl,
     gap: Spacing.lg,
-    width: 480,
+    width: '100%',
+    maxWidth: 480,
   },
   profileDescInput: {
     height: 96,

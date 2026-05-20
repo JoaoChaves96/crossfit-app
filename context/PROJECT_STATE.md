@@ -22,14 +22,16 @@ Crossfit class booking application.
 
 ## Current Phase (2026-05-18)
 
-**EPIC:** Responsive Design — Phase 1 (Epic Q) — 🟡 NOT STARTED  
+**EPIC:** Responsive Design — Phase 1 (Epic Q) — ✅ COMPLETE (2026-05-19)  
 **→ See `epics/RESPONSIVE_DESIGN_EPIC.md` for full task breakdown**
-- ⬜ Task #1: UX Design — Coach mobile frames in `coach-screens.pen`
-- ⬜ Task #2: UX Design — Athlete desktop frames in `athlete-screens.pen`
-- ⬜ Task #3: Frontend — Coach screens responsive (mobile)
-- ⬜ Task #4: Frontend — Athlete screens responsive (desktop)
+- ✅ Task #1: UX Design — Coach mobile frames in `coach-screens.pen`
+- ✅ Task #2: UX Design — Athlete desktop frames in `athlete-screens.pen`
+- ✅ Task #3: Frontend — Coach screens responsive (mobile)
+- ✅ Task #4: Frontend — Athlete screens responsive (desktop)
 
-**Next:** Responsive Design — Phase 2 (Owner screens → mobile) — documented in epic
+**EPIC:** Responsive Design — Phase 2 (Epic Q cont.) — ✅ COMPLETE (2026-05-19)  
+- ✅ Task #5: UX Design — Owner mobile frames in `gym-owner-screens.pen`
+- ✅ Task #6: Frontend — Owner screens responsive (mobile)
 
 ## Previous Phase (2026-05-07)
 

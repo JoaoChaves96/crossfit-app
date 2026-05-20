@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useState } from 'react';
 import {
   ActivityIndicator,
   FlatList,
+  ScrollView,
   Text,
   TouchableOpacity,
   View,
@@ -12,7 +13,9 @@ import { useGym } from '@/hooks/useGym';
 import { createApiClient } from '@/utils/api-client';
 import { components } from '@/types/api.gen';
 import { AppColors } from '@/constants/theme';
-import { styles } from './training-history.styles';
+import { useResponsiveLayout } from '@/hooks/useResponsiveLayout';
+import { DesktopTopNav } from '@/components/DesktopTopNav';
+import { styles, desktopStyles } from './training-history.styles';
 
 // ─── Types ─────────────────────────────────────────────────────────────────────
 type TrainingHistoryItem = components['schemas']['TrainingHistoryItemDto'];
@@ -82,6 +85,7 @@ export default function TrainingHistoryScreen() {
   const router = useRouter();
   const { token, isLoading: authLoading } = useAuth();
   const { currentGymId, isLoading: gymLoading } = useGym();
+  const { isDesktop } = useResponsiveLayout();
 
   const [history, setHistory] = useState<TrainingHistoryItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -131,28 +135,63 @@ export default function TrainingHistoryScreen() {
 
   if (!token || !currentGymId) {
     return (
-      <View style={[styles.container, styles.centerContent]}>
-        <Text style={styles.errorText}>Please select a gym and log in to view your history.</Text>
+      <View style={isDesktop ? desktopStyles.screen : [styles.container, styles.centerContent]}>
+        {isDesktop && <DesktopTopNav />}
+        <View style={[styles.container, styles.centerContent]}>
+          <Text style={styles.errorText}>Please select a gym and log in to view your history.</Text>
+        </View>
       </View>
     );
   }
 
   if (isLoading) {
     return (
-      <View style={[styles.container, styles.centerContent]}>
-        <ActivityIndicator size="large" color={AppColors.textDark3} />
+      <View style={isDesktop ? desktopStyles.screen : [styles.container, styles.centerContent]}>
+        {isDesktop && <DesktopTopNav />}
+        <View style={[styles.container, styles.centerContent]}>
+          <ActivityIndicator size="large" color={AppColors.textDark3} />
+        </View>
       </View>
     );
   }
 
   if (error) {
     return (
-      <View style={[styles.container, styles.centerContent]}>
-        <Text style={styles.errorText}>{error}</Text>
+      <View style={isDesktop ? desktopStyles.screen : [styles.container, styles.centerContent]}>
+        {isDesktop && <DesktopTopNav />}
+        <View style={[styles.container, styles.centerContent]}>
+          <Text style={styles.errorText}>{error}</Text>
+        </View>
       </View>
     );
   }
 
+  // ── Desktop layout ────────────────────────────────────────────────────────
+  if (isDesktop) {
+    return (
+      <View style={desktopStyles.screen}>
+        <DesktopTopNav />
+        <View style={desktopStyles.contentArea}>
+          <View style={desktopStyles.innerWrap}>
+            <Text style={styles.headerTitle}>Training History</Text>
+            {history.length === 0 ? (
+              <EmptyState />
+            ) : (
+              <ScrollView showsVerticalScrollIndicator={false} style={{ flex: 1 }}>
+                <View style={{ gap: 12 }}>
+                  {history.map((item) => (
+                    <HistoryCard key={item.classId} item={item} onPress={() => handleCardPress(item.classId)} />
+                  ))}
+                </View>
+              </ScrollView>
+            )}
+          </View>
+        </View>
+      </View>
+    );
+  }
+
+  // ── Mobile layout ─────────────────────────────────────────────────────────
   return (
     <View style={styles.container}>
       <View style={styles.contentWrap}>

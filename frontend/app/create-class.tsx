@@ -12,6 +12,7 @@ import {
 import { useRouter } from 'expo-router';
 import { useAuth } from '@/hooks/useAuth';
 import { useGym } from '@/hooks/useGym';
+import { useResponsiveLayout } from '@/hooks/useResponsiveLayout';
 import { createApiClient } from '@/utils/api-client';
 import { components } from '@/types/api.gen';
 import { AppColors } from '@/constants/theme';
@@ -206,6 +207,7 @@ export default function CreateClassScreen() {
   const router = useRouter();
   const { token } = useAuth();
   const { currentGymId } = useGym();
+  const { isMobile } = useResponsiveLayout();
 
   const [classTypesFetch, setClassTypesFetch] = useState<FetchState<PickerItem[]>>({
     status: 'loading',
@@ -327,7 +329,7 @@ export default function CreateClassScreen() {
     <KeyboardAvoidingView
       style={styles.screen}
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-      <ScrollView contentContainerStyle={styles.scrollContent} keyboardShouldPersistTaps="handled">
+      <ScrollView contentContainerStyle={[styles.scrollContent, isMobile && styles.scrollContentMobile]} keyboardShouldPersistTaps="handled">
 
         {/* Header */}
         <View style={styles.header}>
@@ -338,10 +340,10 @@ export default function CreateClassScreen() {
         </View>
 
         {/* Form card */}
-        <View style={styles.formCard}>
+        <View style={[styles.formCard, isMobile && styles.formCardMobile]}>
 
           {/* Row 1 — Date and Time */}
-          <View style={styles.row}>
+          <View style={[styles.row, isMobile && styles.rowMobile]}>
             <View style={styles.rowItem}>
               <TextField
                 testID="create-class-date-input"
@@ -365,7 +367,7 @@ export default function CreateClassScreen() {
           </View>
 
           {/* Row 2 — Class Type */}
-          <View style={styles.row}>
+          <View style={[styles.row, isMobile && styles.rowMobile]}>
             <View style={styles.rowItem}>
               <PickerField
                 testID="create-class-class-type-picker"
@@ -395,7 +397,7 @@ export default function CreateClassScreen() {
           </View>
 
           {/* Row 3 — Space */}
-          <View style={styles.row}>
+          <View style={[styles.row, isMobile && styles.rowMobile]}>
             <View style={styles.rowItem}>
               <PickerField
                 testID="create-class-space-picker"
@@ -423,7 +425,7 @@ export default function CreateClassScreen() {
           </View>
 
           {/* Row 4 — Duration */}
-          <View style={styles.row}>
+          <View style={[styles.row, isMobile && styles.rowMobile]}>
             <View style={styles.rowItem}>
               <TextField
                 testID="create-class-duration-input"
@@ -435,7 +437,7 @@ export default function CreateClassScreen() {
                 error={formErrors.duration}
               />
             </View>
-            <View style={styles.rowItem} />
+            {!isMobile && <View style={styles.rowItem} />}
           </View>
 
           {/* Divider */}
@@ -449,17 +451,17 @@ export default function CreateClassScreen() {
           ) : null}
 
           {/* Buttons */}
-          <View style={styles.btnRow}>
+          <View style={[styles.btnRow, isMobile && styles.btnRowMobile]}>
             <TouchableOpacity
               testID="create-class-cancel-btn"
-              style={styles.cancelBtn}
+              style={[styles.cancelBtn, isMobile && styles.btnMobile]}
               onPress={() => router.back()}
               disabled={isSubmitting}>
               <Text style={styles.cancelBtnText}>Cancel</Text>
             </TouchableOpacity>
             <TouchableOpacity
               testID="create-class-save-btn"
-              style={[styles.saveBtn, isSubmitting && styles.saveBtnDisabled]}
+              style={[styles.saveBtn, isMobile && styles.btnMobile, isSubmitting && styles.saveBtnDisabled]}
               onPress={handleSubmit}
               disabled={isSubmitting}>
               {isSubmitting ? (

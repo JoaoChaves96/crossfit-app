@@ -270,6 +270,73 @@ export const styles = StyleSheet.create({
     color: AppColors.textDisabled,
   },
 
+  // Mobile styles
+  drawerOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.4)',
+    flexDirection: 'row',
+  },
+  drawerContainer: {
+    width: 220,
+    height: '100%',
+  },
+  mainMobile: {
+    paddingHorizontal: Spacing.base,
+    paddingVertical: Spacing.base,
+    gap: Spacing.base,
+  },
+  headerMobile: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  hamburgerBtn: {
+    width: 44,
+    height: 44,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: Spacing.sm,
+  },
+  hamburgerText: {
+    fontSize: FontSizes.xl,
+    color: AppColors.textHeading,
+  },
+  createBtnMobile: {
+    paddingHorizontal: Spacing.md,
+    paddingVertical: Spacing.md,
+    minWidth: 44,
+    minHeight: 44,
+  },
+  toolbarMobile: {
+    flexDirection: 'column',
+    alignItems: 'stretch',
+    gap: Spacing.sm,
+  },
+  navArrowBtnMobile: {
+    minWidth: 44,
+    minHeight: 44,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  weekLabelMobile: {
+    fontSize: FontSizes.mdSm,
+  },
+  toggleBtnMobile: {
+    paddingHorizontal: Spacing.base,
+    paddingVertical: Spacing.smMd,
+    minHeight: 44,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  mobileGridContainer: {
+    flexDirection: 'row',
+    gap: Spacing.md,
+    paddingBottom: Spacing.lg,
+  },
+  mobileDayColumn: {
+    width: 160,
+    gap: Spacing.sm,
+  },
+
   // List view
   listContainer: {
     flex: 1,

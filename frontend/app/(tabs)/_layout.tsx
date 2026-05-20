@@ -5,9 +5,11 @@ import { HapticTab } from '@/components/haptic-tab';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { Colors } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
+import { useResponsiveLayout } from '@/hooks/useResponsiveLayout';
 
 export default function TabLayout() {
   const colorScheme = useColorScheme();
+  const { isDesktop } = useResponsiveLayout();
 
   return (
     <Tabs
@@ -15,6 +17,8 @@ export default function TabLayout() {
         tabBarActiveTintColor: Colors[colorScheme ?? 'light'].tint,
         headerShown: false,
         tabBarButton: HapticTab,
+        // Hide bottom tab bar on desktop — top nav is used instead
+        tabBarStyle: isDesktop ? { display: 'none' } : undefined,
       }}>
       <Tabs.Screen
         name="index"

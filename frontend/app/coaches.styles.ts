@@ -300,9 +300,11 @@ export const styles = StyleSheet.create({
     backgroundColor: AppColors.overlay,
     alignItems: 'center',
     justifyContent: 'center',
+    padding: Spacing.base,
   },
   modalCard: {
-    width: 440,
+    width: '100%',
+    maxWidth: 440,
     backgroundColor: AppColors.backgroundWhite,
     borderRadius: BorderRadius.lg,
     padding: Spacing.xxl,
@@ -380,5 +382,65 @@ export const styles = StyleSheet.create({
     fontSize: FontSizes.body,
     fontWeight: FontWeights.medium,
     color: AppColors.backgroundWhite,
+  },
+
+  // Mobile responsive styles
+  drawerOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.4)',
+    flexDirection: 'row',
+  },
+  drawerContainer: {
+    width: 220,
+    height: '100%',
+  },
+  hamburgerBtn: {
+    width: 44,
+    height: 44,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: Spacing.sm,
+  },
+  hamburgerText: {
+    fontSize: FontSizes.xl,
+    color: AppColors.textHeading,
+  },
+  mainMobile: {
+    paddingHorizontal: Spacing.base,
+    paddingVertical: Spacing.base,
+    gap: Spacing.base,
+  },
+  inviteBtnMobile: {
+    minWidth: 44,
+    minHeight: 44,
+    paddingHorizontal: Spacing.md,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+
+  // Coach cards (mobile)
+  coachCardList: {
+    gap: Spacing.md,
+    paddingBottom: Spacing.lg,
+  },
+  coachCard: {
+    borderWidth: 1,
+    borderColor: AppColors.backgroundDivider,
+    borderRadius: BorderRadius.mdLg,
+    padding: Spacing.base,
+    gap: Spacing.md,
+  },
+  coachCardTop: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.md,
+  },
+  coachCardInfo: {
+    flex: 1,
+    gap: Spacing.hairline,
+  },
+  coachCardActions: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
   },
 });
