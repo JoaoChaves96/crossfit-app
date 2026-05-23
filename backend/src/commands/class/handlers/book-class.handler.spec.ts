@@ -1,6 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { ConflictException, ForbiddenException, NotFoundException, BadRequestException } from '@nestjs/common';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 import { BookClassHandler } from './book-class.handler';
 import { BookClassCommand } from '../book-class.command';
 import { ClassRepository } from '../../../repositories/class.repository';
@@ -90,6 +91,10 @@ describe('BookClassHandler', () => {
         {
           provide: getRepositoryToken(BookingEntity),
           useValue: bookingRepository,
+        },
+        {
+          provide: EventEmitter2,
+          useValue: { emit: jest.fn() },
         },
       ],
     }).compile();
