@@ -88,12 +88,12 @@ describe('NotificationBell', () => {
     expect(screen.queryByTestId('notification-badge')).toBeNull();
   });
 
-  it('shows 99+ when unreadCount exceeds 99', () => {
+  it('shows 9+ when unreadCount exceeds 9', () => {
     mockUseNotifications.mockReturnValue(defaultHookReturn({ unreadCount: 150 }));
 
     render(<NotificationBell />);
 
-    expect(screen.getByText('99+')).toBeTruthy();
+    expect(screen.getByText('9+')).toBeTruthy();
   });
 
   it('navigates to /notifications on press', () => {

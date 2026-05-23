@@ -16,11 +16,11 @@ export function NotificationBell() {
       style={styles.container}
       testID="notification-bell"
     >
-      <IconSymbol size={24} name="bell.fill" color={AppColors.textDark3} />
+      <IconSymbol size={24} name="bell" color={AppColors.textDark3} />
       {unreadCount > 0 && (
         <View style={styles.badge} testID="notification-badge">
           <Text style={styles.badgeText}>
-            {unreadCount > 99 ? '99+' : unreadCount}
+            {unreadCount > 9 ? '9+' : unreadCount}
           </Text>
         </View>
       )}

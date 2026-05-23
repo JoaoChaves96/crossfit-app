@@ -28,7 +28,7 @@ export const styles = StyleSheet.create({
   markAllText: {
     fontSize: FontSizes.mdSm,
     fontWeight: FontWeights.semibold,
-    color: AppColors.brandPrimary,
+    color: AppColors.textDark3,
   },
   listContent: {
     paddingVertical: Spacing.sm,
@@ -40,16 +40,15 @@ export const styles = StyleSheet.create({
     gap: Spacing.md,
     backgroundColor: AppColors.backgroundWhite,
     borderBottomWidth: 1,
-    borderBottomColor: AppColors.borderSubtle,
+    borderBottomColor: AppColors.borderDefault,
   },
   notificationItemUnread: {
-    backgroundColor: AppColors.surfaceBlue,
+    backgroundColor: AppColors.backgroundSurface,
   },
   iconContainer: {
     width: 36,
     height: 36,
-    borderRadius: BorderRadius.xlPlus,
-    backgroundColor: AppColors.backgroundLight,
+    borderRadius: 18,
     alignItems: 'center',
     justifyContent: 'center',
   },

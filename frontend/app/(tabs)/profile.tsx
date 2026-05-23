@@ -37,11 +37,11 @@ function formatMemberSince(dateString: string): string {
   return date.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
 }
 
-const NOTIFICATION_ITEMS: { key: keyof NotificationPreferences; label: string }[] = [
-  { key: 'booking_confirmations', label: 'Booking Confirmations' },
-  { key: 'waitlist_updates', label: 'Waitlist Updates' },
-  { key: 'class_changes', label: 'Class Changes' },
-  { key: 'class_reminders', label: 'Class Reminders' },
+const NOTIFICATION_ITEMS: { key: keyof NotificationPreferences; label: string; subtitle: string }[] = [
+  { key: 'booking_confirmations', label: 'Booking Confirmations', subtitle: 'When you book or cancel a class' },
+  { key: 'waitlist_updates', label: 'Waitlist Updates', subtitle: "When you're promoted from the waitlist" },
+  { key: 'class_changes', label: 'Class Changes', subtitle: 'When a class you booked is modified' },
+  { key: 'class_reminders', label: 'Class Reminders', subtitle: '30 minutes before your class starts' },
 ];
 
 type ScreenState =
@@ -209,16 +209,23 @@ export default function ProfileScreen() {
             {/* Notification Preferences */}
             <View style={styles.notificationSection}>
               <Text style={styles.fieldLabel}>NOTIFICATIONS</Text>
+              <Text style={styles.notificationDescription}>Choose which notifications you'd like to receive.</Text>
               <View style={styles.notificationCard}>
-                {NOTIFICATION_ITEMS.map((item) => (
-                  <View key={item.key} style={styles.notificationRow}>
-                    <Text style={styles.notificationLabel}>{item.label}</Text>
-                    <Switch
-                      testID={`notification-toggle-${item.key}`}
-                      value={notificationPrefs[item.key]}
-                      onValueChange={(val) => handleToggle(item.key, val)}
-                    />
-                  </View>
+                {NOTIFICATION_ITEMS.map((item, index) => (
+                  <React.Fragment key={item.key}>
+                    {index > 0 && <View style={styles.notificationDivider} />}
+                    <View style={styles.notificationRow}>
+                      <View style={styles.notificationTextWrap}>
+                        <Text style={styles.notificationLabel}>{item.label}</Text>
+                        <Text style={styles.notificationSubtitle}>{item.subtitle}</Text>
+                      </View>
+                      <Switch
+                        testID={`notification-toggle-${item.key}`}
+                        value={notificationPrefs[item.key]}
+                        onValueChange={(val) => handleToggle(item.key, val)}
+                      />
+                    </View>
+                  </React.Fragment>
                 ))}
               </View>
             </View>

@@ -222,6 +222,12 @@ export const styles = StyleSheet.create({
     marginTop: Spacing.xl,
     width: '100%',
   },
+  notificationDescription: {
+    fontSize: FontSizes.body,
+    color: AppColors.textGray600,
+    marginTop: Spacing.sm,
+    marginBottom: Spacing.lg,
+  },
   notificationCard: {
     width: '100%',
     backgroundColor: AppColors.backgroundWhite,
@@ -235,11 +241,24 @@ export const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingVertical: Spacing.md,
-    paddingHorizontal: Spacing.base,
+  },
+  notificationTextWrap: {
+    flex: 1,
+    marginRight: Spacing.md,
   },
   notificationLabel: {
     fontFamily: 'Inter',
     fontSize: FontSizes.bodyMd,
+    fontWeight: FontWeights.semibold,
     color: AppColors.darkSurface,
+  },
+  notificationSubtitle: {
+    fontSize: FontSizes.mdSm,
+    color: AppColors.textGray500,
+    marginTop: 2,
+  },
+  notificationDivider: {
+    height: 1,
+    backgroundColor: AppColors.borderDefault,
   },
 });

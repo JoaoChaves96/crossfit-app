@@ -5,12 +5,12 @@ import { useNotifications, type Notification, type NotificationType } from '@/ho
 import { AppColors } from '@/constants/theme';
 import { styles } from './notifications.styles';
 
-const NOTIFICATION_ICONS: Record<NotificationType, string> = {
-  booking_confirmation: 'checkmark.circle',
-  waitlist_promotion: 'arrow.up.circle',
-  class_change: 'pencil.circle',
-  class_cancellation: 'xmark.circle',
-  class_reminder: 'clock',
+const NOTIFICATION_ICONS: Record<NotificationType, { name: string; bgColor: string }> = {
+  booking_confirmation: { name: 'checkmark.circle', bgColor: AppColors.successBgFaint },
+  waitlist_promotion: { name: 'arrow.up.circle', bgColor: AppColors.warningBgOrange },
+  class_change: { name: 'pencil.circle', bgColor: AppColors.surfaceBlueLight },
+  class_cancellation: { name: 'xmark.circle', bgColor: AppColors.errorBg },
+  class_reminder: { name: 'clock', bgColor: AppColors.surfaceBlueLight },
 };
 
 function getTimeAgo(dateString: string): string {
@@ -38,7 +38,7 @@ function NotificationItem({
   notification: Notification;
   onPress: () => void;
 }) {
-  const iconName = NOTIFICATION_ICONS[notification.type] ?? 'bell';
+  const iconConfig = NOTIFICATION_ICONS[notification.type] ?? { name: 'bell', bgColor: AppColors.backgroundLight };
 
   return (
     <TouchableOpacity
@@ -49,8 +49,8 @@ function NotificationItem({
       onPress={onPress}
       testID={`notification-item-${notification.id}`}
     >
-      <View style={styles.iconContainer}>
-        <IconSymbol size={18} name={iconName} color={AppColors.textGray600} />
+      <View style={[styles.iconContainer, { backgroundColor: iconConfig.bgColor }]}>
+        <IconSymbol size={18} name={iconConfig.name} color={AppColors.textGray600} />
       </View>
       <View style={styles.contentContainer}>
         <Text
