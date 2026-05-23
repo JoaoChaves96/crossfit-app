@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { EventEmitterModule } from '@nestjs/event-emitter';
+import { ScheduleModule } from '@nestjs/schedule';
 import { DatabaseModule } from './config/database.module';
 import { HttpModule } from './http/http.module';
 
@@ -19,6 +20,7 @@ import { HttpModule } from './http/http.module';
 @Module({
   imports: [
     EventEmitterModule.forRoot(),
+    ScheduleModule.forRoot(),
     DatabaseModule, // TypeORM setup
     HttpModule, // Controllers + feature modules
   ],
