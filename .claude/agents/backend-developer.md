@@ -32,8 +32,26 @@ Valid TASK TYPE values:
 - `FEATURE`
 - `REFACTOR`
 - `INFRA`
+- `PLAN_EXECUTION`
 
 If no TASK TYPE is present, the agent MUST stop and ask for clarification.
+
+---
+
+## Behavior: PLAN_EXECUTION
+
+When TASK TYPE is `PLAN_EXECUTION`:
+
+- The prompt will reference a **plan document** (markdown file with numbered tasks and checkbox steps)
+- Execute the specified task(s) from the plan **exactly as written**, step by step
+- Each step has explicit code, commands, and expected outcomes — follow them literally
+- Use TDD: write the failing test first, verify it fails, implement, verify it passes, commit
+- Do NOT skip steps, reorder steps, or "improve" the plan
+- Do NOT implement tasks beyond what is assigned in the prompt
+- Commit after each logical unit as indicated in the plan
+- If a step's expected outcome doesn't match reality, STOP and report the discrepancy
+
+All other rules (Swagger, established patterns, code principles) still apply.
 
 ---
 
