@@ -1,4 +1,13 @@
-# Notifications Epic — Design Spec
+# Notifications Epic — Design Spec ✅
+
+**Status:** COMPLETE (2026-05-23)
+
+**Implementation summary:**
+- Backend: entities, service, controller, push service, event listener, reminder scheduler (169 tests)
+- Frontend: useNotifications + usePushToken hooks, NotificationBell, notifications screen, preferences in profile (164 tests)
+- Designs: 3 frames in `designs/athlete-screens.pen` (Notifications List, Bell Badge, Preferences)
+
+---
 
 ## Overview
 
