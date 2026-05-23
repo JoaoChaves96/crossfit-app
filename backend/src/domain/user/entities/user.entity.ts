@@ -31,6 +31,21 @@ export class UserEntity {
   })
   status: 'active' | 'inactive' | 'pending';
 
+  @Column('jsonb', {
+    default: {
+      booking_confirmations: true,
+      waitlist_updates: true,
+      class_changes: true,
+      class_reminders: true,
+    },
+  })
+  notificationPreferences: {
+    booking_confirmations: boolean;
+    waitlist_updates: boolean;
+    class_changes: boolean;
+    class_reminders: boolean;
+  };
+
   @CreateDateColumn()
   createdAt: Date;
 

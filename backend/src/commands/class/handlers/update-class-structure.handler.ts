@@ -1,10 +1,12 @@
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { Inject } from '@nestjs/common';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 import { UpdateClassStructureCommand } from '../update-class-structure.command';
 import { UpdateClassStructureResponseDto } from '../dto/update-class-structure-response.dto';
 import { ClassRepository } from '../../../repositories/class.repository';
 import { BookingRepository } from '../../../repositories/booking.repository';
 import { ClassEntity } from '../../../domain/class/entities/class.entity';
+import { ClassModifiedEvent } from '../../../domain/notification/events/class-modified.event';
 import { GymStaffService } from '../../../domain/gym-staff/gym-staff.service';
 import { SpaceService } from '../../../domain/space/space.service';
 import { notFound, forbidden, invalidState } from '../../../http/exceptions';
@@ -33,6 +35,7 @@ export class UpdateClassStructureHandler implements ICommandHandler<UpdateClassS
     private readonly gymStaffService: GymStaffService,
     @Inject(SpaceService)
     private readonly spaceService: SpaceService,
+    private readonly eventEmitter: EventEmitter2,
   ) {}
 
   async execute(
@@ -84,6 +87,26 @@ export class UpdateClassStructureHandler implements ICommandHandler<UpdateClassS
 
     // Persist via repository
     const savedClass = await this.classRepository.save(classEntity);
+
+    // Emit domain event if space (location) changed
+    if (command.spaceId !== undefined) {
+      const bookedBookings =
+        await this.bookingRepository.getBookedBookingsByClass(savedClass.id);
+      const bookedUserIds = bookedBookings.map((b) => b.userId);
+
+      if (bookedUserIds.length > 0) {
+        this.eventEmitter.emit(
+          'class.modified',
+          new ClassModifiedEvent(
+            savedClass.gymId,
+            savedClass.id,
+            savedClass.classType?.name || 'Class',
+            'location changed',
+            bookedUserIds,
+          ),
+        );
+      }
+    }
 
     // Map to response DTO
     return this.mapToResponseDto(savedClass);

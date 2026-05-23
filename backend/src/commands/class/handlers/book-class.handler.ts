@@ -1,5 +1,6 @@
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { Inject } from '@nestjs/common';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 import { BookClassCommand } from '../book-class.command';
 import { BookClassResponseDto } from '../dto/book-class-response.dto';
 import { ClassRepository } from '../../../repositories/class.repository';
@@ -7,6 +8,7 @@ import { GymMembershipRepository } from '../../../repositories/gym-membership.re
 import { AthleteMembershipPlanRepository } from '../../../repositories/athlete-membership-plan.repository';
 import { GymService } from '../../../domain/gym/gym.service';
 import { BookingEntity } from '../../../domain/booking/entities/booking.entity';
+import { BookingCreatedEvent } from '../../../domain/notification/events/booking-created.event';
 import { ConflictException } from '@nestjs/common';
 import { notFound, forbidden, invalidState } from '../../../http/exceptions';
 import { Repository } from 'typeorm';
@@ -35,6 +37,7 @@ export class BookClassHandler implements ICommandHandler<BookClassCommand> {
     @Inject(GymService) private readonly gymService: GymService,
     @InjectRepository(BookingEntity)
     private readonly bookingRepository: Repository<BookingEntity>,
+    private readonly eventEmitter: EventEmitter2,
   ) {}
 
   async execute(command: BookClassCommand): Promise<BookClassResponseDto> {
@@ -143,6 +146,23 @@ export class BookClassHandler implements ICommandHandler<BookClassCommand> {
 
     // Persist via repository
     const savedBooking = await this.bookingRepository.save(booking);
+
+    // Emit domain event for confirmed bookings (not waitlisted)
+    if (savedBooking.status === 'booked') {
+      this.eventEmitter.emit(
+        'booking.created',
+        new BookingCreatedEvent(
+          command.userId,
+          command.gymId,
+          command.classId,
+          classEntity.classType?.name || 'Class',
+          classEntity.scheduledDate instanceof Date
+            ? classEntity.scheduledDate.toISOString().slice(0, 10)
+            : String(classEntity.scheduledDate).slice(0, 10),
+          classEntity.scheduledTime,
+        ),
+      );
+    }
 
     // Map to response DTO
     return this.mapToResponseDto(savedBooking);

@@ -218,4 +218,47 @@ export const styles = StyleSheet.create({
     fontSize: FontSizes.smMd,
     color: AppColors.textGray500,
   },
+  notificationSection: {
+    marginTop: Spacing.xl,
+    width: '100%',
+  },
+  notificationDescription: {
+    fontSize: FontSizes.body,
+    color: AppColors.textGray600,
+    marginTop: Spacing.sm,
+    marginBottom: Spacing.lg,
+  },
+  notificationCard: {
+    width: '100%',
+    backgroundColor: AppColors.backgroundWhite,
+    borderRadius: BorderRadius.lg,
+    borderWidth: 1,
+    borderColor: AppColors.borderDefault,
+    paddingHorizontal: Spacing.base,
+  },
+  notificationRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: Spacing.md,
+  },
+  notificationTextWrap: {
+    flex: 1,
+    marginRight: Spacing.md,
+  },
+  notificationLabel: {
+    fontFamily: 'Inter',
+    fontSize: FontSizes.bodyMd,
+    fontWeight: FontWeights.semibold,
+    color: AppColors.darkSurface,
+  },
+  notificationSubtitle: {
+    fontSize: FontSizes.mdSm,
+    color: AppColors.textGray500,
+    marginTop: 2,
+  },
+  notificationDivider: {
+    height: 1,
+    backgroundColor: AppColors.borderDefault,
+  },
 });

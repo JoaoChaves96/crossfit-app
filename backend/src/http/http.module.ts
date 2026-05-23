@@ -13,6 +13,8 @@ import { GymMembersController } from '../api/gym-configuration/gym-members.contr
 import { GymProfileController } from '../api/gym-configuration/gym-profile.controller';
 import { GymFeatureModule } from '../domain/gym/gym-feature.module';
 import { GymController } from '../api/gym/gym.controller';
+import { NotificationModule } from '../domain/notification/notification.module';
+import { NotificationController } from '../api/notification/notification.controller';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { GymOwnershipGuard } from '../auth/guards/gym-ownership.guard';
 import { UserController } from '../api/user/user.controller';
@@ -34,16 +36,6 @@ import { GetUserProfileService } from '../queries/user/get-user-profile.service'
 import { UpdateUserProfileHandler } from '../commands/user/handlers/update-user-profile.handler';
 import { UserModule } from '../domain/user/user.module';
 
-/**
- * HttpModule: Registers all HTTP controllers
- *
- * This module:
- * - Imports CQRS for command handling
- * - Imports feature modules (ClassModule, GymConfigurationModule, etc.)
- * - Registers controllers (ClassController, GymConfigurationController, etc.)
- * - Provides guards for authorization (RolesGuard)
- * - Makes controllers available to AppModule
- */
 @Module({
   imports: [
     CqrsModule,
@@ -51,6 +43,7 @@ import { UserModule } from '../domain/user/user.module';
     GymStaffModule,
     GymConfigurationModule,
     GymFeatureModule,
+    NotificationModule,
     InviteModule,
     UserModule,
     TypeOrmModule.forFeature([
@@ -73,6 +66,7 @@ import { UserModule } from '../domain/user/user.module';
     GymController,
     GymScheduleController,
     CoachClassesController,
+    NotificationController,
   ],
   providers: [
     RolesGuard,

@@ -1,6 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { ConflictException, ForbiddenException, NotFoundException } from '@nestjs/common';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 import { CancelBookingHandler } from './cancel-booking.handler';
 import { CancelBookingCommand } from '../cancel-booking.command';
 import { ClassRepository } from '../../../repositories/class.repository';
@@ -73,6 +74,10 @@ describe('CancelBookingHandler', () => {
         {
           provide: getRepositoryToken(BookingEntity),
           useValue: bookingDbRepository,
+        },
+        {
+          provide: EventEmitter2,
+          useValue: { emit: jest.fn() },
         },
       ],
     }).compile();

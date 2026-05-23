@@ -3,6 +3,7 @@ import React from 'react';
 
 import { HapticTab } from '@/components/haptic-tab';
 import { IconSymbol } from '@/components/ui/icon-symbol';
+import { NotificationBell } from '@/components/NotificationBell';
 import { Colors } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { useResponsiveLayout } from '@/hooks/useResponsiveLayout';
@@ -15,7 +16,8 @@ export default function TabLayout() {
     <Tabs
       screenOptions={{
         tabBarActiveTintColor: Colors[colorScheme ?? 'light'].tint,
-        headerShown: false,
+        headerShown: true,
+        headerRight: () => <NotificationBell />,
         tabBarButton: HapticTab,
         // Hide bottom tab bar on desktop — top nav is used instead
         tabBarStyle: isDesktop ? { display: 'none' } : undefined,

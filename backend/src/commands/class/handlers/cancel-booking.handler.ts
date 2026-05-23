@@ -1,14 +1,17 @@
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { Inject } from '@nestjs/common';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 import { CancelBookingCommand } from '../cancel-booking.command';
 import { CancelBookingResponseDto } from '../dto/cancel-booking-response.dto';
 import { ClassRepository } from '../../../repositories/class.repository';
 import { BookingRepository } from '../../../repositories/booking.repository';
 import { BookingEntity } from '../../../domain/booking/entities/booking.entity';
+import { WaitlistPromotedEvent } from '../../../domain/notification/events/waitlist-promoted.event';
 import { ConflictException } from '@nestjs/common';
 import { notFound, forbidden, invalidState } from '../../../http/exceptions';
 import { Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
+import { ClassEntity } from '../../../domain/class/entities/class.entity';
 
 /**
  * CancelBookingHandler: Orchestrates booking cancellation
@@ -30,6 +33,7 @@ export class CancelBookingHandler implements ICommandHandler<CancelBookingComman
     private readonly bookingRepository: BookingRepository,
     @InjectRepository(BookingEntity)
     private readonly bookingDbRepository: Repository<BookingEntity>,
+    private readonly eventEmitter: EventEmitter2,
   ) {}
 
   async execute(
@@ -86,7 +90,7 @@ export class CancelBookingHandler implements ICommandHandler<CancelBookingComman
 
     // State Change: If booking was booked and waitlisted athletes exist, promote first
     if (wasBoolked) {
-      await this.promoteFirstWaitlistedBooking(booking.classId);
+      await this.promoteFirstWaitlistedBooking(booking.classId, classEntity);
     }
 
     // Map to response DTO
@@ -101,7 +105,10 @@ export class CancelBookingHandler implements ICommandHandler<CancelBookingComman
    * - Set status = booked, booked_position = null
    * - Renumber remaining waitlist positions
    */
-  private async promoteFirstWaitlistedBooking(classId: string): Promise<void> {
+  private async promoteFirstWaitlistedBooking(
+    classId: string,
+    classEntity: ClassEntity,
+  ): Promise<void> {
     // Precondition: At least one waitlisted booking exists
     const firstWaitlisted =
       await this.bookingRepository.getFirstWaitlistedBooking(classId);
@@ -114,6 +121,21 @@ export class CancelBookingHandler implements ICommandHandler<CancelBookingComman
     firstWaitlisted.status = 'booked';
     firstWaitlisted.bookedPosition = null;
     await this.bookingRepository.save(firstWaitlisted);
+
+    // Emit domain event for waitlist promotion
+    this.eventEmitter.emit(
+      'waitlist.promoted',
+      new WaitlistPromotedEvent(
+        firstWaitlisted.userId,
+        classEntity.gymId,
+        classId,
+        classEntity.classType?.name || 'Class',
+        classEntity.scheduledDate instanceof Date
+          ? classEntity.scheduledDate.toISOString().slice(0, 10)
+          : String(classEntity.scheduledDate).slice(0, 10),
+        classEntity.scheduledTime,
+      ),
+    );
 
     // State Change: Renumber remaining waitlist positions
     const remainingWaitlisted =
