@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, IsNull } from 'typeorm';
+import { In, IsNull, Repository } from 'typeorm';
 import { ClassEntity } from '../domain/class/entities/class.entity';
 
 /**
@@ -32,11 +32,18 @@ export class ClassRepository {
   }
 
   /**
-   * Retrieve a class by ID (soft delete aware)
+   * Retrieve a class by ID (soft delete aware).
+   * When gymId is provided it is included in the WHERE clause so the query
+   * only matches classes that belong to that gym.
    */
-  async getClassById(classId: string): Promise<ClassEntity | null> {
+  async getClassById(
+    classId: string,
+    gymId?: string,
+  ): Promise<ClassEntity | null> {
     return this.classRepository.findOne({
-      where: { id: classId, deletedAt: IsNull() },
+      where: gymId
+        ? { id: classId, gymId, deletedAt: IsNull() }
+        : { id: classId, deletedAt: IsNull() },
     });
   }
 
@@ -61,6 +68,20 @@ export class ClassRepository {
   }
 
   /**
+   * Retrieve all non-deleted classes for a gym assigned to a specific coach.
+   * Scoped by both gymId and coachUserId to prevent cross-gym and cross-coach access.
+   */
+  async getClassesByGymAndCoach(
+    gymId: string,
+    coachUserId: string,
+  ): Promise<ClassEntity[]> {
+    return this.classRepository.find({
+      where: { gymId, coachUserId, deletedAt: IsNull() },
+      order: { scheduledDate: 'ASC', scheduledTime: 'ASC' },
+    });
+  }
+
+  /**
    * Retrieve classes by gym and state
    */
   async getClassesByGymAndState(
@@ -76,6 +97,26 @@ export class ClassRepository {
       where: { gymId, state, deletedAt: IsNull() },
       order: { scheduledDate: 'ASC' },
     });
+  }
+
+  /**
+   * Retrieve all non-deleted classes whose state is one of the provided values.
+   * Used by the lifecycle scheduler to find classes eligible for auto-transition.
+   */
+  async getClassesByStates(
+    states: ClassEntity['state'][],
+  ): Promise<ClassEntity[]> {
+    return this.classRepository.find({
+      where: { state: In(states), deletedAt: IsNull() },
+    });
+  }
+
+  /**
+   * Persist multiple ClassEntity instances in a single call.
+   * Used by the lifecycle scheduler for bulk state transitions.
+   */
+  async saveMany(classes: ClassEntity[]): Promise<ClassEntity[]> {
+    return this.classRepository.save(classes);
   }
 
   /**

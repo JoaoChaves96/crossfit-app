@@ -83,6 +83,26 @@ export class ResultRepository {
   }
 
   /**
+   * Retrieve all results for a user across a set of class IDs in a single query
+   *
+   * @param userId - The user whose results to retrieve
+   * @param classIds - The class IDs to filter by
+   */
+  async getResultsByUserAndClassIds(
+    userId: string,
+    classIds: string[],
+  ): Promise<ResultEntity[]> {
+    if (classIds.length === 0) {
+      return [];
+    }
+    return this.resultRepository
+      .createQueryBuilder('result')
+      .where('result.userId = :userId', { userId })
+      .andWhere('result.classId IN (:...classIds)', { classIds })
+      .getMany();
+  }
+
+  /**
    * Check if result exists for user and class
    */
   async resultExists(userId: string, classId: string): Promise<boolean> {

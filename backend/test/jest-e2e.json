@@ -5,5 +5,15 @@
   "testRegex": ".e2e-spec.ts$",
   "transform": {
     "^.+\\.(t|j)s$": "ts-jest"
-  }
+  },
+  "transformIgnorePatterns": [
+    "node_modules/(?!(uuid)/)"
+  ],
+  "testEnvironmentOptions": {},
+  "globals": {
+    "ts-jest": {
+      "tsconfig": "<rootDir>/../tsconfig.json"
+    }
+  },
+  "setupFiles": ["<rootDir>/helpers/jest-e2e.setup.ts"]
 }

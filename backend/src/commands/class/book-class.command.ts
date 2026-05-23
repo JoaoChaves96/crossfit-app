@@ -5,5 +5,6 @@ export class BookClassCommand implements ICommand {
     readonly userId: string,
     readonly classId: string,
     readonly gymId: string,
+    readonly userRole: string,
   ) {}
 }

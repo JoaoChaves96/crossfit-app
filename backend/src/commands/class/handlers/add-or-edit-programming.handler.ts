@@ -6,11 +6,7 @@ import { ClassRepository } from '../../../repositories/class.repository';
 import { ProgrammingRepository } from '../../../repositories/programming.repository';
 import { GymStaffService } from '../../../domain/gym-staff/gym-staff.service';
 import { ProgrammingEntity } from '../../../domain/programming/entities/programming.entity';
-import {
-  BadRequestException,
-  ForbiddenException,
-  NotFoundException,
-} from '@nestjs/common';
+import { notFound, forbidden, invalidState } from '../../../http/exceptions';
 import { v4 as uuid } from 'uuid';
 
 /**
@@ -38,17 +34,23 @@ export class AddOrEditProgrammingHandler implements ICommandHandler<AddOrEditPro
   async execute(
     command: AddOrEditProgrammingCommand,
   ): Promise<AddOrEditProgrammingResponseDto> {
-    // Precondition 1: Verify class exists
+    // Precondition 1: Verify class exists and belongs to the gym in the route
     const classEntity = await this.classRepository.getClassById(
       command.classId,
+      command.gymId,
     );
     if (!classEntity) {
-      throw new NotFoundException('Class not found');
+      throw notFound('Class not found');
+    }
+
+    // Ownership guard: class must belong to the gym supplied in the command
+    if (classEntity.gymId !== command.gymId) {
+      throw forbidden('Class does not belong to the specified gym');
     }
 
     // Precondition 2: Verify coach is assigned to the class
     if (classEntity.coachUserId !== command.userId) {
-      throw new ForbiddenException('Coach is not assigned to this class');
+      throw forbidden('Coach is not assigned to this class');
     }
 
     // Verify coach is active in the gym
@@ -58,7 +60,7 @@ export class AddOrEditProgrammingHandler implements ICommandHandler<AddOrEditPro
       classEntity.gymId,
     );
     if (!isCoachActive) {
-      throw new ForbiddenException('Coach is not active for this gym');
+      throw forbidden('Coach is not active for this gym');
     }
 
     // Precondition 3: Verify class is in publishable state (published or booking_closed)
@@ -66,9 +68,7 @@ export class AddOrEditProgrammingHandler implements ICommandHandler<AddOrEditPro
       classEntity.state !== 'published' &&
       classEntity.state !== 'booking_closed'
     ) {
-      throw new BadRequestException(
-        'Programming can only be added/edited while class is published or booking closed',
-      );
+      throw invalidState('Programming can only be added/edited while class is published or booking closed');
     }
 
     // State Change: Update class loggable flag if provided

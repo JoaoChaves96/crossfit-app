@@ -21,12 +21,20 @@ import { AddOrEditProgrammingHandler } from '../../commands/class/handlers/add-o
 import { ToggleLoggableStatusHandler } from '../../commands/class/handlers/toggle-loggable-status.handler';
 import { ManuallyTransitionClassStateHandler } from '../../commands/class/handlers/manually-transition-class-state.handler';
 import { UpdateClassStructureHandler } from '../../commands/class/handlers/update-class-structure.handler';
+import { EditClassHandler } from '../../commands/class/handlers/edit-class.handler';
+import { DeleteClassHandler } from '../../commands/class/handlers/delete-class.handler';
+import { ClassScheduleService } from '../../queries/class/class-schedule.service';
+import { GetClassResultsService } from '../../queries/class/get-class-results.service';
+import { GetClassProgrammingService } from '../../queries/class/get-class-programming.service';
+import { GetClassBookingsService } from '../../queries/class/get-class-bookings.service';
 import { GymModule } from '../gym/gym.module';
+import { UserModule } from '../user/user.module';
 import { GymStaffModule } from '../gym-staff/gym-staff.module';
 import { SpaceModule } from '../space/space.module';
 import { ClassTypeModule } from '../class-type/class-type.module';
 import { GymMembershipModule } from '../gym-membership/gym-membership.module';
 import { AthleteMembershipPlanModule } from '../athlete-membership-plan/athlete-membership-plan.module';
+import { ClassLifecycleScheduler } from './class-lifecycle.scheduler';
 
 const CommandHandlers = [
   CreateClassHandler,
@@ -39,6 +47,8 @@ const CommandHandlers = [
   UpdateClassStructureHandler,
   LogResultHandler,
   EditResultHandler,
+  EditClassHandler,
+  DeleteClassHandler,
 ];
 
 @Module({
@@ -53,6 +63,7 @@ const CommandHandlers = [
     ]),
     GymModule,
     GymStaffModule,
+    UserModule,
     SpaceModule,
     ClassTypeModule,
     GymMembershipModule,
@@ -64,6 +75,11 @@ const CommandHandlers = [
     AttendanceRepository,
     ResultRepository,
     ProgrammingRepository,
+    ClassScheduleService,
+    GetClassResultsService,
+    GetClassProgrammingService,
+    GetClassBookingsService,
+    ClassLifecycleScheduler,
     ...CommandHandlers,
   ],
   exports: [
@@ -72,6 +88,10 @@ const CommandHandlers = [
     AttendanceRepository,
     ResultRepository,
     ProgrammingRepository,
+    ClassScheduleService,
+    GetClassResultsService,
+    GetClassProgrammingService,
+    GetClassBookingsService,
   ],
 })
 export class ClassModule {}

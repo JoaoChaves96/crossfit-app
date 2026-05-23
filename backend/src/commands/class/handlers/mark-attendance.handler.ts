@@ -10,11 +10,7 @@ import { AttendanceRepository } from '../../../repositories/attendance.repositor
 import { BookingRepository } from '../../../repositories/booking.repository';
 import { GymStaffService } from '../../../domain/gym-staff/gym-staff.service';
 import { AttendanceEntity } from '../../../domain/attendance/entities/attendance.entity';
-import {
-  BadRequestException,
-  ForbiddenException,
-  NotFoundException,
-} from '@nestjs/common';
+import { notFound, forbidden, invalidState } from '../../../http/exceptions';
 import { Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
 import { BookingEntity } from '../../../domain/booking/entities/booking.entity';
@@ -50,17 +46,23 @@ export class MarkAttendanceHandler implements ICommandHandler<MarkAttendanceComm
   async execute(
     command: MarkAttendanceCommand,
   ): Promise<MarkAttendanceResponseDto> {
-    // Precondition 1: Verify coach is assigned to the class
+    // Precondition 1: Verify class exists and belongs to the gym in the route
     const classEntity = await this.classRepository.getClassById(
       command.classId,
+      command.gymId,
     );
     if (!classEntity) {
-      throw new NotFoundException('Class not found');
+      throw notFound('Class not found');
+    }
+
+    // Ownership guard: class must belong to the gym supplied in the command
+    if (classEntity.gymId !== command.gymId) {
+      throw forbidden('Class does not belong to the specified gym');
     }
 
     // Verify the coach is assigned to this specific class
     if (classEntity.coachUserId !== command.userId) {
-      throw new ForbiddenException('Coach is not assigned to this class');
+      throw forbidden('Coach is not assigned to this class');
     }
 
     // Verify coach is active in the gym
@@ -70,7 +72,7 @@ export class MarkAttendanceHandler implements ICommandHandler<MarkAttendanceComm
       classEntity.gymId,
     );
     if (!isCoachActive) {
-      throw new ForbiddenException('Coach is not active for this gym');
+      throw forbidden('Coach is not active for this gym');
     }
 
     // Precondition 2: Verify class exists and state is in_progress or completed
@@ -79,16 +81,12 @@ export class MarkAttendanceHandler implements ICommandHandler<MarkAttendanceComm
       classEntity.state !== 'in_progress' &&
       classEntity.state !== 'completed'
     ) {
-      throw new BadRequestException(
-        'Attendance can only be marked while class is in progress or completed',
-      );
+      throw invalidState('Attendance can only be marked while class is in progress or completed');
     }
 
     // Precondition 4: At least one attendance record must be provided
     if (command.attendanceRecords.length === 0) {
-      throw new BadRequestException(
-        'At least one attendance record is required',
-      );
+      throw invalidState('At least one attendance record is required');
     }
 
     // State Change: Create or update attendance records

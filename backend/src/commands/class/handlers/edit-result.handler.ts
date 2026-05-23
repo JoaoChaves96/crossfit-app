@@ -6,11 +6,7 @@ import { ClassRepository } from '../../../repositories/class.repository';
 import { AttendanceRepository } from '../../../repositories/attendance.repository';
 import { ResultRepository } from '../../../repositories/result.repository';
 import { ResultEntity } from '../../../domain/result/entities/result.entity';
-import {
-  BadRequestException,
-  ForbiddenException,
-  NotFoundException,
-} from '@nestjs/common';
+import { notFound, forbidden, invalidState } from '../../../http/exceptions';
 
 /**
  * EditResultHandler: Orchestrates result editing
@@ -38,21 +34,21 @@ export class EditResultHandler implements ICommandHandler<EditResultCommand> {
     // Precondition 1: Verify result exists and belongs to the athlete
     const result = await this.resultRepository.getResultById(command.resultId);
     if (!result) {
-      throw new NotFoundException('Result not found');
+      throw notFound('Result not found');
     }
     if (result.userId !== command.userId) {
-      throw new ForbiddenException('Result does not belong to this athlete');
+      throw forbidden('Result does not belong to this athlete');
     }
 
     // Get the class to check its state
     const classEntity = await this.classRepository.getClassById(result.classId);
     if (!classEntity) {
-      throw new NotFoundException('Class not found');
+      throw notFound('Class not found');
     }
 
     // Precondition 2: Verify class is not archived
     if (classEntity.state === 'archived') {
-      throw new BadRequestException('Cannot edit results for archived classes');
+      throw invalidState('Cannot edit results for archived classes');
     }
 
     // Precondition 3: Verify athlete was marked present
@@ -62,9 +58,7 @@ export class EditResultHandler implements ICommandHandler<EditResultCommand> {
         result.classId,
       );
     if (!attendance || !attendance.present) {
-      throw new ForbiddenException(
-        'Athlete was not marked present for this class',
-      );
+      throw forbidden('Athlete was not marked present for this class');
     }
 
     // Precondition 4: Validate metric type/unit if provided
@@ -75,7 +69,7 @@ export class EditResultHandler implements ICommandHandler<EditResultCommand> {
       // If metricType is provided, validate it
       if (command.metricType) {
         if (command.metricType !== classType.resultMetrics) {
-          throw new BadRequestException(
+          throw invalidState(
             `Metric type must be ${classType.resultMetrics} for this class type`,
           );
         }
@@ -126,9 +120,7 @@ export class EditResultHandler implements ICommandHandler<EditResultCommand> {
 
     const allowed = validUnits[metricType];
     if (!allowed || !allowed.includes(unit)) {
-      throw new BadRequestException(
-        `Unit ${unit} is not valid for metric type ${metricType}`,
-      );
+      throw invalidState(`Unit ${unit} is not valid for metric type ${metricType}`);
     }
   }
 

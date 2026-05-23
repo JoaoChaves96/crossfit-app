@@ -26,10 +26,10 @@ export class UserEntity {
 
   @Column({
     type: 'varchar',
-    enum: ['active', 'inactive'],
-    default: 'active',
+    enum: ['active', 'inactive', 'pending'],
+    default: 'pending',
   })
-  status: 'active' | 'inactive';
+  status: 'active' | 'inactive' | 'pending';
 
   @Column('jsonb', {
     default: {

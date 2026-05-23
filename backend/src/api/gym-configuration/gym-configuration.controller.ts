@@ -1,5 +1,6 @@
 import {
   Controller,
+  Get,
   Post,
   Patch,
   Delete,
@@ -12,10 +13,17 @@ import {
 import { CommandBus } from '@nestjs/cqrs';
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../../auth/guards/roles.guard';
+import { GymOwnershipGuard } from '../../auth/guards/gym-ownership.guard';
 import { Role } from '../../auth/decorators/role.decorator';
 import { CurrentUser } from '../../auth/decorators/current-user.decorator';
-import { CurrentGym } from '../../auth/decorators/current-gym.decorator';
-import { ApiTags, ApiBearerAuth, ApiOperation } from '@nestjs/swagger';
+import {
+  ApiTags,
+  ApiBearerAuth,
+  ApiOperation,
+  ApiResponse,
+  ApiParam,
+  ApiBody,
+} from '@nestjs/swagger';
 
 // Space Commands
 import { CreateSpaceCommand } from '../../commands/gym-configuration/create-space.command';
@@ -55,14 +63,61 @@ import { InviteCoachResponseDto } from '../../commands/gym-configuration/dto/inv
 import { ChangeCoachStatusCommand } from '../../commands/gym-configuration/change-coach-status.command';
 import { ChangeCoachStatusResponseDto } from '../../commands/gym-configuration/dto/change-coach-status-response.dto';
 
+// Coaches Query
+import { CoachesQueryService } from '../../queries/gym-configuration/coaches.service';
+import { GetCoachesResponseDto } from '../../queries/gym-configuration/dto/get-coaches-response.dto';
+
+// ClassTypes Query
+import { ClassTypesQueryService } from '../../queries/gym-configuration/class-types.service';
+import { GetClassTypesResponseDto } from '../../queries/gym-configuration/dto/get-class-types-response.dto';
+
+// Spaces Query
+import { SpacesQueryService } from '../../queries/gym-configuration/spaces.service';
+import { GetSpacesResponseDto } from '../../queries/gym-configuration/dto/get-spaces-response.dto';
+
 @Controller('/api/gyms/:gymId/configuration')
 @ApiTags('Gym Configuration')
 @ApiBearerAuth()
-@UseGuards(JwtAuthGuard, RolesGuard)
+@UseGuards(JwtAuthGuard, GymOwnershipGuard, RolesGuard)
 export class GymConfigurationController {
-  constructor(@Inject(CommandBus) private readonly commandBus: CommandBus) {}
+  constructor(
+    @Inject(CommandBus) private readonly commandBus: CommandBus,
+    private readonly coachesQueryService: CoachesQueryService,
+    private readonly classTypesQueryService: ClassTypesQueryService,
+    private readonly spacesQueryService: SpacesQueryService,
+  ) {}
 
   // ============= SPACES =============
+
+  /**
+   * List all spaces for a gym (Gym Owner only)
+   *
+   * **Preconditions:**
+   * - User must be authenticated as a gym owner
+   *
+   * **Postconditions:**
+   * - Returns all active (non-deleted) spaces for the gym
+   */
+  @Get('/spaces')
+  @Role('owner')
+  @ApiOperation({
+    summary: 'List spaces',
+    description:
+      'Returns all active training spaces for the gym. Gym owners only.',
+  })
+  @ApiParam({ name: 'gymId', description: 'Gym ID' })
+  @ApiResponse({
+    status: 200,
+    description: 'Spaces list returned',
+    type: GetSpacesResponseDto,
+  })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiResponse({ status: 403, description: 'Forbidden - Owner role required' })
+  async getSpaces(
+    @Param('gymId') gymId: string,
+  ): Promise<GetSpacesResponseDto> {
+    return this.spacesQueryService.getSpacesByGym(gymId);
+  }
 
   /**
    * Create a space (Gym Owner only)
@@ -83,16 +138,20 @@ export class GymConfigurationController {
     description:
       'Define a physical training location in the gym. Gym owners only.',
   })
+  @ApiParam({ name: 'gymId', description: 'Gym ID' })
+  @ApiBody({ type: CreateSpaceDto })
+  @ApiResponse({
+    status: 201,
+    description: 'Space created',
+    type: CreateSpaceResponseDto,
+  })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiResponse({ status: 403, description: 'Forbidden - Owner role required' })
   async createSpace(
     @Param('gymId') gymId: string,
     @Body(ValidationPipe) createSpaceDto: CreateSpaceDto,
     @CurrentUser() userId: string,
-    @CurrentGym() currentGymId: string,
   ): Promise<CreateSpaceResponseDto> {
-    if (gymId !== currentGymId) {
-      throw new Error('Gym ID mismatch');
-    }
-
     const command = new CreateSpaceCommand(
       userId,
       gymId,
@@ -122,17 +181,22 @@ export class GymConfigurationController {
     summary: 'Update a space',
     description: 'Modify space details. Gym owners only.',
   })
+  @ApiParam({ name: 'gymId', description: 'Gym ID' })
+  @ApiParam({ name: 'spaceId', description: 'Space ID' })
+  @ApiBody({ type: UpdateSpaceDto })
+  @ApiResponse({
+    status: 200,
+    description: 'Space updated',
+    type: UpdateSpaceResponseDto,
+  })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiResponse({ status: 403, description: 'Forbidden - Owner role required' })
   async updateSpace(
     @Param('gymId') gymId: string,
     @Param('spaceId') spaceId: string,
     @Body(ValidationPipe) updateSpaceDto: UpdateSpaceDto,
     @CurrentUser() userId: string,
-    @CurrentGym() currentGymId: string,
   ): Promise<UpdateSpaceResponseDto> {
-    if (gymId !== currentGymId) {
-      throw new Error('Gym ID mismatch');
-    }
-
     const command = new UpdateSpaceCommand(
       userId,
       spaceId,
@@ -161,22 +225,56 @@ export class GymConfigurationController {
     description:
       'Remove a training space. Cannot delete spaces with active classes. Gym owners only.',
   })
+  @ApiParam({ name: 'gymId', description: 'Gym ID' })
+  @ApiParam({ name: 'spaceId', description: 'Space ID' })
+  @ApiResponse({
+    status: 200,
+    description: 'Space deleted',
+    type: DeleteSpaceResponseDto,
+  })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiResponse({ status: 403, description: 'Forbidden - Owner role required' })
   async deleteSpace(
     @Param('gymId') gymId: string,
     @Param('spaceId') spaceId: string,
     @CurrentUser() userId: string,
-    @CurrentGym() currentGymId: string,
   ): Promise<DeleteSpaceResponseDto> {
-    if (gymId !== currentGymId) {
-      throw new Error('Gym ID mismatch');
-    }
-
     const command = new DeleteSpaceCommand(userId, spaceId);
 
     return this.commandBus.execute(command);
   }
 
   // ============= CLASS TYPES =============
+
+  /**
+   * List all class types for a gym (Gym Owner only)
+   *
+   * **Preconditions:**
+   * - User must be authenticated as a gym owner
+   *
+   * **Postconditions:**
+   * - Returns all active (non-deleted) class types for the gym
+   */
+  @Get('/class-types')
+  @Role('owner')
+  @ApiOperation({
+    summary: 'List class types',
+    description:
+      'Returns all active class types for the gym. Gym owners only.',
+  })
+  @ApiParam({ name: 'gymId', description: 'Gym ID' })
+  @ApiResponse({
+    status: 200,
+    description: 'Class types list returned',
+    type: GetClassTypesResponseDto,
+  })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiResponse({ status: 403, description: 'Forbidden - Owner role required' })
+  async getClassTypes(
+    @Param('gymId') gymId: string,
+  ): Promise<GetClassTypesResponseDto> {
+    return this.classTypesQueryService.getClassTypesByGym(gymId);
+  }
 
   /**
    * Configure class types (Gym Owner only)
@@ -197,16 +295,20 @@ export class GymConfigurationController {
     description:
       'Create, update, or delete class types (e.g., CrossFit, Gymnastics). Gym owners only.',
   })
+  @ApiParam({ name: 'gymId', description: 'Gym ID' })
+  @ApiBody({ type: ConfigureClassTypesDto })
+  @ApiResponse({
+    status: 201,
+    description: 'Class type configured',
+    type: ConfigureClassTypesResponseDto,
+  })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiResponse({ status: 403, description: 'Forbidden - Owner role required' })
   async configureClassTypes(
     @Param('gymId') gymId: string,
     @Body(ValidationPipe) configureClassTypesDto: ConfigureClassTypesDto,
     @CurrentUser() userId: string,
-    @CurrentGym() currentGymId: string,
   ): Promise<ConfigureClassTypesResponseDto> {
-    if (gymId !== currentGymId) {
-      throw new Error('Gym ID mismatch');
-    }
-
     const command = new ConfigureClassTypesCommand(
       userId,
       gymId,
@@ -243,16 +345,20 @@ export class GymConfigurationController {
     description:
       'Define a subscription tier with pricing and class access. Gym owners only.',
   })
+  @ApiParam({ name: 'gymId', description: 'Gym ID' })
+  @ApiBody({ type: CreateMembershipPlanDto })
+  @ApiResponse({
+    status: 201,
+    description: 'Membership plan created',
+    type: CreateMembershipPlanResponseDto,
+  })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiResponse({ status: 403, description: 'Forbidden - Owner role required' })
   async createMembershipPlan(
     @Param('gymId') gymId: string,
     @Body(ValidationPipe) createMembershipPlanDto: CreateMembershipPlanDto,
     @CurrentUser() userId: string,
-    @CurrentGym() currentGymId: string,
   ): Promise<CreateMembershipPlanResponseDto> {
-    if (gymId !== currentGymId) {
-      throw new Error('Gym ID mismatch');
-    }
-
     const command = new CreateMembershipPlanCommand(
       userId,
       gymId,
@@ -285,17 +391,22 @@ export class GymConfigurationController {
     description:
       'Modify plan pricing, billing cycle, or class access. Gym owners only.',
   })
+  @ApiParam({ name: 'gymId', description: 'Gym ID' })
+  @ApiParam({ name: 'membershipPlanId', description: 'Membership Plan ID' })
+  @ApiBody({ type: UpdateMembershipPlanDto })
+  @ApiResponse({
+    status: 200,
+    description: 'Membership plan updated',
+    type: UpdateMembershipPlanResponseDto,
+  })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiResponse({ status: 403, description: 'Forbidden - Owner role required' })
   async updateMembershipPlan(
     @Param('gymId') gymId: string,
     @Param('membershipPlanId') membershipPlanId: string,
     @Body(ValidationPipe) updateMembershipPlanDto: UpdateMembershipPlanDto,
     @CurrentUser() userId: string,
-    @CurrentGym() currentGymId: string,
   ): Promise<UpdateMembershipPlanResponseDto> {
-    if (gymId !== currentGymId) {
-      throw new Error('Gym ID mismatch');
-    }
-
     const command = new UpdateMembershipPlanCommand(
       userId,
       gymId,
@@ -328,16 +439,20 @@ export class GymConfigurationController {
     description:
       'Retire a plan. Existing athletes retain access; new athletes cannot purchase. Gym owners only.',
   })
+  @ApiParam({ name: 'gymId', description: 'Gym ID' })
+  @ApiParam({ name: 'membershipPlanId', description: 'Membership Plan ID' })
+  @ApiResponse({
+    status: 201,
+    description: 'Membership plan archived',
+    type: ArchiveMembershipPlanResponseDto,
+  })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiResponse({ status: 403, description: 'Forbidden - Owner role required' })
   async archiveMembershipPlan(
     @Param('gymId') gymId: string,
     @Param('membershipPlanId') membershipPlanId: string,
     @CurrentUser() userId: string,
-    @CurrentGym() currentGymId: string,
   ): Promise<ArchiveMembershipPlanResponseDto> {
-    if (gymId !== currentGymId) {
-      throw new Error('Gym ID mismatch');
-    }
-
     const command = new ArchiveMembershipPlanCommand(
       userId,
       gymId,
@@ -366,17 +481,25 @@ export class GymConfigurationController {
     summary: 'Purchase a membership plan',
     description: 'Subscribe to a plan to gain class access. Athletes only.',
   })
+  @ApiParam({ name: 'gymId', description: 'Gym ID' })
+  @ApiParam({ name: 'membershipPlanId', description: 'Membership Plan ID' })
+  @ApiBody({ type: PurchaseMembershipPlanDto })
+  @ApiResponse({
+    status: 201,
+    description: 'Membership plan purchased',
+    type: PurchaseMembershipPlanResponseDto,
+  })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiResponse({
+    status: 403,
+    description: 'Forbidden - Athlete role required',
+  })
   async purchaseMembershipPlan(
     @Param('gymId') gymId: string,
     @Param('membershipPlanId') membershipPlanId: string,
     @Body(ValidationPipe) purchaseMembershipPlanDto: PurchaseMembershipPlanDto,
     @CurrentUser() userId: string,
-    @CurrentGym() currentGymId: string,
   ): Promise<PurchaseMembershipPlanResponseDto> {
-    if (gymId !== currentGymId) {
-      throw new Error('Gym ID mismatch');
-    }
-
     // Verify membershipPlanId in path matches DTO (if provided)
     if (
       purchaseMembershipPlanDto.membershipPlanId &&
@@ -417,16 +540,20 @@ export class GymConfigurationController {
     description:
       'Enroll an athlete without requiring an invite code. Gym owners only.',
   })
+  @ApiParam({ name: 'gymId', description: 'Gym ID' })
+  @ApiBody({ type: ManuallyAddMemberDto })
+  @ApiResponse({
+    status: 201,
+    description: 'Member added',
+    type: ManuallyAddMemberResponseDto,
+  })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiResponse({ status: 403, description: 'Forbidden - Owner role required' })
   async manuallyAddMember(
     @Param('gymId') gymId: string,
     @Body(ValidationPipe) manuallyAddMemberDto: ManuallyAddMemberDto,
     @CurrentUser() userId: string,
-    @CurrentGym() currentGymId: string,
   ): Promise<ManuallyAddMemberResponseDto> {
-    if (gymId !== currentGymId) {
-      throw new Error('Gym ID mismatch');
-    }
-
     const command = new ManuallyAddMemberCommand(
       userId,
       gymId,
@@ -435,6 +562,36 @@ export class GymConfigurationController {
     );
 
     return this.commandBus.execute(command);
+  }
+
+  /**
+   * List all coaches for a gym (Gym Owner only)
+   *
+   * **Preconditions:**
+   * - User must be authenticated as a gym owner
+   *
+   * **Postconditions:**
+   * - Returns all coaches (active and inactive) for the gym
+   */
+  @Get('/coaches')
+  @Role('owner')
+  @ApiOperation({
+    summary: 'List coaches',
+    description:
+      'Returns all coaches (active and inactive) for the gym. Gym owners only.',
+  })
+  @ApiParam({ name: 'gymId', description: 'Gym ID' })
+  @ApiResponse({
+    status: 200,
+    description: 'Coaches list returned',
+    type: GetCoachesResponseDto,
+  })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiResponse({ status: 403, description: 'Forbidden - Owner role required' })
+  async getCoaches(
+    @Param('gymId') gymId: string,
+  ): Promise<GetCoachesResponseDto> {
+    return this.coachesQueryService.getCoachesByGym(gymId);
   }
 
   /**
@@ -457,16 +614,20 @@ export class GymConfigurationController {
     description:
       'Send an invitation to a user to become a coach. Gym owners only.',
   })
+  @ApiParam({ name: 'gymId', description: 'Gym ID' })
+  @ApiBody({ type: InviteCoachDto })
+  @ApiResponse({
+    status: 201,
+    description: 'Coach invited',
+    type: InviteCoachResponseDto,
+  })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiResponse({ status: 403, description: 'Forbidden - Owner role required' })
   async inviteCoach(
     @Param('gymId') gymId: string,
     @Body(ValidationPipe) inviteCoachDto: InviteCoachDto,
     @CurrentUser() userId: string,
-    @CurrentGym() currentGymId: string,
   ): Promise<InviteCoachResponseDto> {
-    if (gymId !== currentGymId) {
-      throw new Error('Gym ID mismatch');
-    }
-
     const command = new InviteCoachCommand(
       userId,
       gymId,
@@ -495,18 +656,22 @@ export class GymConfigurationController {
     description:
       'Enable or disable a coach. Inactive coaches are hidden from new assignments. Gym owners only.',
   })
+  @ApiParam({ name: 'gymId', description: 'Gym ID' })
+  @ApiParam({ name: 'coachUserId', description: 'Coach User ID' })
+  @ApiResponse({
+    status: 200,
+    description: 'Coach status updated',
+    type: ChangeCoachStatusResponseDto,
+  })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiResponse({ status: 403, description: 'Forbidden - Owner role required' })
   async changeCoachStatus(
     @Param('gymId') gymId: string,
     @Param('coachUserId') coachUserId: string,
     @Body(ValidationPipe)
     changeCoachStatusDto: { status: 'active' | 'inactive' },
     @CurrentUser() userId: string,
-    @CurrentGym() currentGymId: string,
   ): Promise<ChangeCoachStatusResponseDto> {
-    if (gymId !== currentGymId) {
-      throw new Error('Gym ID mismatch');
-    }
-
     const command = new ChangeCoachStatusCommand(
       userId,
       gymId,

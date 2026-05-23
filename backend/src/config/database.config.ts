@@ -12,6 +12,7 @@ import { AttendanceEntity } from '../domain/attendance/entities/attendance.entit
 import { ResultEntity } from '../domain/result/entities/result.entity';
 import { GymMembershipEntity } from '../domain/gym-membership/entities/gym-membership.entity';
 import { AthleteMembershipPlanEntity } from '../domain/athlete-membership-plan/entities/athlete-membership-plan.entity';
+import { InviteEntity } from '../domain/invite/entities/invite.entity';
 import { NotificationEntity } from '../domain/notification/entities/notification.entity';
 import { PushTokenEntity } from '../domain/notification/entities/push-token.entity';
 
@@ -36,6 +37,7 @@ export const databaseConfig: TypeOrmModuleOptions = {
     ResultEntity,
     GymMembershipEntity,
     AthleteMembershipPlanEntity,
+    InviteEntity,
     NotificationEntity,
     PushTokenEntity,
   ],

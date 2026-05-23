@@ -9,7 +9,8 @@ import { AthleteMembershipPlanEntity } from '../athlete-membership-plan/entities
 import { GymStaffEntity } from '../gym-staff/entities/gym-staff.entity';
 import { UserEntity } from '../user/entities/user.entity';
 import { ClassEntity } from '../class/entities/class.entity';
-import { GymService } from '../gym/gym.service';
+import { BookingEntity } from '../booking/entities/booking.entity';
+import { GymModule } from '../gym/gym.module';
 import { GymStaffService } from '../gym-staff/gym-staff.service';
 import { SpaceService } from '../space/space.service';
 import { ClassTypeService } from '../class-type/class-type.service';
@@ -26,6 +27,12 @@ import { PurchaseMembershipPlanHandler } from '../../commands/gym-configuration/
 import { ManuallyAddMemberHandler } from '../../commands/gym-configuration/handlers/manually-add-member.handler';
 import { InviteCoachHandler } from '../../commands/gym-configuration/handlers/invite-coach.handler';
 import { ChangeCoachStatusHandler } from '../../commands/gym-configuration/handlers/change-coach-status.handler';
+import { UpdateGymProfileHandler } from '../../commands/gym-configuration/handlers/update-gym-profile.handler';
+import { GetGymProfileService } from '../../queries/gym-configuration/get-gym-profile.service';
+import { CoachesQueryService } from '../../queries/gym-configuration/coaches.service';
+import { ClassTypesQueryService } from '../../queries/gym-configuration/class-types.service';
+import { SpacesQueryService } from '../../queries/gym-configuration/spaces.service';
+import { GymMembersQueryService } from '../../queries/gym-configuration/gym-members.service';
 
 /**
  * GymConfigurationModule: Wires gym configuration and monetization commands
@@ -39,6 +46,7 @@ import { ChangeCoachStatusHandler } from '../../commands/gym-configuration/handl
 @Module({
   imports: [
     CqrsModule,
+    GymModule,
     TypeOrmModule.forFeature([
       SpaceEntity,
       ClassTypeEntity,
@@ -48,11 +56,11 @@ import { ChangeCoachStatusHandler } from '../../commands/gym-configuration/handl
       GymStaffEntity,
       UserEntity,
       ClassEntity,
+      BookingEntity,
     ]),
   ],
   providers: [
     // Domain services
-    GymService,
     GymStaffService,
     SpaceService,
     ClassTypeService,
@@ -69,7 +77,24 @@ import { ChangeCoachStatusHandler } from '../../commands/gym-configuration/handl
     ManuallyAddMemberHandler,
     InviteCoachHandler,
     ChangeCoachStatusHandler,
+    UpdateGymProfileHandler,
+
+    // Query services
+    GetGymProfileService,
+    CoachesQueryService,
+    ClassTypesQueryService,
+    SpacesQueryService,
+    GymMembersQueryService,
   ],
-  exports: [GymService, GymStaffService, SpaceService, ClassTypeService],
+  exports: [
+    GymStaffService,
+    SpaceService,
+    ClassTypeService,
+    GetGymProfileService,
+    CoachesQueryService,
+    ClassTypesQueryService,
+    SpacesQueryService,
+    GymMembersQueryService,
+  ],
 })
 export class GymConfigurationModule {}

@@ -10,5 +10,6 @@
  */
 
 export { JwtAuthGuard } from './guards/jwt-auth.guard';
+export { GymOwnershipGuard } from './guards/gym-ownership.guard';
 export { CurrentUser } from './decorators/current-user.decorator';
 export { CurrentGym } from './decorators/current-gym.decorator';

@@ -91,4 +91,34 @@ export class AttendanceRepository {
     });
     return count > 0;
   }
+
+  /**
+   * Retrieve all present attendance records for a user in a specific gym,
+   * filtered to classes with a given set of states.
+   *
+   * Joins attendance → class in a single query to avoid N+1.
+   * Results are ordered by class scheduled date descending (most recent first).
+   *
+   * @param userId - The authenticated user's ID
+   * @param gymId - The gym to scope results to
+   * @param states - Class lifecycle states to include
+   */
+  async getPresentAttendanceByUserAndGym(
+    userId: string,
+    gymId: string,
+    states: ('completed' | 'archived')[],
+  ): Promise<AttendanceEntity[]> {
+    return this.attendanceRepository
+      .createQueryBuilder('attendance')
+      .innerJoinAndSelect('attendance.class', 'class')
+      .innerJoinAndSelect('class.classType', 'classType')
+      .where('attendance.userId = :userId', { userId })
+      .andWhere('attendance.present = true')
+      .andWhere('class.gymId = :gymId', { gymId })
+      .andWhere('class.state IN (:...states)', { states })
+      .andWhere('class.deletedAt IS NULL')
+      .orderBy('class.scheduledDate', 'DESC')
+      .addOrderBy('class.scheduledTime', 'DESC')
+      .getMany();
+  }
 }

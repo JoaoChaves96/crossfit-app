@@ -1,19 +1,21 @@
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
-import { Inject } from '@nestjs/common';
+import {
+  BadRequestException,
+  ForbiddenException,
+  Inject,
+  NotFoundException,
+} from '@nestjs/common';
 import { InviteCoachCommand } from '../invite-coach.command';
 import { GymService } from '../../../domain/gym/gym.service';
 import { GymStaffService } from '../../../domain/gym-staff/gym-staff.service';
 import { InviteCoachResponseDto } from '../dto/invite-coach-response.dto';
-import {
-  BadRequestException,
-  ForbiddenException,
-  NotFoundException,
-} from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { InjectDataSource } from '@nestjs/typeorm';
+import { DataSource, EntityManager } from 'typeorm';
 import { GymStaffEntity } from '../../../domain/gym-staff/entities/gym-staff.entity';
 import { UserEntity } from '../../../domain/user/entities/user.entity';
 import { v4 as uuid } from 'uuid';
+import * as crypto from 'crypto';
+import * as bcrypt from 'bcrypt';
 
 /**
  * InviteCoachHandler: Orchestrates coach invitations
@@ -31,69 +33,87 @@ export class InviteCoachHandler implements ICommandHandler<InviteCoachCommand> {
   constructor(
     @Inject(GymService) private readonly gymService: GymService,
     @Inject(GymStaffService) private readonly gymStaffService: GymStaffService,
-    @InjectRepository(GymStaffEntity)
-    private readonly gymStaffRepository: Repository<GymStaffEntity>,
-    @InjectRepository(UserEntity)
-    private readonly userRepository: Repository<UserEntity>,
+    @InjectDataSource() private readonly dataSource: DataSource,
   ) {}
 
   async execute(command: InviteCoachCommand): Promise<InviteCoachResponseDto> {
-    // Precondition 1: Verify user is gym owner
-    const isOwner = await this.gymStaffService.isGymOwner(
-      command.userId,
-      command.gymId,
-    );
-    if (!isOwner) {
-      throw new ForbiddenException('User is not a gym owner for this gym');
-    }
+    // Run all checks and writes inside a single transaction so that:
+    // - Auth checks are repeated under the transactional connection, closing
+    //   the TOCTOU window where a concurrent gym deactivation could occur
+    //   between a pre-transaction check and the transactional write.
+    // - A failure during gym_staff creation rolls back any newly-created user
+    //   row, preventing orphaned records.
+    return this.dataSource.transaction(async (manager: EntityManager) => {
+      const userRepository = manager.getRepository(UserEntity);
+      const gymStaffRepository = manager.getRepository(GymStaffEntity);
 
-    // Precondition 2: Verify gym exists and is active
-    const gym = await this.gymService.getGymById(command.gymId);
-    if (!gym) {
-      throw new NotFoundException('Gym not found');
-    }
-    if (gym.status !== 'active') {
-      throw new BadRequestException('Gym is not active');
-    }
+      // Precondition 1: Verify user is gym owner (inside transaction to prevent TOCTOU)
+      const isOwner = await this.gymStaffService.isGymOwner(
+        command.userId,
+        command.gymId,
+      );
+      if (!isOwner) {
+        throw new ForbiddenException('User is not a gym owner for this gym');
+      }
 
-    // Precondition 3: Verify coach email is valid (basic email format check done by DTO validator)
-    // Require that the user exists (pre-registration required)
-    const coachUser = await this.userRepository.findOne({
-      where: { email: command.coachEmail },
+      // Precondition 2: Verify gym exists and is active (inside transaction to prevent TOCTOU)
+      const gym = await this.gymService.getGymById(command.gymId);
+      if (!gym) {
+        throw new NotFoundException('Gym not found');
+      }
+      if (gym.status !== 'active') {
+        throw new BadRequestException('Gym is not active');
+      }
+
+      // Precondition 3: Verify coach email is valid (basic email format check done by DTO validator)
+      // Find existing user or create a new one for the invited coach
+      let coachUser = await userRepository.findOne({
+        where: { email: command.coachEmail },
+      });
+      if (!coachUser) {
+        const temporaryPassword = crypto.randomBytes(32).toString('hex');
+        const passwordHash = await bcrypt.hash(temporaryPassword, 10);
+
+        const newUser = new UserEntity();
+        newUser.id = uuid();
+        newUser.email = command.coachEmail;
+        // Placeholder name until user completes profile setup.
+        // Intentionally non-unique — user must update their actual name.
+        newUser.name = 'Coach';
+        newUser.passwordHash = passwordHash;
+        newUser.socialLoginId = null;
+        newUser.status = 'pending';
+        coachUser = await userRepository.save(newUser);
+      }
+
+      // Precondition 4: Verify coach is not already a GymStaff member
+      const existingStaff = await gymStaffRepository.findOne({
+        where: {
+          userId: coachUser.id,
+          gymId: command.gymId,
+        },
+      });
+      if (existingStaff) {
+        throw new BadRequestException('Coach is already assigned to this gym');
+      }
+
+      // State Change: Create GymStaffEntity
+      const gymStaff = new GymStaffEntity();
+      gymStaff.id = uuid();
+      gymStaff.gymId = command.gymId;
+      gymStaff.userId = coachUser.id;
+      gymStaff.role = 'coach';
+      gymStaff.status = 'active';
+      gymStaff.assignedAt = new Date();
+
+      // Persist
+      const saved = await gymStaffRepository.save(gymStaff);
+
+      // TODO: Send invitation email (implementation-specific; deferred for MVP)
+      // emailService.sendCoachInvitation(coachUser.email, gym.name)
+
+      return this.mapToResponseDto(saved);
     });
-    if (!coachUser) {
-      throw new NotFoundException('User with this email was not found');
-    }
-
-    // Precondition 4: Verify coach is not already a GymStaff member
-    const existingStaff = await this.gymStaffRepository.findOne({
-      where: {
-        userId: coachUser.id,
-        gymId: command.gymId,
-      },
-    });
-    if (existingStaff) {
-      throw new BadRequestException('Coach is already assigned to this gym');
-    }
-
-    // State Change: Create GymStaffEntity
-
-    const gymStaff = new GymStaffEntity();
-    gymStaff.id = uuid();
-    gymStaff.gymId = command.gymId;
-    gymStaff.userId = coachUser.id;
-    gymStaff.role = 'coach';
-    gymStaff.status = 'active';
-    gymStaff.assignedAt = new Date();
-
-    // Persist
-    const saved = await this.gymStaffRepository.save(gymStaff);
-
-    // TODO: Send invitation email (implementation-specific; deferred for MVP)
-    // emailService.sendCoachInvitation(coachUser.email, gym.name)
-
-    // Map to response DTO
-    return this.mapToResponseDto(saved);
   }
 
   private mapToResponseDto(gymStaff: GymStaffEntity): InviteCoachResponseDto {
