@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useState } from 'react';
 import {
   ActivityIndicator,
   ScrollView,
+  Switch,
   Text,
   TextInput,
   TouchableOpacity,
@@ -18,6 +19,13 @@ import { styles, desktopStyles } from './profile.styles';
 type UserProfileDto = components['schemas']['UserProfileDto'];
 type UpdateUserProfileDto = components['schemas']['UpdateUserProfileDto'];
 
+interface NotificationPreferences {
+  booking_confirmations: boolean;
+  waitlist_updates: boolean;
+  class_changes: boolean;
+  class_reminders: boolean;
+}
+
 function getInitials(name: string): string {
   const parts = name.trim().split(/\s+/);
   if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
@@ -28,6 +36,13 @@ function formatMemberSince(dateString: string): string {
   const date = new Date(dateString);
   return date.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
 }
+
+const NOTIFICATION_ITEMS: { key: keyof NotificationPreferences; label: string }[] = [
+  { key: 'booking_confirmations', label: 'Booking Confirmations' },
+  { key: 'waitlist_updates', label: 'Waitlist Updates' },
+  { key: 'class_changes', label: 'Class Changes' },
+  { key: 'class_reminders', label: 'Class Reminders' },
+];
 
 type ScreenState =
   | { status: 'loading' }
@@ -42,6 +57,12 @@ export default function ProfileScreen() {
   const [editedName, setEditedName] = useState('');
   const [isSaving, setIsSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
+  const [notificationPrefs, setNotificationPrefs] = useState<NotificationPreferences>({
+    booking_confirmations: true,
+    waitlist_updates: true,
+    class_changes: true,
+    class_reminders: true,
+  });
 
   const fetchProfile = useCallback(async () => {
     setScreenState({ status: 'loading' });
@@ -50,6 +71,9 @@ export default function ProfileScreen() {
       const profile = await client.get<UserProfileDto>('/api/me');
       setScreenState({ status: 'success', profile });
       setEditedName(profile.name);
+      if (profile.notificationPreferences) {
+        setNotificationPrefs(profile.notificationPreferences as unknown as NotificationPreferences);
+      }
     } catch {
       setScreenState({ status: 'error', message: 'Failed to load profile. Please try again.' });
     }
@@ -58,6 +82,17 @@ export default function ProfileScreen() {
   useEffect(() => {
     fetchProfile();
   }, [fetchProfile]);
+
+  const handleToggle = async (key: keyof NotificationPreferences, value: boolean) => {
+    const previous = notificationPrefs;
+    setNotificationPrefs((prev) => ({ ...prev, [key]: value }));
+    try {
+      const client = createApiClient({ token });
+      await client.patch('/api/me', { notificationPreferences: { [key]: value } } as unknown as Record<string, unknown>);
+    } catch {
+      setNotificationPrefs(previous);
+    }
+  };
 
   const handleEditPress = () => {
     setIsEditing(true);
@@ -171,6 +206,23 @@ export default function ProfileScreen() {
               </View>
             </View>
 
+            {/* Notification Preferences */}
+            <View style={styles.notificationSection}>
+              <Text style={styles.fieldLabel}>NOTIFICATIONS</Text>
+              <View style={styles.notificationCard}>
+                {NOTIFICATION_ITEMS.map((item) => (
+                  <View key={item.key} style={styles.notificationRow}>
+                    <Text style={styles.notificationLabel}>{item.label}</Text>
+                    <Switch
+                      testID={`notification-toggle-${item.key}`}
+                      value={notificationPrefs[item.key]}
+                      onValueChange={(val) => handleToggle(item.key, val)}
+                    />
+                  </View>
+                ))}
+              </View>
+            </View>
+
             {/* Save button */}
             {isEditing && (
               <View style={styles.saveButtonWrap}>
@@ -272,6 +324,23 @@ export default function ProfileScreen() {
           <View style={styles.emailValueRow}>
             <Text style={styles.fieldInputText}>{profile.email}</Text>
           </View>
+        </View>
+      </View>
+
+      {/* Notification Preferences */}
+      <View style={styles.notificationSection}>
+        <Text style={styles.fieldLabel}>NOTIFICATIONS</Text>
+        <View style={styles.notificationCard}>
+          {NOTIFICATION_ITEMS.map((item) => (
+            <View key={item.key} style={styles.notificationRow}>
+              <Text style={styles.notificationLabel}>{item.label}</Text>
+              <Switch
+                testID={`notification-toggle-${item.key}`}
+                value={notificationPrefs[item.key]}
+                onValueChange={(val) => handleToggle(item.key, val)}
+              />
+            </View>
+          ))}
         </View>
       </View>
 
