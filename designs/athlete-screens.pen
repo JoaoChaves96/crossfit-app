@@ -7955,7 +7955,8 @@
                   "fill": "$--font-secondary",
                   "content": "carlos@example.com",
                   "fontFamily": "Inter",
-                  "fontSize": 14
+                  "fontSize": 14,
+                  "fontWeight": "normal"
                 },
                 {
                   "type": "frame",
@@ -7978,7 +7979,8 @@
                       "fill": "$--font-tertiary",
                       "content": "Member since January 2026",
                       "fontFamily": "Inter",
-                      "fontSize": 12
+                      "fontSize": 12,
+                      "fontWeight": "normal"
                     }
                   ]
                 }
@@ -8076,7 +8078,8 @@
                           "fill": "$--font-primary",
                           "content": "Carlos Silva",
                           "fontFamily": "Inter",
-                          "fontSize": 16
+                          "fontSize": 16,
+                          "fontWeight": "normal"
                         }
                       ]
                     }
@@ -8130,7 +8133,8 @@
                           "fill": "$--font-secondary",
                           "content": "carlos@example.com",
                           "fontFamily": "Inter",
-                          "fontSize": 16
+                          "fontSize": 16,
+                          "fontWeight": "normal"
                         },
                         {
                           "type": "icon_font",
@@ -8206,7 +8210,8 @@
                   "fill": "$--font-tertiary",
                   "content": "Email cannot be changed",
                   "fontFamily": "Inter",
-                  "fontSize": 12
+                  "fontSize": 12,
+                  "fontWeight": "normal"
                 }
               ]
             }
@@ -12589,6 +12594,1294 @@
                           "fontFamily": "Inter",
                           "fontSize": 15,
                           "fontWeight": "500"
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "frame",
+      "id": "opdtv",
+      "x": 10780,
+      "y": 0,
+      "name": "Notifications List",
+      "width": 390,
+      "height": 844,
+      "fill": "$--bg",
+      "layout": "vertical",
+      "children": [
+        {
+          "type": "frame",
+          "id": "wiYWn",
+          "name": "statusBar",
+          "width": "fill_container",
+          "height": 62,
+          "padding": [
+            0,
+            20
+          ],
+          "justifyContent": "space_between",
+          "alignItems": "center",
+          "children": [
+            {
+              "type": "text",
+              "id": "2d9NH",
+              "name": "timeLabel",
+              "fill": "$--font-primary",
+              "content": "9:41",
+              "fontFamily": "Inter",
+              "fontSize": 15,
+              "fontWeight": "600"
+            },
+            {
+              "type": "frame",
+              "id": "F6U0D",
+              "name": "statusIcons",
+              "gap": 6,
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "icon_font",
+                  "id": "yi9QP",
+                  "name": "signal",
+                  "width": 16,
+                  "height": 16,
+                  "iconFontName": "signal",
+                  "iconFontFamily": "lucide",
+                  "fill": "$--font-primary"
+                },
+                {
+                  "type": "icon_font",
+                  "id": "fSwBk",
+                  "name": "wifi",
+                  "width": 16,
+                  "height": 16,
+                  "iconFontName": "wifi",
+                  "iconFontFamily": "lucide",
+                  "fill": "$--font-primary"
+                },
+                {
+                  "type": "icon_font",
+                  "id": "jt9Hj",
+                  "name": "battery",
+                  "width": 16,
+                  "height": 16,
+                  "iconFontName": "battery-full",
+                  "iconFontFamily": "lucide",
+                  "fill": "$--font-primary"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "frame",
+          "id": "hRnKX",
+          "name": "header",
+          "width": "fill_container",
+          "padding": [
+            12,
+            20
+          ],
+          "justifyContent": "space_between",
+          "alignItems": "center",
+          "children": [
+            {
+              "type": "frame",
+              "id": "d65QD",
+              "name": "headerLeft",
+              "gap": 12,
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "icon_font",
+                  "id": "JG98J",
+                  "name": "backIcon",
+                  "width": 24,
+                  "height": 24,
+                  "iconFontName": "arrow-left",
+                  "iconFontFamily": "lucide",
+                  "fill": "$--font-primary"
+                },
+                {
+                  "type": "text",
+                  "id": "GX9vA",
+                  "name": "headerTitle",
+                  "fill": "$--font-primary",
+                  "content": "Notifications",
+                  "fontFamily": "Inter",
+                  "fontSize": 24,
+                  "fontWeight": "700"
+                }
+              ]
+            },
+            {
+              "type": "text",
+              "id": "7ZCaI",
+              "name": "markAllBtn",
+              "fill": "$--accent",
+              "content": "Mark all as read",
+              "fontFamily": "Inter",
+              "fontSize": 13,
+              "fontWeight": "600"
+            }
+          ]
+        },
+        {
+          "type": "frame",
+          "id": "qk2z8",
+          "name": "contentWrap",
+          "clip": true,
+          "width": "fill_container",
+          "height": "fill_container",
+          "layout": "vertical",
+          "children": [
+            {
+              "type": "frame",
+              "id": "X6kv6",
+              "name": "notifItem1",
+              "width": "fill_container",
+              "fill": "#F0F0F0",
+              "gap": 12,
+              "padding": [
+                16,
+                20
+              ],
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "bH8UG",
+                  "name": "iconWrap",
+                  "width": 36,
+                  "height": 36,
+                  "fill": "#E8F5E9",
+                  "cornerRadius": 18,
+                  "justifyContent": "center",
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "icon_font",
+                      "id": "uSCCO",
+                      "name": "icon",
+                      "width": 18,
+                      "height": 18,
+                      "iconFontName": "circle-check",
+                      "iconFontFamily": "lucide",
+                      "fill": "#2E7D32"
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "yiTOQ",
+                  "name": "content",
+                  "width": "fill_container",
+                  "layout": "vertical",
+                  "gap": 4,
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "vEdXe",
+                      "name": "title",
+                      "fill": "$--font-primary",
+                      "content": "Booking Confirmed",
+                      "fontFamily": "Inter",
+                      "fontSize": 15,
+                      "fontWeight": "700"
+                    },
+                    {
+                      "type": "text",
+                      "id": "VombC",
+                      "name": "body",
+                      "fill": "$--font-secondary",
+                      "content": "CrossFit WOD at 07:00 on Mon, 26 May",
+                      "fontFamily": "Inter",
+                      "fontSize": 13,
+                      "fontWeight": "normal"
+                    },
+                    {
+                      "type": "text",
+                      "id": "NMOjs",
+                      "name": "time",
+                      "fill": "$--font-tertiary",
+                      "content": "2 min ago",
+                      "fontFamily": "Inter",
+                      "fontSize": 12,
+                      "fontWeight": "normal"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "2MEjN",
+              "name": "divider1",
+              "width": "fill_container",
+              "padding": [
+                0,
+                20
+              ],
+              "children": [
+                {
+                  "type": "line",
+                  "id": "KaKNc",
+                  "name": "line",
+                  "width": "fill_container",
+                  "height": 0,
+                  "stroke": {
+                    "thickness": 1,
+                    "fill": "$--border"
+                  }
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "tpQDQ",
+              "name": "notifItem2",
+              "width": "fill_container",
+              "fill": "#F0F0F0",
+              "gap": 12,
+              "padding": [
+                16,
+                20
+              ],
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "7Rmr9",
+                  "name": "iconWrap",
+                  "width": 36,
+                  "height": 36,
+                  "fill": "#FFF3E0",
+                  "cornerRadius": 18,
+                  "justifyContent": "center",
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "icon_font",
+                      "id": "AAyof",
+                      "name": "icon",
+                      "width": 18,
+                      "height": 18,
+                      "iconFontName": "user-plus",
+                      "iconFontFamily": "lucide",
+                      "fill": "#E65100"
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "aQMhJ",
+                  "name": "content",
+                  "width": "fill_container",
+                  "layout": "vertical",
+                  "gap": 4,
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "JkWct",
+                      "name": "title",
+                      "fill": "$--font-primary",
+                      "content": "You're In!",
+                      "fontFamily": "Inter",
+                      "fontSize": 15,
+                      "fontWeight": "700"
+                    },
+                    {
+                      "type": "text",
+                      "id": "eMTkx",
+                      "name": "body",
+                      "fill": "$--font-secondary",
+                      "content": "HIIT at 18:00 on Tue, 27 May — promoted from waitlist",
+                      "fontFamily": "Inter",
+                      "fontSize": 13,
+                      "fontWeight": "normal"
+                    },
+                    {
+                      "type": "text",
+                      "id": "ZQf7G",
+                      "name": "time",
+                      "fill": "$--font-tertiary",
+                      "content": "15 min ago",
+                      "fontFamily": "Inter",
+                      "fontSize": 12,
+                      "fontWeight": "normal"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "BnUGA",
+              "name": "divider2",
+              "width": "fill_container",
+              "padding": [
+                0,
+                20
+              ],
+              "children": [
+                {
+                  "type": "line",
+                  "id": "N2dhk",
+                  "name": "line",
+                  "width": "fill_container",
+                  "height": 0,
+                  "stroke": {
+                    "thickness": 1,
+                    "fill": "$--border"
+                  }
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "gPM2n",
+              "name": "notifItem3",
+              "width": "fill_container",
+              "gap": 12,
+              "padding": [
+                16,
+                20
+              ],
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "H1mb4",
+                  "name": "iconWrap",
+                  "width": 36,
+                  "height": 36,
+                  "fill": "#E3F2FD",
+                  "cornerRadius": 18,
+                  "justifyContent": "center",
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "icon_font",
+                      "id": "axraE",
+                      "name": "icon",
+                      "width": 18,
+                      "height": 18,
+                      "iconFontName": "calendar-x",
+                      "iconFontFamily": "lucide",
+                      "fill": "#1565C0"
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "6cW1o",
+                  "name": "content",
+                  "width": "fill_container",
+                  "layout": "vertical",
+                  "gap": 4,
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "9bFez",
+                      "name": "title",
+                      "fill": "$--font-primary",
+                      "content": "Class Cancelled",
+                      "fontFamily": "Inter",
+                      "fontSize": 15,
+                      "fontWeight": "normal"
+                    },
+                    {
+                      "type": "text",
+                      "id": "cU30N",
+                      "name": "body",
+                      "fill": "$--font-secondary",
+                      "content": "Weightlifting at 09:00 on Wed, 28 May has been cancelled",
+                      "fontFamily": "Inter",
+                      "fontSize": 13,
+                      "fontWeight": "normal"
+                    },
+                    {
+                      "type": "text",
+                      "id": "gGuSH",
+                      "name": "time",
+                      "fill": "$--font-tertiary",
+                      "content": "1 hour ago",
+                      "fontFamily": "Inter",
+                      "fontSize": 12,
+                      "fontWeight": "normal"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "LVRne",
+              "name": "divider3",
+              "width": "fill_container",
+              "padding": [
+                0,
+                20
+              ],
+              "children": [
+                {
+                  "type": "line",
+                  "id": "PMqZi",
+                  "name": "line",
+                  "width": "fill_container",
+                  "height": 0,
+                  "stroke": {
+                    "thickness": 1,
+                    "fill": "$--border"
+                  }
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "foo5R",
+              "name": "notifItem4",
+              "width": "fill_container",
+              "gap": 12,
+              "padding": [
+                16,
+                20
+              ],
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "3xeQf",
+                  "name": "iconWrap",
+                  "width": 36,
+                  "height": 36,
+                  "fill": "#E3F2FD",
+                  "cornerRadius": 18,
+                  "justifyContent": "center",
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "icon_font",
+                      "id": "CL58j",
+                      "name": "icon",
+                      "width": 18,
+                      "height": 18,
+                      "iconFontName": "timer",
+                      "iconFontFamily": "lucide",
+                      "fill": "#1565C0"
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "qyWbm",
+                  "name": "content",
+                  "width": "fill_container",
+                  "layout": "vertical",
+                  "gap": 4,
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "4cMR8",
+                      "name": "title",
+                      "fill": "$--font-primary",
+                      "content": "Starting Soon",
+                      "fontFamily": "Inter",
+                      "fontSize": 15,
+                      "fontWeight": "normal"
+                    },
+                    {
+                      "type": "text",
+                      "id": "En3qs",
+                      "name": "body",
+                      "fill": "$--font-secondary",
+                      "content": "CrossFit WOD starts in 30 minutes",
+                      "fontFamily": "Inter",
+                      "fontSize": 13,
+                      "fontWeight": "normal"
+                    },
+                    {
+                      "type": "text",
+                      "id": "yh3Va",
+                      "name": "time",
+                      "fill": "$--font-tertiary",
+                      "content": "Yesterday",
+                      "fontFamily": "Inter",
+                      "fontSize": 12,
+                      "fontWeight": "normal"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "wvnCp",
+              "name": "divider4",
+              "width": "fill_container",
+              "padding": [
+                0,
+                20
+              ],
+              "children": [
+                {
+                  "type": "line",
+                  "id": "1xGUm",
+                  "name": "line",
+                  "width": "fill_container",
+                  "height": 0,
+                  "stroke": {
+                    "thickness": 1,
+                    "fill": "$--border"
+                  }
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "wccFr",
+              "name": "notifItem5",
+              "width": "fill_container",
+              "gap": 12,
+              "padding": [
+                16,
+                20
+              ],
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "iO8ak",
+                  "name": "iconWrap",
+                  "width": 36,
+                  "height": 36,
+                  "fill": "#FFF3E0",
+                  "cornerRadius": 18,
+                  "justifyContent": "center",
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "icon_font",
+                      "id": "0iQqN",
+                      "name": "icon",
+                      "width": 18,
+                      "height": 18,
+                      "iconFontName": "pencil",
+                      "iconFontFamily": "lucide",
+                      "fill": "#E65100"
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "jxdvl",
+                  "name": "content",
+                  "width": "fill_container",
+                  "layout": "vertical",
+                  "gap": 4,
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "sdFx3",
+                      "name": "title",
+                      "fill": "$--font-primary",
+                      "content": "Class Updated",
+                      "fontFamily": "Inter",
+                      "fontSize": 15,
+                      "fontWeight": "normal"
+                    },
+                    {
+                      "type": "text",
+                      "id": "VlbNv",
+                      "name": "body",
+                      "fill": "$--font-secondary",
+                      "content": "Gymnastics moved to 17:00 on Thu, 29 May",
+                      "fontFamily": "Inter",
+                      "fontSize": 13,
+                      "fontWeight": "normal"
+                    },
+                    {
+                      "type": "text",
+                      "id": "76Ig6",
+                      "name": "time",
+                      "fill": "$--font-tertiary",
+                      "content": "2 days ago",
+                      "fontFamily": "Inter",
+                      "fontSize": 12,
+                      "fontWeight": "normal"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "frame",
+      "id": "VL9H7",
+      "x": 10780,
+      "y": 944,
+      "name": "Notification Bell Badge",
+      "width": 390,
+      "height": 200,
+      "fill": "$--bg",
+      "layout": "vertical",
+      "gap": 24,
+      "padding": 24,
+      "children": [
+        {
+          "type": "text",
+          "id": "GkW34",
+          "name": "label",
+          "fill": "$--font-secondary",
+          "content": "Bell Icon States (Header Component)",
+          "fontFamily": "Inter",
+          "fontSize": 14,
+          "fontWeight": "600"
+        },
+        {
+          "type": "frame",
+          "id": "pSSF0",
+          "name": "bellStates",
+          "width": "fill_container",
+          "gap": 48,
+          "alignItems": "center",
+          "children": [
+            {
+              "type": "frame",
+              "id": "Og28H",
+              "name": "stateNoUnread",
+              "layout": "vertical",
+              "gap": 8,
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "text",
+                  "id": "v5sSH",
+                  "name": "label",
+                  "fill": "$--font-tertiary",
+                  "content": "No unread",
+                  "fontFamily": "Inter",
+                  "fontSize": 11,
+                  "fontWeight": "normal"
+                },
+                {
+                  "type": "frame",
+                  "id": "fWzyC",
+                  "name": "iconWrap",
+                  "width": 32,
+                  "height": 32,
+                  "justifyContent": "center",
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "icon_font",
+                      "id": "SjoiB",
+                      "name": "bell",
+                      "width": 24,
+                      "height": 24,
+                      "iconFontName": "bell",
+                      "iconFontFamily": "lucide",
+                      "fill": "$--font-primary"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "GPSfU",
+              "name": "stateWithUnread",
+              "layout": "vertical",
+              "gap": 8,
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "text",
+                  "id": "6wQJK",
+                  "name": "label",
+                  "fill": "$--font-tertiary",
+                  "content": "With unread",
+                  "fontFamily": "Inter",
+                  "fontSize": 11,
+                  "fontWeight": "normal"
+                },
+                {
+                  "type": "frame",
+                  "id": "H2Wi1",
+                  "name": "iconWrap",
+                  "width": 32,
+                  "height": 32,
+                  "layout": "none",
+                  "children": [
+                    {
+                      "type": "icon_font",
+                      "id": "ryJby",
+                      "x": 4,
+                      "y": 4,
+                      "name": "bell",
+                      "width": 24,
+                      "height": 24,
+                      "iconFontName": "bell",
+                      "iconFontFamily": "lucide",
+                      "fill": "$--font-primary"
+                    },
+                    {
+                      "type": "frame",
+                      "id": "uDvkY",
+                      "x": 16,
+                      "y": -2,
+                      "name": "badge",
+                      "width": 18,
+                      "height": 18,
+                      "fill": "#D32F2F",
+                      "cornerRadius": 9,
+                      "justifyContent": "center",
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "text",
+                          "id": "XuHys",
+                          "name": "count",
+                          "fill": "$--white",
+                          "content": "3",
+                          "fontFamily": "Inter",
+                          "fontSize": 10,
+                          "fontWeight": "700"
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "tGm4n",
+              "name": "state9Plus",
+              "layout": "vertical",
+              "gap": 8,
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "text",
+                  "id": "hwF2w",
+                  "name": "label",
+                  "fill": "$--font-tertiary",
+                  "content": "9+ unread",
+                  "fontFamily": "Inter",
+                  "fontSize": 11,
+                  "fontWeight": "normal"
+                },
+                {
+                  "type": "frame",
+                  "id": "SnJKs",
+                  "name": "iconWrap",
+                  "width": 32,
+                  "height": 32,
+                  "layout": "none",
+                  "children": [
+                    {
+                      "type": "icon_font",
+                      "id": "vk3H5",
+                      "x": 4,
+                      "y": 4,
+                      "name": "bell",
+                      "width": 24,
+                      "height": 24,
+                      "iconFontName": "bell",
+                      "iconFontFamily": "lucide",
+                      "fill": "$--font-primary"
+                    },
+                    {
+                      "type": "frame",
+                      "id": "eM1IY",
+                      "x": 14,
+                      "y": -2,
+                      "name": "badge",
+                      "width": 22,
+                      "height": 18,
+                      "fill": "#D32F2F",
+                      "cornerRadius": 9,
+                      "justifyContent": "center",
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "text",
+                          "id": "WqHG1",
+                          "name": "count",
+                          "fill": "$--white",
+                          "content": "9+",
+                          "fontFamily": "Inter",
+                          "fontSize": 10,
+                          "fontWeight": "700"
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "frame",
+      "id": "VMm2O",
+      "x": 10780,
+      "y": 1244,
+      "name": "Notification Preferences",
+      "width": 390,
+      "height": 844,
+      "fill": "$--bg",
+      "layout": "vertical",
+      "children": [
+        {
+          "type": "frame",
+          "id": "kJjwc",
+          "name": "statusBar",
+          "width": "fill_container",
+          "height": 62,
+          "padding": [
+            0,
+            20
+          ],
+          "justifyContent": "space_between",
+          "alignItems": "center",
+          "children": [
+            {
+              "type": "text",
+              "id": "QhEpV",
+              "name": "timeLabel",
+              "fill": "$--font-primary",
+              "content": "9:41",
+              "fontFamily": "Inter",
+              "fontSize": 15,
+              "fontWeight": "600"
+            },
+            {
+              "type": "frame",
+              "id": "38Ybt",
+              "name": "statusIcons",
+              "gap": 6,
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "icon_font",
+                  "id": "mhWLP",
+                  "name": "signal",
+                  "width": 16,
+                  "height": 16,
+                  "iconFontName": "signal",
+                  "iconFontFamily": "lucide",
+                  "fill": "$--font-primary"
+                },
+                {
+                  "type": "icon_font",
+                  "id": "OXnLw",
+                  "name": "wifi",
+                  "width": 16,
+                  "height": 16,
+                  "iconFontName": "wifi",
+                  "iconFontFamily": "lucide",
+                  "fill": "$--font-primary"
+                },
+                {
+                  "type": "icon_font",
+                  "id": "wtMvE",
+                  "name": "battery",
+                  "width": 16,
+                  "height": 16,
+                  "iconFontName": "battery-full",
+                  "iconFontFamily": "lucide",
+                  "fill": "$--font-primary"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "frame",
+          "id": "rAukh",
+          "name": "header",
+          "width": "fill_container",
+          "gap": 12,
+          "padding": [
+            12,
+            20
+          ],
+          "alignItems": "center",
+          "children": [
+            {
+              "type": "icon_font",
+              "id": "mgoA5",
+              "name": "backIcon",
+              "width": 24,
+              "height": 24,
+              "iconFontName": "arrow-left",
+              "iconFontFamily": "lucide",
+              "fill": "$--font-primary"
+            },
+            {
+              "type": "text",
+              "id": "6uc33",
+              "name": "headerTitle",
+              "fill": "$--font-primary",
+              "content": "Notification Preferences",
+              "fontFamily": "Inter",
+              "fontSize": 20,
+              "fontWeight": "700"
+            }
+          ]
+        },
+        {
+          "type": "frame",
+          "id": "aEDP9",
+          "name": "contentWrap",
+          "clip": true,
+          "width": "fill_container",
+          "height": "fill_container",
+          "layout": "vertical",
+          "padding": [
+            24,
+            20
+          ],
+          "children": [
+            {
+              "type": "text",
+              "id": "C9Qq3",
+              "name": "description",
+              "fill": "$--font-secondary",
+              "content": "Choose which notifications you'd like to receive.",
+              "fontFamily": "Inter",
+              "fontSize": 14,
+              "fontWeight": "normal"
+            },
+            {
+              "type": "frame",
+              "id": "5Zmxu",
+              "name": "spacer",
+              "width": "fill_container",
+              "height": 20
+            },
+            {
+              "type": "frame",
+              "id": "mvcxq",
+              "name": "prefsCard",
+              "width": "fill_container",
+              "cornerRadius": 12,
+              "stroke": {
+                "align": "inside",
+                "thickness": 1,
+                "fill": "$--border"
+              },
+              "layout": "vertical",
+              "padding": [
+                0,
+                16
+              ],
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "OwFbj",
+                  "name": "row1",
+                  "width": "fill_container",
+                  "padding": [
+                    16,
+                    0
+                  ],
+                  "justifyContent": "space_between",
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "frame",
+                      "id": "lPnwP",
+                      "name": "left",
+                      "width": "fill_container",
+                      "layout": "vertical",
+                      "gap": 2,
+                      "children": [
+                        {
+                          "type": "text",
+                          "id": "fOidQ",
+                          "name": "title",
+                          "fill": "$--font-primary",
+                          "content": "Booking Confirmations",
+                          "fontFamily": "Inter",
+                          "fontSize": 15,
+                          "fontWeight": "500"
+                        },
+                        {
+                          "type": "text",
+                          "id": "lEA28",
+                          "name": "desc",
+                          "fill": "$--font-tertiary",
+                          "content": "When you book or cancel a class",
+                          "fontFamily": "Inter",
+                          "fontSize": 12,
+                          "fontWeight": "normal"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "oNtTR",
+                      "name": "toggle",
+                      "width": 44,
+                      "height": 24,
+                      "fill": "$--accent",
+                      "cornerRadius": 12,
+                      "layout": "none",
+                      "children": [
+                        {
+                          "type": "frame",
+                          "id": "ZJswN",
+                          "x": 22,
+                          "y": 2,
+                          "name": "knob",
+                          "width": 20,
+                          "height": 20,
+                          "fill": "$--white",
+                          "cornerRadius": 10
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "type": "line",
+                  "id": "3Bz9b",
+                  "name": "divider1",
+                  "width": "fill_container",
+                  "height": 0,
+                  "stroke": {
+                    "thickness": 1,
+                    "fill": "$--border"
+                  }
+                },
+                {
+                  "type": "frame",
+                  "id": "0ei7C",
+                  "name": "row2",
+                  "width": "fill_container",
+                  "padding": [
+                    16,
+                    0
+                  ],
+                  "justifyContent": "space_between",
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "frame",
+                      "id": "de4KG",
+                      "name": "left",
+                      "width": "fill_container",
+                      "layout": "vertical",
+                      "gap": 2,
+                      "children": [
+                        {
+                          "type": "text",
+                          "id": "IgHWY",
+                          "name": "title",
+                          "fill": "$--font-primary",
+                          "content": "Waitlist Updates",
+                          "fontFamily": "Inter",
+                          "fontSize": 15,
+                          "fontWeight": "500"
+                        },
+                        {
+                          "type": "text",
+                          "id": "lBxCf",
+                          "name": "desc",
+                          "fill": "$--font-tertiary",
+                          "content": "When you're promoted from the waitlist",
+                          "fontFamily": "Inter",
+                          "fontSize": 12,
+                          "fontWeight": "normal"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "jkSzP",
+                      "name": "toggle",
+                      "width": 44,
+                      "height": 24,
+                      "fill": "$--accent",
+                      "cornerRadius": 12,
+                      "layout": "none",
+                      "children": [
+                        {
+                          "type": "frame",
+                          "id": "2nqE2",
+                          "x": 22,
+                          "y": 2,
+                          "name": "knob",
+                          "width": 20,
+                          "height": 20,
+                          "fill": "$--white",
+                          "cornerRadius": 10
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "type": "line",
+                  "id": "PhuTD",
+                  "name": "divider2",
+                  "width": "fill_container",
+                  "height": 0,
+                  "stroke": {
+                    "thickness": 1,
+                    "fill": "$--border"
+                  }
+                },
+                {
+                  "type": "frame",
+                  "id": "hyien",
+                  "name": "row3",
+                  "width": "fill_container",
+                  "padding": [
+                    16,
+                    0
+                  ],
+                  "justifyContent": "space_between",
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "frame",
+                      "id": "SR0ey",
+                      "name": "left",
+                      "width": "fill_container",
+                      "layout": "vertical",
+                      "gap": 2,
+                      "children": [
+                        {
+                          "type": "text",
+                          "id": "ajYNQ",
+                          "name": "title",
+                          "fill": "$--font-primary",
+                          "content": "Class Changes",
+                          "fontFamily": "Inter",
+                          "fontSize": 15,
+                          "fontWeight": "500"
+                        },
+                        {
+                          "type": "text",
+                          "id": "xKPvg",
+                          "name": "desc",
+                          "fill": "$--font-tertiary",
+                          "content": "When a class you booked is modified",
+                          "fontFamily": "Inter",
+                          "fontSize": 12,
+                          "fontWeight": "normal"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "8otZ2",
+                      "name": "toggle",
+                      "width": 44,
+                      "height": 24,
+                      "fill": "$--accent",
+                      "cornerRadius": 12,
+                      "layout": "none",
+                      "children": [
+                        {
+                          "type": "frame",
+                          "id": "gknYd",
+                          "x": 22,
+                          "y": 2,
+                          "name": "knob",
+                          "width": 20,
+                          "height": 20,
+                          "fill": "$--white",
+                          "cornerRadius": 10
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "type": "line",
+                  "id": "mnbRB",
+                  "name": "divider3",
+                  "width": "fill_container",
+                  "height": 0,
+                  "stroke": {
+                    "thickness": 1,
+                    "fill": "$--border"
+                  }
+                },
+                {
+                  "type": "frame",
+                  "id": "OOg0F",
+                  "name": "row4",
+                  "width": "fill_container",
+                  "padding": [
+                    16,
+                    0
+                  ],
+                  "justifyContent": "space_between",
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "frame",
+                      "id": "wUymh",
+                      "name": "left",
+                      "width": "fill_container",
+                      "layout": "vertical",
+                      "gap": 2,
+                      "children": [
+                        {
+                          "type": "text",
+                          "id": "jXpMg",
+                          "name": "title",
+                          "fill": "$--font-primary",
+                          "content": "Class Reminders",
+                          "fontFamily": "Inter",
+                          "fontSize": 15,
+                          "fontWeight": "500"
+                        },
+                        {
+                          "type": "text",
+                          "id": "560GG",
+                          "name": "desc",
+                          "fill": "$--font-tertiary",
+                          "content": "30 minutes before your class starts",
+                          "fontFamily": "Inter",
+                          "fontSize": 12,
+                          "fontWeight": "normal"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "tOqsU",
+                      "name": "toggle",
+                      "width": 44,
+                      "height": 24,
+                      "fill": "#E0E0E0",
+                      "cornerRadius": 12,
+                      "layout": "none",
+                      "children": [
+                        {
+                          "type": "frame",
+                          "id": "vwsFH",
+                          "x": 2,
+                          "y": 2,
+                          "name": "knob",
+                          "width": 20,
+                          "height": 20,
+                          "fill": "$--white",
+                          "cornerRadius": 10
                         }
                       ]
                     }
