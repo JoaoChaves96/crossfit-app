@@ -7,8 +7,6 @@
 - Frontend: useNotifications + usePushToken hooks, NotificationBell, notifications screen, preferences in profile (164 tests)
 - Designs: 3 frames in `designs/athlete-screens.pen` (Notifications List, Bell Badge, Preferences)
 
----
-
 ## Overview
 
 Add in-app notifications and push notifications to the CrossFit platform. Athletes receive timely updates about their bookings, waitlist status, class changes, and upcoming classes.

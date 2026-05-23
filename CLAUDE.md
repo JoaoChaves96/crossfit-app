@@ -338,10 +338,13 @@ When work is ready for execution, Claude SHOULD help produce prompts that:
 
 Claude MUST NOT execute backend, frontend, or security tasks itself.
 
-### Execution Prompt Calibration (MANDATORY)
+### Execution Modes
 
-Execution agents (`frontend-developer`, `backend-developer`) are senior engineers.
-They read the codebase themselves. Claude MUST NOT over-specify implementation details.
+There are two modes for dispatching execution work:
+
+#### Mode 1: Standard Prompts (FEATURE, BUG_FIX, etc.)
+
+For tasks where the agent should make implementation decisions:
 
 **A good prompt contains:**
 - **What** needs to be done and **why** (the goal or bug)
@@ -356,6 +359,20 @@ They read the codebase themselves. Claude MUST NOT over-specify implementation d
 - Architectural decisions the agent should make itself
 
 The agent figures out the **how**. Claude figures out the **what** and **why**.
+
+#### Mode 2: Plan Execution (PLAN_EXECUTION)
+
+For complex epics where Claude produces a detailed implementation plan (TDD-style with code, tests, and commit checkpoints):
+
+- Claude writes a full plan document with exact file paths, code blocks, test-first steps, and verification commands
+- Plan lives in the epic file or a dedicated plan doc
+- Agents receive TASK TYPE = `PLAN_EXECUTION` and a reference to the plan + specific task number(s) to execute
+- Agents follow the plan mechanically — they do NOT deviate, skip steps, or "improve" the plan
+- Claude reviews between tasks and dispatches the next one
+
+**When to use Plan Execution:** Multi-file features that introduce new infrastructure, require specific architectural decisions to be locked in upfront, or span multiple agents that must produce compatible code.
+
+**When to use Standard Prompts:** Self-contained features where a senior engineer can make good implementation decisions with just a goal and constraints.
 
 ---
 
