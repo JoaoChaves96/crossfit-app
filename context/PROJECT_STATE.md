@@ -15,12 +15,27 @@
 **→ See `epics/REVOKE_COACH_EPIC.md` for completed epic details**
 **→ See `epics/ATHLETE_PROFILE_EPIC.md` for completed epic details**
 **→ See `epics/GYM_PROFILE_EPIC.md` for completed epic details**
+**→ See `epics/NOTIFICATIONS_EPIC.md` for completed epic details**
 
 ## Product
 
 Crossfit class booking application.
 
-## Current Phase (2026-05-18)
+## Current Phase (2026-05-23)
+
+**EPIC:** Notifications (Epic R) — ✅ COMPLETE (2026-05-23)  
+**→ See `epics/NOTIFICATIONS_EPIC.md` for full task breakdown**
+- ✅ Backend: Notification entities, service, controller, Expo push service
+- ✅ Backend: Event listener (booking.created, waitlist.promoted, class.modified, class.cancelled)
+- ✅ Backend: Class reminder scheduler (cron, 30 min before)
+- ✅ UX Design: 3 frames in `athlete-screens.pen` (Notifications List, Bell Badge, Preferences)
+- ✅ Frontend: useNotifications + usePushToken hooks
+- ✅ Frontend: Notifications screen + NotificationBell with badge
+- ✅ Frontend: Notification preference toggles in profile
+- ✅ Frontend aligned with designs (per-type icon colors, subtitles, dividers)
+- Tests: 169 backend + 164 frontend = 333 total
+
+## Previous Phase (2026-05-18)
 
 **EPIC:** Responsive Design — Phase 1 (Epic Q) — ✅ COMPLETE (2026-05-19)  
 **→ See `epics/RESPONSIVE_DESIGN_EPIC.md` for full task breakdown**
@@ -235,9 +250,9 @@ Crossfit class booking application.
 
 ## Known Non-Goals (for now)
 
-- No payments
-- No Members UI
-- No Settings UI
+- No payments/billing
+- No analytics dashboard
+- No admin panel
 
 ## Verified Working Flows (Waitlist)
 
