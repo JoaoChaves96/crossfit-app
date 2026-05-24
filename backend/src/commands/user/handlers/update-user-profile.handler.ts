@@ -17,13 +17,24 @@ export class UpdateUserProfileHandler
       throw new NotFoundException(`User ${command.userId} not found`);
     }
 
-    user.name = command.name;
+    if (command.name !== undefined) {
+      user.name = command.name;
+    }
+
+    if (command.notificationPreferences !== undefined) {
+      user.notificationPreferences = {
+        ...user.notificationPreferences,
+        ...command.notificationPreferences,
+      };
+    }
+
     const updated = await this.userService.saveUser(user);
 
     return {
       id: updated.id,
       name: updated.name,
       email: updated.email,
+      notificationPreferences: updated.notificationPreferences,
       createdAt: updated.createdAt,
     };
   }

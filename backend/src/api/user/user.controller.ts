@@ -83,9 +83,7 @@ export class UserController {
     description: 'Forbidden - Athlete, owner, or coach role required',
   })
   @ApiResponse({ status: 404, description: 'User not found' })
-  async getUserProfile(
-    @CurrentUser() userId: string,
-  ): Promise<UserProfileDto> {
+  async getUserProfile(@CurrentUser() userId: string): Promise<UserProfileDto> {
     return this.getUserProfileService.getProfile(userId);
   }
 
@@ -95,14 +93,17 @@ export class UserController {
   @ApiOperation({
     summary: 'Update authenticated user profile',
     description:
-      'Updates the name of the currently authenticated user. Email is read-only and cannot be changed.',
+      'Updates the profile of the currently authenticated user. Supports partial updates to name and notification preferences. Email is read-only and cannot be changed.',
   })
   @ApiResponse({
     status: 200,
     description: 'Updated user profile returned',
     type: UserProfileDto,
   })
-  @ApiResponse({ status: 400, description: 'Validation error - name is required and must be non-empty' })
+  @ApiResponse({
+    status: 400,
+    description: 'Validation error - name is required and must be non-empty',
+  })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   @ApiResponse({
     status: 403,
@@ -114,7 +115,11 @@ export class UserController {
     @Body() dto: UpdateUserProfileDto,
   ): Promise<UserProfileDto> {
     return this.commandBus.execute(
-      new UpdateUserProfileCommand(userId, dto.name),
+      new UpdateUserProfileCommand(
+        userId,
+        dto.name,
+        dto.notificationPreferences,
+      ),
     );
   }
 }

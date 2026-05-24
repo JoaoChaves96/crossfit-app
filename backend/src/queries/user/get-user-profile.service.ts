@@ -17,6 +17,7 @@ export class GetUserProfileService {
       id: user.id,
       name: user.name,
       email: user.email,
+      notificationPreferences: user.notificationPreferences,
       createdAt: user.createdAt,
     };
   }
