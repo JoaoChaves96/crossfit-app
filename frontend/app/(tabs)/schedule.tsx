@@ -4,8 +4,10 @@ import {
   Text,
   FlatList,
   TouchableOpacity,
+  Pressable,
   ActivityIndicator,
   ScrollView,
+  GestureResponderEvent,
 } from 'react-native';
 import { useRouter, useFocusEffect } from 'expo-router';
 import { useAuth } from '@/hooks/useAuth';
@@ -26,17 +28,27 @@ type GetUserBookingsResponse = components['schemas']['GetUserBookingsResponseDto
 
 type BookingStatus = 'booked' | 'waitlisted' | 'open' | 'full';
 
+// Statuses derived from a non-published lifecycle state. These are display-only
+// and never offer a booking/waitlist action.
+type LifecycleStatus = 'closed' | 'in_progress' | 'completed';
+
+// The full set of statuses a schedule card can render.
+type CardStatus = BookingStatus | LifecycleStatus;
+
 interface EnrichedClass extends ClassScheduleItem {
-  userBookingStatus: BookingStatus;
+  userBookingStatus: CardStatus;
   userBookingId?: string;
 }
 
 // ─── Badge config ─────────────────────────────────────────────────────────────
-const BADGE_CONFIG: Record<BookingStatus, { bg: string; text: string; label: string }> = {
+const BADGE_CONFIG: Record<CardStatus, { bg: string; text: string; label: string }> = {
   open: { bg: AppColors.successBgFaint, text: AppColors.successMaterial, label: 'Open' },
   booked: { bg: AppColors.surfaceBlueLight, text: AppColors.actionBlueDark, label: 'Booked' },
   waitlisted: { bg: AppColors.warningBgOrange, text: AppColors.warningOrange, label: 'Waitlisted' },
   full: { bg: AppColors.backgroundSubtle, text: AppColors.textGray500, label: 'Full' },
+  closed: { bg: AppColors.backgroundSubtle, text: AppColors.textGray500, label: 'Closed' },
+  in_progress: { bg: AppColors.surfaceBlueLight, text: AppColors.actionBlueDark, label: 'In Progress' },
+  completed: { bg: AppColors.backgroundSubtle, text: AppColors.textGray500, label: 'Completed' },
 };
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -48,20 +60,41 @@ function getSpotsText(bookedCount: number, capacity: number): string {
   return `${bookedCount} / ${capacity} spots`;
 }
 
-function getCapacityDetailText(bookedCount: number, capacity: number, status: BookingStatus): { text: string; isFullWaitlist: boolean } {
-  if (status === 'full' || (status !== 'booked' && status !== 'waitlisted' && bookedCount >= capacity)) {
+function getCapacityDetailText(bookedCount: number, capacity: number, status: CardStatus): { text: string; isFullWaitlist: boolean } {
+  if (status === 'full') {
     return { text: 'Full · Waitlist Open', isFullWaitlist: true };
   }
   return { text: getSpotsText(bookedCount, capacity), isFullWaitlist: false };
 }
 
+// Maps a non-published lifecycle state to its display-only status.
+function lifecycleStatusFor(state: ClassScheduleItem['state']): LifecycleStatus {
+  switch (state) {
+    case 'booking_closed':
+      return 'closed';
+    case 'in_progress':
+      return 'in_progress';
+    default:
+      // 'completed' (and any other non-published, non-bookable state)
+      return 'completed';
+  }
+}
+
+// Derives the card status, mirroring class-details gating: a user's own
+// booking (booked/waitlisted) is always reflected regardless of lifecycle
+// state; open/full booking actions are only offered for `published` classes;
+// non-published classes with no user booking render a display-only lifecycle
+// status.
 function deriveBookingStatus(
   cls: ClassScheduleItem,
   bookingMap: Map<string, UserBookingItem>
-): { status: BookingStatus; bookingId?: string } {
+): { status: CardStatus; bookingId?: string } {
   const booking = bookingMap.get(cls.id);
   if (booking) {
     return { status: booking.status as BookingStatus, bookingId: booking.id };
+  }
+  if (cls.state !== 'published') {
+    return { status: lifecycleStatusFor(cls.state) };
   }
   if (cls.bookedCount >= cls.capacity) {
     return { status: 'full' };
@@ -71,7 +104,7 @@ function deriveBookingStatus(
 
 // ─── Sub-components ───────────────────────────────────────────────────────────
 interface StatusBadgeProps {
-  status: BookingStatus;
+  status: CardStatus;
 }
 
 function StatusBadge({ status }: StatusBadgeProps) {
@@ -84,7 +117,7 @@ function StatusBadge({ status }: StatusBadgeProps) {
 }
 
 interface CardActionButtonProps {
-  status: BookingStatus;
+  status: CardStatus;
   onBook: () => void;
   onCancel: () => void;
   onWaitlist: () => void;
@@ -98,6 +131,16 @@ function CardActionButton({
   onWaitlist,
   isCancelling,
 }: CardActionButtonProps) {
+  const stopAndCall = (handler: () => void) => (e: GestureResponderEvent) => {
+    e.stopPropagation();
+    handler();
+  };
+
+  // Non-published lifecycle states are display-only: no booking/waitlist action.
+  if (status === 'closed' || status === 'in_progress' || status === 'completed') {
+    return null;
+  }
+
   if (status === 'booked') {
     if (isCancelling) {
       return (
@@ -107,9 +150,9 @@ function CardActionButton({
       );
     }
     return (
-      <TouchableOpacity style={[styles.actionBtn, styles.actionBtnCancel]} onPress={onCancel} activeOpacity={0.7}>
+      <Pressable style={[styles.actionBtn, styles.actionBtnCancel]} onPress={stopAndCall(onCancel)}>
         <Text style={[styles.actionBtnText, { color: AppColors.errorBootstrap }]}>Cancel Booking</Text>
-      </TouchableOpacity>
+      </Pressable>
     );
   }
 
@@ -122,25 +165,25 @@ function CardActionButton({
       );
     }
     return (
-      <TouchableOpacity style={[styles.actionBtn, styles.actionBtnWaitlist]} onPress={onCancel} activeOpacity={0.7}>
+      <Pressable style={[styles.actionBtn, styles.actionBtnWaitlist]} onPress={stopAndCall(onCancel)}>
         <Text style={[styles.actionBtnText, { color: AppColors.textPrimary }]}>Leave Waitlist</Text>
-      </TouchableOpacity>
+      </Pressable>
     );
   }
 
   if (status === 'full') {
     return (
-      <TouchableOpacity style={[styles.actionBtn, styles.actionBtnWaitlist]} onPress={onWaitlist} activeOpacity={0.7}>
+      <Pressable style={[styles.actionBtn, styles.actionBtnWaitlist]} onPress={stopAndCall(onWaitlist)}>
         <Text style={[styles.actionBtnText, { color: AppColors.textPrimary }]}>Join Waitlist</Text>
-      </TouchableOpacity>
+      </Pressable>
     );
   }
 
   // open
   return (
-    <TouchableOpacity style={[styles.actionBtn, styles.actionBtnPrimary]} onPress={onBook} activeOpacity={0.7}>
+    <Pressable style={[styles.actionBtn, styles.actionBtnPrimary]} onPress={stopAndCall(onBook)}>
       <Text style={[styles.actionBtnText, { color: AppColors.backgroundWhite }]}>Book Class</Text>
-    </TouchableOpacity>
+    </Pressable>
   );
 }
 
@@ -153,7 +196,7 @@ interface ClassCardProps {
 
 function ClassCard({ item, onPress, onCancel, isCancelling }: ClassCardProps) {
   return (
-    <TouchableOpacity style={styles.card} onPress={onPress} activeOpacity={0.85}>
+    <Pressable style={styles.card} onPress={onPress}>
       {/* Top row: time + badge */}
       <View style={styles.cardTop}>
         <Text style={styles.cardTime}>{formatTimeRange(item.scheduledDate, item.scheduledTime)}</Text>
@@ -188,7 +231,7 @@ function ClassCard({ item, onPress, onCancel, isCancelling }: ClassCardProps) {
         onWaitlist={onPress}
         isCancelling={isCancelling}
       />
-    </TouchableOpacity>
+    </Pressable>
   );
 }
 

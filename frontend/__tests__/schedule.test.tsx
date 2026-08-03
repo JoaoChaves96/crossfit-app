@@ -315,3 +315,207 @@ describe('ScheduleScreen — booking status badges', () => {
     });
   });
 });
+
+// ─── Lifecycle-state gating ─────────────────────────────────────────────────
+//
+// Only `published` classes may offer a booking/waitlist action. Non-published
+// classes (booking_closed / in_progress / completed) render a display-only
+// status badge and no action button, mirroring the gating in class-details.
+
+describe('ScheduleScreen — lifecycle-state gating', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  describe('when a published open class has no user booking', () => {
+    it('renders the "Book Class" action button', async () => {
+      // Arrange
+      const mockApi = createMockApiClient();
+      const cls = buildGymClass({
+        id: 'class-published',
+        state: 'published',
+        bookedCount: 5,
+        capacity: 20,
+      });
+      mockApi.get.mockImplementation((url: string) => {
+        if (url.includes('/classes')) return Promise.resolve(buildScheduleResponse([cls]));
+        if (url.includes('/bookings')) return Promise.resolve(buildBookingsResponse([]));
+        return Promise.reject(new Error(`Unexpected GET: ${url}`));
+      });
+
+      // Act
+      renderScreen(mockApi);
+
+      // Assert
+      await waitFor(() => {
+        expect(screen.getByText('Book Class')).toBeTruthy();
+      });
+    });
+  });
+
+  describe('when a booking_closed class has no user booking', () => {
+    it('renders the "Closed" badge', async () => {
+      // Arrange
+      const mockApi = createMockApiClient();
+      const cls = buildGymClass({
+        id: 'class-closed',
+        state: 'booking_closed',
+        bookedCount: 5,
+        capacity: 20,
+      });
+      mockApi.get.mockImplementation((url: string) => {
+        if (url.includes('/classes')) return Promise.resolve(buildScheduleResponse([cls]));
+        if (url.includes('/bookings')) return Promise.resolve(buildBookingsResponse([]));
+        return Promise.reject(new Error(`Unexpected GET: ${url}`));
+      });
+
+      // Act
+      renderScreen(mockApi);
+
+      // Assert
+      await waitFor(() => {
+        expect(screen.getByText('Closed')).toBeTruthy();
+      });
+    });
+
+    it('does not render any booking action button', async () => {
+      // Arrange
+      const mockApi = createMockApiClient();
+      const cls = buildGymClass({
+        id: 'class-closed',
+        state: 'booking_closed',
+        bookedCount: 5,
+        capacity: 20,
+      });
+      mockApi.get.mockImplementation((url: string) => {
+        if (url.includes('/classes')) return Promise.resolve(buildScheduleResponse([cls]));
+        if (url.includes('/bookings')) return Promise.resolve(buildBookingsResponse([]));
+        return Promise.reject(new Error(`Unexpected GET: ${url}`));
+      });
+
+      // Act
+      renderScreen(mockApi);
+
+      // Assert
+      await waitFor(() => {
+        expect(screen.getByText('Closed')).toBeTruthy();
+      });
+      expect(screen.queryByText('Book Class')).toBeNull();
+      expect(screen.queryByText('Join Waitlist')).toBeNull();
+    });
+  });
+
+  describe('when an in_progress class has no user booking', () => {
+    it('renders the "In Progress" badge and no action button', async () => {
+      // Arrange
+      const mockApi = createMockApiClient();
+      const cls = buildGymClass({
+        id: 'class-in-progress',
+        state: 'in_progress',
+        bookedCount: 12,
+        capacity: 20,
+      });
+      mockApi.get.mockImplementation((url: string) => {
+        if (url.includes('/classes')) return Promise.resolve(buildScheduleResponse([cls]));
+        if (url.includes('/bookings')) return Promise.resolve(buildBookingsResponse([]));
+        return Promise.reject(new Error(`Unexpected GET: ${url}`));
+      });
+
+      // Act
+      renderScreen(mockApi);
+
+      // Assert
+      await waitFor(() => {
+        expect(screen.getByText('In Progress')).toBeTruthy();
+      });
+      expect(screen.queryByText('Book Class')).toBeNull();
+      expect(screen.queryByText('Join Waitlist')).toBeNull();
+    });
+  });
+
+  describe('when a completed class has no user booking', () => {
+    it('renders the "Completed" badge and no action button', async () => {
+      // Arrange
+      const mockApi = createMockApiClient();
+      const cls = buildGymClass({
+        id: 'class-completed',
+        state: 'completed',
+        bookedCount: 18,
+        capacity: 20,
+      });
+      mockApi.get.mockImplementation((url: string) => {
+        if (url.includes('/classes')) return Promise.resolve(buildScheduleResponse([cls]));
+        if (url.includes('/bookings')) return Promise.resolve(buildBookingsResponse([]));
+        return Promise.reject(new Error(`Unexpected GET: ${url}`));
+      });
+
+      // Act
+      renderScreen(mockApi);
+
+      // Assert
+      await waitFor(() => {
+        expect(screen.getByText('Completed')).toBeTruthy();
+      });
+      expect(screen.queryByText('Book Class')).toBeNull();
+      expect(screen.queryByText('Join Waitlist')).toBeNull();
+    });
+  });
+
+  describe('when a full but non-published class has no user booking', () => {
+    it('does not offer "Join Waitlist" (renders lifecycle badge instead)', async () => {
+      // Arrange
+      const mockApi = createMockApiClient();
+      const cls = buildGymClass({
+        id: 'class-completed-full',
+        state: 'completed',
+        bookedCount: 20,
+        capacity: 20,
+      });
+      mockApi.get.mockImplementation((url: string) => {
+        if (url.includes('/classes')) return Promise.resolve(buildScheduleResponse([cls]));
+        if (url.includes('/bookings')) return Promise.resolve(buildBookingsResponse([]));
+        return Promise.reject(new Error(`Unexpected GET: ${url}`));
+      });
+
+      // Act
+      renderScreen(mockApi);
+
+      // Assert
+      await waitFor(() => {
+        expect(screen.getByText('Completed')).toBeTruthy();
+      });
+      expect(screen.queryByText('Join Waitlist')).toBeNull();
+      expect(screen.queryByText('Full')).toBeNull();
+    });
+  });
+
+  describe('when a user has a confirmed booking on a non-published class', () => {
+    it('still reflects the "Booked" status regardless of lifecycle state', async () => {
+      // Arrange
+      const mockApi = createMockApiClient();
+      const cls = buildGymClass({
+        id: 'class-completed-booked',
+        state: 'completed',
+        bookedCount: 15,
+        capacity: 20,
+      });
+      const booking = buildUserBooking({
+        classId: 'class-completed-booked',
+        status: 'booked',
+      });
+      mockApi.get.mockImplementation((url: string) => {
+        if (url.includes('/classes')) return Promise.resolve(buildScheduleResponse([cls]));
+        if (url.includes('/bookings')) return Promise.resolve(buildBookingsResponse([booking]));
+        return Promise.reject(new Error(`Unexpected GET: ${url}`));
+      });
+
+      // Act
+      renderScreen(mockApi);
+
+      // Assert
+      await waitFor(() => {
+        expect(screen.getByText('Booked')).toBeTruthy();
+      });
+    });
+  });
+});
