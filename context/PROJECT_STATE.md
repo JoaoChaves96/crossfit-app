@@ -26,8 +26,14 @@ Crossfit class booking application.
 **Tiered Audit — Phase 3: bug triage & fixes** (Trello board "Crossfit Application")
 Phase 1 (automated sweep) and Phase 2 (per-screen walkthrough vs `.pen` designs) surfaced
 🐞 cards on the board. Phase 3 fixed the audited backend/frontend bugs, blocker first, one at
-a time (execution agents implement; each fix verified before the next). Phase 2 screen audit
-(Athlete first) resumes next.
+a time (execution agents implement; each fix verified before the next).
+
+**Phase 2 per-screen walkthrough status:** ✅ COMPLETE — all three roles. Athlete role ✅ (22 🐞
+cards). Gym-Owner role ✅ (25 🐞 cards — incl. Membership Plans feature entirely missing, and
+/invites rendering the athlete nav shell). Coach role ✅ (13 🐞 cards — Class Details renders the
+desktop-style card on mobile; undesigned "Loggable" toggle; Mark Attendance layout diverges from
+design & defaults athletes to Absent; desktop sidebar & Schedule/Create/Manage frames exceed coach
+MVP scope. Coach desktop has NO duplicate-header bug). Discovery/triage only; fixes are Phase 3.
 
 - ✅ **🐞 Athlete HTTP 403 on log-results** (blocker) → **Verified**
   - Backend (`9df7d47`): new own-scoped `GET /api/gyms/:gymId/classes/:classId/results/me`
