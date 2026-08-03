@@ -21,7 +21,35 @@
 
 Crossfit class booking application.
 
-## Current Phase (2026-05-23)
+## Current Phase (2026-08-03)
+
+**Tiered Audit — Phase 3: bug triage & fixes** (Trello board "Crossfit Application")
+Phase 1 (automated sweep) and Phase 2 (per-screen walkthrough vs `.pen` designs) surfaced
+🐞 cards on the board. Phase 3 fixed the audited backend/frontend bugs, blocker first, one at
+a time (execution agents implement; each fix verified before the next). Phase 2 screen audit
+(Athlete first) resumes next.
+
+- ✅ **🐞 Athlete HTTP 403 on log-results** (blocker) → **Verified**
+  - Backend (`9df7d47`): new own-scoped `GET /api/gyms/:gymId/classes/:classId/results/me`
+    (`@Role(['athlete','owner','coach'])`, returns only the caller's result). Roster
+    `GET .../results` left coach/owner-only (no cross-athlete leak). `GET .../programming`
+    relaxed to athletes with an active membership in the gym. gymId scoping preserved.
+  - Frontend (`d352c28`): `log-results.tsx` now fetches `.../results/me` (single `{ result }`
+    shape) instead of the roster endpoint; types regenerated from Swagger.
+- ✅ **🐞 Login screen hard-crash** (blocker, regression) → **Verified** (`78a07e1`)
+  - `NotificationBell` (mounted globally) called `useNotifications()` → `useApiClient()`, which
+    throws with no token, crashing the whole tree on `/login`. Restored the `isAuthenticated`
+    guard so the bell renders `null` when logged out. Exposed when the unfinished notifications
+    work (which carried the guard) was stashed.
+- ✅ **🐞 Malformed (non-UUID) path param → HTTP 500** (low) → **Verified** (`29a538e`)
+  - Global `UuidParamPipe` (APP_PIPE) rejects malformed UUIDs (params ending in `Id`) with 400
+    before the DB; skips invite `token`/`inviteToken`. Global `QueryFailedFilter` (APP_FILTER)
+    maps Postgres `22P02` → 400 as a backstop. Well-formed-but-missing UUID still → 404.
+- **Deferred (separate plan):** Notifications frontend migration — unit tests (17 failing) + tsc
+  errors + expo 54 / expo-notifications 56 version mismatch. Held in `git stash` on `dev`; two
+  🐞 cards remain in the board's Issues Found list. See `epics/NOTIFICATIONS_PLAN.md`.
+
+## Previous Phase (2026-05-23)
 
 **EPIC:** Notifications (Epic R) — ✅ COMPLETE (2026-05-23)  
 **→ See `epics/NOTIFICATIONS_EPIC.md` for full task breakdown**
@@ -235,11 +263,12 @@ Crossfit class booking application.
 ✅ GET /api/gyms/:gymId/configuration/coaches (owner)  
 ✅ GET /api/gyms/:gymId/schedule (owner)  
 ✅ GET /api/gyms/:gymId/coach/classes (coach)  
-✅ GET /api/gyms/:gymId/classes/:classId/programming (coach or owner)  
+✅ GET /api/gyms/:gymId/classes/:classId/programming (athlete w/ active membership, coach, or owner)  
 ✅ POST /api/gyms/:gymId/classes/:classId/programming (coach)  
 ✅ GET /api/gyms/:gymId/classes/:classId/bookings (coach or owner)  
 ✅ POST /api/gyms/:gymId/classes/:classId/attendance (coach)  
-✅ GET /api/gyms/:gymId/classes/:classId/results (coach or owner)  
+✅ GET /api/gyms/:gymId/classes/:classId/results (coach or owner — full roster)  
+✅ GET /api/gyms/:gymId/classes/:classId/results/me (athlete/coach/owner — caller's own result only)  
 ✅ POST /api/gyms/:gymId/classes/:classId/transition (coach or owner)  
 
 ## Invite Endpoints (Task #1 Complete)
