@@ -1,4 +1,5 @@
 import { Module } from '@nestjs/common';
+import { APP_FILTER, APP_PIPE } from '@nestjs/core';
 import { CqrsModule } from '@nestjs/cqrs';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ClassSchedulingController } from '../api/class/class-scheduling.controller';
@@ -36,6 +37,8 @@ import { InviteController } from '../api/invite/invite.controller';
 import { GetUserProfileService } from '../queries/user/get-user-profile.service';
 import { UpdateUserProfileHandler } from '../commands/user/handlers/update-user-profile.handler';
 import { UserModule } from '../domain/user/user.module';
+import { UuidParamPipe } from './uuid-param.pipe';
+import { QueryFailedFilter } from './query-failed.filter';
 
 @Module({
   imports: [
@@ -71,6 +74,14 @@ import { UserModule } from '../domain/user/user.module';
     InviteController,
   ],
   providers: [
+    {
+      provide: APP_PIPE,
+      useClass: UuidParamPipe,
+    },
+    {
+      provide: APP_FILTER,
+      useClass: QueryFailedFilter,
+    },
     RolesGuard,
     GymOwnershipGuard,
     UserBookingsService,
