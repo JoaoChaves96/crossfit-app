@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, Text, Pressable, StyleSheet } from 'react-native';
 import { useRouter, usePathname } from 'expo-router';
 import { AppColors, FontSizes, FontWeights, Spacing } from '@/constants/theme';
 
@@ -36,10 +36,9 @@ export function DesktopTopNav({ gymName = 'My Gym' }: DesktopTopNavProps) {
         {NAV_ITEMS.map((item) => {
           const active = isActive(item.path);
           return (
-            <TouchableOpacity
+            <Pressable
               key={item.path}
               onPress={() => router.push(item.path as never)}
-              activeOpacity={0.7}
             >
               <Text
                 style={[
@@ -49,7 +48,7 @@ export function DesktopTopNav({ gymName = 'My Gym' }: DesktopTopNavProps) {
               >
                 {item.label}
               </Text>
-            </TouchableOpacity>
+            </Pressable>
           );
         })}
       </View>

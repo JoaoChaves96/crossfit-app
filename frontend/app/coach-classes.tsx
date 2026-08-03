@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import {
   ActivityIndicator,
+  Pressable,
   ScrollView,
   Text,
   TouchableOpacity,
@@ -88,14 +89,13 @@ function Sidebar({ activeItem }: SidebarProps) {
           const isActive = item.key === activeItem;
           const isDisabled = !item.enabled;
           return (
-            <TouchableOpacity
+            <Pressable
               key={item.key}
               style={[
                 styles.navItem,
                 isActive && styles.navItemActive,
               ]}
-              disabled={isDisabled}
-              activeOpacity={isDisabled ? 1 : 0.7}>
+              disabled={isDisabled}>
               <Text
                 style={[
                   styles.navLabel,
@@ -103,7 +103,7 @@ function Sidebar({ activeItem }: SidebarProps) {
                 ]}>
                 {item.label}
               </Text>
-            </TouchableOpacity>
+            </Pressable>
           );
         })}
       </View>
@@ -150,9 +150,9 @@ function ClassRow({ gymClass, isAlt, onView }: ClassRowProps) {
         </View>
       </View>
       <View style={styles.colAction}>
-        <TouchableOpacity testID={`coach-class-view-btn-${gymClass.id}`} style={styles.viewBtn} onPress={() => onView(gymClass)}>
+        <Pressable testID={`coach-class-view-btn-${gymClass.id}`} style={styles.viewBtn} onPress={() => onView(gymClass)}>
           <Text style={styles.viewBtnText}>View</Text>
-        </TouchableOpacity>
+        </Pressable>
       </View>
     </View>
   );
@@ -194,12 +194,12 @@ function MobileClassCard({ gymClass, onView }: MobileClassCardProps) {
       </View>
 
       <View style={mobileStyles.classCardFooter}>
-        <TouchableOpacity
+        <Pressable
           testID={`coach-class-view-btn-${gymClass.id}`}
           style={mobileStyles.classCardViewBtn}
           onPress={() => onView(gymClass)}>
           <Text style={mobileStyles.classCardViewBtnText}>View</Text>
-        </TouchableOpacity>
+        </Pressable>
       </View>
     </View>
   );

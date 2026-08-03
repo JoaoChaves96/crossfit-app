@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useState } from 'react';
 import {
   ActivityIndicator,
   Modal,
+  Pressable,
   ScrollView,
   Text,
   TouchableOpacity,
@@ -131,7 +132,7 @@ function Sidebar({ activeItem, onNavigate }: SidebarProps) {
           const isActive = item.key === activeItem;
           const isDisabled = !item.enabled;
           return (
-            <TouchableOpacity
+            <Pressable
               key={item.key}
               testID={`nav-${item.key}`}
               style={[
@@ -140,8 +141,7 @@ function Sidebar({ activeItem, onNavigate }: SidebarProps) {
                 isDisabled && styles.navItemDisabled,
               ]}
               onPress={isDisabled ? undefined : () => onNavigate(item.key)}
-              disabled={isDisabled}
-              activeOpacity={isDisabled ? 1 : 0.7}>
+              disabled={isDisabled}>
               <View
                 style={[
                   styles.navIcon,
@@ -157,7 +157,7 @@ function Sidebar({ activeItem, onNavigate }: SidebarProps) {
                 ]}>
                 {item.label}
               </Text>
-            </TouchableOpacity>
+            </Pressable>
           );
         })}
       </View>

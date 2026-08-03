@@ -59,7 +59,7 @@ export default function LoginScreen() {
       }
 
       if (role === 'owner') {
-        router.replace('/(tabs)/schedule' as never);
+        router.replace('/schedule-dashboard' as never);
       } else if (role === 'coach') {
         router.replace('/coach-classes' as never);
       } else if (role === 'athlete') {
