@@ -29,6 +29,7 @@ export class CoachesQueryService {
         return {
           id: staff.id,
           userId: staff.userId,
+          name: user?.name ?? '',
           email: user?.email ?? '',
           role: staff.role,
           status: staff.status,

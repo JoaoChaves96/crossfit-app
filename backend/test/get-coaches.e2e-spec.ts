@@ -164,6 +164,7 @@ describe('GET /api/gyms/:gymId/configuration/coaches', () => {
       const coaches: Array<{
         id: string;
         userId: string;
+        name: string;
         email: string;
         role: string;
         status: string;
@@ -230,6 +231,10 @@ describe('GET /api/gyms/:gymId/configuration/coaches', () => {
           /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i,
         );
 
+        // name: string
+        expect(typeof coach.name).toBe('string');
+        expect((coach.name as string).length).toBeGreaterThan(0);
+
         // email: string
         expect(typeof coach.email).toBe('string');
         expect(coach.email.length).toBeGreaterThan(0);
@@ -250,6 +255,7 @@ describe('GET /api/gyms/:gymId/configuration/coaches', () => {
         const allowedKeys = [
           'id',
           'userId',
+          'name',
           'email',
           'role',
           'status',

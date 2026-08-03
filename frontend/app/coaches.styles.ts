@@ -229,10 +229,14 @@ export const styles = StyleSheet.create({
     flex: 1,
     gap: Spacing.hairline,
   },
-  coachEmail: {
+  coachName: {
     fontSize: FontSizes.body,
     fontWeight: FontWeights.medium,
     color: AppColors.textHeading,
+  },
+  coachEmail: {
+    fontSize: FontSizes.smMd,
+    color: AppColors.textMuted,
   },
   coachRole: {
     fontSize: FontSizes.smMd,

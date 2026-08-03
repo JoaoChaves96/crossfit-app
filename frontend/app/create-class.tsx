@@ -257,7 +257,7 @@ export default function CreateClassScreen() {
       .then((data) => {
         const items: PickerItem[] = data.coaches.map((c: Coach) => ({
           id: c.userId,
-          label: c.email,
+          label: c.name || c.email,
         }));
         setCoachesFetch({ status: 'success', data: items });
       })

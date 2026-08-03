@@ -157,11 +157,12 @@ interface CoachRowProps {
 
 function CoachRow({ coach, onChangeStatus, isChangingStatus }: CoachRowProps) {
   const isActive = coach.status === 'active';
+  const displayName = coach.name || coach.email;
 
   function handleDeactivate() {
     Alert.alert(
       'Deactivate Coach',
-      `Are you sure you want to deactivate ${coach.email}? They will no longer be assigned to new classes.`,
+      `Are you sure you want to deactivate ${displayName}? They will no longer be assigned to new classes.`,
       [
         { text: 'Cancel', style: 'cancel' },
         {
@@ -181,12 +182,12 @@ function CoachRow({ coach, onChangeStatus, isChangingStatus }: CoachRowProps) {
     <View style={styles.coachRow}>
       <View style={styles.coachAvatar}>
         <Text style={styles.coachAvatarText}>
-          {coach.email.charAt(0).toUpperCase()}
+          {displayName.charAt(0).toUpperCase()}
         </Text>
       </View>
       <View style={styles.coachInfo}>
+        <Text style={styles.coachName}>{displayName}</Text>
         <Text style={styles.coachEmail}>{coach.email}</Text>
-        <Text style={styles.coachRole}>{coach.role}</Text>
       </View>
       <StatusBadge status={coach.status} />
       <View style={styles.colActions}>
@@ -331,11 +332,12 @@ interface CoachCardProps {
 
 function CoachCard({ coach, onChangeStatus, isChangingStatus }: CoachCardProps) {
   const isActive = coach.status === 'active';
+  const displayName = coach.name || coach.email;
 
   function handleDeactivate() {
     Alert.alert(
       'Deactivate Coach',
-      `Are you sure you want to deactivate ${coach.email}?`,
+      `Are you sure you want to deactivate ${displayName}?`,
       [
         { text: 'Cancel', style: 'cancel' },
         {
@@ -352,12 +354,12 @@ function CoachCard({ coach, onChangeStatus, isChangingStatus }: CoachCardProps) 
       <View style={styles.coachCardTop}>
         <View style={styles.coachAvatar}>
           <Text style={styles.coachAvatarText}>
-            {coach.email.charAt(0).toUpperCase()}
+            {displayName.charAt(0).toUpperCase()}
           </Text>
         </View>
         <View style={styles.coachCardInfo}>
+          <Text style={styles.coachName} numberOfLines={1}>{displayName}</Text>
           <Text style={styles.coachEmail} numberOfLines={1}>{coach.email}</Text>
-          <Text style={styles.coachRole}>{coach.role}</Text>
         </View>
         <StatusBadge status={coach.status} />
       </View>

@@ -11,6 +11,12 @@ export class CoachListItemDto {
   userId: string;
 
   @ApiProperty({
+    example: 'Carlos Silva',
+    description: 'Display name of the coach',
+  })
+  name: string;
+
+  @ApiProperty({
     example: 'coach@example.com',
     description: 'Email address of the coach',
   })

@@ -1858,6 +1858,11 @@ export interface components {
              */
             userId: string;
             /**
+             * @description Display name of the coach
+             * @example Carlos Silva
+             */
+            name: string;
+            /**
              * @description Email address of the coach
              * @example coach@example.com
              */
