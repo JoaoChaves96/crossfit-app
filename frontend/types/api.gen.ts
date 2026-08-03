@@ -15,13 +15,13 @@ export interface paths {
          * Get class schedule
          * @description Retrieve all classes in a gym. For athletes, classes are filtered by gym membership and membership plan visibility. Gym owners and coaches can view all classes in their gym.
          */
-        get: operations["ClassController_getClassSchedule"];
+        get: operations["ClassSchedulingController_getClassSchedule"];
         put?: never;
         /**
          * Create a new class
          * @description Schedule a new training session. Only gym owners can create classes.
          */
-        post: operations["ClassController_createClass"];
+        post: operations["ClassSchedulingController_createClass"];
         delete?: never;
         options?: never;
         head?: never;
@@ -39,21 +39,21 @@ export interface paths {
          * Get a single class by ID
          * @description Retrieve the detail of a single class scoped to the gym. Accessible by coaches and gym owners. Returns 404 if the class does not exist or does not belong to the gym.
          */
-        get: operations["ClassController_getClassDetail"];
+        get: operations["ClassSchedulingController_getClassDetail"];
         put?: never;
         post?: never;
         /**
          * Soft-delete a published class
          * @description Soft-delete a class by setting its deletedAt timestamp. Only gym owners can delete classes. Only classes in published state can be deleted.
          */
-        delete: operations["ClassController_deleteClass"];
+        delete: operations["ClassSchedulingController_deleteClass"];
         options?: never;
         head?: never;
         /**
          * Edit a published class
          * @description Partially update a published class. Only gym owners can edit classes. Only classes in published state can be edited. All body fields are optional.
          */
-        patch: operations["ClassController_editClass"];
+        patch: operations["ClassSchedulingController_editClass"];
         trace?: never;
     };
     "/api/gyms/{gymId}/classes/{classId}/bookings": {
@@ -67,13 +67,13 @@ export interface paths {
          * Get booked athletes for a class
          * @description Retrieve the list of athletes with active bookings (booked or waitlisted) for a class. Accessible by the assigned coach or the gym owner. gymId is validated against the class.
          */
-        get: operations["ClassController_getClassBookings"];
+        get: operations["ClassBookingController_getClassBookings"];
         put?: never;
         /**
          * Book a class
          * @description Reserve a spot in a class or join the waitlist if full. Available to athletes, gym owners, and coaches. Membership and plan validation is bypassed for gym owners and coaches.
          */
-        post: operations["ClassController_bookClass"];
+        post: operations["ClassBookingController_bookClass"];
         delete?: never;
         options?: never;
         head?: never;
@@ -94,27 +94,7 @@ export interface paths {
          * Cancel a booking
          * @description Remove a user from a class booking. Only allowed while class is published. Available to athletes, gym owners, and coaches.
          */
-        delete: operations["ClassController_cancelBooking"];
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/gyms/{gymId}/classes/{classId}/attendance": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * Mark class attendance
-         * @description Record which athletes attended a class. Accessible by coaches and gym owners. Can mark attendance while class is in progress or completed.
-         */
-        post: operations["ClassController_markAttendance"];
-        delete?: never;
+        delete: operations["ClassBookingController_cancelBooking"];
         options?: never;
         head?: never;
         patch?: never;
@@ -129,15 +109,15 @@ export interface paths {
         };
         /**
          * Get class programming (WOD)
-         * @description Retrieve the workout programming for a class. Accessible by the assigned coach or the gym owner. Returns null content when no programming has been set. gymId is validated against the class.
+         * @description Retrieve the workout programming for a class. Accessible by the assigned coach, the gym owner, or any athlete with active membership in the gym (WOD content is not per-athlete sensitive). Returns null content when no programming has been set. gymId is validated against the class.
          */
-        get: operations["ClassController_getClassProgramming"];
+        get: operations["ClassProgrammingController_getClassProgramming"];
         put?: never;
         /**
          * Add or edit class programming
          * @description Create or update workout content and loggable status for a class. Coaches only. Programming can be edited while class is published or booking closed.
          */
-        post: operations["ClassController_addOrEditProgramming"];
+        post: operations["ClassProgrammingController_addOrEditProgramming"];
         delete?: never;
         options?: never;
         head?: never;
@@ -157,7 +137,7 @@ export interface paths {
          * Toggle class loggable status
          * @description Toggle whether athletes can log results for this class. Coaches only.
          */
-        post: operations["ClassController_toggleLoggableStatus"];
+        post: operations["ClassProgrammingController_toggleLoggableStatus"];
         delete?: never;
         options?: never;
         head?: never;
@@ -177,7 +157,7 @@ export interface paths {
          * Manually transition class state
          * @description Move a class to the next state in the lifecycle (published → booking_closed → in_progress → completed → archived). Coaches or gym owners. State transitions are unidirectional.
          */
-        post: operations["ClassController_manuallyTransitionClassState"];
+        post: operations["ClassProgrammingController_manuallyTransitionClassState"];
         delete?: never;
         options?: never;
         head?: never;
@@ -201,7 +181,47 @@ export interface paths {
          * Update class structure
          * @description Adjust class capacity and/or space during the publish/booking phase. Accessible by coaches and gym owners. Cannot reduce capacity below current booked athletes.
          */
-        patch: operations["ClassController_updateClassStructure"];
+        patch: operations["ClassProgrammingController_updateClassStructure"];
+        trace?: never;
+    };
+    "/api/gyms/{gymId}/classes/{classId}/attendance": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Mark class attendance
+         * @description Record which athletes attended a class. Accessible by coaches and gym owners. Can mark attendance while class is in progress or completed.
+         */
+        post: operations["ClassResultsController_markAttendance"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/gyms/{gymId}/classes/{classId}/results/me": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get the caller's own result for a class
+         * @description Retrieve ONLY the authenticated user's own result for a given class. Accessible by athletes with active membership, coaches, and gym owners of the gym. Returns null result (HTTP 200) when the caller has not logged one yet. Never exposes other athletes' results. gymId is validated against the class.
+         */
+        get: operations["ClassResultsController_getMyClassResult"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
         trace?: never;
     };
     "/api/gyms/{gymId}/classes/{classId}/results": {
@@ -215,13 +235,13 @@ export interface paths {
          * Get athlete results for a class
          * @description Retrieve all athlete results for a given class. Accessible by the assigned coach or the gym owner. gymId is validated against the class.
          */
-        get: operations["ClassController_getClassResults"];
+        get: operations["ClassResultsController_getClassResults"];
         put?: never;
         /**
          * Log a result for a completed class
          * @description Submit performance data for a completed class. Available to athletes, gym owners, and coaches. Can only log results for classes where the user was marked present.
          */
-        post: operations["ClassController_logResult"];
+        post: operations["ClassResultsController_logResult"];
         delete?: never;
         options?: never;
         head?: never;
@@ -245,7 +265,7 @@ export interface paths {
          * Edit a logged result
          * @description Update performance data for a result. Available to athletes, gym owners, and coaches. Can edit until class is archived.
          */
-        patch: operations["ClassController_editResult"];
+        patch: operations["ClassResultsController_editResult"];
         trace?: never;
     };
     "/api/gyms/{gymId}/configuration/spaces": {
@@ -547,7 +567,7 @@ export interface paths {
         head?: never;
         /**
          * Update authenticated user profile
-         * @description Updates the name of the currently authenticated user. Email is read-only and cannot be changed.
+         * @description Updates the profile of the currently authenticated user. Supports partial updates to name and notification preferences. Email is read-only and cannot be changed.
          */
         patch: operations["UserController_updateUserProfile"];
         trace?: never;
@@ -626,6 +646,74 @@ export interface paths {
         get: operations["CoachClassesController_getCoachClasses"];
         put?: never;
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/me/notifications": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get paginated notifications for current user */
+        get: operations["NotificationController_getNotifications"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/me/notifications/{id}/read": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Mark a single notification as read */
+        patch: operations["NotificationController_markAsRead"];
+        trace?: never;
+    };
+    "/api/me/notifications/read-all": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Mark all notifications as read for current user */
+        patch: operations["NotificationController_markAllAsRead"];
+        trace?: never;
+    };
+    "/api/me/notifications/push-token": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Register an Expo push token for the current user */
+        post: operations["NotificationController_registerPushToken"];
         delete?: never;
         options?: never;
         head?: never;
@@ -843,7 +931,10 @@ export interface components {
              * @example 07:00
              */
             scheduledTime: string;
-            /** @example 20 */
+            /**
+             * @description Maximum number of athletes that can attend the class
+             * @example 20
+             */
             capacity?: number;
             /**
              * @description Duration of the class in minutes. Defaults to 60.
@@ -892,6 +983,105 @@ export interface components {
              */
             lastModifiedAt: string;
         };
+        EditClassDto: {
+            /** @example uuid-class-type-id */
+            classTypeId?: string;
+            /** @example uuid-coach-user-id */
+            coachUserId?: string;
+            /** @example uuid-space-id */
+            spaceId?: string;
+            /**
+             * @description ISO date string (YYYY-MM-DD)
+             * @example 2024-06-15
+             */
+            scheduledDate?: string;
+            /**
+             * @description Time in HH:mm format
+             * @example 07:00
+             */
+            scheduledTime?: string;
+            /**
+             * @description Maximum number of athletes that can attend the class
+             * @example 20
+             */
+            capacity?: number;
+            /**
+             * @description Duration of the class in minutes. Defaults to 60.
+             * @example 60
+             */
+            duration?: number;
+        };
+        EditClassResponseDto: {
+            /**
+             * @description Unique identifier for the class
+             * @example uuid-class-id
+             */
+            id: string;
+            /**
+             * @description The type of class (e.g., CrossFit, Gymnastics)
+             * @example uuid-class-type-id
+             */
+            classTypeId: string;
+            /**
+             * @description Human-readable name of the class type
+             * @example CrossFit
+             */
+            classTypeName: string;
+            /**
+             * @description Date the class is scheduled, YYYY-MM-DD format
+             * @example 2024-06-15
+             */
+            scheduledDate: string;
+            /**
+             * @description Time the class starts, HH:mm format
+             * @example 07:00
+             */
+            scheduledTime: string;
+            /**
+             * @description Full name of the coach leading the class
+             * @example John Doe
+             */
+            coachName: string;
+            /**
+             * @description Total capacity of the class
+             * @example 20
+             */
+            capacity: number;
+            /**
+             * @description Duration of the class in minutes
+             * @example 60
+             */
+            duration: number;
+            /**
+             * @description Number of booked (confirmed) spots
+             * @example 12
+             */
+            bookedCount: number;
+            /**
+             * @description Name of the space where the class takes place
+             * @example Main Floor
+             */
+            spaceName: string;
+            /**
+             * @description Current state of the class in its lifecycle
+             * @example published
+             * @enum {string}
+             */
+            state: "published" | "booking_closed" | "in_progress" | "completed" | "archived";
+        };
+        DeleteClassResponseDto: {
+            /**
+             * @description Unique identifier of the deleted class
+             * @example uuid-class-id
+             */
+            id: string;
+            /**
+             * Format: date-time
+             * @description Timestamp when the class was soft-deleted
+             * @example 2024-06-15T10:00:00.000Z
+             */
+            deletedAt: string;
+        };
         ClassBookingItemDto: {
             /**
              * @description Unique identifier for the booking
@@ -918,12 +1108,6 @@ export interface components {
         GetClassBookingsResponseDto: {
             /** @description List of athletes with active bookings (booked or waitlisted) for the class */
             bookings: components["schemas"]["ClassBookingItemDto"][];
-        };
-        BookClassDto: {
-            /** @example uuid-class-id */
-            classId: string;
-            /** @example uuid-gym-id */
-            gymId: string;
         };
         BookClassResponseDto: {
             /** @example uuid-booking-id */
@@ -968,43 +1152,6 @@ export interface components {
             createdAt: string;
             /** @example 2024-06-15T10:00:00.000Z */
             cancelledAt: Record<string, never> | null;
-        };
-        AttendanceRecordDto: {
-            /** @example uuid-athlete-user-id */
-            athleteUserId: string;
-            /** @example true */
-            present: boolean;
-            /** @example Arrived late */
-            notes?: string;
-        };
-        MarkAttendanceDto: {
-            /** @example uuid-class-id */
-            classId: string;
-            attendanceRecords: components["schemas"]["AttendanceRecordDto"][];
-        };
-        AttendanceRecordResponseDto: {
-            /** @example uuid-attendance-id */
-            id: string;
-            /** @example uuid-class-id */
-            classId: string;
-            /** @example uuid-athlete-user-id */
-            userId: string;
-            /** @example true */
-            present: boolean;
-            /**
-             * Format: date-time
-             * @example 2024-06-15T07:30:00.000Z
-             */
-            markedAt: string;
-            /** @example uuid-coach-user-id */
-            markedByUserId: string;
-            /** @example Arrived late */
-            notes: Record<string, never> | null;
-        };
-        MarkAttendanceResponseDto: {
-            /** @example uuid-class-id */
-            classId: string;
-            attendanceRecords: components["schemas"]["AttendanceRecordResponseDto"][];
         };
         GetClassProgrammingResponseDto: {
             /**
@@ -1194,113 +1341,42 @@ export interface components {
              */
             lastModifiedAt: string;
         };
-        EditClassDto: {
-            /**
-             * @description Class type to assign to the class
-             * @example uuid-class-type-id
-             */
-            classTypeId?: string;
-            /**
-             * @description Coach user ID to assign to the class
-             * @example uuid-coach-user-id
-             */
-            coachUserId?: string;
-            /**
-             * @description Space ID to assign to the class
-             * @example uuid-space-id
-             */
-            spaceId?: string;
-            /**
-             * @description ISO date string (YYYY-MM-DD)
-             * @example 2024-06-15
-             */
-            scheduledDate?: string;
-            /**
-             * @description Time in HH:mm format
-             * @example 07:00
-             */
-            scheduledTime?: string;
-            /**
-             * @description Maximum number of athletes that can attend the class
-             * @example 20
-             */
-            capacity?: number;
-            /**
-             * @description Duration of the class in minutes
-             * @example 60
-             */
-            duration?: number;
+        AttendanceRecordDto: {
+            /** @example uuid-athlete-user-id */
+            athleteUserId: string;
+            /** @example true */
+            present: boolean;
+            /** @example Arrived late */
+            notes?: string;
         };
-        EditClassResponseDto: {
-            /**
-             * @description Unique identifier for the class
-             * @example uuid-class-id
-             */
-            id: string;
-            /**
-             * @description The type of class (e.g., CrossFit, Gymnastics)
-             * @example uuid-class-type-id
-             */
-            classTypeId: string;
-            /**
-             * @description Human-readable name of the class type
-             * @example CrossFit
-             */
-            classTypeName: string;
-            /**
-             * @description Date the class is scheduled, YYYY-MM-DD format
-             * @example 2024-06-15
-             */
-            scheduledDate: string;
-            /**
-             * @description Time the class starts, HH:mm format
-             * @example 07:00
-             */
-            scheduledTime: string;
-            /**
-             * @description Full name of the coach leading the class
-             * @example John Doe
-             */
-            coachName: string;
-            /**
-             * @description Total capacity of the class
-             * @example 20
-             */
-            capacity: number;
-            /**
-             * @description Duration of the class in minutes
-             * @example 60
-             */
-            duration: number;
-            /**
-             * @description Number of booked (confirmed) spots
-             * @example 12
-             */
-            bookedCount: number;
-            /**
-             * @description Name of the space where the class takes place
-             * @example Main Floor
-             */
-            spaceName: string;
-            /**
-             * @description Current state of the class in its lifecycle
-             * @example published
-             * @enum {string}
-             */
-            state: "published" | "booking_closed" | "in_progress" | "completed" | "archived";
+        MarkAttendanceDto: {
+            /** @example uuid-class-id */
+            classId: string;
+            attendanceRecords: components["schemas"]["AttendanceRecordDto"][];
         };
-        DeleteClassResponseDto: {
-            /**
-             * @description Unique identifier of the deleted class
-             * @example uuid-class-id
-             */
+        AttendanceRecordResponseDto: {
+            /** @example uuid-attendance-id */
             id: string;
+            /** @example uuid-class-id */
+            classId: string;
+            /** @example uuid-athlete-user-id */
+            userId: string;
+            /** @example true */
+            present: boolean;
             /**
              * Format: date-time
-             * @description Timestamp when the class was soft-deleted
-             * @example 2024-06-15T10:00:00.000Z
+             * @example 2024-06-15T07:30:00.000Z
              */
-            deletedAt: string;
+            markedAt: string;
+            /** @example uuid-coach-user-id */
+            markedByUserId: string;
+            /** @example Arrived late */
+            notes: Record<string, never> | null;
+        };
+        MarkAttendanceResponseDto: {
+            /** @example uuid-class-id */
+            classId: string;
+            attendanceRecords: components["schemas"]["AttendanceRecordResponseDto"][];
         };
         ClassResultItemDto: {
             /**
@@ -1346,6 +1422,10 @@ export interface components {
              * @example 2024-06-15T09:05:00.000Z
              */
             editedAt: Record<string, never> | null;
+        };
+        GetMyClassResultResponseDto: {
+            /** @description The caller's own result for this class, or null if none has been logged yet */
+            result: components["schemas"]["ClassResultItemDto"] | null;
         };
         GetClassResultsResponseDto: {
             /** @description List of athlete results for the class */
@@ -1971,6 +2051,16 @@ export interface components {
             /** @description List of the user's active bookings */
             bookings: components["schemas"]["UserBookingItemDto"][];
         };
+        NotificationPreferencesDto: {
+            /** @description Receive booking confirmation notifications */
+            booking_confirmations: boolean;
+            /** @description Receive waitlist update notifications */
+            waitlist_updates: boolean;
+            /** @description Receive class change notifications */
+            class_changes: boolean;
+            /** @description Receive class reminder notifications */
+            class_reminders: boolean;
+        };
         UserProfileDto: {
             /** @description Unique user identifier (UUID) */
             id: string;
@@ -1978,15 +2068,29 @@ export interface components {
             name: string;
             /** @description Email address of the user (read-only) */
             email: string;
+            /** @description Notification preferences */
+            notificationPreferences: components["schemas"]["NotificationPreferencesDto"];
             /**
              * Format: date-time
              * @description Date the user account was created
              */
             createdAt: string;
         };
+        UpdateNotificationPreferencesDto: {
+            /** @description Receive booking confirmation notifications */
+            booking_confirmations?: boolean;
+            /** @description Receive waitlist update notifications */
+            waitlist_updates?: boolean;
+            /** @description Receive class change notifications */
+            class_changes?: boolean;
+            /** @description Receive class reminder notifications */
+            class_reminders?: boolean;
+        };
         UpdateUserProfileDto: {
             /** @description New display name for the user */
-            name: string;
+            name?: string;
+            /** @description Notification preferences (partial update) */
+            notificationPreferences?: components["schemas"]["UpdateNotificationPreferencesDto"];
         };
         TrainingHistoryResultDto: {
             /**
@@ -2134,6 +2238,56 @@ export interface components {
         GetCoachClassesResponseDto: {
             /** @description List of classes assigned to the authenticated coach in this gym */
             classes: components["schemas"]["CoachClassItemDto"][];
+        };
+        NotificationItemDto: {
+            /** @description Notification ID */
+            id: string;
+            /** @description User ID */
+            userId: string;
+            /** @description Gym ID */
+            gymId: string;
+            /**
+             * @description Notification type
+             * @enum {string}
+             */
+            type: "booking_confirmed" | "waitlist_promoted" | "class_cancelled" | "class_changed" | "class_reminder";
+            /** @description Notification title */
+            title: string;
+            /** @description Notification body text */
+            body: string;
+            /** @description Additional data payload */
+            data: Record<string, never>;
+            /** @description Whether the notification has been read */
+            read: boolean;
+            /**
+             * Format: date-time
+             * @description When the notification was created
+             */
+            createdAt: string;
+        };
+        GetNotificationsResponseDto: {
+            /** @description Notification list */
+            items: components["schemas"]["NotificationItemDto"][];
+            /** @description Total number of notifications */
+            total: number;
+            /** @description Current page number */
+            page: number;
+            /** @description Items per page */
+            limit: number;
+            /** @description Number of unread notifications */
+            unreadCount: number;
+        };
+        RegisterPushTokenDto: {
+            /**
+             * @description Expo push token (e.g. ExponentPushToken[...])
+             * @example ExponentPushToken[xxxxxxxxxxxxxxxxxxxxxx]
+             */
+            token: string;
+            /**
+             * @description Device platform
+             * @enum {string}
+             */
+            platform: "ios" | "android" | "web";
         };
         CreateInviteDto: {
             /**
@@ -2318,7 +2472,7 @@ export interface components {
 }
 export type $defs = Record<string, never>;
 export interface operations {
-    ClassController_getClassSchedule: {
+    ClassSchedulingController_getClassSchedule: {
         parameters: {
             query?: never;
             header?: never;
@@ -2355,7 +2509,7 @@ export interface operations {
             };
         };
     };
-    ClassController_createClass: {
+    ClassSchedulingController_createClass: {
         parameters: {
             query?: never;
             header?: never;
@@ -2396,7 +2550,7 @@ export interface operations {
             };
         };
     };
-    ClassController_getClassDetail: {
+    ClassSchedulingController_getClassDetail: {
         parameters: {
             query?: never;
             header?: never;
@@ -2442,7 +2596,7 @@ export interface operations {
             };
         };
     };
-    ClassController_deleteClass: {
+    ClassSchedulingController_deleteClass: {
         parameters: {
             query?: never;
             header?: never;
@@ -2495,7 +2649,7 @@ export interface operations {
             };
         };
     };
-    ClassController_editClass: {
+    ClassSchedulingController_editClass: {
         parameters: {
             query?: never;
             header?: never;
@@ -2552,7 +2706,7 @@ export interface operations {
             };
         };
     };
-    ClassController_getClassBookings: {
+    ClassBookingController_getClassBookings: {
         parameters: {
             query?: never;
             header?: never;
@@ -2598,7 +2752,7 @@ export interface operations {
             };
         };
     };
-    ClassController_bookClass: {
+    ClassBookingController_bookClass: {
         parameters: {
             query?: never;
             header?: never;
@@ -2610,11 +2764,7 @@ export interface operations {
             };
             cookie?: never;
         };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["BookClassDto"];
-            };
-        };
+        requestBody?: never;
         responses: {
             /** @description Class booked or waitlisted */
             201: {
@@ -2641,7 +2791,7 @@ export interface operations {
             };
         };
     };
-    ClassController_cancelBooking: {
+    ClassBookingController_cancelBooking: {
         parameters: {
             query?: never;
             header?: never;
@@ -2680,50 +2830,7 @@ export interface operations {
             };
         };
     };
-    ClassController_markAttendance: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                /** @description Gym ID */
-                gymId: string;
-                /** @description Class ID */
-                classId: string;
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["MarkAttendanceDto"];
-            };
-        };
-        responses: {
-            /** @description Attendance recorded */
-            201: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["MarkAttendanceResponseDto"];
-                };
-            };
-            /** @description Unauthorized */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            /** @description Forbidden - Coach or owner role required */
-            403: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-        };
-    };
-    ClassController_getClassProgramming: {
+    ClassProgrammingController_getClassProgramming: {
         parameters: {
             query?: never;
             header?: never;
@@ -2753,7 +2860,7 @@ export interface operations {
                 };
                 content?: never;
             };
-            /** @description Forbidden - Coach or owner role required */
+            /** @description Forbidden - Coach, owner, or gym member (athlete) role required */
             403: {
                 headers: {
                     [name: string]: unknown;
@@ -2769,7 +2876,7 @@ export interface operations {
             };
         };
     };
-    ClassController_addOrEditProgramming: {
+    ClassProgrammingController_addOrEditProgramming: {
         parameters: {
             query?: never;
             header?: never;
@@ -2812,7 +2919,7 @@ export interface operations {
             };
         };
     };
-    ClassController_toggleLoggableStatus: {
+    ClassProgrammingController_toggleLoggableStatus: {
         parameters: {
             query?: never;
             header?: never;
@@ -2855,7 +2962,7 @@ export interface operations {
             };
         };
     };
-    ClassController_manuallyTransitionClassState: {
+    ClassProgrammingController_manuallyTransitionClassState: {
         parameters: {
             query?: never;
             header?: never;
@@ -2898,7 +3005,7 @@ export interface operations {
             };
         };
     };
-    ClassController_updateClassStructure: {
+    ClassProgrammingController_updateClassStructure: {
         parameters: {
             query?: never;
             header?: never;
@@ -2941,7 +3048,96 @@ export interface operations {
             };
         };
     };
-    ClassController_getClassResults: {
+    ClassResultsController_markAttendance: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Gym ID */
+                gymId: string;
+                /** @description Class ID */
+                classId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["MarkAttendanceDto"];
+            };
+        };
+        responses: {
+            /** @description Attendance recorded */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MarkAttendanceResponseDto"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Forbidden - Coach or owner role required */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    ClassResultsController_getMyClassResult: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Gym ID */
+                gymId: string;
+                /** @description Class ID */
+                classId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The caller's own result, or null when none has been logged yet */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GetMyClassResultResponseDto"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Forbidden - Athlete, coach, or owner in the gym required */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Class not found in gym */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    ClassResultsController_getClassResults: {
         parameters: {
             query?: never;
             header?: never;
@@ -2987,7 +3183,7 @@ export interface operations {
             };
         };
     };
-    ClassController_logResult: {
+    ClassResultsController_logResult: {
         parameters: {
             query?: never;
             header?: never;
@@ -3030,7 +3226,7 @@ export interface operations {
             };
         };
     };
-    ClassController_editResult: {
+    ClassResultsController_editResult: {
         parameters: {
             query?: never;
             header?: never;
@@ -4033,6 +4229,106 @@ export interface operations {
             };
             /** @description Forbidden - Coach role required */
             403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    NotificationController_getNotifications: {
+        parameters: {
+            query?: {
+                /** @description Page number (default: 1) */
+                page?: number;
+                /** @description Items per page (default: 20) */
+                limit?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Paginated notifications with unread count */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GetNotificationsResponseDto"];
+                };
+            };
+        };
+    };
+    NotificationController_markAsRead: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Notification ID */
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Notification marked as read */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Notification not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    NotificationController_markAllAsRead: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description All notifications marked as read */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    NotificationController_registerPushToken: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RegisterPushTokenDto"];
+            };
+        };
+        responses: {
+            /** @description Push token registered successfully */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Invalid push token or platform */
+            400: {
                 headers: {
                     [name: string]: unknown;
                 };

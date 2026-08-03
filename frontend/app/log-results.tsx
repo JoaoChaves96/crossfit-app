@@ -48,7 +48,7 @@ const FONT_SIZES = {
 type ClassScheduleItem = components['schemas']['ClassScheduleItemDto'];
 type GetClassScheduleResponse = components['schemas']['GetClassScheduleResponseDto'];
 type GetClassProgrammingResponse = components['schemas']['GetClassProgrammingResponseDto'];
-type GetClassResultsResponse = components['schemas']['GetClassResultsResponseDto'];
+type GetMyClassResultResponse = components['schemas']['GetMyClassResultResponseDto'];
 type ClassResultItem = components['schemas']['ClassResultItemDto'];
 type LogResultDto = components['schemas']['LogResultDto'];
 type LogResultResponse = components['schemas']['LogResultResponseDto'];
@@ -253,8 +253,8 @@ export default function LogResultsScreen() {
           client.get<GetClassProgrammingResponse>(
             `/api/gyms/${gymId}/classes/${classId}/programming`,
           ),
-          client.get<GetClassResultsResponse>(
-            `/api/gyms/${gymId}/classes/${classId}/results`,
+          client.get<GetMyClassResultResponse>(
+            `/api/gyms/${gymId}/classes/${classId}/results/me`,
           ),
         ]);
 
@@ -262,7 +262,7 @@ export default function LogResultsScreen() {
         setClassData(found);
         setProgramming(programmingRes);
 
-        const myResult = resultsRes.results.length > 0 ? resultsRes.results[0] : null;
+        const myResult = resultsRes.result;
         if (myResult !== null) {
           setExistingResult(myResult);
           setMetricType(myResult.metricType);
