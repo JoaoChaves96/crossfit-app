@@ -94,11 +94,20 @@ async function dbReset(): Promise<void> {
       });
 
       if (res.ok) {
-        const body = (await res.json()) as { id?: string };
-        if (body.id) {
-          userIds[user.email] = body.id;
+        // Register returns { accessToken }; the JWT `sub` claim is the user id.
+        const body = (await res.json()) as { accessToken?: string };
+        const id = body.accessToken ? getUserIdFromToken(body.accessToken) : undefined;
+        if (id) {
+          userIds[user.email] = id;
         }
-      } else if (res.status !== 409) {
+      } else if (res.status === 409) {
+        // User already exists (repeat run): log in to resolve the id and keep
+        // seeding idempotent.
+        const id = await resolveUserIdViaLogin(BACKEND_URL, user.email, user.password);
+        if (id) {
+          userIds[user.email] = id;
+        }
+      } else {
         const body = await res.text();
         console.warn(
           `[db-reset] Could not seed user ${user.email}: ${res.status} ${body}`,
@@ -234,11 +243,18 @@ async function dbReset(): Promise<void> {
       [ampId2, gymMembershipId2, membershipPlanId, 'active'],
     );
 
-    // ── Published classes spread across the current week ─────────────────
-    // Monday, Wednesday, Friday of the current ISO week at 09:00
-    const monday    = getMondayOfCurrentWeek();
-    const wednesday = addDays(monday, 2);
-    const friday    = addDays(monday, 4);
+    // ── Published classes spread across NEXT week ────────────────────────
+    // Monday, Wednesday, Friday of the *following* ISO week at 09:00.
+    // They MUST stay in the future: the backend lifecycle scheduler runs every
+    // minute and transitions any class whose booking window has passed out of
+    // 'published' (→ booking_closed → in_progress → completed). If these were
+    // dated in the current week, a mid-week (or later) test run would find them
+    // already 'completed', so no bookable class would exist. Next week keeps
+    // them 'published' regardless of which weekday the suite runs on.
+    const thisMonday = getMondayOfCurrentWeek();
+    const monday    = addDays(thisMonday, 7);
+    const wednesday = addDays(thisMonday, 9);
+    const friday    = addDays(thisMonday, 11);
 
     await client.query(
       `INSERT INTO classes
@@ -249,9 +265,19 @@ async function dbReset(): Promise<void> {
          ($7,  $2, $3,  $4, $5,  $8,  '09:00:00', 20, 'published', false, NOW(), NOW()),
          ($9,  $2, $10, $4, $5,  $11, '09:00:00', 20, 'published', false, NOW(), NOW())`,
       [
-        publishedClassId1, gymId, crossfitTypeId, coachId, spaceId, monday,
-        publishedClassId2, gymId, crossfitTypeId, coachId, spaceId, wednesday,
-        publishedClassId3, gymId, strengthTypeId, coachId, spaceId, friday,
+        // $1-$11, in placeholder order. $2-$5 (gym/coach/space) are reused
+        // across all three rows, so each distinct value appears exactly once.
+        publishedClassId1, // $1
+        gymId,             // $2
+        crossfitTypeId,    // $3
+        coachId,           // $4
+        spaceId,           // $5
+        monday,            // $6
+        publishedClassId2, // $7
+        wednesday,         // $8
+        publishedClassId3, // $9
+        strengthTypeId,    // $10
+        friday,            // $11
       ],
     );
 
@@ -265,9 +291,9 @@ async function dbReset(): Promise<void> {
       [completedClassId, gymId, crossfitTypeId, coachId, spaceId, lastMonday],
     );
 
-    // ── Capacity-1 class: Thursday of current week ───────────────────────
-    // Used for waitlist promotion scenario: athlete books in, athlete2 joins
-    // waitlist, athlete cancels, athlete2 is promoted.
+    // ── Capacity-1 class: Thursday of next week ──────────────────────────
+    // Full via athlete2 (the single spot is taken), leaving the athlete under
+    // test able to JOIN the waitlist. Future-dated so it stays 'published'.
     const thursday = addDays(monday, 3);
     await client.query(
       `INSERT INTO classes
@@ -284,11 +310,14 @@ async function dbReset(): Promise<void> {
       [bookingId, publishedClassId1, athleteId, 'booked', 1],
     );
 
-    // ── Booking: athlete into the capacity-1 class ────────────────────────
+    // ── Booking: athlete2 fills the capacity-1 class ──────────────────────
+    // athlete2 (not the athlete under test) takes the single spot, so the
+    // class is full and the athlete under test can JOIN THE WAITLIST in the
+    // waitlist E2E flow.
     await client.query(
       `INSERT INTO bookings (id, "classId", "userId", status, "bookedPosition", "createdAt")
        VALUES ($1, $2, $3, $4, $5, NOW())`,
-      [capacityOneBookingId, capacityOneClassId, athleteId, 'booked', 1],
+      [capacityOneBookingId, capacityOneClassId, athlete2Id, 'booked', 1],
     );
 
     // ── Attendance: athlete present in the completed class ────────────────
@@ -300,9 +329,9 @@ async function dbReset(): Promise<void> {
 
     // ── Result: athlete result for the completed class ────────────────────
     await client.query(
-      `INSERT INTO results (id, "classId", "userId", "gymId", "metricType", value, unit, notes, "loggedAt")
-       VALUES ($1, $2, $3, $4, $5, $6, $7, NULL, NOW())`,
-      [resultId, completedClassId, athleteId, gymId, 'time', '300', 'seconds'],
+      `INSERT INTO results (id, "classId", "userId", "metricType", value, unit, notes, "loggedAt")
+       VALUES ($1, $2, $3, $4, $5, $6, NULL, NOW())`,
+      [resultId, completedClassId, athleteId, 'time', '300', 'seconds'],
     );
 
     console.log('[db-reset] Fixture seed complete.');
@@ -321,6 +350,52 @@ async function dbReset(): Promise<void> {
   } finally {
     await client.end();
   }
+}
+
+// ── Auth helpers ──────────────────────────────────────────────────────────────
+
+/**
+ * Decodes the `sub` claim (user id) from a JWT without any external library.
+ * The middle segment is a base64url-encoded JSON payload.
+ */
+function getUserIdFromToken(token: string): string | undefined {
+  const payload = token.split('.')[1];
+  if (!payload) return undefined;
+  try {
+    const json = Buffer.from(payload, 'base64url').toString('utf8');
+    const claims = JSON.parse(json) as { sub?: string };
+    return claims.sub;
+  } catch {
+    return undefined;
+  }
+}
+
+/**
+ * Logs in an existing user and resolves their id from the returned JWT.
+ * Used when register returns 409 (user already exists) so seeding stays
+ * idempotent across repeat runs.
+ */
+async function resolveUserIdViaLogin(
+  backendUrl: string,
+  email: string,
+  password: string,
+): Promise<string | undefined> {
+  const res = await fetch(`${backendUrl}/api/auth/login`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email, password }),
+  });
+
+  if (!res.ok) {
+    const body = await res.text();
+    console.warn(
+      `[db-reset] Could not resolve id for existing user ${email}: ${res.status} ${body}`,
+    );
+    return undefined;
+  }
+
+  const body = (await res.json()) as { accessToken?: string };
+  return body.accessToken ? getUserIdFromToken(body.accessToken) : undefined;
 }
 
 // ── Date helpers ────────────────────────────────────────────────────────────

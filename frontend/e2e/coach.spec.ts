@@ -177,9 +177,12 @@ test.describe('Coach: Mark attendance', () => {
     // in coach-class-details.tsx. Falling back to button text.
     await page.getByText('Mark Attendance').click();
 
-    // Assert — attendance screen heading contains "Attendance"
+    // Assert — the attendance screen rendered. Match the exact "Attendance List"
+    // section title: a bare /Attendance/ regex also matches the "Mark
+    // Attendance" button and the "Attendance — <date>" heading (strict-mode
+    // violation).
     // MISSING TESTID: mark-attendance-screen
-    await expect(page.getByText(/Attendance/)).toBeVisible({ timeout: 15_000 });
+    await expect(page.getByText('Attendance List', { exact: true }).first()).toBeVisible({ timeout: 15_000 });
   });
 
   test('can submit attendance when athletes are booked', async ({ page }) => {
@@ -199,7 +202,7 @@ test.describe('Coach: Mark attendance', () => {
     await firstViewBtn.click();
     await expect(page.getByText('WOD Programming')).toBeVisible({ timeout: 15_000 });
     await page.getByText('Mark Attendance').click();
-    await expect(page.getByText(/Attendance/)).toBeVisible({ timeout: 15_000 });
+    await expect(page.getByText('Attendance List', { exact: true }).first()).toBeVisible({ timeout: 15_000 });
 
     // MISSING TESTID: athlete-toggle-btn-{id}
     // AthleteRow toggle buttons have no testID. Without testIDs we cannot

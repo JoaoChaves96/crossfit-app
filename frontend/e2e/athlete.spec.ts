@@ -1,5 +1,12 @@
 import { test, expect } from '@playwright/test';
-import { loginAs } from './helpers/auth';
+import { loginAs, tab, backToTabs } from './helpers/auth';
+
+// The athlete flows exercise the bottom tab bar, which only renders below the
+// desktop breakpoint (1024px). "Desktop Chrome" is wider than that, so the tab
+// bar is hidden and the top nav takes over. Pin these specs to a mobile
+// viewport so the bottom tabs are present. Desktop athlete coverage (via
+// DesktopTopNav testIDs) is tracked as a separate follow-up.
+test.use({ viewport: { width: 390, height: 844 } });
 
 // ─── Flow 1: Login → schedule loads ───────────────────────────────────────────
 
@@ -14,7 +21,7 @@ test.describe('Flow 1: Login → schedule loads', () => {
     // A class card is identified by its "Book Class" or status badge text, or by
     // the absence of a hard error state. Both empty-state and list-state are
     // acceptable — we assert the screen rendered without a 5xx or crash.
-    await expect(page.getByTestId('tab-schedule')).toBeVisible();
+    await expect(tab(page, 'tab-schedule')).toBeVisible();
 
     // The page must not contain an unhandled error message.
     await expect(page.locator('text=Something went wrong')).not.toBeVisible();
@@ -29,7 +36,7 @@ test.describe('Flow 2: Book a class', () => {
     await loginAs(page, 'athlete');
 
     // Navigate to schedule tab (already there after login, but be explicit)
-    await page.getByTestId('tab-schedule').click();
+    await tab(page, 'tab-schedule').click();
 
     // NOTE: ClassCard TouchableOpacity has no testID. We locate the first
     // "Book Class" button by its visible text to click through to class details.
@@ -50,12 +57,23 @@ test.describe('Flow 2: Book a class', () => {
     // cancel-booking-btn should appear
     await expect(page.getByTestId('cancel-booking-btn')).toBeVisible({ timeout: 10_000 });
 
-    // Navigate to My Bookings
-    await page.getByTestId('tab-my-bookings').click();
+    // Return to the tabs navigator (class-details is a pushed route with no tab
+    // bar), then navigate to My Bookings.
+    await backToTabs(page);
+    await tab(page, 'tab-my-bookings').click();
 
-    // NOTE: UpcomingCard has no testID. We verify the "BOOKED" badge text is
-    // present, which is rendered by StatusBadge with label "BOOKED".
-    await expect(page.getByText('BOOKED')).toBeVisible({ timeout: 10_000 });
+    // NOTE: UpcomingCard has no testID. My Bookings renders the badge label in
+    // uppercase ("BOOKED"); the Schedule screen uses mixed-case "Booked".
+    // Expo-router keeps every tab screen mounted (inactive ones hidden), so:
+    //   - `exact: true` excludes the Schedule screen's "Booked" badges (case-
+    //      sensitive, whole-string), and
+    //   - `.filter({ visible: true })` waits out the tab transition and ignores
+    //      the hidden-but-mounted copies, so the assertion polls until the My
+    //      Bookings screen is actually active rather than failing at 0ms on a
+    //      strict-mode match against not-yet-visible elements.
+    await expect(
+      page.getByText('BOOKED', { exact: true }).filter({ visible: true }).first(),
+    ).toBeVisible({ timeout: 10_000 });
   });
 });
 
@@ -66,7 +84,7 @@ test.describe('Flow 3: Cancel a booking', () => {
     // Arrange — book a class first, then cancel it
     await loginAs(page, 'athlete');
 
-    await page.getByTestId('tab-schedule').click();
+    await tab(page, 'tab-schedule').click();
 
     // NOTE: No testID on schedule cards. Locate first "Book Class" text button.
     const bookClassButton = page.getByText('Book Class').first();
@@ -78,25 +96,25 @@ test.describe('Flow 3: Cancel a booking', () => {
     await page.getByTestId('book-btn').click();
     await expect(page.getByTestId('cancel-booking-btn')).toBeVisible({ timeout: 10_000 });
 
+    // A confirmation dialog appears (showConfirm uses the browser confirm() on
+    // web). The handler MUST be registered BEFORE the click that triggers it —
+    // otherwise Playwright auto-dismisses the dialog and the cancellation never
+    // runs.
+    page.once('dialog', (dialog) => dialog.accept());
+
     // Act — cancel from class details
     await page.getByTestId('cancel-booking-btn').click();
 
-    // A confirmation dialog appears (showConfirm uses browser alert/confirm on web).
-    // Accept it.
-    page.once('dialog', (dialog) => dialog.accept());
-
-    // After cancellation the cancel button should be gone and book-btn should return
+    // After cancellation the cancel button is gone and book-btn returns on the
+    // same class-details screen. This is the authoritative proof the booking was
+    // cancelled: the class the athlete just booked is bookable again.
+    //
+    // NOTE: We intentionally do NOT navigate to My Bookings to assert "no BOOKED
+    // badge" — the deterministic seed always leaves the athlete booked into
+    // publishedClass1, so a global BOOKED-absence check can never pass. The
+    // in-place book-btn return is the reliable, isolation-proof assertion.
     await expect(page.getByTestId('book-btn')).toBeVisible({ timeout: 10_000 });
-
-    // Navigate to My Bookings and confirm no "BOOKED" badge is present
-    await page.getByTestId('tab-my-bookings').click();
-
-    // NOTE: There is no testID on UpcomingCard. We check that the "BOOKED" badge
-    // text does not appear (or that an empty state message is shown).
-    // If other bookings still exist this assertion cannot distinguish them;
-    // the test is only reliable when the athlete has exactly one booking.
-    // This is consistent with DB reset in globalSetup.
-    await expect(page.getByText('BOOKED')).not.toBeVisible({ timeout: 10_000 });
+    await expect(page.getByTestId('cancel-booking-btn')).not.toBeVisible();
   });
 });
 
@@ -107,7 +125,7 @@ test.describe('Flow 4: Join waitlist (when class is full)', () => {
     // Arrange
     await loginAs(page, 'athlete');
 
-    await page.getByTestId('tab-schedule').click();
+    await tab(page, 'tab-schedule').click();
 
     // NOTE: No testID on schedule cards. Locate "Join Waitlist" button — only
     // present when a class is full. If no full class exists, skip with a comment.
@@ -129,8 +147,9 @@ test.describe('Flow 4: Join waitlist (when class is full)', () => {
     // After joining, leave-waitlist-btn should appear
     await expect(page.getByTestId('leave-waitlist-btn')).toBeVisible({ timeout: 10_000 });
 
-    // Navigate to My Bookings
-    await page.getByTestId('tab-my-bookings').click();
+    // Return to the tabs navigator, then navigate to My Bookings.
+    await backToTabs(page);
+    await tab(page, 'tab-my-bookings').click();
 
     // NOTE: getUpcomingBadgeConfig renders label "WAITLISTED #N" or "WAITLISTED"
     // There is no testID on the badge. We match by partial text.
@@ -146,7 +165,7 @@ test.describe('Flow 5: Training History tab loads', () => {
     await loginAs(page, 'athlete');
 
     // Navigate to the Training History tab
-    await page.getByTestId('tab-training-history').click();
+    await tab(page, 'tab-training-history').click();
 
     // Assert — screen must render either empty state or a list without crashing.
     // NOTE: Neither the header Text "Training History" nor the EmptyState View
