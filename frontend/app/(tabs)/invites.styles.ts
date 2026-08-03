@@ -40,6 +40,11 @@ export const styles = StyleSheet.create({
     fontWeight: FontWeights.bold,
     color: AppColors.textHeading,
   },
+  headerActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.sm,
+  },
   createBtn: {
     flexDirection: 'row',
     alignItems: 'center',

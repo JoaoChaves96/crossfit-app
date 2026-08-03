@@ -14,6 +14,7 @@ import type { components } from '@/types/api.gen';
 import { AppColors } from '@/constants/theme';
 import { useResponsiveLayout } from '@/hooks/useResponsiveLayout';
 import { DesktopTopNav } from '@/components/DesktopTopNav';
+import { NotificationBell } from '@/components/NotificationBell';
 import { styles, desktopStyles } from './profile.styles';
 
 type UserProfileDto = components['schemas']['UserProfileDto'];
@@ -271,6 +272,9 @@ export default function ProfileScreen() {
       {/* Page header */}
       <View style={styles.pageHeader}>
         <Text style={styles.headerTitle}>Profile</Text>
+        <View style={styles.pageHeaderBell}>
+          <NotificationBell />
+        </View>
       </View>
 
       {/* Avatar section */}

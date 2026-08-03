@@ -18,6 +18,7 @@ import { components } from '@/types/api.gen';
 import { AppColors } from '@/constants/theme';
 import { useResponsiveLayout } from '@/hooks/useResponsiveLayout';
 import { DesktopTopNav } from '@/components/DesktopTopNav';
+import { NotificationBell } from '@/components/NotificationBell';
 import { styles, desktopStyles } from './schedule.styles';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -412,6 +413,7 @@ export default function ScheduleScreen() {
               <Text style={styles.gymName}>My Gym</Text>
               <Text style={styles.gymDropdownCaret}>▼</Text>
             </View>
+            <NotificationBell />
           </View>
         )}
         <View style={styles.emptyContainer}>
@@ -457,6 +459,7 @@ export default function ScheduleScreen() {
         <Text style={styles.gymName}>My Gym</Text>
         <Text style={styles.gymDropdownCaret}>▼</Text>
       </View>
+      <NotificationBell />
     </View>
   );
 

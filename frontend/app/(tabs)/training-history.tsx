@@ -15,6 +15,7 @@ import { components } from '@/types/api.gen';
 import { AppColors } from '@/constants/theme';
 import { useResponsiveLayout } from '@/hooks/useResponsiveLayout';
 import { DesktopTopNav } from '@/components/DesktopTopNav';
+import { NotificationBell } from '@/components/NotificationBell';
 import { styles, desktopStyles } from './training-history.styles';
 
 // ─── Types ─────────────────────────────────────────────────────────────────────
@@ -197,6 +198,7 @@ export default function TrainingHistoryScreen() {
       <View style={styles.contentWrap}>
         <View style={styles.header}>
           <Text style={styles.headerTitle}>Training History</Text>
+          <NotificationBell />
         </View>
 
         {history.length === 0 ? (

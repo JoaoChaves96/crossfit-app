@@ -2,6 +2,7 @@ import React from 'react';
 import { View, Text, Pressable, StyleSheet } from 'react-native';
 import { useRouter, usePathname } from 'expo-router';
 import { AppColors, FontSizes, FontWeights, Spacing } from '@/constants/theme';
+import { NotificationBell } from '@/components/NotificationBell';
 
 const NAV_ITEMS = [
   { label: 'Schedule', path: '/(tabs)/schedule' },
@@ -53,8 +54,8 @@ export function DesktopTopNav({ gymName = 'My Gym' }: DesktopTopNavProps) {
         })}
       </View>
 
-      {/* Bell icon placeholder */}
-      <Text style={navStyles.bellIcon}>{'🔔'}</Text>
+      {/* Notification bell */}
+      <NotificationBell />
     </View>
   );
 }
@@ -102,8 +103,5 @@ const navStyles = StyleSheet.create({
   navLabelInactive: {
     fontWeight: FontWeights.medium,
     color: AppColors.textGray600,
-  },
-  bellIcon: {
-    fontSize: FontSizes.lg,
   },
 });

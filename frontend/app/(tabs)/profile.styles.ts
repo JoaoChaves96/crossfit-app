@@ -62,6 +62,11 @@ export const styles = StyleSheet.create({
     alignItems: 'center',
     paddingBottom: Spacing.md,
   },
+  pageHeaderBell: {
+    position: 'absolute',
+    right: 0,
+    top: 0,
+  },
   headerTitle: {
     fontFamily: 'Inter',
     fontSize: FontSizes.titleLg,

@@ -52,6 +52,8 @@ export const styles = StyleSheet.create({
     gap: Spacing.lg,
   },
   header: {
+    flexDirection: 'row',
+    alignItems: 'center',
     justifyContent: 'space-between',
   },
   headerTitle: {

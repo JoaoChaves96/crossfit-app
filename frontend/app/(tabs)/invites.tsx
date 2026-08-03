@@ -18,6 +18,7 @@ import { components } from '@/types/api.gen';
 import { AppColors } from '@/constants/theme';
 import { useResponsiveLayout } from '@/hooks/useResponsiveLayout';
 import { DesktopTopNav } from '@/components/DesktopTopNav';
+import { NotificationBell } from '@/components/NotificationBell';
 import { styles, desktopStyles } from './invites.styles';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -435,16 +436,19 @@ export default function InvitesScreen() {
       {/* Page header */}
       <View style={styles.pageHeader}>
         <Text style={styles.pageTitle}>Invites</Text>
-        <TouchableOpacity
-          style={styles.createBtn}
-          onPress={() => {
-            setModalPrefillEmail('');
-            setModalVisible(true);
-          }}
-          activeOpacity={0.7}
-        >
-          <Text style={styles.createBtnText}>+ Create Invite</Text>
-        </TouchableOpacity>
+        <View style={styles.headerActions}>
+          <TouchableOpacity
+            style={styles.createBtn}
+            onPress={() => {
+              setModalPrefillEmail('');
+              setModalVisible(true);
+            }}
+            activeOpacity={0.7}
+          >
+            <Text style={styles.createBtnText}>+ Create Invite</Text>
+          </TouchableOpacity>
+          <NotificationBell />
+        </View>
       </View>
 
       <View style={styles.headerDivider} />
