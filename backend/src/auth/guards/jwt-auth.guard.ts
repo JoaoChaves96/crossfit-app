@@ -5,8 +5,8 @@ import * as jwt from 'jsonwebtoken';
 interface JwtPayload {
   sub: string;
   email: string;
-  gymId: string;
-  role: string;
+  gymId: string | null;
+  role: string | null;
 }
 
 @Injectable()

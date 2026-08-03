@@ -32,6 +32,7 @@ import { ResultEntity } from '../domain/result/entities/result.entity';
 import { GymScheduleController } from '../api/gym-schedule/gym-schedule.controller';
 import { CoachClassesController } from '../api/coach/coach-classes.controller';
 import { InviteModule } from '../api/invite/invite.module';
+import { InviteController } from '../api/invite/invite.controller';
 import { GetUserProfileService } from '../queries/user/get-user-profile.service';
 import { UpdateUserProfileHandler } from '../commands/user/handlers/update-user-profile.handler';
 import { UserModule } from '../domain/user/user.module';
@@ -67,6 +68,7 @@ import { UserModule } from '../domain/user/user.module';
     GymScheduleController,
     CoachClassesController,
     NotificationController,
+    InviteController,
   ],
   providers: [
     RolesGuard,

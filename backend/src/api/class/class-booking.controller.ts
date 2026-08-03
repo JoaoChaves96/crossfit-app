@@ -3,10 +3,8 @@ import {
   Get,
   Post,
   Delete,
-  Body,
   Param,
   UseGuards,
-  ValidationPipe,
   Inject,
 } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
@@ -16,7 +14,6 @@ import { GymOwnershipGuard } from '../../auth/guards/gym-ownership.guard';
 import { Role } from '../../auth/decorators/role.decorator';
 import { CurrentUser } from '../../auth/decorators/current-user.decorator';
 import { CurrentRole } from '../../auth/decorators/current-role.decorator';
-import { BookClassDto } from '../../commands/class/dto/book-class.dto';
 import { BookClassCommand } from '../../commands/class/book-class.command';
 import { BookClassResponseDto } from '../../commands/class/dto/book-class-response.dto';
 import { CancelBookingCommand } from '../../commands/class/cancel-booking.command';
@@ -27,7 +24,6 @@ import {
   ApiOperation,
   ApiResponse,
   ApiParam,
-  ApiBody,
 } from '@nestjs/swagger';
 import { GetClassBookingsService } from '../../queries/class/get-class-bookings.service';
 import { GetClassBookingsResponseDto } from '../../queries/class/dto/get-class-bookings-response.dto';
@@ -83,7 +79,6 @@ export class ClassBookingController {
   })
   @ApiParam({ name: 'gymId', description: 'Gym ID' })
   @ApiParam({ name: 'classId', description: 'Class ID' })
-  @ApiBody({ type: BookClassDto })
   @ApiResponse({
     status: 201,
     description: 'Class booked or waitlisted',
@@ -97,18 +92,9 @@ export class ClassBookingController {
   async bookClass(
     @Param('gymId') gymId: string,
     @Param('classId') classId: string,
-    @Body(ValidationPipe) bookClassDto: BookClassDto,
     @CurrentUser() userId: string,
     @CurrentRole() userRole: string,
   ): Promise<BookClassResponseDto> {
-    if (bookClassDto.gymId !== gymId) {
-      throw new Error('Gym ID mismatch');
-    }
-
-    if (bookClassDto.classId !== classId) {
-      throw new Error('Class ID mismatch');
-    }
-
     const command = new BookClassCommand(userId, classId, gymId, userRole);
 
     return this.commandBus.execute(command);

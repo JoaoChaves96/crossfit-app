@@ -1,12 +1,3 @@
-import { IsUUID } from 'class-validator';
-import { ApiProperty } from '@nestjs/swagger';
-
-export class BookClassDto {
-  @ApiProperty({ example: 'uuid-class-id' })
-  @IsUUID()
-  classId: string;
-
-  @ApiProperty({ example: 'uuid-gym-id' })
-  @IsUUID()
-  gymId: string;
-}
+// BookClassDto is intentionally empty — gymId and classId come from route params.
+// Kept as a class so the controller can still reference a body type for future extensions.
+export class BookClassDto {}
