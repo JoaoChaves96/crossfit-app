@@ -14,6 +14,7 @@ import { useGym } from '@/hooks/useGym';
 import { createApiClient } from '@/utils/api-client';
 import { components } from '@/types/api.gen';
 import { AppColors } from '@/constants/theme';
+import { formatDayMonth, formatTimeRange } from '@/utils/datetime';
 import { styles, mobileStyles } from './coach-class-details.styles';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -26,20 +27,8 @@ const MOBILE_BREAKPOINT = 768;
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
-function formatDateTime(date: string, time: string): string {
-  const d = new Date(`${date}T${time}`);
-  const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-  const monthNames = [
-    'January', 'February', 'March', 'April', 'May', 'June',
-    'July', 'August', 'September', 'October', 'November', 'December',
-  ];
-  const dayName = dayNames[d.getDay()];
-  const day = d.getDate();
-  const month = monthNames[d.getMonth()];
-  const year = d.getFullYear();
-  const hour = String(d.getHours()).padStart(2, '0');
-  const minute = String(d.getMinutes()).padStart(2, '0');
-  return `${dayName}, ${day} ${month} ${year} · ${hour}:${minute}`;
+function formatDateTime(date: string, time: string, duration: number): string {
+  return `${formatDayMonth(date)} · ${formatTimeRange(time, duration)}`;
 }
 
 function formatHeaderTitle(date: string, time: string): string {
@@ -128,6 +117,7 @@ export default function CoachClassDetailsScreen() {
     classTypeName: string;
     scheduledDate: string;
     scheduledTime: string;
+    duration: string;
     spaceName: string;
     capacity: string;
     bookedCount: string;
@@ -139,6 +129,7 @@ export default function CoachClassDetailsScreen() {
     classTypeName,
     scheduledDate,
     scheduledTime,
+    duration,
     spaceName,
     capacity,
     bookedCount,
@@ -237,8 +228,9 @@ export default function CoachClassDetailsScreen() {
   const headerTitle = scheduledDate && scheduledTime
     ? formatHeaderTitle(scheduledDate, scheduledTime)
     : classTypeName ?? 'Class Details';
+  const durationMinutes = duration ? parseInt(duration, 10) : 0;
   const formattedDateTime = scheduledDate && scheduledTime
-    ? formatDateTime(scheduledDate, scheduledTime)
+    ? formatDateTime(scheduledDate, scheduledTime, durationMinutes)
     : '—';
 
   // ─── Mobile Layout ─────────────────────────────────────────────────────────

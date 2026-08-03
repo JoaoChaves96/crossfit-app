@@ -16,6 +16,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { useGym } from '@/hooks/useGym';
 import { useResponsiveLayout } from '@/hooks/useResponsiveLayout';
 import { createApiClient } from '@/utils/api-client';
+import { trimTime } from '@/utils/datetime';
 import { components } from '@/types/api.gen';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -291,7 +292,7 @@ export default function EditClassScreen() {
           coachUserId: data.coachUserId,
           spaceId: data.spaceId,
           scheduledDate: data.scheduledDate,
-          scheduledTime: data.scheduledTime,
+          scheduledTime: trimTime(data.scheduledTime),
           capacity: String(data.capacity),
           duration: String(data.duration),
         });

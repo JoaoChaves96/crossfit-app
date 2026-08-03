@@ -16,6 +16,7 @@ import { createApiClient } from '@/utils/api-client';
 import { showConfirm, showError } from '@/utils/alert';
 import { components } from '@/types/api.gen';
 import { AppColors } from '@/constants/theme';
+import { formatTimeRange } from '@/utils/datetime';
 import { useResponsiveLayout } from '@/hooks/useResponsiveLayout';
 import { DesktopTopNav } from '@/components/DesktopTopNav';
 import { NotificationBell } from '@/components/NotificationBell';
@@ -53,10 +54,6 @@ const BADGE_CONFIG: Record<CardStatus, { bg: string; text: string; label: string
 };
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
-function formatTimeRange(scheduledDate: string, scheduledTime: string): string {
-  return `${scheduledDate} · ${scheduledTime}`;
-}
-
 function getSpotsText(bookedCount: number, capacity: number): string {
   return `${bookedCount} / ${capacity} spots`;
 }
@@ -200,7 +197,7 @@ function ClassCard({ item, onPress, onCancel, isCancelling }: ClassCardProps) {
     <Pressable style={styles.card} onPress={onPress}>
       {/* Top row: time + badge */}
       <View style={styles.cardTop}>
-        <Text style={styles.cardTime}>{formatTimeRange(item.scheduledDate, item.scheduledTime)}</Text>
+        <Text style={styles.cardTime}>{formatTimeRange(item.scheduledTime, item.duration)}</Text>
         <StatusBadge status={item.userBookingStatus} />
       </View>
 

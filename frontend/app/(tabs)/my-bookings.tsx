@@ -14,6 +14,7 @@ import { createApiClient } from '@/utils/api-client';
 import { showConfirm, showError } from '@/utils/alert';
 import { components } from '@/types/api.gen';
 import { AppColors } from '@/constants/theme';
+import { formatShortDate, formatTime12h } from '@/utils/datetime';
 import { useResponsiveLayout } from '@/hooks/useResponsiveLayout';
 import { DesktopTopNav } from '@/components/DesktopTopNav';
 import { NotificationBell } from '@/components/NotificationBell';
@@ -98,7 +99,7 @@ function UpcomingCard({ item, isCancelling, onViewDetails, onCancel }: UpcomingC
         <View style={styles.detailRow}>
           <Text style={styles.detailIcon}>📅</Text>
           <Text style={styles.detailText}>
-            {item.scheduledDate} · {item.scheduledTime}
+            {formatShortDate(item.scheduledDate)} · {formatTime12h(item.scheduledTime)}
           </Text>
         </View>
         <View style={styles.detailRow}>
@@ -156,7 +157,7 @@ function PastCard({ item, onViewDetails, onLogResult }: PastCardProps) {
         <View style={styles.detailRow}>
           <Text style={styles.detailIcon}>📅</Text>
           <Text style={styles.detailText}>
-            {item.scheduledDate} · {item.scheduledTime}
+            {formatShortDate(item.scheduledDate)} · {formatTime12h(item.scheduledTime)}
           </Text>
         </View>
         <View style={styles.detailRow}>

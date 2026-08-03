@@ -16,6 +16,7 @@ import { createApiClient } from '@/utils/api-client';
 import { useResponsiveLayout } from '@/hooks/useResponsiveLayout';
 import { DesktopTopNav } from '@/components/DesktopTopNav';
 import { AppColors } from '@/constants/theme';
+import { formatDayMonth } from '@/utils/datetime';
 import { components } from '@/types/api.gen';
 
 // --- Design tokens ---
@@ -341,9 +342,7 @@ export default function LogResultsScreen() {
   }
 
   const classTypeName = classData?.classTypeName ?? 'Class';
-  const scheduledDate = classData
-    ? `${classData.scheduledDate} · ${classData.scheduledTime}`
-    : '';
+  const scheduledDate = classData ? formatDayMonth(classData.scheduledDate) : '';
   const hasProgramming =
     programming !== null && typeof programming.content === 'string' && programming.content.trim() !== '';
   const isLoggable = programming?.loggable ?? true;

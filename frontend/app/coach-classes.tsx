@@ -261,6 +261,7 @@ export default function CoachClassesScreen() {
         classTypeName: gymClass.classTypeName,
         scheduledDate: gymClass.scheduledDate,
         scheduledTime: gymClass.scheduledTime,
+        duration: String(gymClass.duration),
         spaceName: gymClass.spaceName,
         capacity: String(gymClass.capacity),
         bookedCount: String(gymClass.bookedCount),

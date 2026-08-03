@@ -14,6 +14,7 @@ import { createApiClient } from '@/utils/api-client';
 import { showConfirm, showError } from '@/utils/alert';
 import { components } from '@/types/api.gen';
 import { AppColors } from '@/constants/theme';
+import { formatShortDate, formatTimeRange } from '@/utils/datetime';
 import { useResponsiveLayout } from '@/hooks/useResponsiveLayout';
 import { DesktopTopNav } from '@/components/DesktopTopNav';
 import { styles, desktopStyles } from './class-details.styles';
@@ -311,7 +312,7 @@ export default function ClassDetailsScreen() {
   const bookBtnLabel =
     bookingStatus === 'full' ? 'JOIN WAITLIST' : 'BOOK CLASS';
 
-  const formattedDate = `${classData.scheduledDate} · ${classData.scheduledTime}`;
+  const formattedDate = `${formatShortDate(classData.scheduledDate)} · ${formatTimeRange(classData.scheduledTime, classData.duration)}`;
   const coachLabel = `Coach: ${classData.coachName}`;
 
   // ── Action buttons (shared) ────────────────────────────────────────────────
