@@ -420,6 +420,50 @@ describe('Results, Attendance, and Programming (e2e)', () => {
   });
 
   // =========================================================================
+  // 3b. GET /api/gyms/:gymId/classes/:classId/results/me  (own result)
+  // =========================================================================
+
+  describe('GET /api/gyms/:gymId/classes/:classId/results/me — own result', () => {
+    const endpoint = () =>
+      `/api/gyms/${gymId}/classes/${completedClassId}/results/me`;
+
+    it("happy path: athlete retrieves their own result → 200 with their result", async () => {
+      const res = await request(app.getHttpServer())
+        .get(endpoint())
+        .set('Authorization', `Bearer ${athleteToken}`)
+        .expect(200);
+
+      const body = res.body as Record<string, unknown>;
+      expect(body).toHaveProperty('result');
+      const result = body.result as Record<string, unknown> | null;
+      expect(result).not.toBeNull();
+      expect(result).toHaveProperty('userId', athleteUserId);
+    });
+
+    it('empty: caller with no logged result → 200 with result null', async () => {
+      // owner has no result logged for the completed class
+      const res = await request(app.getHttpServer())
+        .get(endpoint())
+        .set('Authorization', `Bearer ${ownerToken}`)
+        .expect(200);
+
+      const body = res.body as Record<string, unknown>;
+      expect(body).toHaveProperty('result', null);
+    });
+
+    it('no auth token → 401', async () => {
+      await request(app.getHttpServer()).get(endpoint()).expect(401);
+    });
+
+    it('gymId mismatch (JWT gym ≠ route gym) → 401', async () => {
+      await request(app.getHttpServer())
+        .get(endpoint())
+        .set('Authorization', `Bearer ${wrongGymToken}`)
+        .expect(401);
+    });
+  });
+
+  // =========================================================================
   // 4. POST /api/gyms/:gymId/classes/:classId/toggle-loggable
   // =========================================================================
 
@@ -584,11 +628,13 @@ describe('Results, Attendance, and Programming (e2e)', () => {
         .expect(401);
     });
 
-    it('wrong role: athlete cannot view programming → 403', async () => {
-      await request(app.getHttpServer())
+    it('athlete with active membership can view programming → 200', async () => {
+      const res = await request(app.getHttpServer())
         .get(endpoint())
         .set('Authorization', `Bearer ${athleteToken}`)
-        .expect(403);
+        .expect(200);
+
+      expect(res.body).toHaveProperty('classId', publishedClassId);
     });
 
     it('gymId mismatch (JWT gym ≠ route gym) → 401', async () => {

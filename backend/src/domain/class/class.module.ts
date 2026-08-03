@@ -25,6 +25,7 @@ import { EditClassHandler } from '../../commands/class/handlers/edit-class.handl
 import { DeleteClassHandler } from '../../commands/class/handlers/delete-class.handler';
 import { ClassScheduleService } from '../../queries/class/class-schedule.service';
 import { GetClassResultsService } from '../../queries/class/get-class-results.service';
+import { GetMyClassResultService } from '../../queries/class/get-my-class-result.service';
 import { GetClassProgrammingService } from '../../queries/class/get-class-programming.service';
 import { GetClassBookingsService } from '../../queries/class/get-class-bookings.service';
 import { GymModule } from '../gym/gym.module';
@@ -77,6 +78,7 @@ const CommandHandlers = [
     ProgrammingRepository,
     ClassScheduleService,
     GetClassResultsService,
+    GetMyClassResultService,
     GetClassProgrammingService,
     GetClassBookingsService,
     ClassLifecycleScheduler,
@@ -90,6 +92,7 @@ const CommandHandlers = [
     ProgrammingRepository,
     ClassScheduleService,
     GetClassResultsService,
+    GetMyClassResultService,
     GetClassProgrammingService,
     GetClassBookingsService,
   ],

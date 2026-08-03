@@ -37,6 +37,8 @@ import {
 } from '@nestjs/swagger';
 import { GetClassResultsService } from '../../queries/class/get-class-results.service';
 import { GetClassResultsResponseDto } from '../../queries/class/dto/get-class-results-response.dto';
+import { GetMyClassResultService } from '../../queries/class/get-my-class-result.service';
+import { GetMyClassResultResponseDto } from '../../queries/class/dto/get-my-class-result-response.dto';
 
 @Controller('/api/gyms/:gymId/classes')
 @ApiTags('Classes')
@@ -46,6 +48,7 @@ export class ClassResultsController {
   constructor(
     @Inject(CommandBus) private readonly commandBus: CommandBus,
     private readonly getClassResultsService: GetClassResultsService,
+    private readonly getMyClassResultService: GetMyClassResultService,
   ) {}
 
   @Post('/:classId/attendance')
@@ -90,6 +93,39 @@ export class ClassResultsController {
     );
 
     return this.commandBus.execute(command);
+  }
+
+  @Get('/:classId/results/me')
+  @Role(['athlete', 'owner', 'coach'])
+  @ApiOperation({
+    summary: "Get the caller's own result for a class",
+    description:
+      "Retrieve ONLY the authenticated user's own result for a given class. Accessible by athletes with active membership, coaches, and gym owners of the gym. Returns null result (HTTP 200) when the caller has not logged one yet. Never exposes other athletes' results. gymId is validated against the class.",
+  })
+  @ApiParam({ name: 'gymId', description: 'Gym ID' })
+  @ApiParam({ name: 'classId', description: 'Class ID' })
+  @ApiResponse({
+    status: 200,
+    description:
+      "The caller's own result, or null when none has been logged yet",
+    type: GetMyClassResultResponseDto,
+  })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiResponse({
+    status: 403,
+    description: 'Forbidden - Athlete, coach, or owner in the gym required',
+  })
+  @ApiResponse({ status: 404, description: 'Class not found in gym' })
+  async getMyClassResult(
+    @Param('gymId') gymId: string,
+    @Param('classId') classId: string,
+    @CurrentUser() userId: string,
+  ): Promise<GetMyClassResultResponseDto> {
+    return this.getMyClassResultService.getMyClassResult(
+      gymId,
+      classId,
+      userId,
+    );
   }
 
   @Get('/:classId/results')

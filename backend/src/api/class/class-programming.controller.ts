@@ -49,11 +49,11 @@ export class ClassProgrammingController {
   ) {}
 
   @Get('/:classId/programming')
-  @Role(['coach', 'owner'])
+  @Role(['coach', 'owner', 'athlete'])
   @ApiOperation({
     summary: 'Get class programming (WOD)',
     description:
-      'Retrieve the workout programming for a class. Accessible by the assigned coach or the gym owner. Returns null content when no programming has been set. gymId is validated against the class.',
+      'Retrieve the workout programming for a class. Accessible by the assigned coach, the gym owner, or any athlete with active membership in the gym (WOD content is not per-athlete sensitive). Returns null content when no programming has been set. gymId is validated against the class.',
   })
   @ApiParam({ name: 'gymId', description: 'Gym ID' })
   @ApiParam({ name: 'classId', description: 'Class ID' })
@@ -65,7 +65,8 @@ export class ClassProgrammingController {
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   @ApiResponse({
     status: 403,
-    description: 'Forbidden - Coach or owner role required',
+    description:
+      'Forbidden - Coach, owner, or gym member (athlete) role required',
   })
   @ApiResponse({ status: 404, description: 'Class not found in gym' })
   async getClassProgramming(

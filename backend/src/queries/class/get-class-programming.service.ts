@@ -6,6 +6,7 @@ import {
 import { ClassRepository } from '../../repositories/class.repository';
 import { ProgrammingRepository } from '../../repositories/programming.repository';
 import { GymStaffService } from '../../domain/gym-staff/gym-staff.service';
+import { GymMembershipRepository } from '../../repositories/gym-membership.repository';
 import { GetClassProgrammingResponseDto } from './dto/get-class-programming-response.dto';
 
 /**
@@ -14,6 +15,8 @@ import { GetClassProgrammingResponseDto } from './dto/get-class-programming-resp
  * Access rules:
  * - Coach assigned to the class (active in the gym and coachUserId matches)
  * - Gym owner of the gym the class belongs to
+ * - Athlete with active membership in the gym (WOD content is not per-athlete
+ *   sensitive)
  *
  * gymId scoping is enforced: the class must belong to the gym in the route param.
  * Returns null content fields when no programming exists — does not throw 404.
@@ -24,6 +27,7 @@ export class GetClassProgrammingService {
     private readonly classRepository: ClassRepository,
     private readonly programmingRepository: ProgrammingRepository,
     private readonly gymStaffService: GymStaffService,
+    private readonly gymMembershipRepository: GymMembershipRepository,
   ) {}
 
   /**
@@ -53,7 +57,9 @@ export class GetClassProgrammingService {
       throw new ForbiddenException('Class does not belong to this gym');
     }
 
-    // Access control: allow coaches assigned to this class or gym owners
+    // Access control: allow gym owners, the assigned coach, or any athlete
+    // with active membership in the gym (WOD content is not per-athlete
+    // sensitive).
     const isOwner = await this.gymStaffService.isGymOwner(
       requestingUserId,
       gymId,
@@ -61,10 +67,15 @@ export class GetClassProgrammingService {
     const isAssignedCoach =
       classEntity.coachUserId === requestingUserId &&
       (await this.gymStaffService.isCoach(requestingUserId, gymId));
+    const isGymMember =
+      await this.gymMembershipRepository.hasActiveMembershipInGym(
+        requestingUserId,
+        gymId,
+      );
 
-    if (!isOwner && !isAssignedCoach) {
+    if (!isOwner && !isAssignedCoach && !isGymMember) {
       throw new ForbiddenException(
-        'Only the assigned coach or a gym owner can view class programming',
+        'Only a gym owner, the assigned coach, or a gym member can view class programming',
       );
     }
 
