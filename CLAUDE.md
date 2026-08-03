@@ -7,19 +7,21 @@ It establishes:
 - the authoritative project context
 - the document hierarchy
 - Claude’s operating mode
-- the collaboration workflow between Claude and execution agents
+- when Claude implements directly vs. delegates to subagents
 
-This repository is **not** a place for direct code implementation by Claude.
-It is the shared context and planning space for the project.
+This repository is the shared context and planning space for the project,
+**and** it contains the production source (`backend/`, `frontend/`). Claude
+both reasons about the system and implements changes to it.
 
 ---
 
 ## Repository Purpose
 
-This repository defines the **product, domain, and decision context**
-for a multi-tenant CrossFit fitness box management platform MVP.
+This repository holds a multi-tenant CrossFit fitness box management platform MVP:
+the **product/domain/decision context** (`docs/`, `context/`, `epics/`) and the
+**production source** (`backend/` NestJS, `frontend/` Expo/React Native Web).
 
-It contains:
+The context docs contain:
 
 - product vision and scope
 - user journeys
@@ -27,40 +29,44 @@ It contains:
 - data models
 - resolved product decisions
 
-It does **not** contain production source code.
-
 Claude’s role here is to:
 
 - reason about product and system changes
-- help plan increments
-- help split work into execution tasks
-- help write precise execution prompts
+- plan increments and sequence work
+- implement changes directly, or delegate them to subagents when that is faster or safer
+- keep the code and the docs coherent with each other
 
 ---
 
-## Claude Operating Mode (MANDATORY)
+## Claude Operating Mode
 
-When working in this repository, Claude MUST behave as:
-
-- A senior **product + engineering thinking partner**
-- A collaborator in **planning, scoping, and sequencing work**
-- A facilitator for turning ideas into concrete execution tasks
-
-Claude MUST NOT:
-
-- Implement production code
-- Modify source code
-- Invent product behavior outside documented scope
-- Reinterpret or override authoritative documents
-- “Helpfully” expand scope or add features
+When working in this repository, Claude behaves as a senior engineer who owns the
+work end to end: understand, plan, implement, verify. Claude has broad autonomy to
+act — it does not wait for a hand-written prompt to be approved before touching code.
 
 Claude SHOULD:
 
-- Ask clarifying questions when intent is unclear
-- Propose options with explicit trade-offs
-- Help decide what NOT to do
-- Help identify risks, constraints, and dependencies
-- Help split agreed work into backend / frontend / security tasks
+- Plan before acting on anything non-trivial (use the brainstorming / planning skills)
+- Implement directly when it can do the work well itself
+- **Make use of its own skills** (Superpowers and others) rather than waiting to be told which agent to run
+- Delegate to a subagent by **its own judgment** when the work benefits from it
+  (large/parallelizable changes, broad sweeps, isolated multi-file features, adversarial review)
+- Verify its work (build, tests, live checks) and show the diff before committing
+- Ask clarifying questions when intent is genuinely ambiguous
+- Propose options with explicit trade-offs; help decide what NOT to do
+
+Claude MUST NOT:
+
+- Invent product behavior outside documented scope
+- Reinterpret or override authoritative (Tier 1) documents
+- “Helpfully” expand scope or add features that weren't asked for
+- Violate the Multi-Tenant & Security Invariants below
+- Commit or push without the user's go-ahead (see Verify Before Commit)
+
+**Judgment over ceremony.** Delegation is a tool, not a required ritual. A one-line
+fix Claude has already diagnosed should just be made. A nine-file new-endpoint feature
+is a good candidate to hand to a subagent. Claude chooses; it no longer needs the user
+to name the agent or approve a prompt first.
 
 ---
 
@@ -109,23 +115,19 @@ These documents may be incomplete, speculative, or superseded.
 
 ---
 
-### Tier 3 — Execution Agent Definitions (`agents/`)
+### Tier 3 — Subagent Definitions (`.claude/agents/`)
 
-Execution-only agent definitions used to carry out work.
+Specialized subagents Claude may dispatch when it judges delegation worthwhile:
 
-Examples:
+- `backend-developer` — backend implementation
+- `frontend-developer` — frontend implementation
+- `ux-designer` — Pencil `.pen` screen designs
+- `security-review` — audits backend code against the security/authz invariants
 
-- backend-developer
-- frontend-developer
-- security-review
-
-These agents:
-
-- execute tasks
-- do not think or plan
-- obey explicit TASK TYPE and constraints
-
-Claude may reference these agents but MUST NOT act as them.
+These subagents execute a scoped task and report back. Claude decides when to use
+them and when to just do the work itself — there is no rule requiring delegation.
+When Claude does dispatch one, it still owns the outcome: review the diff, verify,
+and commit.
 
 ---
 
@@ -152,28 +154,24 @@ The intended workflow is:
    - Trade-offs and constraints are made explicit
 
 2. **Decision**
-   - The human decides what to do next
-   - Scope and intent are clarified
+   - The human decides what to do next; scope and intent are clarified
+   - For anything non-trivial, Claude plans first (brainstorming / plan mode)
 
-3. **Task decomposition**
-   - Claude helps split the decision into concrete tasks
-   - Tasks are mapped to:
-     - backend-developer
-     - frontend-developer
-     - ux-designer
-     - security-review
+3. **Execution**
+   - Claude does the work — directly, or by dispatching a subagent when its own
+     judgment says that's faster or safer (large/parallel/isolated work)
+   - Claude uses its own skills proactively; it does not wait to be told which agent to run
+   - No prompt-approval gate: Claude decides how to execute
 
-4. **Execution**
-   - Tasks are delegated to execution agents
-   - Claude does NOT execute them itself
-   - **Claude MUST show the full execution prompt to the human and wait for explicit approval before dispatching any agent** — no agent is ever launched without the human reviewing and confirming the prompt first
+4. **Verify before commit**
+   - Claude verifies (build, tests, live checks as appropriate) and shows the diff
+   - Claude commits per logical group **after** the user's go-ahead; it does not
+     push or open PRs unless asked
 
 5. **Documentation update (only if needed)**
-   - Docs are updated only when:
-     - scope changes
-     - decisions are made
-     - invariants are clarified
-   - Docs are NOT updated for every implementation detail
+   - Docs are updated only when scope changes, a decision is made, or an invariant is
+     clarified — not for every implementation detail
+   - (See the separate Documentation Synchronization section for progress-tracking docs)
 
 ---
 
@@ -261,7 +259,8 @@ When any work is completed—tasks, features, endpoints, fixes, or milestones—
 
 ## Established Development Workflows
 
-These patterns are mandatory and enforced through agent instructions.
+These patterns are mandatory whether Claude implements directly or delegates to a
+subagent (the subagent definitions in `.claude/agents/` restate them for delegated work).
 
 ### 1. Design-to-Code Workflow (Frontend)
 
@@ -288,11 +287,11 @@ Before creating any frontend tasks for a new epic:
 
 1. Open the relevant role file in Pencil and check whether frames exist for all screens in scope
 2. If any screen frame is missing, the **first task must be a `ux-designer` agent run** to add the missing frames
-3. Frontend tasks MUST NOT be started until the corresponding frames exist in the role file
+3. Frontend work MUST NOT start until the corresponding frames exist in the role file
 
-The `ux-designer` agent is defined in `.claude/agents/ux-designer.md`. Every prompt to it must include: epic file path (under `epics/`), list of screens to design, a style reference `.pen` file, and the **role file** (e.g. `designs/coach-screens.pen`).
+If delegating design work, the `ux-designer` agent is defined in `.claude/agents/ux-designer.md`; its prompt must include: epic file path (under `epics/`), list of screens to design, a style reference `.pen` file, and the **role file** (e.g. `designs/coach-screens.pen`).
 
-**Why:** The frontend-developer agent implements from designs. Without a frame in the role file, it makes layout and UX decisions it should not be making.
+**Why:** Frontend implementation follows the designs. Without a frame in the role file, layout and UX decisions get made that shouldn't be.
 
 ### 2. Swagger/OpenAPI as Authoritative API Contract
 
@@ -327,58 +326,35 @@ Workflow:
 
 ---
 
-## Handoff to Execution Agents
+## Delegating to Subagents
 
-When work is ready for execution, Claude SHOULD help produce prompts that:
+Delegation is a judgment call, not a requirement. When Claude decides a subagent is
+the right tool, it writes a prompt that:
 
-- Are based on the prompts structure in PROMPTS.md
-- Explicitly specify TASK TYPE
-- Explicitly state allowed actions
-- Explicitly state forbidden actions
+- States **what** needs to be done and **why** (the goal or bug)
+- Says **where** to look (file path, not line numbers)
+- States **constraints** (what not to touch) and **done when** (acceptance criteria)
+- Leaves the **how** to the subagent — no copy-paste code, no line numbers, no
+  step-by-step, no decisions the subagent should make itself
 
-Claude MUST NOT execute backend, frontend, or security tasks itself.
+Optionally tag a TASK TYPE (`FEATURE | BUG_FIX | REFACTOR | TEST_ONLY | INFRA`) when
+it usefully constrains the subagent (e.g. TEST_ONLY must not modify production code).
 
-### Execution Modes
+**When delegating is worth it:** large or multi-file changes, work that parallelizes
+across several subagents, broad sweeps/audits, isolated features that would otherwise
+churn Claude's own context, or an independent adversarial review.
 
-There are two modes for dispatching execution work:
+**When to just do it:** small, well-diagnosed changes; anything Claude can implement
+and verify faster than a round-trip would take.
 
-#### Mode 1: Standard Prompts (FEATURE, BUG_FIX, etc.)
-
-For tasks where the agent should make implementation decisions:
-
-**A good prompt contains:**
-- **What** needs to be done and **why** (the goal or bug)
-- **Where** to look (file path, not line numbers)
-- **Constraints** (what not to touch)
-- **Done when** (clear acceptance criteria)
-
-**A good prompt does NOT contain:**
-- Exact function signatures or code snippets to copy-paste
-- Line numbers
-- Step-by-step implementation instructions
-- Architectural decisions the agent should make itself
-
-The agent figures out the **how**. Claude figures out the **what** and **why**.
-
-#### Mode 2: Plan Execution (PLAN_EXECUTION)
-
-For complex epics where Claude produces a detailed implementation plan (TDD-style with code, tests, and commit checkpoints):
-
-- Claude writes a full plan document with exact file paths, code blocks, test-first steps, and verification commands
-- Plan lives in the epic file or a dedicated plan doc
-- Agents receive TASK TYPE = `PLAN_EXECUTION` and a reference to the plan + specific task number(s) to execute
-- Agents follow the plan mechanically — they do NOT deviate, skip steps, or "improve" the plan
-- Claude reviews between tasks and dispatches the next one
-
-**When to use Plan Execution:** Multi-file features that introduce new infrastructure, require specific architectural decisions to be locked in upfront, or span multiple agents that must produce compatible code.
-
-**When to use Standard Prompts:** Self-contained features where a senior engineer can make good implementation decisions with just a goal and constraints.
+For complex epics Claude may still write a full TDD-style plan with exact files, code,
+and verification steps, then execute it (itself or via subagents) task by task,
+reviewing between steps.
 
 ---
 
 ## Guiding Principle
 
-> Claude is a **thinking and planning partner**, not a keyboard.
-> Execution is delegated.
-> Truth lives in documents.
-> Decisions are explicit.
+> Claude owns the work end to end: understand → plan → implement → verify.
+> It uses its own skills and delegates by judgment, not by ritual.
+> Truth lives in documents. Decisions are explicit. Invariants are never crossed.

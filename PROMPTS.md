@@ -1,78 +1,46 @@
 # PROMPTS.md
 
-This file defines how to interact with Claude when working in this repository.
+This file is a set of reusable prompt templates for delegating scoped work to
+subagents. Claude implements much work directly (see CLAUDE.md); these templates
+are for the cases where Claude — by its own judgment, or at the user's request —
+hands a task to a `backend-developer` / `frontend-developer` / `security-review` /
+`ux-designer` subagent.
 
-It is NOT product documentation.
-It is NOT agent configuration.
-It is a stable set of prompt templates that encode working patterns.
-
-These prompts are reused across conversations and agents.
-
----
-
-1. RESET CONTEXT
-
-Use at the start of a new Claude session.
-
-Purpose:
-
-- Load full project context
-- Establish collaboration mode
-- Prevent accidental execution
-
-Template:
-
-Read and follow CLAUDE.md.
-
-We are working on a multi-tenant CrossFit gym management MVP.
-This conversation is for planning, reasoning, and task definition only.
-
-Do not implement code unless explicitly instructed.
+It is NOT product documentation and NOT subagent configuration — just the shape of a
+good delegation prompt.
 
 ---
 
-2. THINK MODE (Planning & Reasoning)
+1. PLANNING (Thinking Partner)
 
-Use when you want Claude to act as a thinking partner.
+Use plan mode / the brainstorming skill when the goal is to reason, not yet act.
 
 Purpose:
 
-- Explore ideas
-- Evaluate trade-offs
-- Decide what to do next
-- Decide what NOT to do
+- Explore ideas, evaluate trade-offs
+- Decide what to do next, and what NOT to do
+- Sequence work before touching code
 
-Template:
-
-THINK MODE.
-
-Act as a senior product and engineering thinking partner.
-Help me reason, challenge assumptions, and sequence work.
-
-Do not write code.
-Do not delegate to execution agents yet.
-Ask questions if something is unclear.
+This is native plan mode now — no special prompt needed. Ask Claude to plan, or let
+it plan on its own for anything non-trivial before implementing.
 
 ---
 
-3. EXECUTION PROMPT (Backend / Frontend / Security)
+2. DELEGATION PROMPT (Backend / Frontend / Security / UX)
 
-Use when work is ready to be executed by an agent.
+Use when Claude hands a scoped task to a subagent.
 
 Purpose:
 
-- Turn decisions into precise execution tasks
-- Enforce strict boundaries
-- Prevent agent overreach
+- Turn a decision into a precise task with clear boundaries
+- Give the subagent the what/why/where/constraints and let it own the how
 
-Mandatory structure:
+Recommended structure:
 
-TASK TYPE: TEST_ONLY | BUG_FIX | FEATURE | REFACTOR | INFRA
-
-AGENT: backend-developer | frontend-developer | security-review
+TASK TYPE: TEST_ONLY | BUG_FIX | FEATURE | REFACTOR | INFRA   (tag when it constrains scope)
 
 Objective:
-<What needs to be done>
+<What needs to be done, and why>
 
 Constraints:
 
@@ -81,7 +49,7 @@ Constraints:
 
 Scope:
 
-- <Files or areas involved>
+- <Files or areas involved — paths, not line numbers>
 
 Done when:
 
@@ -89,8 +57,7 @@ Done when:
 - For FEATURE tasks (backend): unit tests for any new command handler; integration tests for any new HTTP endpoint
 - For FEATURE tasks (frontend): unit tests for any new hook or component with non-trivial logic
 
-Claude must NOT execute the task itself.
-Claude must route it to the specified agent.
+Claude reviews the returned diff, verifies, and commits — it owns the outcome.
 
 ---
 
