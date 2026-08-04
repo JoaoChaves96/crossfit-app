@@ -9,6 +9,12 @@ import { ClassScheduleItemDto } from './class-schedule-item.dto';
  */
 export class GetClassScheduleResponseDto {
   @ApiProperty({
+    example: 'CrossFit Downtown',
+    description: 'Display name of the gym the schedule belongs to',
+  })
+  gymName: string;
+
+  @ApiProperty({
     type: [ClassScheduleItemDto],
     description: 'List of classes the athlete is eligible to see and book',
   })

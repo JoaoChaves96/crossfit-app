@@ -4,6 +4,7 @@ import { BookingRepository } from '../../repositories/booking.repository';
 import { GymMembershipRepository } from '../../repositories/gym-membership.repository';
 import { AthleteMembershipPlanRepository } from '../../repositories/athlete-membership-plan.repository';
 import { GymStaffService } from '../../domain/gym-staff/gym-staff.service';
+import { GymService } from '../../domain/gym/gym.service';
 import { ClassScheduleItemDto } from './dto/class-schedule-item.dto';
 import { GetClassScheduleResponseDto } from './dto/get-class-schedule-response.dto';
 import { CoachClassItemDto } from './dto/coach-class-item.dto';
@@ -33,6 +34,7 @@ export class ClassScheduleService {
     private readonly gymMembershipRepository: GymMembershipRepository,
     private readonly athleteMembershipPlanRepository: AthleteMembershipPlanRepository,
     private readonly gymStaffService: GymStaffService,
+    private readonly gymService: GymService,
   ) {}
 
   /**
@@ -120,7 +122,10 @@ export class ClassScheduleService {
       return a.scheduledTime.localeCompare(b.scheduledTime);
     });
 
+    const gym = await this.gymService.getGymById(gymId);
+
     return {
+      gymName: gym?.name ?? '',
       classes: classItems,
     };
   }
@@ -172,7 +177,10 @@ export class ClassScheduleService {
       return a.scheduledTime.localeCompare(b.scheduledTime);
     });
 
+    const gym = await this.gymService.getGymById(gymId);
+
     return {
+      gymName: gym?.name ?? '',
       classes: classItems,
     };
   }

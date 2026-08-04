@@ -278,6 +278,7 @@ export default function ScheduleScreen() {
   const { isDesktop } = useResponsiveLayout();
 
   const [classes, setClasses] = useState<EnrichedClass[]>([]);
+  const [gymName, setGymName] = useState('My Gym');
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [cancellingBookingId, setCancellingBookingId] = useState<string | null>(null);
@@ -310,6 +311,7 @@ export default function ScheduleScreen() {
       });
 
       setClasses(enrichedClasses);
+      if (scheduleResponse.gymName) setGymName(scheduleResponse.gymName);
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Failed to load classes';
       setError(message);
@@ -404,10 +406,10 @@ export default function ScheduleScreen() {
   if (classes.length === 0) {
     return (
       <View style={isDesktop ? desktopStyles.screen : styles.screen}>
-        {isDesktop ? <DesktopTopNav /> : (
+        {isDesktop ? <DesktopTopNav gymName={gymName} /> : (
           <View style={styles.header}>
             <View style={styles.gymSelector}>
-              <Text style={styles.gymName}>My Gym</Text>
+              <Text style={styles.gymName}>{gymName}</Text>
               <Text style={styles.gymDropdownCaret}>▼</Text>
             </View>
             <NotificationBell />
@@ -431,7 +433,7 @@ export default function ScheduleScreen() {
   if (isDesktop) {
     return (
       <View style={desktopStyles.screen}>
-        <DesktopTopNav />
+        <DesktopTopNav gymName={gymName} />
         <View style={desktopStyles.contentArea}>
           <View style={desktopStyles.innerWrap}>
             {dateSeparator}
@@ -453,7 +455,7 @@ export default function ScheduleScreen() {
   const header = (
     <View style={styles.header}>
       <View style={styles.gymSelector}>
-        <Text style={styles.gymName}>My Gym</Text>
+        <Text style={styles.gymName}>{gymName}</Text>
         <Text style={styles.gymDropdownCaret}>▼</Text>
       </View>
       <NotificationBell />

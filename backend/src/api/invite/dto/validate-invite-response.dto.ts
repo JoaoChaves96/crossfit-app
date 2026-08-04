@@ -14,6 +14,12 @@ export class ValidateInviteResponseDto {
   gymName: string;
 
   @ApiProperty({
+    description: 'Location of the gym the invite belongs to',
+    example: 'Downtown, New York',
+  })
+  gymLocation: string;
+
+  @ApiProperty({
     description: 'Email address the invite was sent to',
     example: 'athlete@example.com',
   })

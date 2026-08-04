@@ -293,7 +293,9 @@ function GymCard({ invite }: { invite: ValidateInviteResponse }) {
         </View>
         <View style={styles.gymTextGroup}>
           <Text style={styles.gymName}>{invite.gymName}</Text>
-          <Text style={styles.gymSubtext}>CrossFit Box</Text>
+          <Text style={styles.gymSubtext}>
+            {invite.gymLocation || 'Welcome to our community!'}
+          </Text>
         </View>
       </View>
 

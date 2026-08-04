@@ -278,7 +278,9 @@ export default function CoachClassDetailsScreen() {
 
               <Text style={ms.fieldLabel}>BOOKED ATHLETES</Text>
               <View style={ms.bookedRow}>
-                <Text style={ms.bookedRowText}>{bookedCountNum} athletes booked</Text>
+                <Text style={ms.bookedRowText}>
+                  {bookedCountNum} {bookedCountNum === 1 ? 'athlete' : 'athletes'} booked
+                </Text>
               </View>
 
               <TouchableOpacity
@@ -457,7 +459,9 @@ export default function CoachClassDetailsScreen() {
 
               <Text style={styles.fieldLabel}>BOOKED ATHLETES</Text>
               <View style={styles.bookedRow}>
-                <Text style={styles.bookedRowText}>{bookedCountNum} athletes booked</Text>
+                <Text style={styles.bookedRowText}>
+                  {bookedCountNum} {bookedCountNum === 1 ? 'athlete' : 'athletes'} booked
+                </Text>
               </View>
 
               <TouchableOpacity

@@ -51,6 +51,28 @@ MVP scope. Coach desktop has NO duplicate-header bug). Discovery/triage only; fi
   - Global `UuidParamPipe` (APP_PIPE) rejects malformed UUIDs (params ending in `Id`) with 400
     before the DB; skips invite `token`/`inviteToken`. Global `QueryFailedFilter` (APP_FILTER)
     maps Postgres `22P02` → 400 as a backstop. Well-formed-but-missing UUID still → 404.
+- ✅ **🐞 Duplicate-header / slug family** → **Verified** (`8a7528c`)
+- ✅ **🐞 Raw-ISO date/time rendering family** → **Verified** (`0f71eee`)
+- ✅ **🐞 Coach shown as email instead of display name** → **Verified** (`6ebb0b9`)
+  - `CoachListItemDto` omitted `name` though the service already loaded the user. Added `name`
+    to DTO + service mapping; create/edit-class coach pickers and the Coaches list now show the
+    name (email demoted to secondary); types regenerated from Swagger.
+- ✅ **🐞 Tenant-mismatch status inconsistent** → **Verified & pushed** (`4a28c58`)
+  - **Invariant clarification:** for gym-scoped routes, **401 = missing/invalid authentication
+    only; 403 Forbidden = authenticated but wrong tenant or role.** `GymOwnershipGuard` now throws
+    `ForbiddenException` (was 401) on JWT-gym vs route-gym mismatch — single enforcement point for
+    7 controllers. Service/handler resource-gym checks already returned 403 (unchanged). ~22 stale
+    e2e assertions (previously expecting 401/500) aligned to 403; all no-auth 401 assertions kept.
+    (No isolation bug existed — real cross-tenant access was always blocked; only the status code
+    disagreed.)
+- ✅ **🐞 Hardcoded gym labels + pluralization family** → **Verified** (`__COMMIT__`)
+  - Athlete/owner Schedule showed a hardcoded "My Gym"; invite acceptance showed a hardcoded
+    "CrossFit Box" subtext. Added `gymName` to `GetClassScheduleResponseDto` (populated from
+    `GymService` in both athlete and owner schedule paths) and `gymLocation` to
+    `ValidateInviteResponseDto` (from `gym.location`). Frontend `schedule.tsx` renders the real
+    gym name across mobile/empty-state/desktop headers; invite screen renders the gym location
+    (fallback "Welcome to our community!"). Coach Class Details now pluralizes "athlete(s) booked".
+    Types regenerated from Swagger.
 - **Deferred (separate plan):** Notifications frontend migration — unit tests (17 failing) + tsc
   errors + expo 54 / expo-notifications 56 version mismatch. Held in `git stash` on `dev`; two
   🐞 cards remain in the board's Issues Found list. See `epics/NOTIFICATIONS_PLAN.md`.

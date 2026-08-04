@@ -911,6 +911,11 @@ export interface components {
             state: "published" | "booking_closed" | "in_progress" | "completed" | "archived";
         };
         GetClassScheduleResponseDto: {
+            /**
+             * @description Display name of the gym the schedule belongs to
+             * @example CrossFit Downtown
+             */
+            gymName: string;
             /** @description List of classes the athlete is eligible to see and book */
             classes: components["schemas"]["ClassScheduleItemDto"][];
         };
@@ -2379,6 +2384,11 @@ export interface components {
              * @example CrossFit Downtown
              */
             gymName: string;
+            /**
+             * @description Location of the gym the invite belongs to
+             * @example Downtown, New York
+             */
+            gymLocation: string;
             /**
              * @description Email address the invite was sent to
              * @example athlete@example.com

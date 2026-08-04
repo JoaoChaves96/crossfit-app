@@ -105,6 +105,7 @@ export class InviteService {
     return {
       gymId: invite.gymId,
       gymName: gym?.name || '',
+      gymLocation: gym?.location || '',
       inviteeEmail: invite.inviteeEmail,
       expiresAt: invite.expiresAt.toISOString(),
       status: resolvedStatus,
