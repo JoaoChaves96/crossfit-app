@@ -65,7 +65,7 @@ MVP scope. Coach desktop has NO duplicate-header bug). Discovery/triage only; fi
     e2e assertions (previously expecting 401/500) aligned to 403; all no-auth 401 assertions kept.
     (No isolation bug existed — real cross-tenant access was always blocked; only the status code
     disagreed.)
-- ✅ **🐞 Hardcoded gym labels + pluralization family** → **Verified** (`__COMMIT__`)
+- ✅ **🐞 Hardcoded gym labels + pluralization family** → **Verified** (`afca90c`)
   - Athlete/owner Schedule showed a hardcoded "My Gym"; invite acceptance showed a hardcoded
     "CrossFit Box" subtext. Added `gymName` to `GetClassScheduleResponseDto` (populated from
     `GymService` in both athlete and owner schedule paths) and `gymLocation` to
