@@ -22,7 +22,7 @@ import { generateTestToken } from './helpers/jwt.helper';
  * - Happy path: correct role, correct gymId, valid state → 200/201
  * - No auth token → 401
  * - Wrong role → 403
- * - gymId mismatch (JWT gym ≠ route gym) → 401
+ * - gymId mismatch (JWT gym ≠ route gym) → 403
  * - Invalid state where applicable → 400
  */
 describe('Results, Attendance, and Programming (e2e)', () => {
@@ -300,12 +300,12 @@ describe('Results, Attendance, and Programming (e2e)', () => {
         .expect(401);
     });
 
-    it('gymId mismatch (JWT gym ≠ route gym) → 401', async () => {
+    it('gymId mismatch (JWT gym ≠ route gym) → 403', async () => {
       await request(app.getHttpServer())
         .post(endpoint())
         .set('Authorization', `Bearer ${wrongGymToken}`)
         .send(validBody)
-        .expect(401);
+        .expect(403);
     });
 
     it('invalid state: class is published, not completed → 400', async () => {
@@ -351,14 +351,14 @@ describe('Results, Attendance, and Programming (e2e)', () => {
         .expect(401);
     });
 
-    it('gymId mismatch (JWT gym ≠ route gym) → 401', async () => {
+    it('gymId mismatch (JWT gym ≠ route gym) → 403', async () => {
       expect(loggedResultId).toBeDefined();
 
       await request(app.getHttpServer())
         .patch(`/api/gyms/${gymId}/results/${loggedResultId}`)
         .set('Authorization', `Bearer ${wrongGymToken}`)
         .send({ resultId: loggedResultId, value: '250' })
-        .expect(401);
+        .expect(403);
     });
 
     it('non-existent result → 404', async () => {
@@ -411,11 +411,11 @@ describe('Results, Attendance, and Programming (e2e)', () => {
         .expect(403);
     });
 
-    it('gymId mismatch (JWT gym ≠ route gym) → 401', async () => {
+    it('gymId mismatch (JWT gym ≠ route gym) → 403', async () => {
       await request(app.getHttpServer())
         .get(endpoint())
         .set('Authorization', `Bearer ${wrongGymToken}`)
-        .expect(401);
+        .expect(403);
     });
   });
 
@@ -455,11 +455,11 @@ describe('Results, Attendance, and Programming (e2e)', () => {
       await request(app.getHttpServer()).get(endpoint()).expect(401);
     });
 
-    it('gymId mismatch (JWT gym ≠ route gym) → 401', async () => {
+    it('gymId mismatch (JWT gym ≠ route gym) → 403', async () => {
       await request(app.getHttpServer())
         .get(endpoint())
         .set('Authorization', `Bearer ${wrongGymToken}`)
-        .expect(401);
+        .expect(403);
     });
   });
 
@@ -508,12 +508,12 @@ describe('Results, Attendance, and Programming (e2e)', () => {
         .expect(403);
     });
 
-    it('gymId mismatch (JWT gym ≠ route gym) → 401', async () => {
+    it('gymId mismatch (JWT gym ≠ route gym) → 403', async () => {
       await request(app.getHttpServer())
         .post(endpoint())
         .set('Authorization', `Bearer ${wrongGymToken}`)
         .send(validBody)
-        .expect(401);
+        .expect(403);
     });
 
     it('invalid state: class is completed, not published/booking_closed → 400', async () => {
@@ -574,12 +574,12 @@ describe('Results, Attendance, and Programming (e2e)', () => {
         .expect(403);
     });
 
-    it('gymId mismatch (JWT gym ≠ route gym) → 401', async () => {
+    it('gymId mismatch (JWT gym ≠ route gym) → 403', async () => {
       await request(app.getHttpServer())
         .post(endpoint())
         .set('Authorization', `Bearer ${wrongGymToken}`)
         .send(validBody)
-        .expect(401);
+        .expect(403);
     });
 
     it('invalid state: class is published, attendance not allowed → 400', async () => {
@@ -637,11 +637,11 @@ describe('Results, Attendance, and Programming (e2e)', () => {
       expect(res.body).toHaveProperty('classId', publishedClassId);
     });
 
-    it('gymId mismatch (JWT gym ≠ route gym) → 401', async () => {
+    it('gymId mismatch (JWT gym ≠ route gym) → 403', async () => {
       await request(app.getHttpServer())
         .get(endpoint())
         .set('Authorization', `Bearer ${wrongGymToken}`)
-        .expect(401);
+        .expect(403);
     });
   });
 
@@ -695,12 +695,12 @@ describe('Results, Attendance, and Programming (e2e)', () => {
         .expect(403);
     });
 
-    it('gymId mismatch (JWT gym ≠ route gym) → 401', async () => {
+    it('gymId mismatch (JWT gym ≠ route gym) → 403', async () => {
       await request(app.getHttpServer())
         .post(endpoint())
         .set('Authorization', `Bearer ${wrongGymToken}`)
         .send(validBody)
-        .expect(401);
+        .expect(403);
     });
 
     it('invalid state: class is completed, programming not allowed → 400', async () => {

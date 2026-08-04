@@ -1,4 +1,4 @@
-import { UnauthorizedException } from '@nestjs/common';
+import { ForbiddenException } from '@nestjs/common';
 import { GymOwnershipGuard } from './gym-ownership.guard';
 import { ExecutionContext } from '@nestjs/common';
 
@@ -33,23 +33,23 @@ describe('GymOwnershipGuard', () => {
   });
 
   describe('when route gymId does NOT match JWT gymId claim', () => {
-    it('throws UnauthorizedException', () => {
+    it('throws ForbiddenException', () => {
       const context = buildContext({ gymId: 'gym-abc' }, { gymId: 'gym-xyz' });
-      expect(() => guard.canActivate(context)).toThrow(UnauthorizedException);
+      expect(() => guard.canActivate(context)).toThrow(ForbiddenException);
     });
   });
 
   describe('when route has gymId but user has no gymId claim', () => {
-    it('throws UnauthorizedException', () => {
+    it('throws ForbiddenException', () => {
       const context = buildContext({ gymId: 'gym-abc' }, {});
-      expect(() => guard.canActivate(context)).toThrow(UnauthorizedException);
+      expect(() => guard.canActivate(context)).toThrow(ForbiddenException);
     });
   });
 
   describe('when route has gymId but request has no user object', () => {
-    it('throws UnauthorizedException', () => {
+    it('throws ForbiddenException', () => {
       const context = buildContext({ gymId: 'gym-abc' }, undefined);
-      expect(() => guard.canActivate(context)).toThrow(UnauthorizedException);
+      expect(() => guard.canActivate(context)).toThrow(ForbiddenException);
     });
   });
 });

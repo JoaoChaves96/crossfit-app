@@ -1,8 +1,8 @@
 import {
   CanActivate,
   ExecutionContext,
+  ForbiddenException,
   Injectable,
-  UnauthorizedException,
 } from '@nestjs/common';
 import type { Request } from 'express';
 
@@ -11,7 +11,8 @@ import type { Request } from 'express';
  * the gymId claim from the authenticated user's JWT token.
  *
  * Must be applied after JwtAuthGuard so that request.user is populated.
- * Throws 401 when the route gymId does not match the JWT gymId claim.
+ * Throws 403 when the route gymId does not match the JWT gymId claim
+ * (authenticated but wrong tenant).
  */
 @Injectable()
 export class GymOwnershipGuard implements CanActivate {
@@ -29,7 +30,7 @@ export class GymOwnershipGuard implements CanActivate {
     const jwtGymId = request.user?.gymId;
 
     if (!jwtGymId || routeGymId !== jwtGymId) {
-      throw new UnauthorizedException('Gym ID mismatch');
+      throw new ForbiddenException('Gym ID mismatch');
     }
 
     return true;

@@ -57,12 +57,6 @@ describe('GET /api/gyms/:gymId/configuration/coaches', () => {
     gymId,
     role: 'owner',
   });
-  const otherOwnerToken = generateTestToken({
-    id: otherOwnerUserId,
-    email: 'owner@gym2.test',
-    gymId: otherGymId,
-    role: 'owner',
-  });
   const athleteToken = generateTestToken({
     id: athleteUserId,
     email: 'athlete@gym1.test',
@@ -203,7 +197,7 @@ describe('GET /api/gyms/:gymId/configuration/coaches', () => {
     it('should return 403 when gym1 owner tries to access gym2 coach list', async () => {
       await request(app.getHttpServer())
         .get(`/api/gyms/${otherGymId}/configuration/coaches`)
-        .set('Authorization', `Bearer ${otherOwnerToken}`)
+        .set('Authorization', `Bearer ${ownerToken}`)
         .expect(403);
     });
   });

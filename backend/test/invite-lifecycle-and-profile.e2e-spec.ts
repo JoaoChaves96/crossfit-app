@@ -377,12 +377,12 @@ describe('Invite Lifecycle and Profile Endpoints (e2e)', () => {
         .expect(403);
     });
 
-    it('owner of different gym (gymId mismatch) → 401', async () => {
-      // otherOwnerToken has gymId=otherGymId but route has gymId → 401 from GymOwnershipGuard
+    it('owner of different gym (gymId mismatch) → 403', async () => {
+      // otherOwnerToken has gymId=otherGymId but route has gymId → 403 from GymOwnershipGuard
       await request(app.getHttpServer())
         .get(`/api/gyms/${gymId}/invites`)
         .set('Authorization', `Bearer ${otherOwnerToken}`)
-        .expect(401);
+        .expect(403);
     });
   });
 
@@ -428,11 +428,11 @@ describe('Invite Lifecycle and Profile Endpoints (e2e)', () => {
         .expect(403);
     });
 
-    it('owner of different gym (gymId mismatch) → 401', async () => {
+    it('owner of different gym (gymId mismatch) → 403', async () => {
       await request(app.getHttpServer())
         .delete(`/api/gyms/${gymId}/invites/${pendingInviteToken}`)
         .set('Authorization', `Bearer ${otherOwnerToken}`)
-        .expect(401);
+        .expect(403);
     });
 
     it('already accepted invite → 400', async () => {
@@ -568,11 +568,11 @@ describe('Invite Lifecycle and Profile Endpoints (e2e)', () => {
         .expect(403);
     });
 
-    it('owner of different gym (gymId mismatch) → 401', async () => {
+    it('owner of different gym (gymId mismatch) → 403', async () => {
       await request(app.getHttpServer())
         .get(`/api/gyms/${gymId}/profile`)
         .set('Authorization', `Bearer ${otherOwnerToken}`)
-        .expect(401);
+        .expect(403);
     });
   });
 
@@ -617,12 +617,12 @@ describe('Invite Lifecycle and Profile Endpoints (e2e)', () => {
         .expect(403);
     });
 
-    it('owner of different gym (gymId mismatch) → 401', async () => {
+    it('owner of different gym (gymId mismatch) → 403', async () => {
       await request(app.getHttpServer())
         .patch(`/api/gyms/${gymId}/profile`)
         .set('Authorization', `Bearer ${otherOwnerToken}`)
         .send({ name: 'Cross-gym Hack' })
-        .expect(401);
+        .expect(403);
     });
 
     it('partial update (only description) → 200', async () => {

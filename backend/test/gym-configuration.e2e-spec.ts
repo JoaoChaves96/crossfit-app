@@ -15,13 +15,14 @@ import { generateTestToken } from './helpers/jwt.helper';
  *   DELETE /api/gyms/:gymId/configuration/spaces/:spaceId
  *   POST   /api/gyms/:gymId/configuration/class-types
  *
- * Auth: header-based (x-user-id, x-gym-id) — dev mode
- * Role enforcement: RolesGuard checks gym_staff for 'owner' role
+ * Auth: JWT Bearer token (id, gymId, role claims)
+ * Tenant enforcement: GymOwnershipGuard checks route :gymId === JWT gymId claim
+ *   (403 on mismatch); RolesGuard checks gym_staff for 'owner' role
  *
  * ─── API CONTRACT (for frontend) ──────────────────────────────────────────────
  *
  * POST /api/gyms/:gymId/configuration/spaces
- *   Auth: x-user-id (owner), x-gym-id (must match :gymId)
+ *   Auth: JWT Bearer (owner role; JWT gymId claim must match :gymId)
  *   Request body:
  *     { "name": string, "baseCapacity": number (integer >= 1) }
  *   201 Response:
@@ -31,7 +32,7 @@ import { generateTestToken } from './helpers/jwt.helper';
  *     403 — user is not owner, or gymId mismatch
  *
  * PATCH /api/gyms/:gymId/configuration/spaces/:spaceId
- *   Auth: x-user-id (owner), x-gym-id (must match :gymId)
+ *   Auth: JWT Bearer (owner role; JWT gymId claim must match :gymId)
  *   Request body (all fields optional):
  *     { "name"?: string, "baseCapacity"?: number (integer >= 1) }
  *   200 Response:
@@ -42,7 +43,7 @@ import { generateTestToken } from './helpers/jwt.helper';
  *     404 — space not found
  *
  * DELETE /api/gyms/:gymId/configuration/spaces/:spaceId
- *   Auth: x-user-id (owner), x-gym-id (must match :gymId)
+ *   Auth: JWT Bearer (owner role; JWT gymId claim must match :gymId)
  *   No request body
  *   200 Response:
  *     { "id": string, "gymId": string, "name": string, "baseCapacity": number, "deletedAt": string (ISO date) }
@@ -52,7 +53,7 @@ import { generateTestToken } from './helpers/jwt.helper';
  *     404 — space not found
  *
  * POST /api/gyms/:gymId/configuration/class-types
- *   Auth: x-user-id (owner), x-gym-id (must match :gymId)
+ *   Auth: JWT Bearer (owner role; JWT gymId claim must match :gymId)
  *   Request body:
  *     {
  *       "operation": "create" | "update" | "delete",
@@ -110,7 +111,8 @@ describe('Gym Configuration — Spaces & Class Types (e2e)', () => {
     role: 'athlete',
   });
   // Token for the owner of gymId but scoped to otherGymId — used for the
-  // "gymId path does not match gym context" tests that expect 500.
+  // "gymId path does not match JWT gym claim" tests. GymOwnershipGuard rejects
+  // this authenticated-but-wrong-tenant request with 403.
   const ownerWithOtherGymToken = generateTestToken({
     id: ownerUserId,
     email: 'owner@gym-config.test',
@@ -321,14 +323,13 @@ describe('Gym Configuration — Spaces & Class Types (e2e)', () => {
           .expect(403);
       });
 
-      it('500 — gymId in path does not match x-gym-id header (mismatch throws)', async () => {
-        // The controller throws a plain Error('Gym ID mismatch') which results in 500
-        // This is a known behavior (not HTTP-mapped). Documented for frontend.
+      it('403 — gymId in path does not match JWT gym claim (mismatch)', async () => {
+        // GymOwnershipGuard rejects authenticated-but-wrong-tenant with 403.
         await request(app.getHttpServer())
           .post(`/api/gyms/${gymId}/configuration/spaces`)
           .set('Authorization', `Bearer ${ownerWithOtherGymToken}`)
           .send({ name: 'Mismatch Room', baseCapacity: 10 })
-          .expect(500);
+          .expect(403);
       });
     });
   });
@@ -427,12 +428,12 @@ describe('Gym Configuration — Spaces & Class Types (e2e)', () => {
           .expect(403);
       });
 
-      it('500 — gymId path does not match x-gym-id header', async () => {
+      it('403 — gymId path does not match JWT gym claim', async () => {
         await request(app.getHttpServer())
           .patch(`/api/gyms/${gymId}/configuration/spaces/${spaceId}`)
           .set('Authorization', `Bearer ${ownerWithOtherGymToken}`)
           .send({ name: 'Mismatch Update' })
-          .expect(500);
+          .expect(403);
       });
     });
   });
@@ -496,11 +497,11 @@ describe('Gym Configuration — Spaces & Class Types (e2e)', () => {
           .expect(403);
       });
 
-      it('500 — gymId path does not match x-gym-id header', async () => {
+      it('403 — gymId path does not match JWT gym claim', async () => {
         await request(app.getHttpServer())
           .delete(`/api/gyms/${gymId}/configuration/spaces/${spaceId}`)
           .set('Authorization', `Bearer ${ownerWithOtherGymToken}`)
-          .expect(500);
+          .expect(403);
       });
     });
   });
@@ -748,12 +749,12 @@ describe('Gym Configuration — Spaces & Class Types (e2e)', () => {
           .expect(403);
       });
 
-      it('500 — gymId path does not match x-gym-id header', async () => {
+      it('403 — gymId path does not match JWT gym claim', async () => {
         await request(app.getHttpServer())
           .post(`/api/gyms/${gymId}/configuration/class-types`)
           .set('Authorization', `Bearer ${ownerWithOtherGymToken}`)
           .send({ operation: 'create', name: 'Mismatch Type' })
-          .expect(500);
+          .expect(403);
       });
     });
   });

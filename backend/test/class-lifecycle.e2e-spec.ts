@@ -278,14 +278,14 @@ describe('Class Lifecycle & Gym Configuration (e2e)', () => {
     });
 
     describe('gymId mismatch', () => {
-      it('500 — gymId in path does not match gym context in token', async () => {
+      it('403 — gymId in path does not match gym context in token', async () => {
         const classId = await createPublishedClass();
 
         await request(app.getHttpServer())
           .patch(`/api/gyms/${gymId}/classes/${classId}`)
           .set('Authorization', `Bearer ${ownerWithOtherGymToken}`)
           .send({ scheduledTime: '10:00' })
-          .expect(500);
+          .expect(403);
       });
     });
 
@@ -364,13 +364,13 @@ describe('Class Lifecycle & Gym Configuration (e2e)', () => {
     });
 
     describe('gymId mismatch', () => {
-      it('500 — gymId in path does not match gym context in token', async () => {
+      it('403 — gymId in path does not match gym context in token', async () => {
         const classId = await createPublishedClass();
 
         await request(app.getHttpServer())
           .delete(`/api/gyms/${gymId}/classes/${classId}`)
           .set('Authorization', `Bearer ${ownerWithOtherGymToken}`)
-          .expect(500);
+          .expect(403);
       });
     });
 
@@ -483,14 +483,14 @@ describe('Class Lifecycle & Gym Configuration (e2e)', () => {
     });
 
     describe('gymId mismatch', () => {
-      it('500 — gymId in path does not match gym context in token', async () => {
+      it('403 — gymId in path does not match gym context in token', async () => {
         const classId = await createPublishedClass();
 
         await request(app.getHttpServer())
           .post(`/api/gyms/${gymId}/classes/${classId}/transition`)
           .set('Authorization', `Bearer ${ownerWithOtherGymToken}`)
           .send({ classId, targetState: 'booking_closed' })
-          .expect(500);
+          .expect(403);
       });
     });
 
@@ -600,11 +600,11 @@ describe('Class Lifecycle & Gym Configuration (e2e)', () => {
     });
 
     describe('gymId mismatch', () => {
-      it('500 — gymId in path does not match gym context in token', async () => {
+      it('403 — gymId in path does not match gym context in token', async () => {
         await request(app.getHttpServer())
           .get(`/api/gyms/${gymId}/configuration/spaces`)
           .set('Authorization', `Bearer ${ownerWithOtherGymToken}`)
-          .expect(500);
+          .expect(403);
       });
     });
   });
@@ -656,11 +656,11 @@ describe('Class Lifecycle & Gym Configuration (e2e)', () => {
     });
 
     describe('gymId mismatch', () => {
-      it('500 — gymId in path does not match gym context in token', async () => {
+      it('403 — gymId in path does not match gym context in token', async () => {
         await request(app.getHttpServer())
           .get(`/api/gyms/${gymId}/configuration/class-types`)
           .set('Authorization', `Bearer ${ownerWithOtherGymToken}`)
-          .expect(500);
+          .expect(403);
       });
     });
   });
@@ -717,11 +717,11 @@ describe('Class Lifecycle & Gym Configuration (e2e)', () => {
     });
 
     describe('gymId mismatch', () => {
-      it('500 — gymId in path does not match gym context in token', async () => {
+      it('403 — gymId in path does not match gym context in token', async () => {
         await request(app.getHttpServer())
           .get(`/api/gyms/${gymId}/members`)
           .set('Authorization', `Bearer ${ownerWithOtherGymToken}`)
-          .expect(500);
+          .expect(403);
       });
     });
   });
