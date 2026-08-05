@@ -104,6 +104,12 @@ MVP scope. Coach desktop has NO duplicate-header bug). Discovery/triage only; fi
   - `6a70c8e2` Leftover Expo-starter tabs → deleted `(tabs)/index` + `explore`, repointed `/(tabs)` redirect + modal link to `/(tabs)/schedule`
   - `6a70c8ea` Missing Week/Day toggle + filter chips → added Controls (segmented toggle + class-type chips, client-side filtering) on mobile + desktop. ⚠️ pixel-verify vs frame `wUe5e` pending (Pencil editor locked on gym-owner file)
   - `6a70c8f2` Two-tier header / hardcoded gym name → verify-only; app already renders single header + real `gymName`
+- 🔍 **🐞 Owner/Invites + Nav-consistency family** (3 cards) → **To Verify** — frontend `d4af41c`.
+  `OWNER_NAV_ITEMS` is now the single owner nav shell everywhere: Dashboard(off)/Schedule/Classes(off)/Members/Coaches/Plans(off)/Invites/Settings (Plans shown-but-disabled, feature deferred; label "Members" not "Athletes").
+  - `6a70cf37` Invites used athlete tab-nav → moved `app/(tabs)/invites` → top-level `app/invites` route, removed from athlete Tabs layout, registered in root Stack, now hosts `OwnerSidebar` + mobile drawer
+  - `6a70cf85` Divergent inline sidebars → schedule-dashboard/coaches/members drop their local `Sidebar`/`NAV_ITEMS` and render shared `OwnerSidebar`; dead per-screen sidebar styles removed
+  - `6a70cf3c` Create-Invite modal no backdrop → overlay uses `absoluteFillObject` (flex:1 collapsed to 0-height in RN-Web Modal host); dimmed layer now fills viewport, card opaque above it
+  - Note: `gym-settings` still uses its own `SettingsSidebar` (out of scope; unify later if desired)
 - 🔍 **🐞 Owner/Create Class family** (2 cards) → **To Verify** — frontend `1e8057a`.
   New reusable `OwnerSidebar` component (`OWNER_NAV_ITEMS`) introduced here; will be rolled out to remaining owner screens by the Nav-consistency batch.
   - `6a70cdd5` Desktop missing sidebar nav → Create Class desktop hosts `OwnerSidebar` (activeItem="classes"); mobile stays form-only
