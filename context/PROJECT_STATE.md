@@ -136,9 +136,21 @@ MVP scope. Coach desktop has NO duplicate-header bug). Discovery/triage only; fi
   New reusable `OwnerSidebar` component (`OWNER_NAV_ITEMS`) introduced here; will be rolled out to remaining owner screens by the Nav-consistency batch.
   - `6a70cdd5` Desktop missing sidebar nav → Create Class desktop hosts `OwnerSidebar` (activeItem="classes"); mobile stays form-only
   - `6a70cdd7` Date/Time plain text inputs → new `DateTimeField`: web renders native `<input type=date|time>`, native falls back to pressable box + inline entry; payload contract unchanged (no new dependency)
-- **Deferred (separate plan):** Notifications frontend migration — unit tests (17 failing) + tsc
-  errors + expo 54 / expo-notifications 56 version mismatch. Held in `git stash` on `dev`; two
-  🐞 cards remain in the board's Issues Found list. See `epics/NOTIFICATIONS_PLAN.md`.
+- 🔍 **🐞 Notifications family** (4 cards) → **To Verify** — frontend `93c9941`. The prior
+  "held in `git stash` / 17 failing tests / deferred migration" narrative was **stale**: the
+  notifications frontend was already committed on `dev` and working. Actual remaining issues were
+  a small cluster, all fixed here:
+  - `6a6cdffe` tsc fails → 3 real errors resolved. `usePushToken.ts` `.status` errors traced to an
+    expo 54 / expo-notifications 56 version skew (imported `PermissionResponse` drops `.status`),
+    fixed with a narrow cast; `notifications.tsx` SFSymbol typing fixed by moving off the unmapped
+    `IconSymbol` names. (`profile.tsx` `notificationPreferences` error was already gone via regen.)
+    Only remaining tsc error is `useClassTransition.test.ts` — a separate stale Class Lifecycle mock.
+  - `6a6cdffb` "17 tests failing" → actually 4 `NotificationBell` tests missing `useAuth` in the
+    harness; added a `useAuth` mock. `npx jest notifications` → 20/20 pass.
+  - `6a70ca28` mobile profile notification rows → added subtitles + section description + dividers to
+    match the desktop layout / design frame.
+  - `6a70cae7` "screen hard-crashes (`notifications` undefined)" → not reproducible; `useNotifications`
+    always returns an array. Web icons (previously blank SF-symbol names) switched to `Ionicons`.
 
 ## Previous Phase (2026-05-23)
 
