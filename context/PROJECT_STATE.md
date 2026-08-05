@@ -111,6 +111,15 @@ MVP scope. Coach desktop has NO duplicate-header bug). Discovery/triage only; fi
   - `6a70cf3c` Create-Invite modal no backdrop → overlay uses `absoluteFillObject` (flex:1 collapsed to 0-height in RN-Web Modal host); dimmed layer now fills viewport, card opaque above it
   - Note: `gym-settings` still uses its own `SettingsSidebar` (out of scope; unify later if desired)
 - 🔍 **🐞 Owner/Schedule Dashboard mobile card** (`6a70cd59`) → **To Verify** — verify-only, no code change (HEAD `7e87d87`). `MobileClassCard` already matches design frame `XbXLT` (time / name / Coach / "{space} · {duration} min" row / top-right N/N capacity). Card's "corner badge" claim was inaccurate — `XbXLT` renders capacity as plain #6B7280 text, which the code already does. Row was added in the earlier Tier-2 mobile-reflow batch.
+- 🔍 **🐞 Owner/Coaches family** (2 cards) → **To Verify** — backend `ba8b948`, frontend `6282daf`.
+  Backend added `classesAssigned: string[]` (distinct, sorted class-type names) to `CoachListItemDto`,
+  computed gymId-scoped with no N+1; types regenerated from Swagger.
+  - `6a70ce71` Missing "Classes Assigned" column → desktop table realigned to design frame `5gQj6`
+    (Name · Email · Status · Classes Assigned · Actions; Role column dropped); mobile `CoachCard` gains a
+    Classes Assigned line ("No classes assigned" when empty)
+  - `6a70ce73` Missing Coach Details side panel → new 340px desktop panel (frame `JE7Pq`); Actions "View"
+    button (+ clickable row) selects a coach; panel shows Name/Email/Classes Assigned + Disable/Enable wired
+    to the existing status-change flow; derives the coach from live list state by userId so it stays in sync
 - 🔍 **🐞 Owner/Create Class family** (2 cards) → **To Verify** — frontend `1e8057a`.
   New reusable `OwnerSidebar` component (`OWNER_NAV_ITEMS`) introduced here; will be rolled out to remaining owner screens by the Nav-consistency batch.
   - `6a70cdd5` Desktop missing sidebar nav → Create Class desktop hosts `OwnerSidebar` (activeItem="classes"); mobile stays form-only
