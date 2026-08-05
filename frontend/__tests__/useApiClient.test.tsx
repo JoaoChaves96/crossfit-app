@@ -1,28 +1,15 @@
 /**
  * Tests for useApiClient hook and createApiClient utility.
  *
- * useApiClient reads token from AuthContext, throws when no token is present,
- * and returns a createApiClient({token}) instance when authenticated.
+ * useApiClient reads token from AuthContext. When authenticated it returns a
+ * createApiClient({token}) instance wrapped to redirect on 401. When no token
+ * is present (authed mode) it does NOT throw during render — it returns a
+ * client whose methods reject with a 401 ApiError and redirect to /login, so a
+ * cold-start token race degrades gracefully instead of crashing the tree.
+ * Pass { public: true } for a token-free client on public endpoints.
  *
  * createApiClient attaches Authorization: Bearer <token> to all requests
  * and throws ApiError on non-ok HTTP responses.
- *
- * --- MISSING BEHAVIOR REPORT ---
- *
- * The following two behaviors described in the task spec do NOT exist in the
- * current implementation and therefore have dedicated failing tests below:
- *
- * 1. "401 response triggers logout and redirect to login"
- *    createApiClient throws ApiError(401, ...) on a 401 response. It has NO
- *    reference to auth context and performs no logout or navigation. The hook
- *    useApiClient also does not wrap the client to add this behavior.
- *    → Test: "MISSING: 401 response does NOT trigger logout or redirect"
- *
- * 2. "Requests proceed without token for public endpoints"
- *    useApiClient throws synchronously when token is null — there is no
- *    concept of public vs. authenticated endpoints. createApiClient can be
- *    called directly without a token, but useApiClient always requires one.
- *    → Test: "MISSING: useApiClient does NOT support public (unauthenticated) requests"
  */
 
 import React from 'react';
@@ -54,18 +41,38 @@ beforeEach(() => {
 // ─── useApiClient — no token ───────────────────────────────────────────────────
 
 describe('useApiClient — called without a token', () => {
-  it('throws when auth context has no token', () => {
-    // Arrange — unauthenticated context
+  it('does NOT throw during render when auth context has no token', () => {
+    // Throwing in render would crash the tree before the navigation guard can
+    // redirect (the cold-start token race). The hook must degrade gracefully.
     const unauthWrapper = ({ children }: { children: React.ReactNode }) => (
       <AuthWrapper value={{ token: null, isAuthenticated: false, user: null }}>
         {children}
       </AuthWrapper>
     );
 
-    // Act + Assert
-    expect(() => renderHook(() => useApiClient(), { wrapper: unauthWrapper })).toThrow(
-      'useApiClient: No token available. User must be authenticated.',
+    expect(() => renderHook(() => useApiClient(), { wrapper: unauthWrapper })).not.toThrow();
+  });
+
+  it('rejects with a 401 ApiError and redirects to /login when a method is called', async () => {
+    // Arrange — unauthenticated context
+    const mockLogout = jest.fn(() => Promise.resolve());
+    const unauthWrapper = ({ children }: { children: React.ReactNode }) => (
+      <AuthWrapper value={{ token: null, isAuthenticated: false, user: null, logout: mockLogout }}>
+        {children}
+      </AuthWrapper>
     );
+    const { result } = renderHook(() => useApiClient(), { wrapper: unauthWrapper });
+    const mockRouter = getMockRouter();
+
+    // Act — calling a method (as a screen would inside an effect) rejects
+    const error = await result.current.get('/protected').catch((e: unknown) => e);
+
+    // Assert — no network call, rejects with 401, logs out and redirects
+    expect(mockFetch).not.toHaveBeenCalled();
+    expect(error).toBeInstanceOf(ApiError);
+    expect((error as ApiError).status).toBe(401);
+    expect(mockLogout).toHaveBeenCalled();
+    expect(mockRouter.replace).toHaveBeenCalledWith('/login');
   });
 });
 
