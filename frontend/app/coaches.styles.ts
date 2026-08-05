@@ -88,6 +88,13 @@ export const styles = StyleSheet.create({
     marginBottom: Spacing.tight,
   },
 
+  // Content row (table + detail panel)
+  contentRow: {
+    flex: 1,
+    flexDirection: 'row',
+    gap: Spacing.lg,
+  },
+
   // List card
   listCard: {
     flex: 1,
@@ -113,21 +120,30 @@ export const styles = StyleSheet.create({
     textTransform: 'uppercase',
     letterSpacing: 0.5,
   },
-  colEmail: {
-    flex: 1,
+  colName: {
+    width: 200,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.md,
   },
-  colRole: {
-    width: 100,
+  colEmail: {
+    width: 220,
+    justifyContent: 'center',
   },
   colStatus: {
     width: 90,
+    justifyContent: 'center',
+  },
+  colClasses: {
+    flex: 1,
+    justifyContent: 'center',
   },
   colActionsHeader: {
-    width: 140,
+    width: 80,
     textAlign: 'right',
   },
   colActions: {
-    width: 140,
+    width: 80,
     alignItems: 'flex-end',
   },
 
@@ -139,7 +155,9 @@ export const styles = StyleSheet.create({
     paddingVertical: Spacing.mdPlus,
     borderBottomWidth: 1,
     borderBottomColor: AppColors.backgroundDivider,
-    gap: Spacing.md,
+  },
+  coachRowSelected: {
+    backgroundColor: AppColors.surfaceBlueHint,
   },
   coachAvatar: {
     width: 36,
@@ -159,6 +177,7 @@ export const styles = StyleSheet.create({
     gap: Spacing.hairline,
   },
   coachName: {
+    flex: 1,
     fontSize: FontSizes.body,
     fontWeight: FontWeights.medium,
     color: AppColors.textHeading,
@@ -167,10 +186,76 @@ export const styles = StyleSheet.create({
     fontSize: FontSizes.smMd,
     color: AppColors.textMuted,
   },
-  coachRole: {
+  coachClasses: {
     fontSize: FontSizes.smMd,
+    color: AppColors.textSecondary,
+  },
+  coachClassesEmpty: {
+    fontSize: FontSizes.smMd,
+    color: AppColors.textDisabled,
+  },
+
+  // View button (desktop actions)
+  viewBtn: {
+    paddingHorizontal: Spacing.md,
+    paddingVertical: Spacing.compact,
+    borderRadius: BorderRadius.mdSm,
+  },
+  viewBtnText: {
+    fontSize: FontSizes.mdSm,
+    fontWeight: FontWeights.semibold,
+    color: AppColors.actionBlue,
+  },
+
+  // Detail panel (desktop)
+  detailPanel: {
+    width: 340,
+    borderWidth: 1,
+    borderColor: AppColors.backgroundDivider,
+    borderRadius: BorderRadius.mdLg,
+    backgroundColor: AppColors.backgroundWhite,
+    padding: Spacing.xl,
+    gap: Spacing.base,
+  },
+  detailEmpty: {
+    fontSize: FontSizes.body,
     color: AppColors.textMuted,
-    textTransform: 'capitalize',
+  },
+  detailTitle: {
+    fontSize: FontSizes.lg,
+    fontWeight: FontWeights.bold,
+    color: AppColors.textHeading,
+  },
+  detailField: {
+    gap: Spacing.tight,
+  },
+  detailLabel: {
+    fontSize: FontSizes.sm,
+    fontWeight: FontWeights.bold,
+    color: AppColors.textMuted,
+    textTransform: 'uppercase',
+    letterSpacing: 0.8,
+  },
+  detailValue: {
+    fontSize: FontSizes.bodyMd,
+    fontWeight: FontWeights.semibold,
+    color: AppColors.textHeading,
+  },
+  detailValueMuted: {
+    fontSize: FontSizes.body,
+    color: AppColors.textSecondary,
+  },
+  detailClassItem: {
+    fontSize: FontSizes.body,
+    color: AppColors.textSecondary,
+  },
+  detailClassEmpty: {
+    fontSize: FontSizes.body,
+    color: AppColors.textDisabled,
+  },
+  detailBtnRow: {
+    flexDirection: 'row',
+    marginTop: Spacing.tight,
   },
 
   // Action button
@@ -371,6 +456,18 @@ export const styles = StyleSheet.create({
   coachCardInfo: {
     flex: 1,
     gap: Spacing.hairline,
+  },
+  coachCardClasses: {
+    gap: Spacing.hairline,
+  },
+  coachCardClassesLabel: {
+    fontSize: FontSizes.smMd,
+    fontWeight: FontWeights.semibold,
+    color: AppColors.textMuted,
+  },
+  coachCardClassesValue: {
+    fontSize: FontSizes.mdSm,
+    color: AppColors.textSecondary,
   },
   coachCardActions: {
     flexDirection: 'row',

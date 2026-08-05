@@ -1895,6 +1895,14 @@ export interface components {
              * @example 2024-01-15T10:00:00.000Z
              */
             assignedAt: string;
+            /**
+             * @description Distinct class-type names of all non-deleted classes assigned to this coach within this gym, sorted alphabetically. Empty array when the coach has no classes.
+             * @example [
+             *       "CrossFit WOD",
+             *       "Gymnastics"
+             *     ]
+             */
+            classesAssigned: string[];
         };
         GetCoachesResponseDto: {
             /** @description List of coaches for the gym */

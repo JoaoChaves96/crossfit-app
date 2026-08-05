@@ -29,6 +29,19 @@ type CoachesListResponse = components['schemas']['GetCoachesResponseDto'];
 type ChangeCoachStatusResponse = components['schemas']['ChangeCoachStatusResponseDto'];
 type CoachStatus = 'active' | 'inactive';
 
+// ─── Helpers ──────────────────────────────────────────────────────────────────
+
+function confirmDeactivate(displayName: string, onConfirm: () => void) {
+  Alert.alert(
+    'Deactivate Coach',
+    `Are you sure you want to deactivate ${displayName}? They will no longer be assigned to new classes.`,
+    [
+      { text: 'Cancel', style: 'cancel' },
+      { text: 'Deactivate', style: 'destructive', onPress: onConfirm },
+    ],
+  );
+}
+
 // ─── Status Badge ─────────────────────────────────────────────────────────────
 
 interface StatusBadgeProps {
@@ -90,57 +103,117 @@ function ActionButton({ label, onPress, variant, disabled }: ActionButtonProps) 
 
 interface CoachRowProps {
   coach: CoachListItem;
+  isSelected: boolean;
+  onSelect: (coachUserId: string) => void;
+}
+
+function CoachRow({ coach, isSelected, onSelect }: CoachRowProps) {
+  const displayName = coach.name || coach.email;
+  const classesLabel =
+    coach.classesAssigned.length > 0 ? coach.classesAssigned.join(', ') : null;
+
+  return (
+    <TouchableOpacity
+      style={[styles.coachRow, isSelected && styles.coachRowSelected]}
+      onPress={() => onSelect(coach.userId)}
+      activeOpacity={0.7}>
+      <View style={styles.colName}>
+        <View style={styles.coachAvatar}>
+          <Text style={styles.coachAvatarText}>
+            {displayName.charAt(0).toUpperCase()}
+          </Text>
+        </View>
+        <Text style={styles.coachName} numberOfLines={1}>{displayName}</Text>
+      </View>
+      <View style={styles.colEmail}>
+        <Text style={styles.coachEmail} numberOfLines={1}>{coach.email}</Text>
+      </View>
+      <View style={styles.colStatus}>
+        <StatusBadge status={coach.status} />
+      </View>
+      <View style={styles.colClasses}>
+        {classesLabel !== null ? (
+          <Text style={styles.coachClasses} numberOfLines={1}>{classesLabel}</Text>
+        ) : (
+          <Text style={styles.coachClassesEmpty}>—</Text>
+        )}
+      </View>
+      <View style={styles.colActions}>
+        <TouchableOpacity
+          testID={`coach-view-${coach.userId}`}
+          style={styles.viewBtn}
+          onPress={() => onSelect(coach.userId)}
+          activeOpacity={0.7}>
+          <Text style={styles.viewBtnText}>View</Text>
+        </TouchableOpacity>
+      </View>
+    </TouchableOpacity>
+  );
+}
+
+// ─── Coach Detail Panel (Desktop) ───────────────────────────────────────────────
+
+interface CoachDetailPanelProps {
+  coach: CoachListItem | null;
   onChangeStatus: (coachUserId: string, status: CoachStatus) => Promise<void>;
   isChangingStatus: boolean;
 }
 
-function CoachRow({ coach, onChangeStatus, isChangingStatus }: CoachRowProps) {
-  const isActive = coach.status === 'active';
-  const displayName = coach.name || coach.email;
-
-  function handleDeactivate() {
-    Alert.alert(
-      'Deactivate Coach',
-      `Are you sure you want to deactivate ${displayName}? They will no longer be assigned to new classes.`,
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Deactivate',
-          style: 'destructive',
-          onPress: () => onChangeStatus(coach.userId, 'inactive'),
-        },
-      ],
+function CoachDetailPanel({ coach, onChangeStatus, isChangingStatus }: CoachDetailPanelProps) {
+  if (coach === null) {
+    return (
+      <View style={styles.detailPanel}>
+        <Text style={styles.detailEmpty}>Select a coach to view details</Text>
+      </View>
     );
   }
 
-  function handleReactivate() {
-    onChangeStatus(coach.userId, 'active');
+  const displayName = coach.name || coach.email;
+  const isActive = coach.status === 'active';
+
+  function handleDisable() {
+    if (coach === null) return;
+    const userId = coach.userId;
+    confirmDeactivate(displayName, () => onChangeStatus(userId, 'inactive'));
   }
 
   return (
-    <View style={styles.coachRow}>
-      <View style={styles.coachAvatar}>
-        <Text style={styles.coachAvatarText}>
-          {displayName.charAt(0).toUpperCase()}
-        </Text>
+    <View style={styles.detailPanel}>
+      <Text style={styles.detailTitle}>Coach Details</Text>
+
+      <View style={styles.detailField}>
+        <Text style={styles.detailLabel}>Name</Text>
+        <Text style={styles.detailValue}>{displayName}</Text>
       </View>
-      <View style={styles.coachInfo}>
-        <Text style={styles.coachName}>{displayName}</Text>
-        <Text style={styles.coachEmail}>{coach.email}</Text>
+
+      <View style={styles.detailField}>
+        <Text style={styles.detailLabel}>Email</Text>
+        <Text style={styles.detailValueMuted}>{coach.email}</Text>
       </View>
-      <StatusBadge status={coach.status} />
-      <View style={styles.colActions}>
+
+      <View style={styles.detailField}>
+        <Text style={styles.detailLabel}>Classes Assigned</Text>
+        {coach.classesAssigned.length > 0 ? (
+          coach.classesAssigned.map((className) => (
+            <Text key={className} style={styles.detailClassItem}>{className}</Text>
+          ))
+        ) : (
+          <Text style={styles.detailClassEmpty}>No classes assigned</Text>
+        )}
+      </View>
+
+      <View style={styles.detailBtnRow}>
         {isActive ? (
           <ActionButton
-            label="Deactivate"
-            onPress={handleDeactivate}
+            label="Disable"
+            onPress={handleDisable}
             variant="deactivate"
             disabled={isChangingStatus}
           />
         ) : (
           <ActionButton
-            label="Reactivate"
-            onPress={handleReactivate}
+            label="Enable"
+            onPress={() => onChangeStatus(coach.userId, 'active')}
             variant="reactivate"
             disabled={isChangingStatus}
           />
@@ -272,20 +345,10 @@ interface CoachCardProps {
 function CoachCard({ coach, onChangeStatus, isChangingStatus }: CoachCardProps) {
   const isActive = coach.status === 'active';
   const displayName = coach.name || coach.email;
+  const classesLabel = coach.classesAssigned.join(', ');
 
   function handleDeactivate() {
-    Alert.alert(
-      'Deactivate Coach',
-      `Are you sure you want to deactivate ${displayName}?`,
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Deactivate',
-          style: 'destructive',
-          onPress: () => onChangeStatus(coach.userId, 'inactive'),
-        },
-      ],
-    );
+    confirmDeactivate(displayName, () => onChangeStatus(coach.userId, 'inactive'));
   }
 
   return (
@@ -301,6 +364,12 @@ function CoachCard({ coach, onChangeStatus, isChangingStatus }: CoachCardProps) 
           <Text style={styles.coachEmail} numberOfLines={1}>{coach.email}</Text>
         </View>
         <StatusBadge status={coach.status} />
+      </View>
+      <View style={styles.coachCardClasses}>
+        <Text style={styles.coachCardClassesLabel}>Classes Assigned</Text>
+        <Text style={styles.coachCardClassesValue}>
+          {classesLabel !== '' ? classesLabel : 'No classes assigned'}
+        </Text>
       </View>
       <View style={styles.coachCardActions}>
         {isActive ? (
@@ -337,6 +406,10 @@ export default function CoachesScreen() {
   const [modalVisible, setModalVisible] = useState(false);
   const [changingStatusId, setChangingStatusId] = useState<string | null>(null);
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const [selectedCoachUserId, setSelectedCoachUserId] = useState<string | null>(null);
+
+  const selectedCoach =
+    coaches.find((c) => c.userId === selectedCoachUserId) ?? null;
 
   const fetchCoaches = useCallback(async () => {
     if (!token || !currentGymId) return;
@@ -472,31 +545,42 @@ export default function CoachesScreen() {
             ))}
           </ScrollView>
         ) : (
-          <View style={styles.listCard}>
-            {/* Table header */}
-            <View style={styles.tableHeader}>
-              <Text style={[styles.tableHeaderCell, styles.colEmail]}>
-                Coach
-              </Text>
-              <Text style={[styles.tableHeaderCell, styles.colRole]}>Role</Text>
-              <Text style={[styles.tableHeaderCell, styles.colStatus]}>
-                Status
-              </Text>
-              <Text style={[styles.tableHeaderCell, styles.colActionsHeader]}>
-                Actions
-              </Text>
+          <View style={styles.contentRow}>
+            <View style={styles.listCard}>
+              {/* Table header */}
+              <View style={styles.tableHeader}>
+                <Text style={[styles.tableHeaderCell, styles.colName]}>Name</Text>
+                <Text style={[styles.tableHeaderCell, styles.colEmail]}>Email</Text>
+                <Text style={[styles.tableHeaderCell, styles.colStatus]}>
+                  Status
+                </Text>
+                <Text style={[styles.tableHeaderCell, styles.colClasses]}>
+                  Classes Assigned
+                </Text>
+                <Text style={[styles.tableHeaderCell, styles.colActionsHeader]}>
+                  Actions
+                </Text>
+              </View>
+
+              <ScrollView showsVerticalScrollIndicator={false}>
+                {coaches.map((coach) => (
+                  <CoachRow
+                    key={coach.id}
+                    coach={coach}
+                    isSelected={coach.userId === selectedCoachUserId}
+                    onSelect={setSelectedCoachUserId}
+                  />
+                ))}
+              </ScrollView>
             </View>
 
-            <ScrollView showsVerticalScrollIndicator={false}>
-              {coaches.map((coach) => (
-                <CoachRow
-                  key={coach.id}
-                  coach={coach}
-                  onChangeStatus={handleChangeStatus}
-                  isChangingStatus={changingStatusId === coach.userId}
-                />
-              ))}
-            </ScrollView>
+            <CoachDetailPanel
+              coach={selectedCoach}
+              onChangeStatus={handleChangeStatus}
+              isChangingStatus={
+                selectedCoach !== null && changingStatusId === selectedCoach.userId
+              }
+            />
           </View>
         )}
       </View>
