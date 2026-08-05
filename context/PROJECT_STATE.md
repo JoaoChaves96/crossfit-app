@@ -104,6 +104,10 @@ MVP scope. Coach desktop has NO duplicate-header bug). Discovery/triage only; fi
   - `6a70c8e2` Leftover Expo-starter tabs → deleted `(tabs)/index` + `explore`, repointed `/(tabs)` redirect + modal link to `/(tabs)/schedule`
   - `6a70c8ea` Missing Week/Day toggle + filter chips → added Controls (segmented toggle + class-type chips, client-side filtering) on mobile + desktop. ⚠️ pixel-verify vs frame `wUe5e` pending (Pencil editor locked on gym-owner file)
   - `6a70c8f2` Two-tier header / hardcoded gym name → verify-only; app already renders single header + real `gymName`
+- 🔍 **🐞 Owner/Create Class family** (2 cards) → **To Verify** — frontend `1e8057a`.
+  New reusable `OwnerSidebar` component (`OWNER_NAV_ITEMS`) introduced here; will be rolled out to remaining owner screens by the Nav-consistency batch.
+  - `6a70cdd5` Desktop missing sidebar nav → Create Class desktop hosts `OwnerSidebar` (activeItem="classes"); mobile stays form-only
+  - `6a70cdd7` Date/Time plain text inputs → new `DateTimeField`: web renders native `<input type=date|time>`, native falls back to pressable box + inline entry; payload contract unchanged (no new dependency)
 - **Deferred (separate plan):** Notifications frontend migration — unit tests (17 failing) + tsc
   errors + expo 54 / expo-notifications 56 version mismatch. Held in `git stash` on `dev`; two
   🐞 cards remain in the board's Issues Found list. See `epics/NOTIFICATIONS_PLAN.md`.
