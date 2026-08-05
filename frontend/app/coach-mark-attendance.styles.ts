@@ -527,6 +527,48 @@ export const mobileStyles = StyleSheet.create({
     color: AppColors.errorDarkest,
   },
 
+  // Subheader with Select All
+  subHeader: {
+    paddingHorizontal: Spacing.base,
+    paddingTop: Spacing.sm,
+    paddingBottom: Spacing.md,
+  },
+  subHeaderTitle: {
+    fontSize: FontSizes.mdSm,
+    fontWeight: FontWeights.semibold,
+    color: AppColors.textHeading,
+  },
+  subHeaderRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginTop: Spacing.tightPlus,
+  },
+  subHeaderCount: {
+    fontSize: FontSizes.mdSm,
+    color: AppColors.textMuted,
+  },
+  selectAllBtn: {
+    paddingVertical: Spacing.sm,
+    paddingHorizontal: Spacing.md,
+    borderRadius: BorderRadius.md,
+    borderWidth: 1,
+    borderColor: AppColors.borderLight,
+  },
+  selectAllText: {
+    fontSize: FontSizes.mdSm,
+    fontWeight: FontWeights.semibold,
+    color: AppColors.textHeading,
+  },
+  footerRow: {
+    alignItems: 'center',
+    paddingVertical: Spacing.base,
+  },
+  footerCountText: {
+    fontSize: FontSizes.body,
+    color: AppColors.textMuted,
+  },
+
   // Submit button
   submitBtn: {
     backgroundColor: AppColors.textHeading,

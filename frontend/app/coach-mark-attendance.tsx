@@ -272,6 +272,14 @@ export default function CoachMarkAttendanceScreen() {
     setSubmitError(null);
   };
 
+  const allPresent = slots.length > 0 && slots.every((s) => s.present);
+
+  const handleSelectAll = () => {
+    setSlots((prev) => prev.map((s) => ({ ...s, present: !allPresent })));
+    setSuccessMessage(null);
+    setSubmitError(null);
+  };
+
   const handleSubmit = async () => {
     if (!token || !currentGymId || !classId) return;
 
@@ -323,67 +331,26 @@ export default function CoachMarkAttendanceScreen() {
             <Text style={ms.headerTitle} numberOfLines={2}>{headerTitle}</Text>
           </View>
 
-          {/* Info Card */}
-          <View style={ms.infoCard}>
-            {classTypeName ? (
-              <View style={ms.infoItem}>
-                <Text style={ms.infoLabel}>CLASS TYPE</Text>
-                <Text style={ms.infoValue}>{classTypeName}</Text>
-              </View>
-            ) : null}
-            {scheduledDate && scheduledTime ? (
-              <View style={ms.infoItem}>
-                <Text style={ms.infoLabel}>DATE &amp; TIME</Text>
-                <Text style={ms.infoValue}>{formatDateTime(scheduledDate, scheduledTime)}</Text>
-              </View>
-            ) : null}
-            {spaceName ? (
-              <View style={ms.infoItem}>
-                <Text style={ms.infoLabel}>SPACE</Text>
-                <Text style={ms.infoValue}>{spaceName}</Text>
-              </View>
-            ) : null}
-            <View style={ms.infoItem}>
-              <Text style={ms.infoLabel}>STATUS</Text>
-              <Text style={ms.infoValue}>{classState.replace('_', ' ')}</Text>
+          {/* Subheader with Select All */}
+          <View style={ms.subHeader}>
+            <View style={ms.subHeaderRow}>
+              <Text style={ms.subHeaderCount}>
+                {isLoadingBookings ? bookedCountNum : slots.length} athletes booked
+              </Text>
+              {slots.length > 0 && !isLoadingBookings ? (
+                <TouchableOpacity
+                  testID="select-all-btn"
+                  style={ms.selectAllBtn}
+                  onPress={handleSelectAll}
+                  activeOpacity={0.8}>
+                  <Text style={ms.selectAllText}>{allPresent ? 'Deselect All' : 'Select All'}</Text>
+                </TouchableOpacity>
+              ) : null}
             </View>
-          </View>
-
-          {/* Summary stat cards */}
-          <View style={ms.statsRow}>
-            <StatCard
-              label="Booked"
-              value={bookedCountNum}
-              valueBg={AppColors.badgeBlueBg}
-              valueColor={AppColors.actionBlue}
-              isMobile
-            />
-            <StatCard
-              label="Present"
-              value={markedPresentCount}
-              valueBg={AppColors.successBgVivid}
-              valueColor={AppColors.successDefault}
-              isMobile
-            />
-            <StatCard
-              label="Absent"
-              value={markedAbsentCount}
-              valueBg={AppColors.errorBgSoft}
-              valueColor={AppColors.errorDarkest}
-              isMobile
-            />
           </View>
 
           {/* Attendance card */}
           <View style={ms.attendanceCard}>
-            {/* Section header */}
-            <View style={ms.sectionHeader}>
-              <Text style={ms.sectionTitle}>Attendance List</Text>
-              <View style={ms.sectionBadge}>
-                <Text style={ms.sectionBadgeText}>{isLoadingBookings ? bookedCountNum : slots.length} booked</Text>
-              </View>
-            </View>
-
             {isLoadingBookings ? (
               <View style={ms.emptyState}>
                 <ActivityIndicator size="small" color={AppColors.darkTextDim} />
@@ -419,6 +386,15 @@ export default function CoachMarkAttendanceScreen() {
             {submitError !== null && (
               <Text style={ms.errorText}>{submitError}</Text>
             )}
+
+            {/* Footer count */}
+            {slots.length > 0 && !isLoadingBookings ? (
+              <View style={ms.footerRow}>
+                <Text style={ms.footerCountText}>
+                  {markedPresentCount} of {slots.length} marked present
+                </Text>
+              </View>
+            ) : null}
 
             {/* Submit */}
             {slots.length > 0 && !isLoadingBookings && (
