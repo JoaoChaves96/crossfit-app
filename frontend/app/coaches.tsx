@@ -13,6 +13,7 @@ import { useRouter } from 'expo-router';
 import { useAuth } from '@/hooks/useAuth';
 import { useGym } from '@/hooks/useGym';
 import { useResponsiveLayout } from '@/hooks/useResponsiveLayout';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { createApiClient } from '@/utils/api-client';
 import { components } from '@/types/api.gen';
 import { AppColors } from '@/constants/theme';
@@ -399,6 +400,7 @@ export default function CoachesScreen() {
   const { token } = useAuth();
   const { currentGymId } = useGym();
   const { isMobile } = useResponsiveLayout();
+  const insets = useSafeAreaInsets();
 
   const [coaches, setCoaches] = useState<CoachListItem[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -481,7 +483,7 @@ export default function CoachesScreen() {
         </Modal>
       )}
 
-      <View style={[styles.main, isMobile && styles.mainMobile]}>
+      <View style={[styles.main, isMobile && styles.mainMobile, isMobile && { paddingTop: insets.top + 16 }]}>
         {/* Header */}
         <View style={styles.header}>
           <View style={styles.headerLeft}>

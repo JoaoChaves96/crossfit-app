@@ -1,6 +1,7 @@
 import React from 'react';
 import { Pressable, Text, View } from 'react-native';
 import { useRouter } from 'expo-router';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { styles } from './OwnerSidebar.styles';
 
 // ─── Nav model ──────────────────────────────────────────────────────────────
@@ -40,6 +41,7 @@ interface OwnerSidebarProps {
 
 export function OwnerSidebar({ activeItem, onNavigate }: OwnerSidebarProps) {
   const router = useRouter();
+  const insets = useSafeAreaInsets();
 
   const handlePress = (item: OwnerNavItem) => {
     if (onNavigate) {
@@ -52,7 +54,7 @@ export function OwnerSidebar({ activeItem, onNavigate }: OwnerSidebarProps) {
   };
 
   return (
-    <View style={styles.sidebar}>
+    <View style={[styles.sidebar, { paddingTop: insets.top + 20 }]}>
       <View style={styles.sidebarLogo}>
         <View style={styles.sidebarLogoIcon} />
         <Text style={styles.sidebarLogoText}>CrossFit Box</Text>

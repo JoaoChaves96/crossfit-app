@@ -1,5 +1,6 @@
 import React from 'react';
 import { Text, TouchableOpacity, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { styles } from './gym-settings.styles';
 
 const NAV_ITEMS: { label: string; key: string; enabled: boolean }[] = [
@@ -16,8 +17,9 @@ interface SettingsSidebarProps {
 }
 
 export function SettingsSidebar({ onNavigate }: SettingsSidebarProps) {
+  const insets = useSafeAreaInsets();
   return (
-    <View style={styles.sidebar}>
+    <View style={[styles.sidebar, { paddingTop: insets.top + 20 }]}>
       <View style={styles.sidebarLogo}>
         <View style={styles.sidebarLogoIcon} />
         <Text style={styles.sidebarLogoText}>CrossFit Box</Text>

@@ -4,6 +4,7 @@ import { useRouter } from 'expo-router';
 import { useAuth } from '@/hooks/useAuth';
 import { useGym } from '@/hooks/useGym';
 import { useResponsiveLayout } from '@/hooks/useResponsiveLayout';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { styles } from './gym-settings.styles';
 import { SettingsSidebar } from './SettingsSidebar';
 import { SettingsTabBar, ActiveTab } from './SettingsTabBar';
@@ -26,6 +27,7 @@ export default function GymSettings() {
   const { token } = useAuth();
   const { currentGymId } = useGym();
   const { isMobile } = useResponsiveLayout();
+  const insets = useSafeAreaInsets();
   const [activeTab, setActiveTab] = useState<ActiveTab>('spaces');
   const [drawerOpen, setDrawerOpen] = useState(false);
 
@@ -55,7 +57,7 @@ export default function GymSettings() {
       )}
 
       <View style={[styles.main, isMobile && styles.mainMobile]}>
-        <View style={styles.pageTitleRow}>
+        <View style={[styles.pageTitleRow, isMobile && { paddingTop: insets.top + 16 }]}>
           {isMobile && (
             <TouchableOpacity
               testID="hamburger-btn"

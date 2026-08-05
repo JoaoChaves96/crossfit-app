@@ -4,6 +4,7 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useAuth } from '@/hooks/useAuth';
 import { useGym } from '@/hooks/useGym';
 import { useResponsiveLayout } from '@/hooks/useResponsiveLayout';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { createApiClient } from '@/utils/api-client';
 import { AppColors } from '@/constants/theme';
 import { components } from '@/types/api.gen';
@@ -27,6 +28,7 @@ export default function ClassManagement() {
   const { token } = useAuth();
   const { currentGymId } = useGym();
   const { isMobile } = useResponsiveLayout();
+  const insets = useSafeAreaInsets();
   const { classId } = useLocalSearchParams<{ classId: string }>();
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [mobileTab, setMobileTab] = useState<MobileTab>('info');
@@ -156,7 +158,7 @@ export default function ClassManagement() {
 
       <ScrollView
         style={styles.mainScroll}
-        contentContainerStyle={[styles.mainContent, isMobile && styles.mainContentMobile]}
+        contentContainerStyle={[styles.mainContent, isMobile && styles.mainContentMobile, isMobile && { paddingTop: insets.top + 16 }]}
         showsVerticalScrollIndicator={false}>
 
         {isMobile && (

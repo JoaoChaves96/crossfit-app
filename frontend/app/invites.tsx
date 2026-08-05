@@ -18,6 +18,7 @@ import { showError } from '@/utils/alert';
 import { components } from '@/types/api.gen';
 import { AppColors } from '@/constants/theme';
 import { useResponsiveLayout } from '@/hooks/useResponsiveLayout';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { OwnerSidebar, OWNER_NAV_ITEMS } from '@/components/OwnerSidebar';
 import { NotificationBell } from '@/components/NotificationBell';
 import { styles } from './invites.styles';
@@ -279,6 +280,7 @@ export default function InvitesScreen() {
   const { user, token } = useAuth();
   const { currentGymId } = useGym();
   const { isMobile } = useResponsiveLayout();
+  const insets = useSafeAreaInsets();
 
   const [invites, setInvites] = useState<LocalInvite[]>([]);
   const [modalVisible, setModalVisible] = useState(false);
@@ -430,7 +432,7 @@ export default function InvitesScreen() {
 
       <View style={[styles.main, isMobile && styles.mainMobile]}>
         {/* Page header */}
-        <View style={styles.pageHeader}>
+        <View style={[styles.pageHeader, isMobile && { paddingTop: insets.top + 16 }]}>
           <View style={styles.pageHeaderLeft}>
             {isMobile && (
               <TouchableOpacity
