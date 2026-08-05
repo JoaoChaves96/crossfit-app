@@ -15,7 +15,8 @@ import { useGym } from '@/hooks/useGym';
 import { createApiClient } from '@/utils/api-client';
 import { useResponsiveLayout } from '@/hooks/useResponsiveLayout';
 import { DesktopTopNav } from '@/components/DesktopTopNav';
-import { AppColors } from '@/constants/theme';
+import { AppColors, Spacing } from '@/constants/theme';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { formatDayMonth } from '@/utils/datetime';
 import { components } from '@/types/api.gen';
 
@@ -211,6 +212,7 @@ export default function LogResultsScreen() {
   const { token, isLoading: authLoading } = useAuth();
   const { currentGymId, isLoading: gymLoading } = useGym();
   const { isDesktop } = useResponsiveLayout();
+  const insets = useSafeAreaInsets();
   const params = useLocalSearchParams<{ classId: string; gymId: string }>();
   const classId = params.classId;
   const gymId = params.gymId ?? currentGymId ?? '';
@@ -510,7 +512,7 @@ export default function LogResultsScreen() {
   return (
     <View style={styles.screen}>
       {/* Header */}
-      <View style={styles.header}>
+      <View style={[styles.header, { paddingTop: insets.top + Spacing.md }]}>
         <TouchableOpacity
           onPress={() => router.back()}
           hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}

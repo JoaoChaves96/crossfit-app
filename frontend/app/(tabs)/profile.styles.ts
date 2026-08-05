@@ -53,9 +53,6 @@ export const styles = StyleSheet.create({
     fontWeight: FontWeights.semibold,
     color: AppColors.backgroundWhite,
   },
-  statusBar: {
-    height: 44,
-  },
   pageHeader: {
     width: '100%',
     justifyContent: 'center',

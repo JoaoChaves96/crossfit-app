@@ -13,10 +13,12 @@ import { useGym } from '@/hooks/useGym';
 import { createApiClient } from '@/utils/api-client';
 import { showConfirm, showError } from '@/utils/alert';
 import { components } from '@/types/api.gen';
-import { AppColors } from '@/constants/theme';
+import { AppColors, Spacing } from '@/constants/theme';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { formatShortDate, formatTimeRange } from '@/utils/datetime';
 import { formatResultValue, formatMetricLabel } from '@/utils/result-format';
 import { useResponsiveLayout } from '@/hooks/useResponsiveLayout';
+import { useNotifications } from '@/hooks/useNotifications';
 import { DesktopTopNav } from '@/components/DesktopTopNav';
 import { styles, desktopStyles } from './class-details.styles';
 
@@ -200,6 +202,8 @@ export default function ClassDetailsScreen() {
   const { currentGymId, isLoading: gymLoading } = useGym();
   const { classId } = useLocalSearchParams();
   const { isDesktop } = useResponsiveLayout();
+  const { refresh: refreshNotifications } = useNotifications();
+  const insets = useSafeAreaInsets();
 
   const [classData, setClassData] = useState<ClassDetailsItem | null>(null);
   const [bookingStatus, setBookingStatus] = useState<BookingStatus>('open');
@@ -308,6 +312,9 @@ export default function ClassDetailsScreen() {
         setBookingId(booking.id);
         setWaitlistPosition(booking.waitlistPosition ?? null);
       }
+      // Booking creates a server-side notification; refresh the shared badge
+      // count once so it updates deterministically rather than on next mount.
+      void refreshNotifications();
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'Failed to book class';
       setMutationError(msg);
@@ -500,7 +507,7 @@ export default function ClassDetailsScreen() {
   return (
     <View style={styles.screen}>
       {/* Header */}
-      <View style={styles.header}>
+      <View style={[styles.header, { paddingTop: insets.top + Spacing.md }]}>
         <TouchableOpacity onPress={() => router.back()} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
           <Ionicons name="chevron-back" size={24} color={AppColors.black} />
         </TouchableOpacity>

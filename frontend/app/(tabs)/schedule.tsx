@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo, useState } from 'react';
+import React, { useCallback, useMemo, useRef, useState } from 'react';
 import {
   View,
   Text,
@@ -15,12 +15,13 @@ import { useGym } from '@/hooks/useGym';
 import { createApiClient } from '@/utils/api-client';
 import { showConfirm, showError } from '@/utils/alert';
 import { components } from '@/types/api.gen';
-import { AppColors } from '@/constants/theme';
+import { AppColors, Spacing } from '@/constants/theme';
 import { formatTimeRange } from '@/utils/datetime';
 import { useResponsiveLayout } from '@/hooks/useResponsiveLayout';
 import { DesktopTopNav } from '@/components/DesktopTopNav';
 import { NotificationBell } from '@/components/NotificationBell';
 import { GymMenu } from '@/components/GymMenu';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { styles, desktopStyles } from './schedule.styles';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -379,10 +380,14 @@ export default function ScheduleScreen() {
   const { token, isLoading: authLoading } = useAuth();
   const { currentGymId, isLoading: gymLoading } = useGym();
   const { isDesktop } = useResponsiveLayout();
+  const insets = useSafeAreaInsets();
 
   const [classes, setClasses] = useState<EnrichedClass[]>([]);
   const [gymName, setGymName] = useState('My Gym');
   const [isLoading, setIsLoading] = useState(true);
+  // Full-screen spinner is for the first load only. Refocus refetches keep the
+  // existing list on screen (refreshed in place) so tab switches don't flicker.
+  const hasLoadedRef = useRef(false);
   const [error, setError] = useState<string | null>(null);
   const [cancellingBookingId, setCancellingBookingId] = useState<string | null>(null);
   const [timeView, setTimeView] = useState<TimeView>('week');
@@ -440,7 +445,7 @@ export default function ScheduleScreen() {
     }
 
     try {
-      setIsLoading(true);
+      if (!hasLoadedRef.current) setIsLoading(true);
       setError(null);
 
       const client = createApiClient({ token });
@@ -466,6 +471,7 @@ export default function ScheduleScreen() {
       const message = err instanceof Error ? err.message : 'Failed to load classes';
       setError(message);
     } finally {
+      hasLoadedRef.current = true;
       setIsLoading(false);
     }
   }, [authLoading, gymLoading, token, currentGymId]);
@@ -555,7 +561,7 @@ export default function ScheduleScreen() {
     return (
       <View style={isDesktop ? desktopStyles.screen : styles.screen}>
         {isDesktop ? <DesktopTopNav gymName={gymName} /> : (
-          <View style={styles.header}>
+          <View style={[styles.header, { paddingTop: insets.top + Spacing.md }]}>
             <GymMenu gymName={gymName} />
             <NotificationBell />
           </View>
@@ -618,7 +624,7 @@ export default function ScheduleScreen() {
 
   // ── Mobile list ────────────────────────────────────────────────────────────
   const header = (
-    <View style={styles.header}>
+    <View style={[styles.header, { paddingTop: insets.top + Spacing.md }]}>
       <GymMenu gymName={gymName} />
       <NotificationBell />
     </View>

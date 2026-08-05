@@ -40,6 +40,25 @@ jest.mock('@react-navigation/native', () => ({
   useFocusEffect: jest.fn(),
 }));
 
+// Mock react-native-safe-area-context — tests render screens without the
+// app-root <SafeAreaProvider>, so useSafeAreaInsets() would otherwise throw.
+// Return zero insets (matches web/no-notch behaviour) and pass-through providers.
+jest.mock('react-native-safe-area-context', () => {
+  const React = require('react');
+  const inset = { top: 0, right: 0, bottom: 0, left: 0 };
+  const frame = { x: 0, y: 0, width: 390, height: 844 };
+  return {
+    SafeAreaProvider: ({ children }: { children: unknown }) => children,
+    SafeAreaConsumer: ({ children }: { children: (i: typeof inset) => unknown }) =>
+      children(inset),
+    SafeAreaView: ({ children }: { children: unknown }) =>
+      React.createElement(React.Fragment, null, children),
+    useSafeAreaInsets: () => inset,
+    useSafeAreaFrame: () => frame,
+    initialWindowMetrics: { insets: inset, frame },
+  };
+});
+
 // Silence the React Native LogBox in test output
 jest.mock('react-native/Libraries/LogBox/LogBox', () => ({
   ignoreLogs: jest.fn(),

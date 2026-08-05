@@ -20,6 +20,19 @@ jest.mock('@/utils/api-client', () => ({
   createApiClient: jest.fn(),
 }));
 
+// Notification state lives in an app-wide provider not mounted in these tests;
+// stub it so NotificationBell renders without a NotificationsProvider.
+jest.mock('@/hooks/useNotifications', () => ({
+  useNotifications: () => ({
+    notifications: [],
+    unreadCount: 0,
+    loading: false,
+    refresh: jest.fn(() => Promise.resolve()),
+    markAsRead: jest.fn(() => Promise.resolve()),
+    markAllAsRead: jest.fn(() => Promise.resolve()),
+  }),
+}));
+
 jest.mock('@/utils/alert', () => ({
   showConfirm: jest.fn(),
   showError: jest.fn(),
