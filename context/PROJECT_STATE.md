@@ -151,6 +151,22 @@ MVP scope. Coach desktop has NO duplicate-header bug). Discovery/triage only; fi
     match the desktop layout / design frame.
   - `6a70cae7` "screen hard-crashes (`notifications` undefined)" → not reproducible; `useNotifications`
     always returns an array. Web icons (previously blank SF-symbol names) switched to `Ionicons`.
+- 🔍 **🐞 Coach design-scope reconciliation** (3 cards) → **To Verify** — design `e76b950`
+  (`ux-designer` on `designs/coach-screens.pen`; no app change). Coach design frames had drifted
+  from `docs/PRODUCT.md` §5.3 (several copied from the gym-owner design). Reconciled the design set
+  DOWN to what coaches actually get:
+  - `6a70d167` Sidebar nav `eT7ZY` → rebuilt from the owner-copied 6-item nav down to the shipped
+    coach nav (My Classes + Profile only).
+  - `6a70d16b` Owner-scoped frames removed: `J5KcE` (Schedule Dashboard), `8J7nW` (Create/Edit Class),
+    `KYfwz` (Class Management). Remaining coach frames are all coach-scoped.
+  - `6a70d0fb` Loggable toggle → KEEP (§5.3 grants coaches "decide whether a class is loggable");
+    the design was incomplete, so ADDED the toggle to mobile `gXPN7` (desktop `hrUW2` already had it).
+  - Designer flagged two read-only-for-now items in the surviving coach Class Details frames to
+    confirm are never wired editable: the lifecycle status badge and capacity/booked counts
+    (coaches can't change lifecycle state or capacity per §5.3).
+- ✅ **Issues Found is now empty of actionable 🐞 cards.** All Phase 3 audit bugs are fixed and sit
+  in To Verify awaiting live verification. Membership Plans / Members cards are parked in Backlog
+  (deferred post-go-live).
 
 ## Previous Phase (2026-05-23)
 
