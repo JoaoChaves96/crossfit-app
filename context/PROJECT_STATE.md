@@ -73,6 +73,16 @@ MVP scope. Coach desktop has NO duplicate-header bug). Discovery/triage only; fi
     gym name across mobile/empty-state/desktop headers; invite screen renders the gym location
     (fallback "Welcome to our community!"). Coach Class Details now pluralizes "athlete(s) booked".
     Types regenerated from Swagger.
+- 🔍 **🐞 Tier-2 mobile-reflow family** (5 cards) → **To Verify** (subagent-driven; each task
+  reviewed spec+quality and live-checked at 390×844 vs its `.pen` frame; final whole-branch
+  review clean; desktop re-verified unregressed at 1280px). Presentation-only mobile (≤768px)
+  reflows; desktop layouts untouched. Plan: `docs/superpowers/plans/2026-08-05-tier2-mobile-reflow.md`.
+  - `6a70ce53` Gym Settings Spaces & Class Types tabs → card lists (frame `nU1Kb`) — `ae8d3ac`
+  - `6a70cd64` Owner Schedule Dashboard → day-strip + vertical class cards (frame `XbXLT`) — `6c5587d`
+  - `6a70d0f3` Coach Class Details → compact 2-col info grid (frame `gXPN7`) — `826bdbd`
+  - `6a70d10c` Coach Mark Attendance → subheader + Select All + footer, dropped stat tiles (frame `PWqpG`) — `35de7b2`
+  - `6a70cdba` Owner Class Management → 3-tab Info|Bookings|Results (frame `7iKEc`) — `ff3978a`
+  - Stale card `6a70c8f2` (Athlete Schedule header) excluded — app already renders the designed single-tier header.
 - **Deferred (separate plan):** Notifications frontend migration — unit tests (17 failing) + tsc
   errors + expo 54 / expo-notifications 56 version mismatch. Held in `git stash` on `dev`; two
   🐞 cards remain in the board's Issues Found list. See `epics/NOTIFICATIONS_PLAN.md`.
