@@ -94,6 +94,12 @@ MVP scope. Coach desktop has NO duplicate-header bug). Discovery/triage only; fi
   - `6a70cc1b` Training History result value → renders value + metric, "Not Logged" badge fallback
   - `6a70c9a5` Training History coach row → `TrainingHistoryItemDto.coachName` (attendance repo join) + 👤 row
   - `6a70caec` Invite Acceptance → `ValidateInviteResponseDto.inviterName`/`inviterRole`; renders "Invited by {name} ({role})"
+- 🔍 **🐞 Owner/Class Management Results panel family** (3 cards) → **To Verify** — backend `e0d7aa4`, frontend `79c20fd`.
+  Added `userName` to `ClassResultItemDto`, resolved via UserService in both the coach/owner class-results
+  query and the athlete own-result query (fallback to userId); types regenerated from Swagger.
+  - `6a70cdb7` Results row athlete UUID → renders `userName` with initials avatar
+  - `6a70cd97` Result value raw ("300 seconds") → formatted via `result-format` util ("18:42 min", frame `9ZqYx`)
+  - `6a70cd94` Header collision "AthleteMetric" → `gap: Spacing.sm` on shared tableHeader/tableRow
 - **Deferred (separate plan):** Notifications frontend migration — unit tests (17 failing) + tsc
   errors + expo 54 / expo-notifications 56 version mismatch. Held in `git stash` on `dev`; two
   🐞 cards remain in the board's Issues Found list. See `epics/NOTIFICATIONS_PLAN.md`.
