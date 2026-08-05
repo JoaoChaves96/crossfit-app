@@ -102,8 +102,14 @@ function UpcomingCard({ item, isCancelling, onViewDetails, onCancel }: UpcomingC
             {formatShortDate(item.scheduledDate)} · {formatTime12h(item.scheduledTime)}
           </Text>
         </View>
+        {item.spaceName ? (
+          <View style={styles.detailRow}>
+            <Text style={styles.detailIcon}>📍</Text>
+            <Text style={styles.detailText}>{item.spaceName}</Text>
+          </View>
+        ) : null}
         <View style={styles.detailRow}>
-          <Text style={styles.detailIcon}>📍</Text>
+          <Text style={styles.detailIcon}>👤</Text>
           <Text style={styles.detailText}>Coach {item.coachName}</Text>
         </View>
       </View>
@@ -160,8 +166,14 @@ function PastCard({ item, onViewDetails, onLogResult }: PastCardProps) {
             {formatShortDate(item.scheduledDate)} · {formatTime12h(item.scheduledTime)}
           </Text>
         </View>
+        {item.spaceName ? (
+          <View style={styles.detailRow}>
+            <Text style={styles.detailIcon}>📍</Text>
+            <Text style={styles.detailText}>{item.spaceName}</Text>
+          </View>
+        ) : null}
         <View style={styles.detailRow}>
-          <Text style={styles.detailIcon}>📍</Text>
+          <Text style={styles.detailIcon}>👤</Text>
           <Text style={styles.detailText}>Coach {item.coachName}</Text>
         </View>
       </View>

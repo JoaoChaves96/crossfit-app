@@ -13,6 +13,7 @@ import { useGym } from '@/hooks/useGym';
 import { createApiClient } from '@/utils/api-client';
 import { components } from '@/types/api.gen';
 import { AppColors } from '@/constants/theme';
+import { formatResultValue, formatMetricLabel } from '@/utils/result-format';
 import { useResponsiveLayout } from '@/hooks/useResponsiveLayout';
 import { DesktopTopNav } from '@/components/DesktopTopNav';
 import { NotificationBell } from '@/components/NotificationBell';
@@ -33,18 +34,23 @@ function formatScheduledAt(isoString: string): string {
 }
 
 // ─── Sub-components ─────────────────────────────────────────────────────────────
-interface ResultBadgeProps {
-  hasResult: boolean;
+interface ResultDisplayProps {
+  result: TrainingHistoryItem['result'];
 }
 
-function ResultBadge({ hasResult }: ResultBadgeProps) {
-  const label = hasResult ? 'Logged' : 'Not Logged';
-  const color = hasResult ? AppColors.successMaterial : AppColors.textGray500;
-  const bg = hasResult ? AppColors.successBgFaint : AppColors.backgroundSubtle;
+function ResultDisplay({ result }: ResultDisplayProps) {
+  if (result === null) {
+    return (
+      <View style={[styles.badge, { backgroundColor: AppColors.backgroundSubtle }]}>
+        <Text style={[styles.badgeText, { color: AppColors.textGray500 }]}>Not Logged</Text>
+      </View>
+    );
+  }
 
   return (
-    <View style={[styles.badge, { backgroundColor: bg }]}>
-      <Text style={[styles.badgeText, { color }]}>{label}</Text>
+    <View style={styles.resultDisplay}>
+      <Text style={styles.resultValue}>{formatResultValue(result)}</Text>
+      <Text style={styles.resultMetric}>{formatMetricLabel(result.metricType)}</Text>
     </View>
   );
 }
@@ -61,11 +67,12 @@ function HistoryCard({ item, onPress }: HistoryCardProps) {
         <View style={styles.cardTitleGroup}>
           <Text style={styles.cardTitle}>{item.className}</Text>
           <Text style={styles.cardDate}>{formatScheduledAt(item.scheduledAt)}</Text>
+          <View style={styles.coachRow}>
+            <Text style={styles.coachIcon}>👤</Text>
+            <Text style={styles.coachText}>Coach {item.coachName}</Text>
+          </View>
         </View>
-        <ResultBadge hasResult={item.result !== null} />
-      </View>
-      <View style={styles.cardBottom}>
-        <Text style={styles.cardChevron}>{'›'}</Text>
+        <ResultDisplay result={item.result} />
       </View>
     </TouchableOpacity>
   );

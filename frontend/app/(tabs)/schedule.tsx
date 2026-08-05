@@ -215,6 +215,12 @@ function ClassCard({ item, onPress, onCancel, isCancelling }: ClassCardProps) {
             );
           })()}
         </View>
+        {item.spaceName ? (
+          <View style={styles.detailRow}>
+            <Text style={styles.detailIcon}>📍</Text>
+            <Text style={styles.detailText}>{item.spaceName}</Text>
+          </View>
+        ) : null}
         <View style={styles.detailRow}>
           <Text style={styles.detailIcon}>👤</Text>
           <Text style={styles.detailText}>Coach: {item.coachName}</Text>

@@ -203,6 +203,25 @@ export const styles = StyleSheet.create({
     lineHeight: FontSizes.mdSm * 1.4,
   },
 
+  // Recent result
+  resultRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  resultMetric: {
+    fontFamily: 'Inter',
+    fontSize: FontSizes.mdSm,
+    fontWeight: FontWeights.regular,
+    color: AppColors.textGray600,
+  },
+  resultValue: {
+    fontFamily: 'Inter',
+    fontSize: FontSizes.md,
+    fontWeight: FontWeights.semibold,
+    color: AppColors.textPrimary,
+  },
+
   // Mutation error
   mutationErrorCard: {
     backgroundColor: AppColors.errorBg,

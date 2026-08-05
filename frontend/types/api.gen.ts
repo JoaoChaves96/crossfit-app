@@ -2155,6 +2155,11 @@ export interface components {
              */
             className: string;
             /**
+             * @description Full name of the coach who led the class
+             * @example Maria Santos
+             */
+            coachName: string;
+            /**
              * @description ISO 8601 datetime combining the scheduled date and time
              * @example 2024-06-01T09:00:00.000Z
              */
@@ -2394,6 +2399,17 @@ export interface components {
              * @example athlete@example.com
              */
             inviteeEmail: string;
+            /**
+             * @description Full name of the person who created the invite
+             * @example Sarah Johnson
+             */
+            inviterName: string;
+            /**
+             * @description Role of the inviter in the gym
+             * @example coach
+             * @enum {string}
+             */
+            inviterRole: "owner" | "coach";
             /**
              * @description ISO timestamp when the invite expires
              * @example 2026-05-10T12:00:00.000Z

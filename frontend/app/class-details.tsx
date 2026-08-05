@@ -15,6 +15,7 @@ import { showConfirm, showError } from '@/utils/alert';
 import { components } from '@/types/api.gen';
 import { AppColors } from '@/constants/theme';
 import { formatShortDate, formatTimeRange } from '@/utils/datetime';
+import { formatResultValue, formatMetricLabel } from '@/utils/result-format';
 import { useResponsiveLayout } from '@/hooks/useResponsiveLayout';
 import { DesktopTopNav } from '@/components/DesktopTopNav';
 import { styles, desktopStyles } from './class-details.styles';
@@ -23,6 +24,9 @@ import { styles, desktopStyles } from './class-details.styles';
 type ClassDetailsItem = components['schemas']['ClassScheduleItemDto'];
 type GetUserBookingsResponse = components['schemas']['GetUserBookingsResponseDto'];
 type GetClassScheduleResponse = components['schemas']['GetClassScheduleResponseDto'];
+type GetClassProgrammingResponse = components['schemas']['GetClassProgrammingResponseDto'];
+type GetMyClassResultResponse = components['schemas']['GetMyClassResultResponseDto'];
+type OwnResult = components['schemas']['ClassResultItemDto'];
 
 type BookingStatus = 'booked' | 'waitlisted' | 'open' | 'full';
 
@@ -117,23 +121,52 @@ function BookingStatusSection({
   );
 }
 
-function ProgrammingSection() {
+function ProgrammingSection({
+  content,
+  isLoading,
+}: {
+  content: string | null;
+  isLoading: boolean;
+}) {
   return (
     <View style={styles.sectionGap10}>
       <SectionLabel text="Programming" />
       <Text style={styles.wodTitle}>WOD</Text>
       <View style={styles.programBlock}>
-        <Text style={styles.programSubLabel}>Warm-up</Text>
-        <Text style={styles.programText}>See class details provided by your coach.</Text>
+        {isLoading ? (
+          <ActivityIndicator size="small" color={AppColors.textGray500} />
+        ) : content && content.trim().length > 0 ? (
+          <Text style={styles.programText}>{content}</Text>
+        ) : (
+          <Text style={styles.programText}>
+            No programming has been posted for this class yet.
+          </Text>
+        )}
       </View>
     </View>
   );
 }
 
-function ResultsSection() {
+function ResultsSection({
+  result,
+  isLoading,
+}: {
+  result: OwnResult | null;
+  isLoading: boolean;
+}) {
   return (
     <View style={styles.sectionGap10}>
       <SectionLabel text="Recent Results" />
+      {isLoading ? (
+        <ActivityIndicator size="small" color={AppColors.textGray500} />
+      ) : result ? (
+        <View style={styles.resultRow}>
+          <Text style={styles.resultMetric}>{formatMetricLabel(result.metricType)}</Text>
+          <Text style={styles.resultValue}>{formatResultValue(result)}</Text>
+        </View>
+      ) : (
+        <Text style={styles.programText}>You haven&apos;t logged a result for this class.</Text>
+      )}
     </View>
   );
 }
@@ -176,6 +209,10 @@ export default function ClassDetailsScreen() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [fetchError, setFetchError] = useState<string | null>(null);
   const [mutationError, setMutationError] = useState<string | null>(null);
+  const [programming, setProgramming] = useState<string | null>(null);
+  const [isLoadingProgramming, setIsLoadingProgramming] = useState(true);
+  const [ownResult, setOwnResult] = useState<OwnResult | null>(null);
+  const [isLoadingResult, setIsLoadingResult] = useState(true);
 
   useEffect(() => {
     if (authLoading || gymLoading || !token || !currentGymId || !classId) {
@@ -218,7 +255,40 @@ export default function ClassDetailsScreen() {
       }
     };
 
+    // Programming + the athlete's own result are secondary content: a failure
+    // here should not blank the whole screen, so they load independently and
+    // swallow their own errors (rendering the empty/placeholder state instead).
+    const loadProgramming = async () => {
+      setIsLoadingProgramming(true);
+      try {
+        const res = await client.get<GetClassProgrammingResponse>(
+          `/api/gyms/${currentGymId}/classes/${classId}/programming`,
+        );
+        setProgramming(res.content);
+      } catch {
+        setProgramming(null);
+      } finally {
+        setIsLoadingProgramming(false);
+      }
+    };
+
+    const loadOwnResult = async () => {
+      setIsLoadingResult(true);
+      try {
+        const res = await client.get<GetMyClassResultResponse>(
+          `/api/gyms/${currentGymId}/classes/${classId}/results/me`,
+        );
+        setOwnResult(res.result);
+      } catch {
+        setOwnResult(null);
+      } finally {
+        setIsLoadingResult(false);
+      }
+    };
+
     load();
+    loadProgramming();
+    loadOwnResult();
   }, [authLoading, gymLoading, token, currentGymId, classId]);
 
   const handleBook = async () => {
@@ -386,6 +456,9 @@ export default function ClassDetailsScreen() {
             <View style={styles.metaGroup}>
               <MetaRow iconName="calendar-outline" text={formattedDate} />
               <MetaRow iconName="person-outline" text={coachLabel} />
+              {classData.spaceName ? (
+                <MetaRow iconName="location-outline" text={classData.spaceName} />
+              ) : null}
             </View>
 
             <Divider />
@@ -412,10 +485,10 @@ export default function ClassDetailsScreen() {
           {/* Right column — programming + results */}
           <View style={desktopStyles.rightCol}>
             <View style={desktopStyles.rightCard}>
-              <ProgrammingSection />
+              <ProgrammingSection content={programming} isLoading={isLoadingProgramming} />
             </View>
             <View style={desktopStyles.rightCard}>
-              <ResultsSection />
+              <ResultsSection result={ownResult} isLoading={isLoadingResult} />
             </View>
           </View>
         </ScrollView>
@@ -447,6 +520,9 @@ export default function ClassDetailsScreen() {
         <View style={styles.metaGroup}>
           <MetaRow iconName="calendar-outline" text={formattedDate} />
           <MetaRow iconName="person-outline" text={coachLabel} />
+          {classData.spaceName ? (
+            <MetaRow iconName="location-outline" text={classData.spaceName} />
+          ) : null}
         </View>
 
         <Divider />
@@ -462,12 +538,12 @@ export default function ClassDetailsScreen() {
         {(canCancel || bookingStatus === 'full') && <Divider />}
 
         {/* Programming */}
-        <ProgrammingSection />
+        <ProgrammingSection content={programming} isLoading={isLoadingProgramming} />
 
         <Divider />
 
         {/* Results */}
-        <ResultsSection />
+        <ResultsSection result={ownResult} isLoading={isLoadingResult} />
 
         {/* Mutation error inline */}
         {mutationError !== null && (

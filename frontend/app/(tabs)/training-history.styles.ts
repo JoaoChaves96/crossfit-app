@@ -89,6 +89,33 @@ export const styles = StyleSheet.create({
     fontSize: FontSizes.smMd,
     fontWeight: FontWeights.semibold,
   },
+  coachRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.tight,
+    marginTop: Spacing.hairline,
+  },
+  coachIcon: {
+    fontSize: FontSizes.smMd,
+  },
+  coachText: {
+    fontSize: FontSizes.mdSm,
+    color: AppColors.textGray600,
+  },
+  resultDisplay: {
+    alignItems: 'flex-end',
+    justifyContent: 'center',
+  },
+  resultValue: {
+    fontSize: FontSizes.md,
+    fontWeight: FontWeights.semibold,
+    color: AppColors.textPrimary,
+  },
+  resultMetric: {
+    fontSize: FontSizes.smMd,
+    color: AppColors.textGray500,
+    marginTop: Spacing.hairline,
+  },
   cardBottom: {
     flexDirection: 'row',
     justifyContent: 'flex-end',

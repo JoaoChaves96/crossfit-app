@@ -48,6 +48,10 @@ function formatExpiry(iso: string): string {
   });
 }
 
+function formatRole(role: ValidateInviteResponse['inviterRole']): string {
+  return role === 'owner' ? 'Gym Owner' : 'Coach';
+}
+
 function getStatusError(status: ValidateInviteResponse['status']): string | null {
   if (status === 'expired') return 'expired';
   if (status === 'revoked') return 'revoked';
@@ -302,6 +306,12 @@ function GymCard({ invite }: { invite: ValidateInviteResponse }) {
       <View style={styles.divider} />
 
       <View style={styles.inviteMeta}>
+        <View style={styles.metaRow}>
+          <Text style={styles.metaLabel}>Invited by</Text>
+          <Text style={styles.metaValue}>
+            {`${invite.inviterName} (${formatRole(invite.inviterRole)})`}
+          </Text>
+        </View>
         <View style={styles.metaRow}>
           <Text style={styles.metaLabel}>Invited to</Text>
           <Text style={styles.metaValue}>{invite.inviteeEmail}</Text>
