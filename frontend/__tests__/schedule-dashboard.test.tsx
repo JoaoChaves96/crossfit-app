@@ -154,7 +154,7 @@ describe('ScheduleDashboard', () => {
       );
 
       // Act
-      fireEvent.press(screen.getByText('>'));
+      fireEvent.press(screen.getByTestId('week-nav-next-btn'));
 
       // Assert
       expect(screen.getByText(expectedLabel)).toBeTruthy();
@@ -175,7 +175,7 @@ describe('ScheduleDashboard', () => {
       );
 
       // Act
-      fireEvent.press(screen.getByText('<'));
+      fireEvent.press(screen.getByTestId('week-nav-prev-btn'));
 
       // Assert
       expect(screen.getByText(expectedLabel)).toBeTruthy();
@@ -193,8 +193,8 @@ describe('ScheduleDashboard', () => {
       await waitFor(() => expect(screen.getByText(currentLabel)).toBeTruthy());
 
       // Act
-      fireEvent.press(screen.getByText('>'));
-      fireEvent.press(screen.getByText('<'));
+      fireEvent.press(screen.getByTestId('week-nav-next-btn'));
+      fireEvent.press(screen.getByTestId('week-nav-prev-btn'));
 
       // Assert
       expect(screen.getByText(currentLabel)).toBeTruthy();

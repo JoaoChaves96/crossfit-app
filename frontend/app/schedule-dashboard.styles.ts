@@ -30,6 +30,15 @@ export const styles = StyleSheet.create({
     fontWeight: FontWeights.bold,
     color: AppColors.textHeading,
   },
+  headerTitleMobile: {
+    fontSize: FontSizes.lg,
+  },
+  createIconBtn: {
+    width: 44,
+    height: 44,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   headerSubtitle: {
     fontSize: FontSizes.mdSm,
     color: AppColors.textMuted,
@@ -76,6 +85,12 @@ export const styles = StyleSheet.create({
     fontSize: FontSizes.body,
     fontWeight: FontWeights.semibold,
     color: AppColors.textHeading,
+  },
+  weekNavMobile: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: Spacing.sm,
   },
   viewToggle: {
     flexDirection: 'row',
@@ -229,82 +244,50 @@ export const styles = StyleSheet.create({
     fontSize: FontSizes.xl,
     color: AppColors.textHeading,
   },
-  createBtnMobile: {
-    paddingHorizontal: Spacing.md,
-    paddingVertical: Spacing.md,
-    minWidth: 44,
-    minHeight: 44,
-  },
-  toolbarMobile: {
-    flexDirection: 'column',
-    alignItems: 'stretch',
-    gap: Spacing.sm,
-  },
   navArrowBtnMobile: {
-    minWidth: 44,
-    minHeight: 44,
+    width: 44,
+    height: 44,
     alignItems: 'center',
     justifyContent: 'center',
   },
   weekLabelMobile: {
-    fontSize: FontSizes.mdSm,
-  },
-  toggleBtnMobile: {
-    paddingHorizontal: Spacing.base,
-    paddingVertical: Spacing.smMd,
-    minHeight: 44,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  mobileGridContainer: {
-    flexDirection: 'row',
-    gap: Spacing.md,
-    paddingBottom: Spacing.lg,
-  },
-  mobileDayColumn: {
-    width: 160,
-    gap: Spacing.sm,
+    fontSize: FontSizes.body,
+    fontWeight: FontWeights.semibold,
+    color: AppColors.textHeading,
   },
 
   // Mobile day-strip + vertical card list
-  dayStripScroll: {
-    flexGrow: 0,
-    flexShrink: 0,
-  },
   dayStrip: {
     flexDirection: 'row',
-    alignItems: 'flex-start',
-    gap: Spacing.sm,
-    paddingHorizontal: Spacing.base,
-    paddingVertical: Spacing.md,
+    alignItems: 'stretch',
+    justifyContent: 'space-between',
+    gap: Spacing.tight,
+    paddingHorizontal: Spacing.md,
+    paddingVertical: Spacing.sm,
   },
   dayPill: {
-    minWidth: 44,
+    flex: 1,
     paddingVertical: Spacing.sm,
-    paddingHorizontal: Spacing.compact,
-    borderRadius: BorderRadius.mdLg,
-    borderWidth: 1,
-    borderColor: AppColors.backgroundDivider,
+    paddingHorizontal: Spacing.smMd,
+    borderRadius: BorderRadius.md,
     alignItems: 'center',
-    backgroundColor: AppColors.backgroundWhite,
+    gap: Spacing.tight,
   },
   dayPillActive: {
     backgroundColor: AppColors.textHeading,
-    borderColor: AppColors.textHeading,
   },
   dayPillLabel: {
     fontSize: FontSizes.sm,
-    fontWeight: FontWeights.semibold,
+    fontWeight: FontWeights.medium,
     color: AppColors.textMuted,
   },
   dayPillLabelActive: {
     color: AppColors.backgroundWhite,
   },
   dayPillDate: {
-    fontSize: FontSizes.md,
+    fontSize: FontSizes.body,
     fontWeight: FontWeights.bold,
     color: AppColors.textHeading,
-    marginTop: Spacing.hairline,
   },
   dayPillDateActive: {
     color: AppColors.backgroundWhite,

@@ -12,9 +12,11 @@ import { useRouter } from 'expo-router';
 import { useAuth } from '@/hooks/useAuth';
 import { useGym } from '@/hooks/useGym';
 import { useResponsiveLayout } from '@/hooks/useResponsiveLayout';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { createApiClient } from '@/utils/api-client';
 import { components } from '@/types/api.gen';
 import { OwnerSidebar, OWNER_NAV_ITEMS } from '@/components/OwnerSidebar';
+import { Ionicons } from '@expo/vector-icons';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -210,11 +212,7 @@ interface MobileDayStripProps {
 
 function MobileDayStrip({ weekDays, selectedDayIdx, onSelectDay }: MobileDayStripProps) {
   return (
-    <ScrollView
-      horizontal
-      showsHorizontalScrollIndicator={false}
-      style={styles.dayStripScroll}
-      contentContainerStyle={styles.dayStrip}>
+    <View style={styles.dayStrip}>
       {weekDays.map((day, idx) => {
         const isActive = idx === selectedDayIdx;
         return (
@@ -225,7 +223,7 @@ function MobileDayStrip({ weekDays, selectedDayIdx, onSelectDay }: MobileDayStri
             onPress={() => onSelectDay(idx)}
             activeOpacity={0.8}>
             <Text style={[styles.dayPillLabel, isActive && styles.dayPillLabelActive]}>
-              {DAY_LABELS[idx]}
+              {DAY_LABELS[idx].charAt(0) + DAY_LABELS[idx].slice(1).toLowerCase()}
             </Text>
             <Text style={[styles.dayPillDate, isActive && styles.dayPillDateActive]}>
               {day.getDate()}
@@ -233,7 +231,7 @@ function MobileDayStrip({ weekDays, selectedDayIdx, onSelectDay }: MobileDayStri
           </TouchableOpacity>
         );
       })}
-    </ScrollView>
+    </View>
   );
 }
 
@@ -287,6 +285,7 @@ export default function ScheduleDashboard() {
   const { token } = useAuth();
   const { currentGymId } = useGym();
   const { isMobile } = useResponsiveLayout();
+  const insets = useSafeAreaInsets();
   const [drawerOpen, setDrawerOpen] = useState(false);
 
   const [weekStart, setWeekStart] = useState<Date>(() => getWeekStart(new Date()));
@@ -461,7 +460,7 @@ export default function ScheduleDashboard() {
         </Modal>
       )}
 
-      <View style={[styles.main, isMobile && styles.mainMobile]}>
+      <View style={[styles.main, isMobile && styles.mainMobile, isMobile && { paddingTop: insets.top + 16 }]}>
         {/* Header */}
         <View style={[styles.header, isMobile && styles.headerMobile]}>
           <View style={styles.headerLeft}>
@@ -473,54 +472,77 @@ export default function ScheduleDashboard() {
                 <Text style={styles.hamburgerText}>☰</Text>
               </TouchableOpacity>
             )}
-            <Text style={styles.headerTitle}>Schedule Dashboard</Text>
+            <Text style={[styles.headerTitle, isMobile && styles.headerTitleMobile]}>
+              {isMobile ? 'Schedule' : 'Schedule Dashboard'}
+            </Text>
             {!isMobile && <Text style={styles.headerSubtitle}>Manage your weekly class schedule</Text>}
           </View>
-          <TouchableOpacity
-            testID="create-class-btn"
-            style={[styles.createBtn, isMobile && styles.createBtnMobile]}
-            onPress={() => router.push('/create-class' as never)}>
-            <Text style={styles.createBtnText}>{isMobile ? '+' : '+ Create Class'}</Text>
-          </TouchableOpacity>
+          {isMobile ? (
+            <TouchableOpacity
+              testID="create-class-btn"
+              style={styles.createIconBtn}
+              onPress={() => router.push('/create-class' as never)}>
+              <Ionicons name="add" size={24} color={COLOR.bodyText} />
+            </TouchableOpacity>
+          ) : (
+            <TouchableOpacity
+              testID="create-class-btn"
+              style={styles.createBtn}
+              onPress={() => router.push('/create-class' as never)}>
+              <Text style={styles.createBtnText}>+ Create Class</Text>
+            </TouchableOpacity>
+          )}
         </View>
 
         {/* Toolbar */}
-        <View style={[styles.toolbar, isMobile && styles.toolbarMobile]}>
-          <View style={styles.weekNav}>
-            <TouchableOpacity testID="week-nav-prev-btn" style={[styles.navArrowBtn, isMobile && styles.navArrowBtnMobile]} onPress={handlePrevWeek}>
-              <Text style={styles.navArrowText}>{'<'}</Text>
+        {isMobile ? (
+          <View style={styles.weekNavMobile}>
+            <TouchableOpacity testID="week-nav-prev-btn" style={styles.navArrowBtnMobile} onPress={handlePrevWeek}>
+              <Ionicons name="chevron-back" size={20} color={COLOR.subText} />
             </TouchableOpacity>
-            <Text style={[styles.weekLabel, isMobile && styles.weekLabelMobile]}>{formatWeekLabel(weekStart)}</Text>
-            <TouchableOpacity testID="week-nav-next-btn" style={[styles.navArrowBtn, isMobile && styles.navArrowBtnMobile]} onPress={handleNextWeek}>
-              <Text style={styles.navArrowText}>{'>'}</Text>
+            <Text style={styles.weekLabelMobile}>{formatWeekLabel(weekStart)}</Text>
+            <TouchableOpacity testID="week-nav-next-btn" style={styles.navArrowBtnMobile} onPress={handleNextWeek}>
+              <Ionicons name="chevron-forward" size={20} color={COLOR.subText} />
             </TouchableOpacity>
           </View>
+        ) : (
+          <View style={styles.toolbar}>
+            <View style={styles.weekNav}>
+              <TouchableOpacity testID="week-nav-prev-btn" style={styles.navArrowBtn} onPress={handlePrevWeek}>
+                <Text style={styles.navArrowText}>{'<'}</Text>
+              </TouchableOpacity>
+              <Text style={styles.weekLabel}>{formatWeekLabel(weekStart)}</Text>
+              <TouchableOpacity testID="week-nav-next-btn" style={styles.navArrowBtn} onPress={handleNextWeek}>
+                <Text style={styles.navArrowText}>{'>'}</Text>
+              </TouchableOpacity>
+            </View>
 
-          <View style={styles.viewToggle}>
-            <TouchableOpacity
-              style={[styles.toggleBtn, viewMode === 'week' && styles.toggleBtnActive, isMobile && styles.toggleBtnMobile]}
-              onPress={() => setViewMode('week')}>
-              <Text
-                style={[
-                  styles.toggleBtnText,
-                  viewMode === 'week' && styles.toggleBtnTextActive,
-                ]}>
-                Week
-              </Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={[styles.toggleBtn, viewMode === 'list' && styles.toggleBtnActive, isMobile && styles.toggleBtnMobile]}
-              onPress={() => setViewMode('list')}>
-              <Text
-                style={[
-                  styles.toggleBtnText,
-                  viewMode === 'list' && styles.toggleBtnTextActive,
-                ]}>
-                List
-              </Text>
-            </TouchableOpacity>
+            <View style={styles.viewToggle}>
+              <TouchableOpacity
+                style={[styles.toggleBtn, viewMode === 'week' && styles.toggleBtnActive]}
+                onPress={() => setViewMode('week')}>
+                <Text
+                  style={[
+                    styles.toggleBtnText,
+                    viewMode === 'week' && styles.toggleBtnTextActive,
+                  ]}>
+                  Week
+                </Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.toggleBtn, viewMode === 'list' && styles.toggleBtnActive]}
+                onPress={() => setViewMode('list')}>
+                <Text
+                  style={[
+                    styles.toggleBtnText,
+                    viewMode === 'list' && styles.toggleBtnTextActive,
+                  ]}>
+                  List
+                </Text>
+              </TouchableOpacity>
+            </View>
           </View>
-        </View>
+        )}
 
         {/* Content */}
         {renderContent()}
