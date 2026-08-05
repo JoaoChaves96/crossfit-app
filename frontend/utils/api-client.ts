@@ -3,8 +3,16 @@ export interface ApiClientOptions {
   baseUrl?: string;
 }
 
+// Base URL resolution order:
+//   1. explicit baseUrl option (tests / overrides)
+//   2. EXPO_PUBLIC_API_BASE_URL (set in .env.local — required for device
+//      testing, where `localhost` resolves to the phone, not the dev machine)
+//   3. localhost fallback for web/simulator dev
+const DEFAULT_BASE_URL =
+  process.env.EXPO_PUBLIC_API_BASE_URL || 'http://localhost:3000';
+
 export function createApiClient(options: ApiClientOptions) {
-  const baseUrl = options.baseUrl || 'http://localhost:3000';
+  const baseUrl = options.baseUrl || DEFAULT_BASE_URL;
 
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
