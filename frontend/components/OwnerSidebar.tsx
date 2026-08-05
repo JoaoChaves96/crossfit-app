@@ -22,6 +22,8 @@ export const OWNER_NAV_ITEMS: OwnerNavItem[] = [
   { label: 'Classes', key: 'classes', enabled: false },
   { label: 'Members', key: 'members', enabled: true, route: '/members' },
   { label: 'Coaches', key: 'coaches', enabled: true, route: '/coaches' },
+  { label: 'Plans', key: 'plans', enabled: false },
+  { label: 'Invites', key: 'invites', enabled: true, route: '/invites' },
   { label: 'Settings', key: 'settings', enabled: true, route: '/gym-settings' },
 ];
 

@@ -52,14 +52,6 @@ export default function TabLayout() {
           tabBarButtonTestID: 'tab-profile',
         }}
       />
-      <Tabs.Screen
-        name="invites"
-        options={{
-          title: 'Invites',
-          tabBarIcon: ({ color }) => <IconSymbol size={28} name="envelope.fill" color={color} />,
-          tabBarButtonTestID: 'tab-invites',
-        }}
-      />
     </Tabs>
   );
 }

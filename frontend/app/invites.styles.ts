@@ -1,28 +1,41 @@
 import { StyleSheet } from 'react-native';
 import { AppColors, BorderRadius, FontSizes, FontWeights, LineHeights, Spacing } from '@/constants/theme';
 
-export const desktopStyles = StyleSheet.create({
-  screen: {
-    flex: 1,
-    backgroundColor: '#F8F8F8',
-  },
-  contentArea: {
-    flex: 1,
-    alignItems: 'center',
-    paddingVertical: 48,
-    paddingHorizontal: 40,
-  },
-  innerWrap: {
-    width: 720,
-    maxWidth: '100%',
-    flex: 1,
-  },
-});
-
 export const styles = StyleSheet.create({
-  screen: {
+  // Shell
+  root: {
+    flex: 1,
+    flexDirection: 'row',
+    backgroundColor: AppColors.backgroundWhite,
+  },
+  main: {
     flex: 1,
     backgroundColor: AppColors.backgroundWhite,
+  },
+  mainMobile: {
+    paddingHorizontal: 0,
+  },
+
+  // Mobile drawer
+  drawerOverlay: {
+    flex: 1,
+    backgroundColor: AppColors.overlay,
+    flexDirection: 'row',
+  },
+  drawerContainer: {
+    width: 220,
+    height: '100%',
+  },
+  hamburgerBtn: {
+    width: 44,
+    height: 44,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: Spacing.sm,
+  },
+  hamburgerText: {
+    fontSize: FontSizes.xl,
+    color: AppColors.textHeading,
   },
 
   // Page header
@@ -33,6 +46,11 @@ export const styles = StyleSheet.create({
     paddingHorizontal: Spacing.xl,
     paddingTop: Spacing.jumbo,
     paddingBottom: Spacing.base,
+  },
+  pageHeaderLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.sm,
   },
   pageTitle: {
     fontFamily: 'Inter',
@@ -215,7 +233,7 @@ export const styles = StyleSheet.create({
     maxWidth: 400,
   },
 
-  // Centered state
+  // Centered state (guards)
   centeredState: {
     flex: 1,
     alignItems: 'center',
@@ -231,7 +249,7 @@ export const styles = StyleSheet.create({
 
   // Modal
   modalOverlay: {
-    flex: 1,
+    ...StyleSheet.absoluteFillObject,
     backgroundColor: AppColors.overlay,
     alignItems: 'center',
     justifyContent: 'center',

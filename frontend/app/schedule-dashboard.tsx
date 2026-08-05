@@ -2,7 +2,6 @@ import React, { useCallback, useEffect, useState } from 'react';
 import {
   ActivityIndicator,
   Modal,
-  Pressable,
   ScrollView,
   Text,
   TouchableOpacity,
@@ -15,6 +14,7 @@ import { useGym } from '@/hooks/useGym';
 import { useResponsiveLayout } from '@/hooks/useResponsiveLayout';
 import { createApiClient } from '@/utils/api-client';
 import { components } from '@/types/api.gen';
+import { OwnerSidebar, OWNER_NAV_ITEMS } from '@/components/OwnerSidebar';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -27,15 +27,11 @@ type ViewMode = 'week' | 'list';
 
 const COLOR = {
   white: '#FFFFFF',
-  sidebarBg: '#F3F4F6',
   bodyText: '#111827',
   subText: '#6B7280',
   mutedText: '#9CA3AF',
   borderLight: '#E5E7EB',
   borderMid: '#D1D5DB',
-  activeNavBg: '#E5E7EB',
-  activeNavText: '#111827',
-  inactiveNavText: '#6B7280',
   createBtnBg: '#111827',
   createBtnText: '#FFFFFF',
   fullCapacity: '#DC2626',
@@ -103,67 +99,6 @@ function isSameDay(a: Date, b: Date): boolean {
 }
 
 const DAY_LABELS = ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN'];
-
-// ─── Sidebar ──────────────────────────────────────────────────────────────────
-
-interface SidebarProps {
-  activeItem: string;
-  onNavigate: (key: string) => void;
-}
-
-const NAV_ITEMS: { label: string; key: string; enabled: boolean }[] = [
-  { label: 'Dashboard', key: 'dashboard', enabled: false },
-  { label: 'Schedule', key: 'schedule', enabled: true },
-  { label: 'Classes', key: 'classes', enabled: false },
-  { label: 'Members', key: 'members', enabled: true },
-  { label: 'Coaches', key: 'coaches', enabled: true },
-  { label: 'Settings', key: 'settings', enabled: true },
-];
-
-function Sidebar({ activeItem, onNavigate }: SidebarProps) {
-  return (
-    <View style={styles.sidebar}>
-      <View style={styles.sidebarLogo}>
-        <View style={styles.sidebarLogoIcon} />
-        <Text style={styles.sidebarLogoText}>CrossFit Box</Text>
-      </View>
-      <View style={styles.navGroup}>
-        {NAV_ITEMS.map((item) => {
-          const isActive = item.key === activeItem;
-          const isDisabled = !item.enabled;
-          return (
-            <Pressable
-              key={item.key}
-              testID={`nav-${item.key}`}
-              style={[
-                styles.navItem,
-                isActive && styles.navItemActive,
-                isDisabled && styles.navItemDisabled,
-              ]}
-              onPress={isDisabled ? undefined : () => onNavigate(item.key)}
-              disabled={isDisabled}>
-              <View
-                style={[
-                  styles.navIcon,
-                  isActive ? styles.navIconActive : styles.navIconInactive,
-                  isDisabled && styles.navIconDisabled,
-                ]}
-              />
-              <Text
-                style={[
-                  styles.navLabel,
-                  isActive ? styles.navLabelActive : styles.navLabelInactive,
-                  isDisabled && styles.navLabelDisabled,
-                ]}>
-                {item.label}
-              </Text>
-            </Pressable>
-          );
-        })}
-      </View>
-    </View>
-  );
-}
 
 // ─── Class Card ───────────────────────────────────────────────────────────────
 
@@ -411,9 +346,8 @@ export default function ScheduleDashboard() {
 
   const handleSidebarNav = (key: string) => {
     setDrawerOpen(false);
-    if (key === 'coaches') router.push('/coaches');
-    if (key === 'members') router.push('/members' as never);
-    if (key === 'settings') router.push('/gym-settings');
+    const target = OWNER_NAV_ITEMS.find((item) => item.key === key);
+    if (target?.route) router.push(target.route as never);
   };
 
   const handleClassPress = (classId: string) =>
@@ -514,19 +448,14 @@ export default function ScheduleDashboard() {
 
   return (
     <View style={styles.root}>
-      {!isMobile && (
-        <Sidebar
-          activeItem="schedule"
-          onNavigate={handleSidebarNav}
-        />
-      )}
+      {!isMobile && <OwnerSidebar activeItem="schedule" onNavigate={handleSidebarNav} />}
 
       {/* Mobile drawer */}
       {isMobile && (
         <Modal visible={drawerOpen} transparent animationType="fade" onRequestClose={() => setDrawerOpen(false)}>
           <TouchableOpacity style={styles.drawerOverlay} activeOpacity={1} onPress={() => setDrawerOpen(false)}>
             <View style={styles.drawerContainer}>
-              <Sidebar activeItem="schedule" onNavigate={handleSidebarNav} />
+              <OwnerSidebar activeItem="schedule" onNavigate={handleSidebarNav} />
             </View>
           </TouchableOpacity>
         </Modal>

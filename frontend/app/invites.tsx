@@ -10,6 +10,7 @@ import {
   Clipboard,
   ScrollView,
 } from 'react-native';
+import { useRouter } from 'expo-router';
 import { useAuth } from '@/hooks/useAuth';
 import { useGym } from '@/hooks/useGym';
 import { createApiClient } from '@/utils/api-client';
@@ -17,9 +18,9 @@ import { showError } from '@/utils/alert';
 import { components } from '@/types/api.gen';
 import { AppColors } from '@/constants/theme';
 import { useResponsiveLayout } from '@/hooks/useResponsiveLayout';
-import { DesktopTopNav } from '@/components/DesktopTopNav';
+import { OwnerSidebar, OWNER_NAV_ITEMS } from '@/components/OwnerSidebar';
 import { NotificationBell } from '@/components/NotificationBell';
-import { styles, desktopStyles } from './invites.styles';
+import { styles } from './invites.styles';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 type InviteResponse = components['schemas']['InviteResponseDto'];
@@ -274,22 +275,32 @@ function CreateInviteModal({ visible, gymId, token, prefillEmail = '', onClose, 
 
 // ─── Screen ───────────────────────────────────────────────────────────────────
 export default function InvitesScreen() {
+  const router = useRouter();
   const { user, token } = useAuth();
   const { currentGymId } = useGym();
-  const { isDesktop } = useResponsiveLayout();
+  const { isMobile } = useResponsiveLayout();
 
   const [invites, setInvites] = useState<LocalInvite[]>([]);
   const [modalVisible, setModalVisible] = useState(false);
   const [modalPrefillEmail, setModalPrefillEmail] = useState('');
   const [revokingToken, setRevokingToken] = useState<string | null>(null);
+  const [drawerOpen, setDrawerOpen] = useState(false);
+
+  const handleSidebarNav = (key: string) => {
+    setDrawerOpen(false);
+    const target = OWNER_NAV_ITEMS.find((item) => item.key === key);
+    if (target?.route) router.push(target.route as never);
+  };
 
   // Guard: athletes cannot access this screen
   if (!user || user.role === 'athlete') {
     return (
-      <View style={isDesktop ? desktopStyles.screen : styles.screen}>
-        {isDesktop && <DesktopTopNav />}
-        <View style={styles.centeredState}>
-          <Text style={styles.errorText}>Access denied. This screen is for gym owners and coaches only.</Text>
+      <View style={styles.root}>
+        {!isMobile && <OwnerSidebar activeItem="invites" onNavigate={handleSidebarNav} />}
+        <View style={styles.main}>
+          <View style={styles.centeredState}>
+            <Text style={styles.errorText}>Access denied. This screen is for gym owners and coaches only.</Text>
+          </View>
         </View>
       </View>
     );
@@ -297,10 +308,12 @@ export default function InvitesScreen() {
 
   if (!token || !currentGymId) {
     return (
-      <View style={isDesktop ? desktopStyles.screen : styles.screen}>
-        {isDesktop && <DesktopTopNav />}
-        <View style={styles.centeredState}>
-          <Text style={styles.errorText}>Please log in and select a gym to manage invites.</Text>
+      <View style={styles.root}>
+        {!isMobile && <OwnerSidebar activeItem="invites" onNavigate={handleSidebarNav} />}
+        <View style={styles.main}>
+          <View style={styles.centeredState}>
+            <Text style={styles.errorText}>Please log in and select a gym to manage invites.</Text>
+          </View>
         </View>
       </View>
     );
@@ -367,7 +380,7 @@ export default function InvitesScreen() {
       </View>
       <Text style={styles.emptyTitle}>No invites sent yet</Text>
       <Text style={styles.emptyDesc}>
-        Invite athletes to join your gym. They'll receive an email with a link to accept.
+        {"Invite athletes to join your gym. They'll receive an email with a link to accept."}
       </Text>
       <TouchableOpacity
         style={styles.createBtn}
@@ -400,60 +413,54 @@ export default function InvitesScreen() {
     />
   );
 
-  // ── Desktop layout ──────────────────────────────────────────────────────────
-  if (isDesktop) {
-    return (
-      <View style={desktopStyles.screen}>
-        <DesktopTopNav />
-        <View style={desktopStyles.contentArea}>
-          <View style={desktopStyles.innerWrap}>
-            {/* Page header */}
-            <View style={styles.pageHeader}>
-              <Text style={styles.pageTitle}>Invites</Text>
-              <TouchableOpacity
-                style={styles.createBtn}
-                onPress={() => {
-                  setModalPrefillEmail('');
-                  setModalVisible(true);
-                }}
-                activeOpacity={0.7}
-              >
-                <Text style={styles.createBtnText}>+ Create Invite</Text>
-              </TouchableOpacity>
+  return (
+    <View style={styles.root}>
+      {!isMobile && <OwnerSidebar activeItem="invites" onNavigate={handleSidebarNav} />}
+
+      {/* Mobile drawer */}
+      {isMobile && (
+        <Modal visible={drawerOpen} transparent animationType="fade" onRequestClose={() => setDrawerOpen(false)}>
+          <TouchableOpacity style={styles.drawerOverlay} activeOpacity={1} onPress={() => setDrawerOpen(false)}>
+            <View style={styles.drawerContainer}>
+              <OwnerSidebar activeItem="invites" onNavigate={handleSidebarNav} />
             </View>
-            <View style={styles.headerDivider} />
-            {inviteContent}
+          </TouchableOpacity>
+        </Modal>
+      )}
+
+      <View style={[styles.main, isMobile && styles.mainMobile]}>
+        {/* Page header */}
+        <View style={styles.pageHeader}>
+          <View style={styles.pageHeaderLeft}>
+            {isMobile && (
+              <TouchableOpacity
+                testID="hamburger-btn"
+                style={styles.hamburgerBtn}
+                onPress={() => setDrawerOpen(true)}>
+                <Text style={styles.hamburgerText}>☰</Text>
+              </TouchableOpacity>
+            )}
+            <Text style={styles.pageTitle}>Invites</Text>
+          </View>
+          <View style={styles.headerActions}>
+            <TouchableOpacity
+              style={styles.createBtn}
+              onPress={() => {
+                setModalPrefillEmail('');
+                setModalVisible(true);
+              }}
+              activeOpacity={0.7}
+            >
+              <Text style={styles.createBtnText}>+ Create Invite</Text>
+            </TouchableOpacity>
+            {isMobile && <NotificationBell />}
           </View>
         </View>
-        {modal}
+
+        <View style={styles.headerDivider} />
+
+        {inviteContent}
       </View>
-    );
-  }
-
-  // ── Mobile layout ───────────────────────────────────────────────────────────
-  return (
-    <View style={styles.screen}>
-      {/* Page header */}
-      <View style={styles.pageHeader}>
-        <Text style={styles.pageTitle}>Invites</Text>
-        <View style={styles.headerActions}>
-          <TouchableOpacity
-            style={styles.createBtn}
-            onPress={() => {
-              setModalPrefillEmail('');
-              setModalVisible(true);
-            }}
-            activeOpacity={0.7}
-          >
-            <Text style={styles.createBtnText}>+ Create Invite</Text>
-          </TouchableOpacity>
-          <NotificationBell />
-        </View>
-      </View>
-
-      <View style={styles.headerDivider} />
-
-      {inviteContent}
       {modal}
     </View>
   );

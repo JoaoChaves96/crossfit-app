@@ -16,6 +16,7 @@ import { useResponsiveLayout } from '@/hooks/useResponsiveLayout';
 import { createApiClient } from '@/utils/api-client';
 import { components } from '@/types/api.gen';
 import { AppColors } from '@/constants/theme';
+import { OwnerSidebar, OWNER_NAV_ITEMS } from '@/components/OwnerSidebar';
 import { styles } from './coaches.styles';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -27,68 +28,6 @@ type CoachListItem = components['schemas']['CoachListItemDto'];
 type CoachesListResponse = components['schemas']['GetCoachesResponseDto'];
 type ChangeCoachStatusResponse = components['schemas']['ChangeCoachStatusResponseDto'];
 type CoachStatus = 'active' | 'inactive';
-
-// ─── Sidebar ──────────────────────────────────────────────────────────────────
-
-const NAV_ITEMS: { label: string; key: string; enabled: boolean }[] = [
-  { label: 'Dashboard', key: 'dashboard', enabled: false },
-  { label: 'Schedule', key: 'schedule', enabled: true },
-  { label: 'Classes', key: 'classes', enabled: false },
-  { label: 'Athletes', key: 'athletes', enabled: false },
-  { label: 'Coaches', key: 'coaches', enabled: true },
-  { label: 'Settings', key: 'settings', enabled: false },
-];
-
-interface SidebarProps {
-  activeItem: string;
-  onNavigate: (key: string) => void;
-}
-
-function Sidebar({ activeItem, onNavigate }: SidebarProps) {
-  return (
-    <View style={styles.sidebar}>
-      <View style={styles.sidebarLogo}>
-        <View style={styles.sidebarLogoIcon} />
-        <Text style={styles.sidebarLogoText}>CrossFit Box</Text>
-      </View>
-      <View style={styles.navGroup}>
-        {NAV_ITEMS.map((item) => {
-          const isActive = item.key === activeItem;
-          const isDisabled = !item.enabled;
-          return (
-            <TouchableOpacity
-              key={item.key}
-              testID={`nav-${item.key}`}
-              style={[
-                styles.navItem,
-                isActive && styles.navItemActive,
-                isDisabled && styles.navItemDisabled,
-              ]}
-              onPress={isDisabled ? undefined : () => onNavigate(item.key)}
-              disabled={isDisabled}
-              activeOpacity={isDisabled ? 1 : 0.7}>
-              <View
-                style={[
-                  styles.navIcon,
-                  isActive ? styles.navIconActive : styles.navIconInactive,
-                  isDisabled && styles.navIconDisabled,
-                ]}
-              />
-              <Text
-                style={[
-                  styles.navLabel,
-                  isActive ? styles.navLabelActive : styles.navLabelInactive,
-                  isDisabled && styles.navLabelDisabled,
-                ]}>
-                {item.label}
-              </Text>
-            </TouchableOpacity>
-          );
-        })}
-      </View>
-    </View>
-  );
-}
 
 // ─── Status Badge ─────────────────────────────────────────────────────────────
 
@@ -450,24 +389,20 @@ export default function CoachesScreen() {
 
   const handleSidebarNav = (key: string) => {
     setDrawerOpen(false);
-    if (key === 'schedule') router.push('/schedule-dashboard');
+    const target = OWNER_NAV_ITEMS.find((item) => item.key === key);
+    if (target?.route) router.push(target.route as never);
   };
 
   return (
     <View style={styles.root}>
-      {!isMobile && (
-        <Sidebar
-          activeItem="coaches"
-          onNavigate={handleSidebarNav}
-        />
-      )}
+      {!isMobile && <OwnerSidebar activeItem="coaches" onNavigate={handleSidebarNav} />}
 
       {/* Mobile drawer */}
       {isMobile && (
         <Modal visible={drawerOpen} transparent animationType="fade" onRequestClose={() => setDrawerOpen(false)}>
           <TouchableOpacity style={styles.drawerOverlay} activeOpacity={1} onPress={() => setDrawerOpen(false)}>
             <View style={styles.drawerContainer}>
-              <Sidebar activeItem="coaches" onNavigate={handleSidebarNav} />
+              <OwnerSidebar activeItem="coaches" onNavigate={handleSidebarNav} />
             </View>
           </TouchableOpacity>
         </Modal>

@@ -14,6 +14,7 @@ import { useGym } from '@/hooks/useGym';
 import { useResponsiveLayout } from '@/hooks/useResponsiveLayout';
 import { createApiClient } from '@/utils/api-client';
 import { components } from '@/types/api.gen';
+import { OwnerSidebar, OWNER_NAV_ITEMS } from '@/components/OwnerSidebar';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -23,29 +24,7 @@ type GetGymMembersResponse = components['schemas']['GetGymMembersResponseDto'];
 // ─── Design Tokens ────────────────────────────────────────────────────────────
 
 const COLOR = {
-  white: '#FFFFFF',
-  sidebarBg: '#F3F4F6',
   bodyText: '#111827',
-  subText: '#6B7280',
-  mutedText: '#9CA3AF',
-  borderLight: '#E5E7EB',
-  cardBorder: '#E4E4EA',
-  tableHeaderBg: '#F9FAFB',
-  activeNavBg: '#DBEAFE',
-  activeNavIcon: '#1D4ED8',
-  activeNavText: '#1D4ED8',
-  inactiveNavIcon: '#9CA3AF',
-  inactiveNavText: '#6B7280',
-  avatarBg: '#DBEAFE',
-  activeBadgeBg: '#D1FAE5',
-  activeBadgeText: '#065F46',
-  countBadgeBg: '#F3F4F6',
-  emptyIconBg: '#F0F0F0',
-  rowAltBg: '#EEF0FF',
-  nameText: '#1A1A2E',
-  cellText: '#555568',
-  errorText: '#DC2626',
-  borderMid: '#D1D5DB',
 };
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -65,69 +44,6 @@ function formatJoinedDate(isoDate: string): string {
     day: 'numeric',
     year: 'numeric',
   });
-}
-
-// ─── NAV Items ────────────────────────────────────────────────────────────────
-
-const NAV_ITEMS: { label: string; key: string; enabled: boolean }[] = [
-  { label: 'Dashboard', key: 'dashboard', enabled: false },
-  { label: 'Schedule', key: 'schedule', enabled: true },
-  { label: 'Classes', key: 'classes', enabled: false },
-  { label: 'Members', key: 'members', enabled: true },
-  { label: 'Coaches', key: 'coaches', enabled: true },
-  { label: 'Settings', key: 'settings', enabled: true },
-];
-
-// ─── Sidebar ──────────────────────────────────────────────────────────────────
-
-interface SidebarProps {
-  onNavigate: (key: string) => void;
-}
-
-function Sidebar({ onNavigate }: SidebarProps) {
-  return (
-    <View style={styles.sidebar}>
-      <View style={styles.sidebarLogo}>
-        <View style={styles.sidebarLogoIcon} />
-        <Text style={styles.sidebarLogoText}>CrossFit Box</Text>
-      </View>
-      <View style={styles.navGroup}>
-        {NAV_ITEMS.map((item) => {
-          const isActive = item.key === 'members';
-          const isDisabled = !item.enabled;
-          return (
-            <TouchableOpacity
-              key={item.key}
-              testID={`sidebar-nav-${item.key}`}
-              style={[
-                styles.navItem,
-                isActive && styles.navItemActive,
-                isDisabled && styles.navItemDisabled,
-              ]}
-              onPress={isDisabled ? undefined : () => onNavigate(item.key)}
-              disabled={isDisabled}
-              activeOpacity={isDisabled ? 1 : 0.7}>
-              <View
-                style={[
-                  styles.navIcon,
-                  isActive ? styles.navIconActive : styles.navIconInactive,
-                  isDisabled && styles.navIconMuted,
-                ]}
-              />
-              <Text
-                style={[
-                  styles.navLabel,
-                  isActive ? styles.navLabelActive : styles.navLabelInactive,
-                  isDisabled && styles.navLabelMuted,
-                ]}>
-                {item.label}
-              </Text>
-            </TouchableOpacity>
-          );
-        })}
-      </View>
-    </View>
-  );
 }
 
 // ─── Table Header Row ─────────────────────────────────────────────────────────
@@ -263,21 +179,20 @@ export default function MembersScreen() {
 
   function handleNavigate(key: string) {
     setDrawerOpen(false);
-    if (key === 'schedule') router.push('/schedule-dashboard' as never);
-    if (key === 'coaches') router.push('/coaches' as never);
-    if (key === 'settings') router.push('/gym-settings' as never);
+    const target = OWNER_NAV_ITEMS.find((item) => item.key === key);
+    if (target?.route) router.push(target.route as never);
   }
 
   return (
     <View style={styles.root}>
-      {!isMobile && <Sidebar onNavigate={handleNavigate} />}
+      {!isMobile && <OwnerSidebar activeItem="members" onNavigate={handleNavigate} />}
 
       {/* Mobile drawer */}
       {isMobile && (
         <Modal visible={drawerOpen} transparent animationType="fade" onRequestClose={() => setDrawerOpen(false)}>
           <TouchableOpacity style={styles.drawerOverlay} activeOpacity={1} onPress={() => setDrawerOpen(false)}>
             <View style={styles.drawerContainer}>
-              <Sidebar onNavigate={handleNavigate} />
+              <OwnerSidebar activeItem="members" onNavigate={handleNavigate} />
             </View>
           </TouchableOpacity>
         </Modal>

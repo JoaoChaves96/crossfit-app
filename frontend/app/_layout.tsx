@@ -71,6 +71,7 @@ export default function RootLayout() {
             <Stack.Screen name="class-management/index" options={{ headerShown: false }} />
             <Stack.Screen name="gym-settings/index" options={{ headerShown: false }} />
             <Stack.Screen name="members" options={{ headerShown: false }} />
+            <Stack.Screen name="invites" options={{ headerShown: false }} />
             <Stack.Screen name="edit-class" options={{ headerShown: false }} />
             <Stack.Screen name="class-details" options={{ headerShown: false }} />
             <Stack.Screen name="log-results" options={{ headerShown: false }} />

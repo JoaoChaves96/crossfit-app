@@ -11,15 +11,28 @@ describe('OwnerSidebar', () => {
   });
 
   describe('nav model', () => {
-    it('exposes the canonical owner nav items without a Plans entry', () => {
+    it('exposes the canonical owner nav items in order', () => {
       const keys = OWNER_NAV_ITEMS.map((i) => i.key);
-      expect(keys).toEqual(['dashboard', 'schedule', 'classes', 'members', 'coaches', 'settings']);
-      expect(keys).not.toContain('plans');
+      expect(keys).toEqual([
+        'dashboard',
+        'schedule',
+        'classes',
+        'members',
+        'coaches',
+        'plans',
+        'invites',
+        'settings',
+      ]);
     });
 
-    it('marks Dashboard and Classes as disabled', () => {
+    it('marks Dashboard, Classes and Plans as disabled', () => {
       const disabled = OWNER_NAV_ITEMS.filter((i) => !i.enabled).map((i) => i.key);
-      expect(disabled).toEqual(['dashboard', 'classes']);
+      expect(disabled).toEqual(['dashboard', 'classes', 'plans']);
+    });
+
+    it('labels the members item "Members", never "Athletes"', () => {
+      const members = OWNER_NAV_ITEMS.find((i) => i.key === 'members');
+      expect(members?.label).toBe('Members');
     });
   });
 
