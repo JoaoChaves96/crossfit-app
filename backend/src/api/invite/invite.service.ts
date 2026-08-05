@@ -7,6 +7,7 @@ import { InviteEntity } from '../../domain/invite/entities/invite.entity';
 import { GymEntity } from '../../domain/gym/entities/gym.entity';
 import { UserEntity } from '../../domain/user/entities/user.entity';
 import { GymMembershipEntity } from '../../domain/gym-membership/entities/gym-membership.entity';
+import { GymStaffEntity } from '../../domain/gym-staff/entities/gym-staff.entity';
 import { InviteResponseDto } from './dto/invite-response.dto';
 import { InviteListItemDto } from './dto/invite-list-item.dto';
 import { RevokeInviteResponseDto } from './dto/revoke-invite-response.dto';
@@ -102,11 +103,23 @@ export class InviteService {
       where: { id: invite.gymId },
     });
 
+    const inviter = await this.dataSource.getRepository(UserEntity).findOne({
+      where: { id: invite.createdByUserId },
+    });
+
+    const inviterStaff = await this.dataSource
+      .getRepository(GymStaffEntity)
+      .findOne({
+        where: { gymId: invite.gymId, userId: invite.createdByUserId },
+      });
+
     return {
       gymId: invite.gymId,
       gymName: gym?.name || '',
       gymLocation: gym?.location || '',
       inviteeEmail: invite.inviteeEmail,
+      inviterName: inviter?.name || 'A gym staff member',
+      inviterRole: inviterStaff?.role || 'owner',
       expiresAt: invite.expiresAt.toISOString(),
       status: resolvedStatus,
     };

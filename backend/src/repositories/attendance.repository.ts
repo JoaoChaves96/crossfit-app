@@ -112,6 +112,7 @@ export class AttendanceRepository {
       .createQueryBuilder('attendance')
       .innerJoinAndSelect('attendance.class', 'class')
       .innerJoinAndSelect('class.classType', 'classType')
+      .leftJoinAndSelect('class.coach', 'coach')
       .where('attendance.userId = :userId', { userId })
       .andWhere('attendance.present = true')
       .andWhere('class.gymId = :gymId', { gymId })

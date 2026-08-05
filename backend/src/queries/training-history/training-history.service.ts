@@ -86,6 +86,7 @@ export class TrainingHistoryService {
         return {
           classId: cls.id,
           className: classType.name,
+          coachName: cls.coach?.name || 'Unknown Coach',
           scheduledAt,
           classState: cls.state as 'completed' | 'archived',
           result: resultDto,

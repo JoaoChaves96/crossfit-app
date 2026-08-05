@@ -26,6 +26,19 @@ export class ValidateInviteResponseDto {
   inviteeEmail: string;
 
   @ApiProperty({
+    description: 'Full name of the person who created the invite',
+    example: 'Sarah Johnson',
+  })
+  inviterName: string;
+
+  @ApiProperty({
+    description: 'Role of the inviter in the gym',
+    enum: ['owner', 'coach'],
+    example: 'coach',
+  })
+  inviterRole: 'owner' | 'coach';
+
+  @ApiProperty({
     description: 'ISO timestamp when the invite expires',
     example: '2026-05-10T12:00:00.000Z',
   })

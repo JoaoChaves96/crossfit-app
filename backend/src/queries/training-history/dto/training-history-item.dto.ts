@@ -72,6 +72,12 @@ export class TrainingHistoryItemDto {
   className: string;
 
   @ApiProperty({
+    example: 'Maria Santos',
+    description: 'Full name of the coach who led the class',
+  })
+  coachName: string;
+
+  @ApiProperty({
     example: '2024-06-01T09:00:00.000Z',
     description: 'ISO 8601 datetime combining the scheduled date and time',
   })
