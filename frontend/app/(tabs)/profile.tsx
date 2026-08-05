@@ -341,16 +341,23 @@ export default function ProfileScreen() {
       {/* Notification Preferences */}
       <View style={styles.notificationSection}>
         <Text style={styles.fieldLabel}>NOTIFICATIONS</Text>
+        <Text style={styles.notificationDescription}>Choose which notifications you'd like to receive.</Text>
         <View style={styles.notificationCard}>
-          {NOTIFICATION_ITEMS.map((item) => (
-            <View key={item.key} style={styles.notificationRow}>
-              <Text style={styles.notificationLabel}>{item.label}</Text>
-              <Switch
-                testID={`notification-toggle-${item.key}`}
-                value={notificationPrefs[item.key]}
-                onValueChange={(val) => handleToggle(item.key, val)}
-              />
-            </View>
+          {NOTIFICATION_ITEMS.map((item, index) => (
+            <React.Fragment key={item.key}>
+              {index > 0 && <View style={styles.notificationDivider} />}
+              <View style={styles.notificationRow}>
+                <View style={styles.notificationTextWrap}>
+                  <Text style={styles.notificationLabel}>{item.label}</Text>
+                  <Text style={styles.notificationSubtitle}>{item.subtitle}</Text>
+                </View>
+                <Switch
+                  testID={`notification-toggle-${item.key}`}
+                  value={notificationPrefs[item.key]}
+                  onValueChange={(val) => handleToggle(item.key, val)}
+                />
+              </View>
+            </React.Fragment>
           ))}
         </View>
       </View>

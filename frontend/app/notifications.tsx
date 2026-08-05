@@ -1,16 +1,18 @@
 import React from 'react';
 import { View, Text, FlatList, TouchableOpacity, ActivityIndicator } from 'react-native';
-import { IconSymbol } from '@/components/ui/icon-symbol';
+import { Ionicons } from '@expo/vector-icons';
 import { useNotifications, type Notification, type NotificationType } from '@/hooks/useNotifications';
 import { AppColors } from '@/constants/theme';
 import { styles } from './notifications.styles';
 
-const NOTIFICATION_ICONS: Record<NotificationType, { name: string; bgColor: string }> = {
-  booking_confirmation: { name: 'checkmark.circle', bgColor: AppColors.successBgFaint },
-  waitlist_promotion: { name: 'arrow.up.circle', bgColor: AppColors.warningBgOrange },
-  class_change: { name: 'pencil.circle', bgColor: AppColors.surfaceBlueLight },
-  class_cancellation: { name: 'xmark.circle', bgColor: AppColors.errorBg },
-  class_reminder: { name: 'clock', bgColor: AppColors.surfaceBlueLight },
+type IoniconName = React.ComponentProps<typeof Ionicons>['name'];
+
+const NOTIFICATION_ICONS: Record<NotificationType, { name: IoniconName; bgColor: string }> = {
+  booking_confirmation: { name: 'checkmark-circle', bgColor: AppColors.successBgFaint },
+  waitlist_promotion: { name: 'arrow-up-circle', bgColor: AppColors.warningBgOrange },
+  class_change: { name: 'create', bgColor: AppColors.surfaceBlueLight },
+  class_cancellation: { name: 'close-circle', bgColor: AppColors.errorBg },
+  class_reminder: { name: 'time', bgColor: AppColors.surfaceBlueLight },
 };
 
 function getTimeAgo(dateString: string): string {
@@ -38,7 +40,10 @@ function NotificationItem({
   notification: Notification;
   onPress: () => void;
 }) {
-  const iconConfig = NOTIFICATION_ICONS[notification.type] ?? { name: 'bell', bgColor: AppColors.backgroundLight };
+  const iconConfig = NOTIFICATION_ICONS[notification.type] ?? {
+    name: 'notifications' as IoniconName,
+    bgColor: AppColors.backgroundLight,
+  };
 
   return (
     <TouchableOpacity
@@ -50,7 +55,7 @@ function NotificationItem({
       testID={`notification-item-${notification.id}`}
     >
       <View style={[styles.iconContainer, { backgroundColor: iconConfig.bgColor }]}>
-        <IconSymbol size={18} name={iconConfig.name} color={AppColors.textGray600} />
+        <Ionicons size={18} name={iconConfig.name} color={AppColors.textGray600} />
       </View>
       <View style={styles.contentContainer}>
         <Text

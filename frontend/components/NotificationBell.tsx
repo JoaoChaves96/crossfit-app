@@ -1,6 +1,6 @@
 import React from 'react';
 import { TouchableOpacity, View, Text } from 'react-native';
-import { IconSymbol } from '@/components/ui/icon-symbol';
+import { Ionicons } from '@expo/vector-icons';
 import { useNotifications } from '@/hooks/useNotifications';
 import { useRouter } from 'expo-router';
 import { useAuth } from '@/hooks/useAuth';
@@ -17,7 +17,7 @@ function NotificationBellInner() {
       style={styles.container}
       testID="notification-bell"
     >
-      <IconSymbol size={24} name="bell" color={AppColors.textDark3} />
+      <Ionicons size={24} name="notifications-outline" color={AppColors.textDark3} />
       {unreadCount > 0 && (
         <View style={styles.badge} testID="notification-badge">
           <Text style={styles.badgeText}>

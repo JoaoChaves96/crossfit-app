@@ -20,11 +20,18 @@ export function usePushToken(): UsePushTokenReturn {
         return;
       }
 
-      const { status: existingStatus } = await Notifications.getPermissionsAsync();
+      // expo-notifications and expo are on skewed versions here, so the
+      // PermissionResponse type imported by expo-notifications drops `status`.
+      // Read it through a narrow cast to the base permission shape.
+      const { status: existingStatus } = (await Notifications.getPermissionsAsync()) as {
+        status: Notifications.PermissionStatus;
+      };
       let finalStatus = existingStatus;
 
       if (existingStatus !== 'granted') {
-        const { status } = await Notifications.requestPermissionsAsync();
+        const { status } = (await Notifications.requestPermissionsAsync()) as {
+          status: Notifications.PermissionStatus;
+        };
         finalStatus = status;
       }
 

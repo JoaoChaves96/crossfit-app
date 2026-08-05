@@ -33,6 +33,12 @@ jest.mock('@/hooks/useNotifications', () => ({
   useNotifications: (...args: unknown[]) => mockUseNotifications(...args),
 }));
 
+// NotificationBell reads auth state to decide whether to render; the component
+// under test is the bell itself, so treat the user as authenticated.
+jest.mock('@/hooks/useAuth', () => ({
+  useAuth: jest.fn(() => ({ isAuthenticated: true })),
+}));
+
 import { NotificationBell } from '@/components/NotificationBell';
 import NotificationsScreen from '@/app/notifications';
 import type { Notification } from '@/hooks/useNotifications';
