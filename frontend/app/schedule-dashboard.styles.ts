@@ -337,6 +337,93 @@ export const styles = StyleSheet.create({
     gap: Spacing.sm,
   },
 
+  // Mobile day-strip + vertical card list
+  dayStripScroll: {
+    flexGrow: 0,
+    flexShrink: 0,
+  },
+  dayStrip: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: Spacing.sm,
+    paddingHorizontal: Spacing.base,
+    paddingVertical: Spacing.md,
+  },
+  dayPill: {
+    minWidth: 44,
+    paddingVertical: Spacing.sm,
+    paddingHorizontal: Spacing.compact,
+    borderRadius: BorderRadius.mdLg,
+    borderWidth: 1,
+    borderColor: AppColors.backgroundDivider,
+    alignItems: 'center',
+    backgroundColor: AppColors.backgroundWhite,
+  },
+  dayPillActive: {
+    backgroundColor: AppColors.textHeading,
+    borderColor: AppColors.textHeading,
+  },
+  dayPillLabel: {
+    fontSize: FontSizes.sm,
+    fontWeight: FontWeights.semibold,
+    color: AppColors.textMuted,
+  },
+  dayPillLabelActive: {
+    color: AppColors.backgroundWhite,
+  },
+  dayPillDate: {
+    fontSize: FontSizes.md,
+    fontWeight: FontWeights.bold,
+    color: AppColors.textHeading,
+    marginTop: Spacing.hairline,
+  },
+  dayPillDateActive: {
+    color: AppColors.backgroundWhite,
+  },
+  mobileCardList: {
+    paddingHorizontal: Spacing.base,
+    paddingBottom: Spacing.xl,
+    gap: Spacing.md,
+  },
+  mobileClassCard: {
+    borderWidth: 1,
+    borderRadius: BorderRadius.lg,
+    borderLeftWidth: 4,
+    padding: Spacing.base,
+  },
+  mobileClassCardTop: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  mobileClassTime: {
+    fontSize: FontSizes.mdSm,
+    fontWeight: FontWeights.semibold,
+  },
+  mobileClassCapacity: {
+    fontSize: FontSizes.mdSm,
+    color: AppColors.textMuted,
+  },
+  mobileClassName: {
+    fontSize: FontSizes.md,
+    fontWeight: FontWeights.bold,
+    color: AppColors.textHeading,
+    marginTop: Spacing.compact,
+  },
+  mobileClassMeta: {
+    fontSize: FontSizes.mdSm,
+    color: AppColors.textMuted,
+    marginTop: Spacing.hairline,
+  },
+  mobileEmptyDay: {
+    paddingVertical: Spacing.jumboLg,
+    alignItems: 'center',
+  },
+  mobileEmptyDayText: {
+    fontSize: FontSizes.body,
+    color: AppColors.textDisabled,
+  },
+
   // List view
   listContainer: {
     flex: 1,

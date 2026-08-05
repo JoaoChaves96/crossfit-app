@@ -265,6 +265,86 @@ function ListRow({ gymClass, colorIndex }: ListRowProps) {
   );
 }
 
+// ─── Mobile Day Strip ───────────────────────────────────────────────────────────
+
+interface MobileDayStripProps {
+  weekDays: Date[];
+  selectedDayIdx: number;
+  onSelectDay: (idx: number) => void;
+}
+
+function MobileDayStrip({ weekDays, selectedDayIdx, onSelectDay }: MobileDayStripProps) {
+  return (
+    <ScrollView
+      horizontal
+      showsHorizontalScrollIndicator={false}
+      style={styles.dayStripScroll}
+      contentContainerStyle={styles.dayStrip}>
+      {weekDays.map((day, idx) => {
+        const isActive = idx === selectedDayIdx;
+        return (
+          <TouchableOpacity
+            key={day.toISOString().slice(0, 10)}
+            testID={`day-pill-${idx}`}
+            style={[styles.dayPill, isActive && styles.dayPillActive]}
+            onPress={() => onSelectDay(idx)}
+            activeOpacity={0.8}>
+            <Text style={[styles.dayPillLabel, isActive && styles.dayPillLabelActive]}>
+              {DAY_LABELS[idx]}
+            </Text>
+            <Text style={[styles.dayPillDate, isActive && styles.dayPillDateActive]}>
+              {day.getDate()}
+            </Text>
+          </TouchableOpacity>
+        );
+      })}
+    </ScrollView>
+  );
+}
+
+// ─── Mobile Class Card (full-width) ─────────────────────────────────────────────
+
+interface MobileClassCardProps {
+  gymClass: GymClass;
+  colorIndex: number;
+  onPress: () => void;
+}
+
+function MobileClassCard({ gymClass, colorIndex, onPress }: MobileClassCardProps) {
+  const color = getClassColor(colorIndex);
+  const isFull = gymClass.bookedCount >= gymClass.capacity;
+  const metaParts = [
+    gymClass.spaceName,
+    gymClass.duration ? `${gymClass.duration} min` : null,
+  ].filter(Boolean);
+
+  return (
+    <TouchableOpacity
+      activeOpacity={0.75}
+      onPress={onPress}
+      style={[
+        styles.mobileClassCard,
+        { backgroundColor: color.bg, borderColor: color.border, borderLeftColor: color.time },
+      ]}>
+      <View style={styles.mobileClassCardTop}>
+        <Text style={[styles.mobileClassTime, { color: color.time }]}>
+          {formatTime(gymClass.scheduledTime)}
+        </Text>
+        <Text style={[styles.mobileClassCapacity, isFull && styles.classCapacityFull]}>
+          {gymClass.bookedCount}/{gymClass.capacity}
+        </Text>
+      </View>
+      <Text style={styles.mobileClassName}>{gymClass.classTypeName}</Text>
+      <Text style={styles.mobileClassMeta}>
+        {gymClass.coachName ? `Coach: ${gymClass.coachName}` : 'No coach assigned'}
+      </Text>
+      {metaParts.length > 0 ? (
+        <Text style={styles.mobileClassMeta}>{metaParts.join(' · ')}</Text>
+      ) : null}
+    </TouchableOpacity>
+  );
+}
+
 // ─── Main Screen ──────────────────────────────────────────────────────────────
 
 export default function ScheduleDashboard() {
@@ -276,6 +356,7 @@ export default function ScheduleDashboard() {
 
   const [weekStart, setWeekStart] = useState<Date>(() => getWeekStart(new Date()));
   const [viewMode, setViewMode] = useState<ViewMode>('week');
+  const [selectedDayIdx, setSelectedDayIdx] = useState<number>(0);
   const [classes, setClasses] = useState<GymClass[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -375,40 +456,34 @@ export default function ScheduleDashboard() {
     }
 
     if (isMobile) {
+      const dayClasses = classesByDay[selectedDayIdx] ?? [];
+      const offset = classesByDay
+        .slice(0, selectedDayIdx)
+        .reduce((sum, arr) => sum + arr.length, 0);
       return (
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={styles.mobileGridContainer}>
-          {weekDays.map((day, dayIdx) => {
-            const dayKey = day.toISOString().slice(0, 10);
-            const offset = classesByDay
-              .slice(0, dayIdx)
-              .reduce((sum, arr) => sum + arr.length, 0);
-            return (
-              <View key={dayKey} style={styles.mobileDayColumn}>
-                <View style={styles.dayHeader}>
-                  <Text style={styles.dayLabel}>{DAY_LABELS[dayIdx]}</Text>
-                  <Text style={styles.dayDate}>{day.getDate()}</Text>
-                </View>
-                {classesByDay[dayIdx].length === 0 ? (
-                  <View style={styles.emptyDayCard}>
-                    <Text style={styles.emptyDayText}>No classes</Text>
-                  </View>
-                ) : (
-                  classesByDay[dayIdx].map((cls, idx) => (
-                    <ClassCard
-                      key={cls.id}
-                      gymClass={cls}
-                      colorIndex={offset + idx}
-                      onPress={() => handleClassPress(cls.id)}
-                    />
-                  ))
-                )}
+        <View style={{ flex: 1 }}>
+          <MobileDayStrip
+            weekDays={weekDays}
+            selectedDayIdx={selectedDayIdx}
+            onSelectDay={setSelectedDayIdx}
+          />
+          <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.mobileCardList}>
+            {dayClasses.length === 0 ? (
+              <View style={styles.mobileEmptyDay}>
+                <Text style={styles.mobileEmptyDayText}>No classes scheduled</Text>
               </View>
-            );
-          })}
-        </ScrollView>
+            ) : (
+              dayClasses.map((cls, idx) => (
+                <MobileClassCard
+                  key={cls.id}
+                  gymClass={cls}
+                  colorIndex={offset + idx}
+                  onPress={() => handleClassPress(cls.id)}
+                />
+              ))
+            )}
+          </ScrollView>
+        </View>
       );
     }
 
