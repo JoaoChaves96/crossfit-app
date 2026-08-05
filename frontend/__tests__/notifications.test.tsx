@@ -48,7 +48,7 @@ import type { Notification } from '@/hooks/useNotifications';
 function makeNotification(overrides: Partial<Notification> = {}): Notification {
   return {
     id: 'notif-1',
-    type: 'booking_confirmation',
+    type: 'booking_confirmed',
     title: 'Booking Confirmed',
     body: 'Your spot is reserved.',
     data: null,

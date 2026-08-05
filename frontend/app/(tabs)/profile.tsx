@@ -8,6 +8,8 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import { useRouter } from 'expo-router';
 import { useAuth } from '@/hooks/useAuth';
 import { createApiClient } from '@/utils/api-client';
 import type { components } from '@/types/api.gen';
@@ -51,7 +53,8 @@ type ScreenState =
   | { status: 'success'; profile: UserProfileDto };
 
 export default function ProfileScreen() {
-  const { token } = useAuth();
+  const { token, logout } = useAuth();
+  const router = useRouter();
   const { isDesktop } = useResponsiveLayout();
   const [screenState, setScreenState] = useState<ScreenState>({ status: 'loading' });
   const [isEditing, setIsEditing] = useState(false);
@@ -116,6 +119,11 @@ export default function ProfileScreen() {
     } finally {
       setIsSaving(false);
     }
+  };
+
+  const handleLogout = async () => {
+    await logout();
+    router.replace('/login' as never);
   };
 
   if (screenState.status === 'loading') {
@@ -257,6 +265,19 @@ export default function ProfileScreen() {
             <View style={styles.noteRow}>
               <Text style={styles.noteText}>Email cannot be changed</Text>
             </View>
+
+            {/* Log out */}
+            <View style={styles.logoutButtonWrap}>
+              <TouchableOpacity
+                testID="profile-logout-btn"
+                style={styles.logoutButton}
+                onPress={handleLogout}
+                activeOpacity={0.8}
+              >
+                <Ionicons size={18} name="log-out-outline" color={AppColors.errorMaterial} />
+                <Text style={styles.logoutButtonLabel}>Log Out</Text>
+              </TouchableOpacity>
+            </View>
           </View>
         </ScrollView>
       </View>
@@ -389,6 +410,19 @@ export default function ProfileScreen() {
       {/* Email cannot be changed note */}
       <View style={styles.noteRow}>
         <Text style={styles.noteText}>Email cannot be changed</Text>
+      </View>
+
+      {/* Log out */}
+      <View style={styles.logoutButtonWrap}>
+        <TouchableOpacity
+          testID="profile-logout-btn"
+          style={styles.logoutButton}
+          onPress={handleLogout}
+          activeOpacity={0.8}
+        >
+          <Ionicons size={18} name="log-out-outline" color={AppColors.errorMaterial} />
+          <Text style={styles.logoutButtonLabel}>Log Out</Text>
+        </TouchableOpacity>
       </View>
     </ScrollView>
   );

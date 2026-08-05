@@ -32,7 +32,7 @@ jest.mock('@/hooks/useApiClient', () => ({
 function makeNotification(overrides: Partial<Notification> = {}): Notification {
   return {
     id: 'notif-1',
-    type: 'booking_confirmation',
+    type: 'booking_confirmed',
     title: 'Booking Confirmed',
     body: 'Your spot is reserved.',
     data: null,
@@ -42,10 +42,13 @@ function makeNotification(overrides: Partial<Notification> = {}): Notification {
   };
 }
 
+// Mirrors GetNotificationsResponseDto — the list lives under `items`.
 function makeNotificationsResponse(notifications: Notification[], unreadCount?: number) {
   return {
-    notifications,
+    items: notifications,
     total: notifications.length,
+    page: 1,
+    limit: 20,
     unreadCount: unreadCount ?? notifications.filter((n) => !n.read).length,
   };
 }

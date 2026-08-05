@@ -1,11 +1,14 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useApiClient } from './useApiClient';
 
+// Notification type names mirror the backend contract
+// (GetNotificationsResponseDto.items[].type). Keep these in sync with
+// backend/src/api/notification/dto/notification-response.dto.ts.
 export type NotificationType =
-  | 'booking_confirmation'
-  | 'waitlist_promotion'
-  | 'class_change'
-  | 'class_cancellation'
+  | 'booking_confirmed'
+  | 'waitlist_promoted'
+  | 'class_cancelled'
+  | 'class_changed'
   | 'class_reminder';
 
 export interface Notification {
@@ -18,9 +21,12 @@ export interface Notification {
   createdAt: string;
 }
 
+// Matches GetNotificationsResponseDto — the list lives under `items`.
 interface NotificationsResponse {
-  notifications: Notification[];
+  items: Notification[];
   total: number;
+  page: number;
+  limit: number;
   unreadCount: number;
 }
 
@@ -52,8 +58,8 @@ export function useNotifications(options?: UseNotificationsOptions): UseNotifica
       const response = await apiClient.get(
         `/api/me/notifications?page=${page}&limit=${limit}`,
       ) as NotificationsResponse;
-      setNotifications(response.notifications);
-      setUnreadCount(response.unreadCount);
+      setNotifications(response.items ?? []);
+      setUnreadCount(response.unreadCount ?? 0);
     } catch {
       // Error is handled by the API client (401 redirect etc.)
       // Keep current state on failure

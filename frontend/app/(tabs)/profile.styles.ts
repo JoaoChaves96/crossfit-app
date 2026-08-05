@@ -212,6 +212,28 @@ export const styles = StyleSheet.create({
     textAlign: 'center',
     paddingTop: Spacing.sm,
   },
+  logoutButtonWrap: {
+    width: '100%',
+    paddingTop: Spacing.xl,
+  },
+  logoutButton: {
+    width: '100%',
+    height: 48,
+    backgroundColor: AppColors.backgroundWhite,
+    borderRadius: BorderRadius.lg,
+    borderWidth: 1,
+    borderColor: AppColors.errorMaterial,
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    gap: Spacing.sm,
+  },
+  logoutButtonLabel: {
+    fontFamily: 'Inter',
+    fontSize: FontSizes.md,
+    fontWeight: FontWeights.semibold,
+    color: AppColors.errorMaterial,
+  },
   noteRow: {
     width: '100%',
     justifyContent: 'center',

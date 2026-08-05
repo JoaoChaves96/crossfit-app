@@ -1,8 +1,9 @@
 import React from 'react';
 import { View, Text, Pressable, StyleSheet } from 'react-native';
 import { useRouter, usePathname } from 'expo-router';
-import { AppColors, FontSizes, FontWeights, Spacing } from '@/constants/theme';
+import { AppColors, FontSizes, FontWeights } from '@/constants/theme';
 import { NotificationBell } from '@/components/NotificationBell';
+import { GymMenu } from '@/components/GymMenu';
 
 const NAV_ITEMS = [
   { label: 'Schedule', path: '/(tabs)/schedule' },
@@ -26,11 +27,8 @@ export function DesktopTopNav({ gymName = 'My Gym' }: DesktopTopNavProps) {
 
   return (
     <View style={navStyles.topBar}>
-      {/* Gym selector */}
-      <View style={navStyles.gymSelector}>
-        <Text style={navStyles.gymName}>{gymName}</Text>
-        <Text style={navStyles.gymCaret}>{'▼'}</Text>
-      </View>
+      {/* Gym selector menu (gym name + Log Out) */}
+      <GymMenu gymName={gymName} />
 
       {/* Nav tabs */}
       <View style={navStyles.navTabs}>
@@ -70,22 +68,6 @@ const navStyles = StyleSheet.create({
     paddingHorizontal: 40,
     borderBottomWidth: 1,
     borderBottomColor: AppColors.borderDefault,
-  },
-  gymSelector: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.sm,
-  },
-  gymName: {
-    fontFamily: 'Inter',
-    fontSize: FontSizes.lg,
-    fontWeight: FontWeights.bold,
-    color: AppColors.textPrimary,
-  },
-  gymCaret: {
-    fontFamily: 'Inter',
-    fontSize: FontSizes.xs,
-    color: AppColors.textGray600,
   },
   navTabs: {
     flexDirection: 'row',

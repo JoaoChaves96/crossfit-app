@@ -1,4 +1,4 @@
-import React, { useContext, useState } from 'react';
+import React, { useContext, useEffect, useState } from 'react';
 import {
   ActivityIndicator,
   KeyboardAvoidingView,
@@ -34,6 +34,17 @@ export default function LoginScreen() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // If the user is already authenticated (a valid token was restored from
+  // storage on app start), skip the login form and send them to their home
+  // screen. Wait for AuthContext to finish loading so we don't redirect on a
+  // stale null user.
+  useEffect(() => {
+    if (!auth || auth.isLoading) return;
+    if (auth.isAuthenticated && auth.user) {
+      routeForRole(router, auth.user.role);
+    }
+  }, [auth, router]);
+
   async function handleSubmit() {
     if (!auth || !gym) return;
 
@@ -58,15 +69,7 @@ export default function LoginScreen() {
         await gym.setCurrentGymId(gymId);
       }
 
-      if (role === 'owner') {
-        router.replace('/schedule-dashboard' as never);
-      } else if (role === 'coach') {
-        router.replace('/coach-classes' as never);
-      } else if (role === 'athlete') {
-        router.replace('/(tabs)/schedule' as never);
-      } else {
-        router.replace('/no-gym' as never);
-      }
+      routeForRole(router, role);
     } catch (err) {
       if (err instanceof ApiError && err.status === 401) {
         setError('Wrong email or password. Please try again.');
@@ -171,6 +174,20 @@ export default function LoginScreen() {
 }
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
+
+// Send the user to their role's home screen. Shared by the post-login flow and
+// the already-authenticated redirect guard so both stay in sync.
+function routeForRole(router: ReturnType<typeof useRouter>, role: string | null): void {
+  if (role === 'owner') {
+    router.replace('/schedule-dashboard' as never);
+  } else if (role === 'coach') {
+    router.replace('/coach-classes' as never);
+  } else if (role === 'athlete') {
+    router.replace('/(tabs)/schedule' as never);
+  } else {
+    router.replace('/no-gym' as never);
+  }
+}
 
 function getRoleFromToken(token: string): string | null {
   try {

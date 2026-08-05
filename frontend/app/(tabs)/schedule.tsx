@@ -20,6 +20,7 @@ import { formatTimeRange } from '@/utils/datetime';
 import { useResponsiveLayout } from '@/hooks/useResponsiveLayout';
 import { DesktopTopNav } from '@/components/DesktopTopNav';
 import { NotificationBell } from '@/components/NotificationBell';
+import { GymMenu } from '@/components/GymMenu';
 import { styles, desktopStyles } from './schedule.styles';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -66,6 +67,29 @@ type TimeView = 'week' | 'day';
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 function getSpotsText(bookedCount: number, capacity: number): string {
   return `${bookedCount} / ${capacity} spots`;
+}
+
+// Format a "YYYY-MM-DD" schedule date into a human separator label.
+// Parses the parts explicitly to avoid UTC-vs-local off-by-one shifts.
+function formatDateLabel(iso: string): string {
+  const [year, month, day] = iso.split('-').map(Number);
+  const date = new Date(year, month - 1, day);
+  return date.toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' });
+}
+
+// Group classes (already sorted by date then time) into consecutive date
+// buckets so the schedule can render one separator per real day.
+function groupByDate(items: EnrichedClass[]): { date: string; items: EnrichedClass[] }[] {
+  const groups: { date: string; items: EnrichedClass[] }[] = [];
+  for (const item of items) {
+    const last = groups[groups.length - 1];
+    if (last && last.date === item.scheduledDate) {
+      last.items.push(item);
+    } else {
+      groups.push({ date: item.scheduledDate, items: [item] });
+    }
+  }
+  return groups;
 }
 
 function getCapacityDetailText(bookedCount: number, capacity: number, status: CardStatus): { text: string; isFullWaitlist: boolean } {
@@ -380,16 +404,34 @@ export default function ScheduleScreen() {
     return [ALL_FILTER, ...unique];
   }, [classes]);
 
+  // Classes passing the active class-type chip (All shows everything).
+  const typeFilteredClasses = useMemo(() => {
+    return classes.filter(
+      (cls) => activeFilter === ALL_FILTER || cls.classTypeName === activeFilter,
+    );
+  }, [classes, activeFilter]);
+
+  // In Day view we focus a single day. Prefer today; otherwise the soonest
+  // upcoming day that has classes; otherwise the most recent past day. This
+  // avoids the empty screen that appeared when nothing was scheduled today.
+  const focusedDay = useMemo(() => {
+    const dates = Array.from(new Set(typeFilteredClasses.map((c) => c.scheduledDate))).sort();
+    if (dates.length === 0) return null;
+    if (dates.includes(todayIso)) return todayIso;
+    const upcoming = dates.find((d) => d >= todayIso);
+    return upcoming ?? dates[dates.length - 1];
+  }, [typeFilteredClasses, todayIso]);
+
   // Client-side filtering over already-fetched classes:
-  //  - class-type chip (All shows everything)
-  //  - Week shows all; Day narrows to today's classes.
+  //  - Week shows all matching classes (grouped by date on render).
+  //  - Day narrows to the focused day's classes.
   const visibleClasses = useMemo(() => {
-    return classes.filter((cls) => {
-      const typeMatch = activeFilter === ALL_FILTER || cls.classTypeName === activeFilter;
-      const dayMatch = timeView === 'week' || cls.scheduledDate === todayIso;
-      return typeMatch && dayMatch;
-    });
-  }, [classes, activeFilter, timeView, todayIso]);
+    if (timeView === 'week') return typeFilteredClasses;
+    return typeFilteredClasses.filter((cls) => cls.scheduledDate === focusedDay);
+  }, [typeFilteredClasses, timeView, focusedDay]);
+
+  // Consecutive date buckets for rendering one separator per real day.
+  const dateGroups = useMemo(() => groupByDate(visibleClasses), [visibleClasses]);
 
   const fetchData = useCallback(async () => {
     if (authLoading || gymLoading || !token || !currentGymId) {
@@ -501,11 +543,9 @@ export default function ScheduleScreen() {
   }
 
   // ── Date separator ─────────────────────────────────────────────────────────
-  const dateSeparator = (
+  const renderDateSeparator = (iso: string) => (
     <View style={styles.dateSep}>
-      <Text style={styles.dateLabel}>
-        {new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' })}
-      </Text>
+      <Text style={styles.dateLabel}>{formatDateLabel(iso)}</Text>
       <View style={styles.dateLine} />
     </View>
   );
@@ -516,10 +556,7 @@ export default function ScheduleScreen() {
       <View style={isDesktop ? desktopStyles.screen : styles.screen}>
         {isDesktop ? <DesktopTopNav gymName={gymName} /> : (
           <View style={styles.header}>
-            <View style={styles.gymSelector}>
-              <Text style={styles.gymName}>{gymName}</Text>
-              <Text style={styles.gymDropdownCaret}>▼</Text>
-            </View>
+            <GymMenu gymName={gymName} />
             <NotificationBell />
           </View>
         )}
@@ -552,21 +589,25 @@ export default function ScheduleScreen() {
               onFilterChange={setActiveFilter}
               containerStyle={desktopStyles.controls}
             />
-            {dateSeparator}
             <ScrollView showsVerticalScrollIndicator={false} style={{ flex: 1 }}>
-              {visibleClasses.length === 0 ? (
+              {dateGroups.length === 0 ? (
                 <View style={styles.filteredEmpty}>
                   <Text style={styles.filteredEmptyText}>
                     No classes match the selected filters.
                   </Text>
                 </View>
               ) : (
-                <DesktopGrid
-                  classes={visibleClasses}
-                  onClassPress={handleClassPress}
-                  onCancelBooking={handleCancelBooking}
-                  cancellingBookingId={cancellingBookingId}
-                />
+                dateGroups.map((group) => (
+                  <View key={group.date}>
+                    {renderDateSeparator(group.date)}
+                    <DesktopGrid
+                      classes={group.items}
+                      onClassPress={handleClassPress}
+                      onCancelBooking={handleCancelBooking}
+                      cancellingBookingId={cancellingBookingId}
+                    />
+                  </View>
+                ))
               )}
             </ScrollView>
           </View>
@@ -578,10 +619,7 @@ export default function ScheduleScreen() {
   // ── Mobile list ────────────────────────────────────────────────────────────
   const header = (
     <View style={styles.header}>
-      <View style={styles.gymSelector}>
-        <Text style={styles.gymName}>{gymName}</Text>
-        <Text style={styles.gymDropdownCaret}>▼</Text>
-      </View>
+      <GymMenu gymName={gymName} />
       <NotificationBell />
     </View>
   );
@@ -596,38 +634,48 @@ export default function ScheduleScreen() {
     />
   );
 
-  const listHeader = (
-    <View>
-      {controls}
-      {dateSeparator}
-    </View>
-  );
+  // Flatten date groups into a single list interleaving separators and cards so
+  // one FlatList renders per-day headers without a nested-list perf warning.
+  type ListRow =
+    | { kind: 'separator'; date: string }
+    | { kind: 'class'; item: EnrichedClass };
+  const listRows: ListRow[] = [];
+  for (const group of dateGroups) {
+    listRows.push({ kind: 'separator', date: group.date });
+    for (const item of group.items) {
+      listRows.push({ kind: 'class', item });
+    }
+  }
 
   return (
     <View style={styles.screen}>
       {header}
       <FlatList
-        data={visibleClasses}
-        keyExtractor={(item) => item.id}
+        data={listRows}
+        keyExtractor={(row) => (row.kind === 'separator' ? `sep-${row.date}` : row.item.id)}
         contentContainerStyle={styles.listContent}
-        ListHeaderComponent={listHeader}
+        ListHeaderComponent={controls}
         ListEmptyComponent={
           <View style={styles.filteredEmpty}>
             <Text style={styles.filteredEmptyText}>No classes match the selected filters.</Text>
           </View>
         }
-        renderItem={({ item }) => (
-          <ClassCard
-            item={item}
-            onPress={() => handleClassPress(item.id)}
-            onCancel={() => {
-              if (item.userBookingId) {
-                handleCancelBooking(item.id, item.userBookingId);
-              }
-            }}
-            isCancelling={cancellingBookingId === item.userBookingId}
-          />
-        )}
+        renderItem={({ item: row }) =>
+          row.kind === 'separator' ? (
+            renderDateSeparator(row.date)
+          ) : (
+            <ClassCard
+              item={row.item}
+              onPress={() => handleClassPress(row.item.id)}
+              onCancel={() => {
+                if (row.item.userBookingId) {
+                  handleCancelBooking(row.item.id, row.item.userBookingId);
+                }
+              }}
+              isCancelling={cancellingBookingId === row.item.userBookingId}
+            />
+          )
+        }
       />
     </View>
   );

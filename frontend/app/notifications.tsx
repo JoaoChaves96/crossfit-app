@@ -8,10 +8,10 @@ import { styles } from './notifications.styles';
 type IoniconName = React.ComponentProps<typeof Ionicons>['name'];
 
 const NOTIFICATION_ICONS: Record<NotificationType, { name: IoniconName; bgColor: string }> = {
-  booking_confirmation: { name: 'checkmark-circle', bgColor: AppColors.successBgFaint },
-  waitlist_promotion: { name: 'arrow-up-circle', bgColor: AppColors.warningBgOrange },
-  class_change: { name: 'create', bgColor: AppColors.surfaceBlueLight },
-  class_cancellation: { name: 'close-circle', bgColor: AppColors.errorBg },
+  booking_confirmed: { name: 'checkmark-circle', bgColor: AppColors.successBgFaint },
+  waitlist_promoted: { name: 'arrow-up-circle', bgColor: AppColors.warningBgOrange },
+  class_changed: { name: 'create', bgColor: AppColors.surfaceBlueLight },
+  class_cancelled: { name: 'close-circle', bgColor: AppColors.errorBg },
   class_reminder: { name: 'time', bgColor: AppColors.surfaceBlueLight },
 };
 
