@@ -16,7 +16,9 @@ import { useResponsiveLayout } from '@/hooks/useResponsiveLayout';
 import { createApiClient } from '@/utils/api-client';
 import { components } from '@/types/api.gen';
 import { AppColors } from '@/constants/theme';
-import { styles } from './create-class.styles';
+import { OwnerSidebar } from '@/components/OwnerSidebar';
+import { formatShortDate, formatTime12h } from '@/utils/datetime';
+import { styles, webDateTimeInputStyle } from './create-class.styles';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -146,6 +148,94 @@ function TextField({ label, value, onChangeText, placeholder, keyboardType, erro
         placeholderTextColor={AppColors.textDisabled}
         keyboardType={keyboardType ?? 'default'}
       />
+      {error ? <Text style={styles.validationErrorText}>{error}</Text> : null}
+    </View>
+  );
+}
+
+// ─── Date / Time Picker Field ────────────────────────────────────────────────
+//
+// A bordered value+icon box (per design ApiDp). On web it renders the browser's
+// native date/time picker via a raw HTML <input>, which yields "YYYY-MM-DD" /
+// "HH:mm" strings directly — fed straight into the form state with no conversion.
+// On native there is no bundled picker dependency, so it falls back to a
+// pressable box that reveals an inline text entry, showing a human-friendly
+// formatted value ("Apr 21, 2026" / "06:00 AM") when a value is set.
+
+interface DateTimeFieldProps {
+  label: string;
+  mode: 'date' | 'time';
+  value: string;
+  onChange: (value: string) => void;
+  error?: string;
+  testID?: string;
+}
+
+function DateTimeField({ label, mode, value, onChange, error, testID }: DateTimeFieldProps) {
+  const [editing, setEditing] = useState(false);
+  const icon = mode === 'date' ? '📅' : '🕐';
+  const placeholder = mode === 'date' ? 'YYYY-MM-DD' : 'HH:mm';
+  const formatted =
+    value && mode === 'date' ? formatShortDate(value) : value ? formatTime12h(value) : '';
+  const displayValue = formatted || value;
+
+  const renderControl = () => {
+    // Web: real browser date/time picker.
+    if (Platform.OS === 'web') {
+      return (
+        <View style={[styles.inputBox, error ? styles.inputBoxValidationError : null]}>
+          {React.createElement('input', {
+            'data-testid': testID,
+            type: mode,
+            value,
+            onChange: (e: { target: { value: string } }) => onChange(e.target.value),
+            style: webDateTimeInputStyle,
+          })}
+          <Text style={styles.trailingIcon}>{icon}</Text>
+        </View>
+      );
+    }
+
+    // Native fallback: pressable box that reveals an inline text entry.
+    if (editing) {
+      return (
+        <View style={[styles.inputBox, error ? styles.inputBoxValidationError : null]}>
+          <TextInput
+            testID={testID}
+            style={styles.pickerValueText}
+            value={value}
+            onChangeText={onChange}
+            onBlur={() => setEditing(false)}
+            placeholder={placeholder}
+            placeholderTextColor={AppColors.textDisabled}
+            keyboardType={mode === 'time' ? 'numbers-and-punctuation' : 'default'}
+            autoFocus
+          />
+          <Text style={styles.trailingIcon}>{icon}</Text>
+        </View>
+      );
+    }
+
+    return (
+      <TouchableOpacity
+        testID={testID}
+        style={[styles.inputBox, error ? styles.inputBoxValidationError : null]}
+        onPress={() => setEditing(true)}
+        activeOpacity={0.7}>
+        <Text
+          style={[styles.pickerValueText, !displayValue && styles.pickerPlaceholderText]}
+          numberOfLines={1}>
+          {displayValue || `Select ${label}`}
+        </Text>
+        <Text style={styles.trailingIcon}>{icon}</Text>
+      </TouchableOpacity>
+    );
+  };
+
+  return (
+    <View style={styles.fieldContainer}>
+      <Text style={styles.fieldLabel}>{label}</Text>
+      {renderControl()}
       {error ? <Text style={styles.validationErrorText}>{error}</Text> : null}
     </View>
   );
@@ -325,7 +415,14 @@ export default function CreateClassScreen() {
   const spaceItems =
     spacesFetch.status === 'success' ? spacesFetch.data : [];
 
-  return (
+  const handleSidebarNav = (key: string) => {
+    if (key === 'schedule') router.push('/schedule-dashboard' as never);
+    if (key === 'members') router.push('/members' as never);
+    if (key === 'coaches') router.push('/coaches' as never);
+    if (key === 'settings') router.push('/gym-settings' as never);
+  };
+
+  const formContent = (
     <KeyboardAvoidingView
       style={styles.screen}
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
@@ -345,22 +442,22 @@ export default function CreateClassScreen() {
           {/* Row 1 — Date and Time */}
           <View style={[styles.row, isMobile && styles.rowMobile]}>
             <View style={styles.rowItem}>
-              <TextField
+              <DateTimeField
                 testID="create-class-date-input"
                 label="Date"
+                mode="date"
                 value={form.scheduledDate}
-                onChangeText={(v) => setForm((s) => ({ ...s, scheduledDate: v }))}
-                placeholder="YYYY-MM-DD"
+                onChange={(v) => setForm((s) => ({ ...s, scheduledDate: v }))}
                 error={formErrors.scheduledDate}
               />
             </View>
             <View style={styles.rowItem}>
-              <TextField
+              <DateTimeField
                 testID="create-class-time-input"
                 label="Time"
+                mode="time"
                 value={form.scheduledTime}
-                onChangeText={(v) => setForm((s) => ({ ...s, scheduledTime: v }))}
-                placeholder="HH:mm"
+                onChange={(v) => setForm((s) => ({ ...s, scheduledTime: v }))}
                 error={formErrors.scheduledTime}
               />
             </View>
@@ -474,5 +571,16 @@ export default function CreateClassScreen() {
         </View>
       </ScrollView>
     </KeyboardAvoidingView>
+  );
+
+  if (isMobile) {
+    return formContent;
+  }
+
+  return (
+    <View style={styles.root}>
+      <OwnerSidebar activeItem="classes" onNavigate={handleSidebarNav} />
+      {formContent}
+    </View>
   );
 }

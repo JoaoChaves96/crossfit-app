@@ -74,6 +74,18 @@ function renderScreen(mockApi = buildApiClientWithDropdowns()) {
   );
 }
 
+/**
+ * The Date/Time fields are picker affordances. On the native fallback path
+ * (jest's default Platform), the underlying text entry is revealed by pressing
+ * the field first. This helper presses the field then types the canonical
+ * "YYYY-MM-DD" / "HH:mm" string into the placeholder input.
+ */
+function fillDateTime(utils: ReturnType<typeof renderScreen>, placeholder: string, value: string) {
+  const testID = placeholder === 'YYYY-MM-DD' ? 'create-class-date-input' : 'create-class-time-input';
+  fireEvent.press(utils.getByTestId(testID));
+  fireEvent.changeText(utils.getByPlaceholderText(placeholder), value);
+}
+
 // ─── Tests ────────────────────────────────────────────────────────────────────
 
 describe('CreateClassScreen', () => {
@@ -127,7 +139,7 @@ describe('CreateClassScreen', () => {
       fireEvent.press(utils.getByText('Main Floor'));
 
       // Fill time but not date
-      fireEvent.changeText(utils.getByPlaceholderText('HH:mm'), '09:00');
+      fillDateTime(utils, 'HH:mm', '09:00');
 
       fireEvent.press(utils.getByText('Save Class'));
 
@@ -163,8 +175,8 @@ describe('CreateClassScreen', () => {
       fireEvent.press(utils.getByText('Main Floor'));
 
       // Fill date and time
-      fireEvent.changeText(utils.getByPlaceholderText('YYYY-MM-DD'), '2026-06-01');
-      fireEvent.changeText(utils.getByPlaceholderText('HH:mm'), '09:00');
+      fillDateTime(utils, 'YYYY-MM-DD', '2026-06-01');
+      fillDateTime(utils, 'HH:mm', '09:00');
 
       // Submit
       await act(async () => {
@@ -201,8 +213,8 @@ describe('CreateClassScreen', () => {
       fireEvent.press(utils.getByText('Select Space'));
       fireEvent.press(utils.getByText('Main Floor'));
 
-      fireEvent.changeText(utils.getByPlaceholderText('YYYY-MM-DD'), '2026-06-01');
-      fireEvent.changeText(utils.getByPlaceholderText('HH:mm'), '09:00');
+      fillDateTime(utils, 'YYYY-MM-DD', '2026-06-01');
+      fillDateTime(utils, 'HH:mm', '09:00');
       fireEvent.changeText(utils.getByPlaceholderText('e.g. 15'), '20');
       fireEvent.changeText(utils.getByPlaceholderText('e.g. 60'), '60');
 
@@ -236,8 +248,8 @@ describe('CreateClassScreen', () => {
       fireEvent.press(utils.getByText('coach@example.com'));
       fireEvent.press(utils.getByText('Select Space'));
       fireEvent.press(utils.getByText('Main Floor'));
-      fireEvent.changeText(utils.getByPlaceholderText('YYYY-MM-DD'), '2026-06-01');
-      fireEvent.changeText(utils.getByPlaceholderText('HH:mm'), '09:00');
+      fillDateTime(utils, 'YYYY-MM-DD', '2026-06-01');
+      fillDateTime(utils, 'HH:mm', '09:00');
 
       await act(async () => {
         fireEvent.press(utils.getByText('Save Class'));

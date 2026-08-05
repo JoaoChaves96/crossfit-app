@@ -1,7 +1,28 @@
 import { StyleSheet } from 'react-native';
 import { AppColors, BorderRadius, FontSizes, FontWeights, LineHeights, Spacing } from '@/constants/theme';
 
+/**
+ * Inline style for the raw HTML <input type="date|time"> rendered on web.
+ * This targets a DOM element (not an RN component), so it is a plain CSS
+ * object rather than a StyleSheet entry. Values still reference design tokens.
+ */
+export const webDateTimeInputStyle = {
+  flex: 1,
+  border: 'none',
+  outline: 'none',
+  background: 'transparent',
+  color: AppColors.textHeading,
+  fontFamily: 'Inter',
+  fontSize: FontSizes.body,
+  padding: 0,
+} as const;
+
 export const styles = StyleSheet.create({
+  root: {
+    flex: 1,
+    flexDirection: 'row',
+    backgroundColor: AppColors.backgroundWhite,
+  },
   screen: {
     flex: 1,
     backgroundColor: AppColors.backgroundWhite,
@@ -58,6 +79,21 @@ export const styles = StyleSheet.create({
   },
   inputBoxDisabled: {
     backgroundColor: AppColors.backgroundLight,
+  },
+  pickerValueText: {
+    flex: 1,
+    color: AppColors.textHeading,
+    fontFamily: 'Inter',
+    fontSize: FontSizes.body,
+    fontWeight: FontWeights.regular,
+  },
+  pickerPlaceholderText: {
+    color: AppColors.textDisabled,
+  },
+  trailingIcon: {
+    fontSize: FontSizes.body,
+    color: AppColors.textDisabled,
+    marginLeft: Spacing.sm,
   },
   inputBoxError: {
     borderColor: AppColors.errorBgRose,
