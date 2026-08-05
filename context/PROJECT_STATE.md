@@ -149,8 +149,10 @@ MVP scope. Coach desktop has NO duplicate-header bug). Discovery/triage only; fi
     harness; added a `useAuth` mock. `npx jest notifications` → 20/20 pass.
   - `6a70ca28` mobile profile notification rows → added subtitles + section description + dividers to
     match the desktop layout / design frame.
-  - `6a70cae7` "screen hard-crashes (`notifications` undefined)" → not reproducible; `useNotifications`
-    always returns an array. Web icons (previously blank SF-symbol names) switched to `Ionicons`.
+  - `6a70cae7` "screen hard-crashes (`notifications` undefined)" → **crash was real** (earlier
+    "not reproducible" note corrected). Backend returns the list under `items` + `unreadCount`, but
+    the hook read `response.notifications` → undefined → crash; the `type` enum was also mismatched
+    (`booking_confirmation` vs backend `booking_confirmed`). Fixed in the UX batch below (`9b7e6bd`).
 - 🔍 **🐞 Coach design-scope reconciliation** (3 cards) → **To Verify** — design `e76b950`
   (`ux-designer` on `designs/coach-screens.pen`; no app change). Coach design frames had drifted
   from `docs/PRODUCT.md` §5.3 (several copied from the gym-owner design). Reconciled the design set
@@ -164,6 +166,21 @@ MVP scope. Coach desktop has NO duplicate-header bug). Discovery/triage only; fi
   - Designer flagged two read-only-for-now items in the surviving coach Class Details frames to
     confirm are never wired editable: the lifecycle status badge and capacity/booked counts
     (coaches can't change lifecycle state or capacity per §5.3).
+- 🔍 **Five athlete-app UX fixes** → **To Verify** — frontend `9b7e6bd` (live-verified in Chrome).
+  Post-audit issues reported directly by the user while exercising the athlete app:
+  - **No logout** → Log Out button added at the bottom of the Profile screen (desktop + mobile) and
+    in the new gym menu; clears the session and routes to `/login`.
+  - **Login redirect when already authenticated** → `login.tsx` mount guard: once AuthContext finishes
+    loading, an authenticated user is routed to their role home (shared `routeForRole` helper).
+  - **Week/Day schedule bug** → schedule no longer filters to a hardcoded `new Date()` "today"
+    (which rendered empty). Week shows all plan-eligible classes grouped by date; Day focuses the
+    next upcoming date; date separators use a UTC-safe `formatDateLabel`.
+  - **Dead gym dropdown** → new `GymMenu` popover (gym name + Log Out) replaces the inert ▼ selector
+    in the desktop top-nav and mobile schedule headers. Decision: menu, not a multi-gym switcher.
+  - **Notification bell crash on click** → the `items`/`unreadCount` contract + enum fix
+    (see `6a70cae7` above). 20/20 notification tests, 19/19 schedule tests pass.
+  - Spun off a new Backlog card for a separate cold-load robustness issue: direct-URL `/notifications`
+    load crashes because `useApiClient` throws before AuthContext restores the token.
 - ✅ **Issues Found is now empty of actionable 🐞 cards.** All Phase 3 audit bugs are fixed and sit
   in To Verify awaiting live verification. Membership Plans / Members cards are parked in Backlog
   (deferred post-go-live).
