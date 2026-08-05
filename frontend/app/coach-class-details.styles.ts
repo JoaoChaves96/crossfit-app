@@ -419,6 +419,29 @@ export const mobileStyles = StyleSheet.create({
     color: AppColors.darkTextDim,
     marginTop: Spacing.tight,
   },
+
+  // Compact 2-col info grid
+  infoGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+  },
+  infoGridCell: {
+    width: '50%',
+    marginBottom: Spacing.base,
+  },
+  infoGridCellLabel: {
+    fontSize: FontSizes.sm,
+    fontWeight: FontWeights.bold,
+    letterSpacing: 0.8,
+    textTransform: 'uppercase',
+    color: AppColors.darkTextMuted,
+    marginBottom: Spacing.tight,
+  },
+  infoGridCellValue: {
+    fontSize: FontSizes.body,
+    fontWeight: FontWeights.regular,
+    color: AppColors.darkTextDim,
+  },
   bookedRow: {
     flexDirection: 'row',
     alignItems: 'center',

@@ -259,20 +259,24 @@ export default function CoachClassDetailsScreen() {
           <View style={ms.contentColumn}>
             {/* Info Panel */}
             <View style={ms.infoPanel}>
-              <Text style={ms.panelTitle}>Class Info</Text>
-              <View style={ms.separator} />
-
-              <Text style={ms.fieldLabel}>CLASS TYPE</Text>
-              <Text style={ms.fieldValueBold}>{classTypeName ?? '—'}</Text>
-
-              <Text style={ms.fieldLabel}>DATE &amp; TIME</Text>
-              <Text style={ms.fieldValue}>{formattedDateTime}</Text>
-
-              <Text style={ms.fieldLabel}>SPACE</Text>
-              <Text style={ms.fieldValue}>{spaceName ?? '—'}</Text>
-
-              <Text style={ms.fieldLabel}>CAPACITY</Text>
-              <Text style={ms.fieldValue}>{bookedCountNum} booked / {capacityNum} spots</Text>
+              <View style={ms.infoGrid}>
+                <View style={ms.infoGridCell}>
+                  <Text style={ms.infoGridCellLabel}>CLASS TYPE</Text>
+                  <Text style={ms.infoGridCellValue}>{classTypeName ?? '—'}</Text>
+                </View>
+                <View style={ms.infoGridCell}>
+                  <Text style={ms.infoGridCellLabel}>DATE &amp; TIME</Text>
+                  <Text style={ms.infoGridCellValue}>{formattedDateTime}</Text>
+                </View>
+                <View style={ms.infoGridCell}>
+                  <Text style={ms.infoGridCellLabel}>SPACE</Text>
+                  <Text style={ms.infoGridCellValue}>{spaceName ?? '—'}</Text>
+                </View>
+                <View style={ms.infoGridCell}>
+                  <Text style={ms.infoGridCellLabel}>CAPACITY</Text>
+                  <Text style={ms.infoGridCellValue}>{bookedCountNum} / {capacityNum} booked</Text>
+                </View>
+              </View>
 
               <View style={[ms.separator, ms.separatorSpacing]} />
 
