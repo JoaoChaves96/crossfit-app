@@ -9,7 +9,7 @@ import { AppColors } from '@/constants/theme';
 import { components } from '@/types/api.gen';
 import { styles } from './class-management.styles';
 import { ClassManagementSidebar } from './ClassManagementSidebar';
-import { ClassHeader } from './ClassHeader';
+import { ClassHeader, ClassTitleRow, MobileClassInfoCard, ClassActions } from './ClassHeader';
 import { BookingsPanel } from './BookingsPanel';
 import { ResultsPanel } from './ResultsPanel';
 import { useClassTransition } from './useClassTransition';
@@ -181,14 +181,22 @@ export default function ClassManagement() {
           </View>
         ) : classDetail ? (
           <>
-            <ClassHeader
-              classDetail={classDetail}
-              isTransitioning={isTransitioning}
-              onTransition={handleTransition}
-              onMarkAttendance={handleMarkAttendance}
-              onAddProgramming={handleAddProgramming}
-              onEditClass={handleEditClass}
-            />
+            {isMobile ? (
+              <ClassTitleRow
+                classDetail={classDetail}
+                isTransitioning={isTransitioning}
+                onTransition={handleTransition}
+              />
+            ) : (
+              <ClassHeader
+                classDetail={classDetail}
+                isTransitioning={isTransitioning}
+                onTransition={handleTransition}
+                onMarkAttendance={handleMarkAttendance}
+                onAddProgramming={handleAddProgramming}
+                onEditClass={handleEditClass}
+              />
+            )}
 
             {isLoadingBookings || isLoadingResults ? (
               <View style={styles.centeredFeedback}>
@@ -214,9 +222,16 @@ export default function ClassManagement() {
                 ) : null}
               </View>
             ) : isMobile ? (
-              /* Mobile: tabbed interface for Bookings/Results */
+              /* Mobile: 3-tab interface Info | Bookings | Results */
               <View style={styles.mobileTabsContainer}>
                 <View style={styles.mobileTabBar}>
+                  <TouchableOpacity
+                    style={[styles.mobileTab, mobileTab === 'info' && styles.mobileTabActive]}
+                    onPress={() => setMobileTab('info')}>
+                    <Text style={[styles.mobileTabText, mobileTab === 'info' && styles.mobileTabTextActive]}>
+                      Info
+                    </Text>
+                  </TouchableOpacity>
                   <TouchableOpacity
                     style={[styles.mobileTab, mobileTab === 'bookings' && styles.mobileTabActive]}
                     onPress={() => setMobileTab('bookings')}>
@@ -232,7 +247,16 @@ export default function ClassManagement() {
                     </Text>
                   </TouchableOpacity>
                 </View>
-                {mobileTab === 'bookings' ? (
+                {mobileTab === 'info' ? (
+                  <View>
+                    <MobileClassInfoCard classDetail={classDetail} />
+                    <ClassActions
+                      onMarkAttendance={handleMarkAttendance}
+                      onAddProgramming={handleAddProgramming}
+                      onEditClass={handleEditClass}
+                    />
+                  </View>
+                ) : mobileTab === 'bookings' ? (
                   <BookingsPanel bookedList={bookedList} waitlistedList={waitlistedList} />
                 ) : (
                   <ResultsPanel results={results} />

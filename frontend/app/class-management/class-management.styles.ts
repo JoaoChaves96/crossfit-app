@@ -258,9 +258,40 @@ export const styles = StyleSheet.create({
     fontFamily: 'Inter',
   },
 
+  // Mobile compact info grid (2-col)
+  mobileInfoGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    backgroundColor: AppColors.backgroundScreen,
+    borderWidth: 1,
+    borderColor: AppColors.backgroundDivider,
+    borderRadius: BorderRadius.mdLg,
+    padding: Spacing.base,
+    marginBottom: Spacing.base,
+  },
+  mobileInfoGridCell: {
+    width: '50%',
+    marginBottom: Spacing.md,
+  },
+  mobileInfoGridLabel: {
+    fontSize: FontSizes.sm,
+    fontWeight: FontWeights.semibold,
+    letterSpacing: 0.5,
+    color: AppColors.textDisabled,
+    marginBottom: Spacing.tight,
+    fontFamily: 'Inter',
+  },
+  mobileInfoGridValue: {
+    fontSize: FontSizes.body,
+    fontWeight: FontWeights.medium,
+    color: AppColors.textHeading,
+    fontFamily: 'Inter',
+  },
+
   // Action row
   actionRow: {
     flexDirection: 'row',
+    flexWrap: 'wrap',
     gap: Spacing.smMd,
   },
   primaryBtn: {

@@ -94,6 +94,78 @@ function InfoCard({ classDetail }: InfoCardProps) {
   );
 }
 
+// ─── Class Title Row (always shown) ─────────────────────────────────────────────
+
+interface ClassTitleRowProps {
+  classDetail: ClassDetail;
+  isTransitioning: boolean;
+  onTransition: () => void;
+}
+
+export function ClassTitleRow({ classDetail, isTransitioning, onTransition }: ClassTitleRowProps) {
+  return (
+    <View style={styles.headerRow}>
+      <View style={styles.headerLeft}>
+        <Text style={styles.headerTitle}>{classDetail.classTypeName}</Text>
+        <Text style={styles.headerSubtitle}>
+          {formatDateSubtitle(classDetail.scheduledDate, classDetail.scheduledTime)}
+        </Text>
+      </View>
+      <StateBadge
+        state={classDetail.state}
+        isTransitioning={isTransitioning}
+        onPress={onTransition}
+      />
+    </View>
+  );
+}
+
+// ─── Mobile Info Card (compact 2-col) ───────────────────────────────────────────
+
+export function MobileClassInfoCard({ classDetail }: { classDetail: ClassDetail }) {
+  const items: { label: string; value: string }[] = [
+    { label: 'CLASS TYPE', value: classDetail.classTypeName },
+    { label: 'DURATION', value: `${classDetail.duration} min` },
+    { label: 'COACH', value: classDetail.coachName || '—' },
+    { label: 'CAPACITY', value: `${classDetail.bookedCount} / ${classDetail.capacity}` },
+    { label: 'SPACE', value: classDetail.spaceName || '—' },
+  ];
+  return (
+    <View style={styles.mobileInfoGrid}>
+      {items.map((item) => (
+        <View key={item.label} style={styles.mobileInfoGridCell}>
+          <Text style={styles.mobileInfoGridLabel}>{item.label}</Text>
+          <Text style={styles.mobileInfoGridValue}>{item.value}</Text>
+        </View>
+      ))}
+    </View>
+  );
+}
+
+// ─── Action Row ─────────────────────────────────────────────────────────────────
+
+interface ClassActionsProps {
+  onMarkAttendance: () => void;
+  onAddProgramming: () => void;
+  onEditClass: () => void;
+}
+
+export function ClassActions({ onMarkAttendance, onAddProgramming, onEditClass }: ClassActionsProps) {
+  return (
+    <View style={styles.actionRow}>
+      <TouchableOpacity testID="mark-attendance-btn" style={styles.primaryBtn} onPress={onMarkAttendance}>
+        <Text style={styles.primaryBtnText}>MARK ATTENDANCE</Text>
+      </TouchableOpacity>
+      <TouchableOpacity testID="add-programming-btn" style={styles.outlinedBtn} onPress={onAddProgramming}>
+        <Text style={styles.outlinedBtnText}>ADD PROGRAMMING</Text>
+      </TouchableOpacity>
+      <TouchableOpacity testID="edit-class-btn" style={styles.outlinedBtn} onPress={onEditClass}>
+        <Text style={styles.outlinedBtnText}>EDIT</Text>
+      </TouchableOpacity>
+    </View>
+  );
+}
+
 // ─── Class Header ─────────────────────────────────────────────────────────────
 
 interface ClassHeaderProps {
@@ -115,33 +187,13 @@ export function ClassHeader({
 }: ClassHeaderProps) {
   return (
     <>
-      <View style={styles.headerRow}>
-        <View style={styles.headerLeft}>
-          <Text style={styles.headerTitle}>{classDetail.classTypeName}</Text>
-          <Text style={styles.headerSubtitle}>
-            {formatDateSubtitle(classDetail.scheduledDate, classDetail.scheduledTime)}
-          </Text>
-        </View>
-        <StateBadge
-          state={classDetail.state}
-          isTransitioning={isTransitioning}
-          onPress={onTransition}
-        />
-      </View>
-
+      <ClassTitleRow classDetail={classDetail} isTransitioning={isTransitioning} onTransition={onTransition} />
       <InfoCard classDetail={classDetail} />
-
-      <View style={styles.actionRow}>
-        <TouchableOpacity testID="mark-attendance-btn" style={styles.primaryBtn} onPress={onMarkAttendance}>
-          <Text style={styles.primaryBtnText}>MARK ATTENDANCE</Text>
-        </TouchableOpacity>
-        <TouchableOpacity testID="add-programming-btn" style={styles.outlinedBtn} onPress={onAddProgramming}>
-          <Text style={styles.outlinedBtnText}>ADD PROGRAMMING</Text>
-        </TouchableOpacity>
-        <TouchableOpacity testID="edit-class-btn" style={styles.outlinedBtn} onPress={onEditClass}>
-          <Text style={styles.outlinedBtnText}>EDIT</Text>
-        </TouchableOpacity>
-      </View>
+      <ClassActions
+        onMarkAttendance={onMarkAttendance}
+        onAddProgramming={onAddProgramming}
+        onEditClass={onEditClass}
+      />
     </>
   );
 }
