@@ -38,9 +38,17 @@ function buildSlotsFromBookings(bookings: ClassBookingItem[]): AthleteSlot[] {
   return bookings.map((b) => ({
     athleteUserId: b.athleteUserId,
     label: b.displayName,
-    present: false,
+    present: true,
   }));
 }
+
+const STATUS_LABEL: Record<CoachClassItem['state'], string> = {
+  published: 'Published',
+  booking_closed: 'Booking Closed',
+  in_progress: 'In Progress',
+  completed: 'Completed',
+  archived: 'Archived',
+};
 
 function formatDateTime(date: string, time: string): string {
   const d = new Date(`${date}T${time}`);
@@ -455,7 +463,7 @@ export default function CoachMarkAttendanceScreen() {
           ) : null}
           <View style={styles.infoItem}>
             <Text style={styles.infoLabel}>STATUS</Text>
-            <Text style={styles.infoValue}>{classState.replace('_', ' ')}</Text>
+            <Text style={styles.infoValue}>{STATUS_LABEL[classState]}</Text>
           </View>
         </View>
 

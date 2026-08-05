@@ -9,6 +9,7 @@ import {
   useWindowDimensions,
 } from 'react-native';
 import { useRouter } from 'expo-router';
+import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '@/hooks/useAuth';
 import { useGym } from '@/hooks/useGym';
 import { createApiClient } from '@/utils/api-client';
@@ -187,8 +188,13 @@ function MobileClassCard({ gymClass, onView }: MobileClassCardProps) {
           <Text style={mobileStyles.classCardMetaText}>{dateTimeLabel}</Text>
         </View>
         <View style={mobileStyles.classCardMetaRow}>
+          <Ionicons name="location-outline" size={16} color={AppColors.darkTextDim} />
+          <Text style={mobileStyles.classCardMetaText}>{gymClass.spaceName}</Text>
+        </View>
+        <View style={mobileStyles.classCardMetaRow}>
+          <Ionicons name="people-outline" size={16} color={AppColors.darkTextDim} />
           <Text style={mobileStyles.classCardMetaText}>
-            {gymClass.spaceName} · {gymClass.bookedCount}/{gymClass.capacity} booked
+            {gymClass.bookedCount} / {gymClass.capacity} booked
           </Text>
         </View>
       </View>
@@ -198,7 +204,7 @@ function MobileClassCard({ gymClass, onView }: MobileClassCardProps) {
           testID={`coach-class-view-btn-${gymClass.id}`}
           style={mobileStyles.classCardViewBtn}
           onPress={() => onView(gymClass)}>
-          <Text style={mobileStyles.classCardViewBtnText}>View</Text>
+          <Text style={mobileStyles.classCardViewBtnText}>View Details</Text>
         </Pressable>
       </View>
     </View>
