@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { ClassRepository } from '../../repositories/class.repository';
 import { ResultRepository } from '../../repositories/result.repository';
+import { UserService } from '../../domain/user/user.service';
 import { GetMyClassResultResponseDto } from './dto/get-my-class-result-response.dto';
 import { ClassResultItemDto } from './dto/class-result-item.dto';
 import { notFound } from '../../http/exceptions';
@@ -22,6 +23,7 @@ export class GetMyClassResultService {
   constructor(
     private readonly classRepository: ClassRepository,
     private readonly resultRepository: ResultRepository,
+    private readonly userService: UserService,
   ) {}
 
   /**
@@ -55,9 +57,12 @@ export class GetMyClassResultService {
       return { result: null };
     }
 
+    const user = await this.userService.getUserById(resultEntity.userId);
+
     const result: ClassResultItemDto = {
       id: resultEntity.id,
       userId: resultEntity.userId,
+      userName: user ? user.name : resultEntity.userId,
       metricType: resultEntity.metricType,
       value: resultEntity.value,
       unit: resultEntity.unit,

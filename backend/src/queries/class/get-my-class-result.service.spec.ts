@@ -3,11 +3,13 @@ import { NotFoundException } from '@nestjs/common';
 import { GetMyClassResultService } from './get-my-class-result.service';
 import { ClassRepository } from '../../repositories/class.repository';
 import { ResultRepository } from '../../repositories/result.repository';
+import { UserService } from '../../domain/user/user.service';
 
 describe('GetMyClassResultService', () => {
   let service: GetMyClassResultService;
   let classRepository: { getClassById: jest.Mock };
   let resultRepository: { getResultByUserAndClass: jest.Mock };
+  let userService: { getUserById: jest.Mock };
 
   const gymId = 'gym-1';
   const classId = 'class-1';
@@ -26,12 +28,17 @@ describe('GetMyClassResultService', () => {
           provide: ResultRepository,
           useValue: { getResultByUserAndClass: jest.fn() },
         },
+        {
+          provide: UserService,
+          useValue: { getUserById: jest.fn() },
+        },
       ],
     }).compile();
 
     service = module.get(GetMyClassResultService);
     classRepository = module.get(ClassRepository);
     resultRepository = module.get(ResultRepository);
+    userService = module.get(UserService);
   });
 
   it('returns the caller own result when one exists', async () => {
@@ -48,6 +55,7 @@ describe('GetMyClassResultService', () => {
       editedAt: null,
     };
     resultRepository.getResultByUserAndClass.mockResolvedValue(resultEntity);
+    userService.getUserById.mockResolvedValue({ id: athleteA, name: 'Alice A.' });
 
     const response = await service.getMyClassResult(gymId, classId, athleteA);
 
@@ -58,7 +66,28 @@ describe('GetMyClassResultService', () => {
     expect(response.result).not.toBeNull();
     expect(response.result?.id).toBe('result-1');
     expect(response.result?.userId).toBe(athleteA);
+    expect(response.result?.userName).toBe('Alice A.');
     expect(response.result?.value).toBe('180');
+  });
+
+  it('falls back to userId as userName when the user cannot be resolved', async () => {
+    classRepository.getClassById.mockResolvedValue({ id: classId, gymId });
+    resultRepository.getResultByUserAndClass.mockResolvedValue({
+      id: 'result-1',
+      userId: athleteA,
+      classId,
+      metricType: 'reps',
+      value: '50',
+      unit: 'reps',
+      notes: null,
+      loggedAt: new Date('2026-01-01T00:00:00.000Z'),
+      editedAt: null,
+    });
+    userService.getUserById.mockResolvedValue(null);
+
+    const response = await service.getMyClassResult(gymId, classId, athleteA);
+
+    expect(response.result?.userName).toBe(athleteA);
   });
 
   it('returns null result when the caller has none (no 404)', async () => {

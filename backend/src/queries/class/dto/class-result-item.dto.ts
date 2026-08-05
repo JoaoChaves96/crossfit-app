@@ -19,6 +19,13 @@ export class ClassResultItemDto {
   userId: string;
 
   @ApiProperty({
+    example: 'Carlos Silva',
+    description:
+      "Display name of the athlete who logged this result (full name, or the userId if the user can't be resolved)",
+  })
+  userName: string;
+
+  @ApiProperty({
     enum: ['time', 'reps', 'weight', 'rounds', 'note'],
     example: 'time',
     description: 'Type of metric logged',

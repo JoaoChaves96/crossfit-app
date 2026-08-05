@@ -6,6 +6,7 @@ import {
 import { ClassRepository } from '../../repositories/class.repository';
 import { ResultRepository } from '../../repositories/result.repository';
 import { GymStaffService } from '../../domain/gym-staff/gym-staff.service';
+import { UserService } from '../../domain/user/user.service';
 import { GetClassResultsResponseDto } from './dto/get-class-results-response.dto';
 import { ClassResultItemDto } from './dto/class-result-item.dto';
 
@@ -24,6 +25,7 @@ export class GetClassResultsService {
     private readonly classRepository: ClassRepository,
     private readonly resultRepository: ResultRepository,
     private readonly gymStaffService: GymStaffService,
+    private readonly userService: UserService,
   ) {}
 
   /**
@@ -72,16 +74,23 @@ export class GetClassResultsService {
     const resultEntities =
       await this.resultRepository.getResultsByClass(classId);
 
-    const results: ClassResultItemDto[] = resultEntities.map((result) => ({
-      id: result.id,
-      userId: result.userId,
-      metricType: result.metricType,
-      value: result.value,
-      unit: result.unit,
-      notes: result.notes,
-      loggedAt: result.loggedAt,
-      editedAt: result.editedAt,
-    }));
+    // Resolve athlete display names (fallback to userId if unresolved)
+    const results: ClassResultItemDto[] = await Promise.all(
+      resultEntities.map(async (result) => {
+        const user = await this.userService.getUserById(result.userId);
+        return {
+          id: result.id,
+          userId: result.userId,
+          userName: user ? user.name : result.userId,
+          metricType: result.metricType,
+          value: result.value,
+          unit: result.unit,
+          notes: result.notes,
+          loggedAt: result.loggedAt,
+          editedAt: result.editedAt,
+        };
+      }),
+    );
 
     return { results };
   }
