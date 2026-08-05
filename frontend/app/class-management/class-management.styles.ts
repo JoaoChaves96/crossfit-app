@@ -386,6 +386,7 @@ export const styles = StyleSheet.create({
   tableHeader: {
     flexDirection: 'row',
     alignItems: 'center',
+    gap: Spacing.sm,
     backgroundColor: AppColors.backgroundScreen,
     paddingHorizontal: Spacing.mdPlus,
     paddingVertical: Spacing.smMd,
@@ -406,6 +407,7 @@ export const styles = StyleSheet.create({
   tableRow: {
     flexDirection: 'row',
     alignItems: 'center',
+    gap: Spacing.sm,
     paddingHorizontal: Spacing.mdPlus,
     paddingVertical: Spacing.smMd,
     borderTopWidth: 1,

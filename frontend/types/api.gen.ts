@@ -1395,6 +1395,11 @@ export interface components {
              */
             userId: string;
             /**
+             * @description Display name of the athlete who logged this result (full name, or the userId if the user can't be resolved)
+             * @example Carlos Silva
+             */
+            userName: string;
+            /**
              * @description Type of metric logged
              * @example time
              * @enum {string}

@@ -1,20 +1,31 @@
 import React from 'react';
 import { Text, View } from 'react-native';
 import { components } from '@/types/api.gen';
+import { formatMetricLabel, formatResultValue } from '@/utils/result-format';
 import { styles } from './class-management.styles';
 
 type ClassResultItem = components['schemas']['ClassResultItemDto'];
 
-const METRIC_LABEL: Record<ClassResultItem['metricType'], string> = {
-  time: 'Time',
-  reps: 'Reps',
-  weight: 'Weight',
-  rounds: 'Rounds',
-  note: 'Note',
-};
-
 interface ResultsPanelProps {
   results: ClassResultItem[];
+}
+
+/** Two-letter initials from a display name (e.g. "Carlos Silva" → "CS"). */
+function initialsFor(name: string): string {
+  const parts = name.trim().split(/\s+/).filter(Boolean);
+  if (parts.length === 0) return '?';
+  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
+  return `${parts[0][0]}${parts[parts.length - 1][0]}`.toUpperCase();
+}
+
+/**
+ * Value shown in the owner Results table. Time results render as a clock with
+ * a "min" unit per design (e.g. "18:42 min"); everything else uses the shared
+ * formatter ("95 kg", "12 rounds", raw note text).
+ */
+function formatTableValue(result: ClassResultItem): string {
+  const formatted = formatResultValue(result);
+  return result.metricType === 'time' ? `${formatted} min` : formatted;
 }
 
 export function ResultsPanel({ results }: ResultsPanelProps) {
@@ -39,8 +50,7 @@ export function ResultsPanel({ results }: ResultsPanelProps) {
           </View>
         ) : (
           results.map((result) => {
-            const valueWithUnit =
-              result.unit !== 'none' ? `${result.value} ${result.unit}` : result.value;
+            const valueWithUnit = formatTableValue(result);
             const rawNotes = result.notes as unknown;
             const notesStr =
               rawNotes != null && typeof rawNotes === 'string' && rawNotes.length > 0
@@ -55,16 +65,16 @@ export function ResultsPanel({ results }: ResultsPanelProps) {
                 <View style={[styles.tableRowName, styles.tableColFill]}>
                   <View style={styles.avatar}>
                     <Text style={styles.avatarText}>
-                      {result.userId.slice(0, 2).toUpperCase()}
+                      {initialsFor(result.userName)}
                     </Text>
                   </View>
                   <Text style={styles.athleteName} numberOfLines={1}>
-                    {result.userId}
+                    {result.userName}
                   </Text>
                 </View>
                 <View style={styles.resColMetric}>
                   <Text style={styles.resMetricText}>
-                    {METRIC_LABEL[result.metricType] ?? result.metricType}
+                    {formatMetricLabel(result.metricType)}
                   </Text>
                 </View>
                 <View style={styles.resColValue}>
