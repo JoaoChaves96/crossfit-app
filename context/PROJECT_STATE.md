@@ -110,6 +110,7 @@ MVP scope. Coach desktop has NO duplicate-header bug). Discovery/triage only; fi
   - `6a70cf85` Divergent inline sidebars → schedule-dashboard/coaches/members drop their local `Sidebar`/`NAV_ITEMS` and render shared `OwnerSidebar`; dead per-screen sidebar styles removed
   - `6a70cf3c` Create-Invite modal no backdrop → overlay uses `absoluteFillObject` (flex:1 collapsed to 0-height in RN-Web Modal host); dimmed layer now fills viewport, card opaque above it
   - Note: `gym-settings` still uses its own `SettingsSidebar` (out of scope; unify later if desired)
+- 🔍 **🐞 Owner/Schedule Dashboard mobile card** (`6a70cd59`) → **To Verify** — verify-only, no code change (HEAD `7e87d87`). `MobileClassCard` already matches design frame `XbXLT` (time / name / Coach / "{space} · {duration} min" row / top-right N/N capacity). Card's "corner badge" claim was inaccurate — `XbXLT` renders capacity as plain #6B7280 text, which the code already does. Row was added in the earlier Tier-2 mobile-reflow batch.
 - 🔍 **🐞 Owner/Create Class family** (2 cards) → **To Verify** — frontend `1e8057a`.
   New reusable `OwnerSidebar` component (`OWNER_NAV_ITEMS`) introduced here; will be rolled out to remaining owner screens by the Nav-consistency batch.
   - `6a70cdd5` Desktop missing sidebar nav → Create Class desktop hosts `OwnerSidebar` (activeItem="classes"); mobile stays form-only
