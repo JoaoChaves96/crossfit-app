@@ -83,6 +83,17 @@ MVP scope. Coach desktop has NO duplicate-header bug). Discovery/triage only; fi
   - `6a70d10c` Coach Mark Attendance → subheader + Select All + footer, dropped stat tiles (frame `PWqpG`) — `35de7b2`
   - `6a70cdba` Owner Class Management → 3-tab Info|Bookings|Results (frame `7iKEc`) — `ff3978a`
   - Stale card `6a70c8f2` (Athlete Schedule header) excluded — app already renders the designed single-tier header.
+- 🔍 **🐞 Athlete data/section family** (8 cards) → **To Verify** — backend `301a065`, frontend `d7ff5bd`.
+  Real data now renders where placeholders/labels-only stood before; two backend contract additions,
+  types regenerated from Swagger. Added shared `frontend/utils/result-format.ts`.
+  - `6a70c92f` Class Details programming → fetches `.../classes/{id}/programming`, renders WOD (empty-state fallback)
+  - `6a70c933` Class Details Recent Results → fetches `.../results/me`, renders athlete's own result
+  - `6a70c926` Class Details location meta row → `spaceName` MetaRow (desktop + mobile)
+  - `6a70c8ed` Schedule card location row → conditional 📍 `spaceName`
+  - `6a70c961` My Bookings location row + icon fix → split 📍 space / 👤 coach rows (Upcoming + Past)
+  - `6a70cc1b` Training History result value → renders value + metric, "Not Logged" badge fallback
+  - `6a70c9a5` Training History coach row → `TrainingHistoryItemDto.coachName` (attendance repo join) + 👤 row
+  - `6a70caec` Invite Acceptance → `ValidateInviteResponseDto.inviterName`/`inviterRole`; renders "Invited by {name} ({role})"
 - **Deferred (separate plan):** Notifications frontend migration — unit tests (17 failing) + tsc
   errors + expo 54 / expo-notifications 56 version mismatch. Held in `git stash` on `dev`; two
   🐞 cards remain in the board's Issues Found list. See `epics/NOTIFICATIONS_PLAN.md`.
