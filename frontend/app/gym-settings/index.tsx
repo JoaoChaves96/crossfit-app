@@ -71,13 +71,13 @@ export default function GymSettings() {
 
         <ScrollView style={styles.tabContent} showsVerticalScrollIndicator={false}>
           {activeTab === 'spaces' && token && currentGymId ? (
-            <SpacesTab gymId={currentGymId} token={token} />
+            <SpacesTab gymId={currentGymId} token={token} isMobile={isMobile} />
           ) : activeTab === 'spaces' ? (
             <View style={styles.feedbackContainer}>
               <ActivityIndicator size="large" color={BODY_TEXT_COLOR} />
             </View>
           ) : activeTab === 'class-types' && token && currentGymId ? (
-            <ClassTypesTab gymId={currentGymId} token={token} />
+            <ClassTypesTab gymId={currentGymId} token={token} isMobile={isMobile} />
           ) : activeTab === 'class-types' ? (
             <View style={styles.feedbackContainer}>
               <ActivityIndicator size="large" color={BODY_TEXT_COLOR} />

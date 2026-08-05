@@ -39,6 +39,7 @@ function buildGetClassTypesResponse(classTypes: ReturnType<typeof buildClassType
 const DEFAULT_PROPS = {
   gymId: 'gym-abc',
   token: 'test-token',
+  isMobile: false,
 };
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────

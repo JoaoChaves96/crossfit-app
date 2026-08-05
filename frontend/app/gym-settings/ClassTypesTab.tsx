@@ -130,6 +130,71 @@ function ClassTypesTable({ classTypes, onEdit, onDelete, onAddPress }: ClassType
   );
 }
 
+// ─── Class Type Card (Mobile) ───────────────────────────────────────────────────
+
+interface ClassTypeCardProps {
+  classType: ClassTypeItem;
+  onEdit: (classType: ClassTypeItem) => void;
+  onDelete: (classType: ClassTypeItem) => void;
+}
+
+function ClassTypeCard({ classType, onEdit, onDelete }: ClassTypeCardProps) {
+  return (
+    <View style={styles.entityCard}>
+      <View style={styles.entityCardTop}>
+        <Text style={styles.entityCardTitle} numberOfLines={1}>{classType.name}</Text>
+        <View style={styles.entityCardActions}>
+          <TouchableOpacity
+            testID={`class-type-edit-btn-${classType.id}`}
+            style={styles.editBtn}
+            onPress={() => onEdit(classType)}
+            activeOpacity={0.7}>
+            <Text style={styles.editBtnText}>Edit</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            testID={`class-type-delete-btn-${classType.id}`}
+            style={styles.deleteBtn}
+            onPress={() => onDelete(classType)}
+            activeOpacity={0.7}>
+            <Text style={styles.deleteBtnText}>Delete</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+      <Text style={styles.entityCardSub}>
+        {classType.loggable ? 'Loggable' : 'Not loggable'} · Metric: {RESULT_METRIC_LABELS[classType.resultMetrics]}
+      </Text>
+    </View>
+  );
+}
+
+// ─── Class Types Card List (Mobile) ─────────────────────────────────────────────
+
+interface ClassTypesCardListProps {
+  classTypes: ClassTypeItem[];
+  onEdit: (classType: ClassTypeItem) => void;
+  onDelete: (classType: ClassTypeItem) => void;
+  onAddPress: () => void;
+}
+
+function ClassTypesCardList({ classTypes, onEdit, onDelete, onAddPress }: ClassTypesCardListProps) {
+  return (
+    <View style={styles.content}>
+      <View style={styles.sectionRow}>
+        <Text style={styles.sectionTitle}>Class Types</Text>
+        <TouchableOpacity testID="add-class-type-btn" style={styles.addBtn} onPress={onAddPress} activeOpacity={0.8}>
+          <Text style={styles.addBtnPlus}>+</Text>
+          <Text style={styles.addBtnText}>Add Class Type</Text>
+        </TouchableOpacity>
+      </View>
+      <View style={styles.spaceCardList}>
+        {classTypes.map((classType) => (
+          <ClassTypeCard key={classType.id} classType={classType} onEdit={onEdit} onDelete={onDelete} />
+        ))}
+      </View>
+    </View>
+  );
+}
+
 // ─── Class Type Form ──────────────────────────────────────────────────────────
 
 interface ClassTypeFormProps {
@@ -245,9 +310,10 @@ function ClassTypeForm({
 interface ClassTypesTabProps {
   gymId: string;
   token: string;
+  isMobile: boolean;
 }
 
-export function ClassTypesTab({ gymId, token }: ClassTypesTabProps) {
+export function ClassTypesTab({ gymId, token, isMobile }: ClassTypesTabProps) {
   const [classTypes, setClassTypes] = useState<ClassTypeItem[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -394,6 +460,17 @@ export function ClassTypesTab({ gymId, token }: ClassTypesTabProps) {
 
   if (classTypes.length === 0) {
     return <EmptyClassTypes onAddPress={handleAddPress} />;
+  }
+
+  if (isMobile) {
+    return (
+      <ClassTypesCardList
+        classTypes={classTypes}
+        onEdit={handleEditPress}
+        onDelete={handleDeletePress}
+        onAddPress={handleAddPress}
+      />
+    );
   }
 
   return (

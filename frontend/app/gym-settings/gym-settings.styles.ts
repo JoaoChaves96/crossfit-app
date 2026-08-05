@@ -278,6 +278,42 @@ export const styles = StyleSheet.create({
     fontFamily: 'Inter',
   },
 
+  // Entity card list (mobile)
+  spaceCardList: {
+    paddingHorizontal: Spacing.base,
+    paddingBottom: Spacing.xl,
+    gap: Spacing.md,
+  },
+  entityCard: {
+    backgroundColor: AppColors.backgroundWhite,
+    borderWidth: 1,
+    borderColor: AppColors.backgroundDivider,
+    borderRadius: BorderRadius.lg,
+    padding: Spacing.base,
+    gap: Spacing.md,
+  },
+  entityCardTop: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: Spacing.md,
+  },
+  entityCardTitle: {
+    fontSize: FontSizes.md,
+    fontWeight: FontWeights.semibold,
+    color: AppColors.textHeading,
+    flexShrink: 1,
+  },
+  entityCardSub: {
+    fontSize: FontSizes.mdSm,
+    color: AppColors.textMuted,
+    marginTop: Spacing.hairline,
+  },
+  entityCardActions: {
+    flexDirection: 'row',
+    gap: Spacing.sm,
+  },
+
   // Empty state
   emptyContainer: {
     flex: 1,

@@ -106,6 +106,69 @@ function SpacesTable({ spaces, onEdit, onDelete, onAddPress }: SpacesTableProps)
   );
 }
 
+// ─── Space Card (Mobile) ───────────────────────────────────────────────────────
+
+interface SpaceCardProps {
+  space: SpaceItem;
+  onEdit: (space: SpaceItem) => void;
+  onDelete: (space: SpaceItem) => void;
+}
+
+function SpaceCard({ space, onEdit, onDelete }: SpaceCardProps) {
+  return (
+    <View style={styles.entityCard}>
+      <View style={styles.entityCardTop}>
+        <Text style={styles.entityCardTitle} numberOfLines={1}>{space.name}</Text>
+        <View style={styles.entityCardActions}>
+          <TouchableOpacity
+            testID={`space-edit-btn-${space.id}`}
+            style={styles.editBtn}
+            onPress={() => onEdit(space)}
+            activeOpacity={0.7}>
+            <Text style={styles.editBtnText}>Edit</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            testID={`space-delete-btn-${space.id}`}
+            style={styles.deleteBtn}
+            onPress={() => onDelete(space)}
+            activeOpacity={0.7}>
+            <Text style={styles.deleteBtnText}>Delete</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+      <Text style={styles.entityCardSub}>Base capacity: {space.baseCapacity}</Text>
+    </View>
+  );
+}
+
+// ─── Spaces Card List (Mobile) ─────────────────────────────────────────────────
+
+interface SpacesCardListProps {
+  spaces: SpaceItem[];
+  onEdit: (space: SpaceItem) => void;
+  onDelete: (space: SpaceItem) => void;
+  onAddPress: () => void;
+}
+
+function SpacesCardList({ spaces, onEdit, onDelete, onAddPress }: SpacesCardListProps) {
+  return (
+    <View style={styles.content}>
+      <View style={styles.sectionRow}>
+        <Text style={styles.sectionTitle}>Spaces</Text>
+        <TouchableOpacity testID="add-space-btn" style={styles.addBtn} onPress={onAddPress} activeOpacity={0.8}>
+          <Text style={styles.addBtnPlus}>+</Text>
+          <Text style={styles.addBtnText}>Add Space</Text>
+        </TouchableOpacity>
+      </View>
+      <View style={styles.spaceCardList}>
+        {spaces.map((space) => (
+          <SpaceCard key={space.id} space={space} onEdit={onEdit} onDelete={onDelete} />
+        ))}
+      </View>
+    </View>
+  );
+}
+
 // ─── Space Form ───────────────────────────────────────────────────────────────
 
 interface SpaceFormProps {
@@ -196,9 +259,10 @@ function SpaceForm({ mode, initialName, initialCapacity, isSaving, onSave, onCan
 interface SpacesTabProps {
   gymId: string;
   token: string;
+  isMobile: boolean;
 }
 
-export function SpacesTab({ gymId, token }: SpacesTabProps) {
+export function SpacesTab({ gymId, token, isMobile }: SpacesTabProps) {
   const [spaces, setSpaces] = useState<SpaceItem[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -330,6 +394,17 @@ export function SpacesTab({ gymId, token }: SpacesTabProps) {
 
   if (spaces.length === 0) {
     return <EmptySpaces onAddPress={handleAddPress} />;
+  }
+
+  if (isMobile) {
+    return (
+      <SpacesCardList
+        spaces={spaces}
+        onEdit={handleEditPress}
+        onDelete={handleDeletePress}
+        onAddPress={handleAddPress}
+      />
+    );
   }
 
   return (
