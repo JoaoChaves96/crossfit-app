@@ -1,7 +1,7 @@
-import React from 'react';
+import React, { useCallback } from 'react';
 import { View, Text, FlatList, TouchableOpacity, ActivityIndicator, Alert } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { useRouter } from 'expo-router';
+import { useRouter, useFocusEffect } from 'expo-router';
 import { useNotifications, type Notification, type NotificationType } from '@/hooks/useNotifications';
 import { AppColors, Spacing } from '@/constants/theme';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -98,6 +98,14 @@ export default function NotificationsScreen() {
     useNotifications();
   const insets = useSafeAreaInsets();
   const router = useRouter();
+
+  // Refetch each time the screen gains focus, so opening the bell shows the
+  // latest notifications without requiring a manual pull-to-refresh.
+  useFocusEffect(
+    useCallback(() => {
+      void refresh();
+    }, [refresh]),
+  );
 
   const readCount = notifications.filter((n) => n.read).length;
 

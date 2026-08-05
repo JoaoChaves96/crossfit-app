@@ -8,6 +8,7 @@ import React, {
 } from 'react';
 import { useApiClient } from '@/hooks/useApiClient';
 import { useAuth } from '@/hooks/useAuth';
+import { useRefreshOnAppActive } from '@/hooks/useRefreshOnAppActive';
 
 // Notification type names mirror the backend contract
 // (GetNotificationsResponseDto.items[].type). Keep these in sync with
@@ -96,6 +97,12 @@ export function NotificationsProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     void fetchNotifications();
   }, [fetchNotifications]);
+
+  // Refetch when the app returns to the foreground, so the bell badge reflects
+  // notifications created while the app was backgrounded (e.g. a waitlist
+  // promotion). This provider lives above the navigator, so it drives the
+  // global badge regardless of which screen is focused.
+  useRefreshOnAppActive(useCallback(() => void fetchNotifications(), [fetchNotifications]));
 
   const refresh = useCallback(async () => {
     await fetchNotifications();

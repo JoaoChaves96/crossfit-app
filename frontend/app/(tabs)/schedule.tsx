@@ -18,6 +18,7 @@ import { components } from '@/types/api.gen';
 import { AppColors, Spacing } from '@/constants/theme';
 import { formatTimeRange } from '@/utils/datetime';
 import { useResponsiveLayout } from '@/hooks/useResponsiveLayout';
+import { useRefreshOnAppActive } from '@/hooks/useRefreshOnAppActive';
 import { DesktopTopNav } from '@/components/DesktopTopNav';
 import { NotificationBell } from '@/components/NotificationBell';
 import { GymMenu } from '@/components/GymMenu';
@@ -481,6 +482,10 @@ export default function ScheduleScreen() {
       fetchData();
     }, [fetchData])
   );
+
+  // Also refetch when the app returns to the foreground while this screen is the
+  // one on display — focus alone won't fire if no navigation happened on resume.
+  useRefreshOnAppActive(fetchData);
 
   const handleClassPress = (classId: string) => {
     if (!currentGymId) return;

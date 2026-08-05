@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import {
   View,
   Text,
@@ -18,6 +18,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { formatShortDate, formatTimeRange } from '@/utils/datetime';
 import { formatResultValue, formatMetricLabel } from '@/utils/result-format';
 import { useResponsiveLayout } from '@/hooks/useResponsiveLayout';
+import { useRefreshOnAppActive } from '@/hooks/useRefreshOnAppActive';
 import { useNotifications } from '@/hooks/useNotifications';
 import { DesktopTopNav } from '@/components/DesktopTopNav';
 import { styles, desktopStyles } from './class-details.styles';
@@ -218,7 +219,7 @@ export default function ClassDetailsScreen() {
   const [ownResult, setOwnResult] = useState<OwnResult | null>(null);
   const [isLoadingResult, setIsLoadingResult] = useState(true);
 
-  useEffect(() => {
+  const loadAll = useCallback(() => {
     if (authLoading || gymLoading || !token || !currentGymId || !classId) {
       setIsLoading(false);
       return;
@@ -294,6 +295,14 @@ export default function ClassDetailsScreen() {
     loadProgramming();
     loadOwnResult();
   }, [authLoading, gymLoading, token, currentGymId, classId]);
+
+  useEffect(() => {
+    loadAll();
+  }, [loadAll]);
+
+  // Refetch class details on foreground resume — the booking/waitlist state may
+  // have changed while the app was backgrounded (e.g. a waitlist promotion).
+  useRefreshOnAppActive(loadAll);
 
   const handleBook = async () => {
     if (!token || !currentGymId || !classId) return;

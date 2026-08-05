@@ -16,6 +16,7 @@ import { components } from '@/types/api.gen';
 import { AppColors } from '@/constants/theme';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { formatShortDate, formatTime12h } from '@/utils/datetime';
+import { useRefreshOnAppActive } from '@/hooks/useRefreshOnAppActive';
 import { useResponsiveLayout } from '@/hooks/useResponsiveLayout';
 import { DesktopTopNav } from '@/components/DesktopTopNav';
 import { NotificationBell } from '@/components/NotificationBell';
@@ -381,6 +382,10 @@ export default function MyBookingsScreen() {
       fetchData();
     }, [fetchData]),
   );
+
+  // Also refetch on foreground resume while this screen is on display — focus
+  // alone won't fire if the user reopens the app without navigating.
+  useRefreshOnAppActive(fetchData);
 
   const handleLogResult = (classId: string) => {
     if (!currentGymId) return;
