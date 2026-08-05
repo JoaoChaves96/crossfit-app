@@ -111,6 +111,18 @@ MVP scope. Coach desktop has NO duplicate-header bug). Discovery/triage only; fi
   - `6a70cf3c` Create-Invite modal no backdrop → overlay uses `absoluteFillObject` (flex:1 collapsed to 0-height in RN-Web Modal host); dimmed layer now fills viewport, card opaque above it
   - Note: `gym-settings` still uses its own `SettingsSidebar` (out of scope; unify later if desired)
 - 🔍 **🐞 Owner/Schedule Dashboard mobile card** (`6a70cd59`) → **To Verify** — verify-only, no code change (HEAD `7e87d87`). `MobileClassCard` already matches design frame `XbXLT` (time / name / Coach / "{space} · {duration} min" row / top-right N/N capacity). Card's "corner badge" claim was inaccurate — `XbXLT` renders capacity as plain #6B7280 text, which the code already does. Row was added in the earlier Tier-2 mobile-reflow batch.
+- 🔍 **🐞 Coach mobile/attendance family** (4 cards) → **To Verify** — frontend `bb7cef1`.
+  - `6a70d0ee` My Classes mobile card merged space+capacity → split into two Ionicon rows
+    (`location-outline` + space, `people-outline` + capacity), frame `hnkOL`; desktop table unchanged
+  - `6a70d0f0` Mobile card CTA "View" → "View Details" (frame `hnkOL`); testID unchanged
+  - `6a70d10f` Mark Attendance STATUS showed raw slug "published" → local `STATUS_LABEL` map renders
+    title-cased label (desktop info card only; mobile has no status row)
+  - `6a70d10d` Mark Attendance defaulted athletes to Absent → now defaults booked athletes to Present
+    (frame `PWqpG`); screen loads no prior attendance so nothing saved is clobbered
+- 🔺 **🐞 Coach/Class Details "Loggable" toggle** (`6a70d0fb`) → **stays in Issues Found** — triage: KEEP.
+  Toggle is live backend-wired behavior (persisted on POST programming, gates athlete result logging), so
+  removal would delete a working feature. Gap is in the design; recommend a ux-designer task to add the
+  control to coach frames `gXPN7`/`hrUW2` rather than an app change. No code change.
 - 🔍 **🐞 Owner/Coaches family** (2 cards) → **To Verify** — backend `ba8b948`, frontend `6282daf`.
   Backend added `classesAssigned: string[]` (distinct, sorted class-type names) to `CoachListItemDto`,
   computed gymId-scoped with no N+1; types regenerated from Swagger.
