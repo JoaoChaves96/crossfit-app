@@ -1,8 +1,10 @@
 import React from 'react';
-import { View, Text, FlatList, TouchableOpacity, ActivityIndicator } from 'react-native';
+import { View, Text, FlatList, TouchableOpacity, ActivityIndicator, Alert } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { useRouter } from 'expo-router';
 import { useNotifications, type Notification, type NotificationType } from '@/hooks/useNotifications';
-import { AppColors } from '@/constants/theme';
+import { AppColors, Spacing } from '@/constants/theme';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { styles } from './notifications.styles';
 
 type IoniconName = React.ComponentProps<typeof Ionicons>['name'];
@@ -69,13 +71,52 @@ function NotificationItem({
         <Text style={styles.bodyText}>{notification.body}</Text>
         <Text style={styles.timeText}>{getTimeAgo(notification.createdAt)}</Text>
       </View>
+      {/* Read-status indicator: a filled dot for unread, a check for read.
+          This is the single source of truth for read state — the left icon is
+          type-based (what the notification is), not read state. */}
+      <View style={styles.statusIndicator}>
+        {notification.read ? (
+          <Ionicons
+            name="checkmark"
+            size={16}
+            color={AppColors.textGray500}
+            testID={`notification-read-${notification.id}`}
+          />
+        ) : (
+          <View
+            style={styles.unreadDot}
+            testID={`notification-unread-${notification.id}`}
+          />
+        )}
+      </View>
     </TouchableOpacity>
   );
 }
 
 export default function NotificationsScreen() {
-  const { notifications, loading, refresh, markAsRead, markAllAsRead, unreadCount } =
+  const { notifications, loading, refresh, markAsRead, markAllAsRead, clearRead, unreadCount } =
     useNotifications();
+  const insets = useSafeAreaInsets();
+  const router = useRouter();
+
+  const readCount = notifications.filter((n) => n.read).length;
+
+  const handleClearRead = () => {
+    Alert.alert(
+      'Clear read notifications',
+      `Remove ${readCount} read notification${readCount === 1 ? '' : 's'}? This cannot be undone.`,
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Clear',
+          style: 'destructive',
+          onPress: () => {
+            void clearRead();
+          },
+        },
+      ],
+    );
+  };
 
   if (loading && notifications.length === 0) {
     return (
@@ -87,17 +128,37 @@ export default function NotificationsScreen() {
 
   return (
     <View style={styles.screen} testID="notifications-screen">
-      <View style={styles.headerRow}>
-        <Text style={styles.headerTitle}>Notifications</Text>
-        {unreadCount > 0 && (
+      <View style={[styles.headerRow, { paddingTop: insets.top + Spacing.md }]}>
+        <View style={styles.headerLeft}>
           <TouchableOpacity
-            style={styles.markAllButton}
-            onPress={markAllAsRead}
-            testID="mark-all-read-button"
+            onPress={() => router.back()}
+            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+            testID="notifications-back-button"
           >
-            <Text style={styles.markAllText}>Mark all as read</Text>
+            <Ionicons name="chevron-back" size={24} color={AppColors.textPrimary} />
           </TouchableOpacity>
-        )}
+          <Text style={styles.headerTitle}>Notifications</Text>
+        </View>
+        <View style={styles.headerActions}>
+          {unreadCount > 0 && (
+            <TouchableOpacity
+              style={styles.markAllButton}
+              onPress={markAllAsRead}
+              testID="mark-all-read-button"
+            >
+              <Text style={styles.markAllText}>Mark all as read</Text>
+            </TouchableOpacity>
+          )}
+          {readCount > 0 && (
+            <TouchableOpacity
+              style={styles.markAllButton}
+              onPress={handleClearRead}
+              testID="clear-read-button"
+            >
+              <Text style={styles.clearReadText}>Clear read</Text>
+            </TouchableOpacity>
+          )}
+        </View>
       </View>
 
       <FlatList

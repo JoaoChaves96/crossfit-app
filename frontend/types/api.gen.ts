@@ -703,6 +703,23 @@ export interface paths {
         patch: operations["NotificationController_markAllAsRead"];
         trace?: never;
     };
+    "/api/me/notifications/read": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** Delete all read notifications for current user */
+        delete: operations["NotificationController_clearRead"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/me/notifications/push-token": {
         parameters: {
             query?: never;
@@ -4348,6 +4365,28 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+        };
+    };
+    NotificationController_clearRead: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Read notifications cleared */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        deletedCount?: number;
+                    };
+                };
             };
         };
     };

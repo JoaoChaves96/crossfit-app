@@ -16,10 +16,20 @@ export const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: AppColors.borderSubtle,
   },
+  headerLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.sm,
+  },
   headerTitle: {
     fontSize: FontSizes.lg,
     fontWeight: FontWeights.bold,
     color: AppColors.textPrimary,
+  },
+  headerActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.sm,
   },
   markAllButton: {
     paddingVertical: Spacing.tight,
@@ -29,6 +39,11 @@ export const styles = StyleSheet.create({
     fontSize: FontSizes.mdSm,
     fontWeight: FontWeights.semibold,
     color: AppColors.textDark3,
+  },
+  clearReadText: {
+    fontSize: FontSizes.mdSm,
+    fontWeight: FontWeights.semibold,
+    color: AppColors.textGray500,
   },
   listContent: {
     paddingVertical: Spacing.sm,
@@ -55,6 +70,18 @@ export const styles = StyleSheet.create({
   contentContainer: {
     flex: 1,
     gap: Spacing.tight,
+  },
+  statusIndicator: {
+    width: 20,
+    alignItems: 'center',
+    justifyContent: 'flex-start',
+    paddingTop: Spacing.tight,
+  },
+  unreadDot: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+    backgroundColor: AppColors.brandPrimary,
   },
   titleText: {
     fontSize: FontSizes.body,

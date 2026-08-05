@@ -3,6 +3,7 @@ import {
   Get,
   Patch,
   Post,
+  Delete,
   Param,
   Query,
   Body,
@@ -84,6 +85,15 @@ export class NotificationController {
   ): Promise<{ success: boolean }> {
     await this.notificationService.markAllAsRead(userId);
     return { success: true };
+  }
+
+  @Delete('read')
+  @ApiOperation({ summary: 'Delete all read notifications for current user' })
+  @ApiResponse({ status: 200, description: 'Read notifications cleared', schema: { properties: { deletedCount: { type: 'number' } } } })
+  async clearRead(
+    @CurrentUser() userId: string,
+  ): Promise<{ deletedCount: number }> {
+    return this.notificationService.clearRead(userId);
   }
 
   @Post('push-token')

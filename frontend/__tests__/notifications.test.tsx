@@ -3,6 +3,7 @@
  */
 
 import React from 'react';
+import { Alert } from 'react-native';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react-native';
 
 // ─── Mocks ──────────────────────────────────────────────────────────────────
@@ -66,6 +67,7 @@ function defaultHookReturn(overrides: Partial<ReturnType<typeof mockUseNotificat
     refresh: jest.fn(),
     markAsRead: jest.fn(),
     markAllAsRead: jest.fn(),
+    clearRead: jest.fn(),
     ...overrides,
   };
 }
@@ -189,5 +191,63 @@ describe('NotificationsScreen', () => {
     render(<NotificationsScreen />);
 
     expect(screen.queryByTestId('mark-all-read-button')).toBeNull();
+  });
+
+  it('shows a read check for read notifications and an unread dot for unread ones', () => {
+    const notifications = [
+      makeNotification({ id: 'n1', read: false }),
+      makeNotification({ id: 'n2', read: true }),
+    ];
+    mockUseNotifications.mockReturnValue(
+      defaultHookReturn({ notifications, unreadCount: 1 }),
+    );
+
+    render(<NotificationsScreen />);
+
+    // Unread → dot, no check. Read → check, no dot.
+    expect(screen.getByTestId('notification-unread-n1')).toBeTruthy();
+    expect(screen.queryByTestId('notification-read-n1')).toBeNull();
+    expect(screen.getByTestId('notification-read-n2')).toBeTruthy();
+    expect(screen.queryByTestId('notification-unread-n2')).toBeNull();
+  });
+
+  it('shows the clear read button only when read notifications exist', () => {
+    const withRead = [makeNotification({ id: 'n1', read: true })];
+    mockUseNotifications.mockReturnValue(
+      defaultHookReturn({ notifications: withRead, unreadCount: 0 }),
+    );
+    const { rerender } = render(<NotificationsScreen />);
+    expect(screen.getByTestId('clear-read-button')).toBeTruthy();
+
+    const allUnread = [makeNotification({ id: 'n2', read: false })];
+    mockUseNotifications.mockReturnValue(
+      defaultHookReturn({ notifications: allUnread, unreadCount: 1 }),
+    );
+    rerender(<NotificationsScreen />);
+    expect(screen.queryByTestId('clear-read-button')).toBeNull();
+  });
+
+  it('prompts for confirmation and calls clearRead when confirmed', () => {
+    const mockClearRead = jest.fn();
+    const alertSpy = jest
+      .spyOn(Alert, 'alert')
+      .mockImplementation((_title, _msg, buttons) => {
+        // Invoke the destructive "Clear" button's handler.
+        const clearBtn = buttons?.find((b) => b.style === 'destructive');
+        clearBtn?.onPress?.();
+      });
+
+    const notifications = [makeNotification({ id: 'n1', read: true })];
+    mockUseNotifications.mockReturnValue(
+      defaultHookReturn({ notifications, unreadCount: 0, clearRead: mockClearRead }),
+    );
+
+    render(<NotificationsScreen />);
+    fireEvent.press(screen.getByTestId('clear-read-button'));
+
+    expect(alertSpy).toHaveBeenCalled();
+    expect(mockClearRead).toHaveBeenCalled();
+
+    alertSpy.mockRestore();
   });
 });

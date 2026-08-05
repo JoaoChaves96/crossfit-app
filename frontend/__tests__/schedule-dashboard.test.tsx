@@ -12,6 +12,19 @@ jest.mock('@/utils/api-client', () => ({
   createApiClient: jest.fn(),
 }));
 
+// Notification state lives in an app-wide provider not mounted in these tests;
+// stub it so DesktopTopNav's NotificationBell renders without a provider.
+jest.mock('@/hooks/useNotifications', () => ({
+  useNotifications: () => ({
+    notifications: [],
+    unreadCount: 0,
+    loading: false,
+    refresh: jest.fn(() => Promise.resolve()),
+    markAsRead: jest.fn(() => Promise.resolve()),
+    markAllAsRead: jest.fn(() => Promise.resolve()),
+  }),
+}));
+
 import { createApiClient } from '@/utils/api-client';
 
 // ─── Types ────────────────────────────────────────────────────────────────────

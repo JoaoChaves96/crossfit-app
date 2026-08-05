@@ -18,6 +18,7 @@ describe('NotificationService', () => {
       findOne: jest.fn(),
       count: jest.fn(),
       update: jest.fn(),
+      delete: jest.fn(),
     };
 
     pushTokenRepo = {
@@ -152,6 +153,28 @@ describe('NotificationService', () => {
         { userId: 'user-1', read: false },
         { read: true },
       );
+    });
+  });
+
+  describe('clearRead', () => {
+    it('should delete all read notifications for user and return the count', async () => {
+      notificationRepo.delete.mockResolvedValue({ affected: 4 });
+
+      const result = await service.clearRead('user-1');
+
+      expect(notificationRepo.delete).toHaveBeenCalledWith({
+        userId: 'user-1',
+        read: true,
+      });
+      expect(result).toEqual({ deletedCount: 4 });
+    });
+
+    it('should return zero when nothing was deleted', async () => {
+      notificationRepo.delete.mockResolvedValue({ affected: 0 });
+
+      const result = await service.clearRead('user-1');
+
+      expect(result).toEqual({ deletedCount: 0 });
     });
   });
 

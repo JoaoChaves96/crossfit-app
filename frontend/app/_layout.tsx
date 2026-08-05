@@ -4,9 +4,12 @@ import { StatusBar } from 'expo-status-bar';
 import 'react-native-reanimated';
 import { useContext, useEffect } from 'react';
 
+import { SafeAreaProvider } from 'react-native-safe-area-context';
+
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { AuthContext, AuthProvider } from '@/context/AuthContext';
 import { GymProvider } from '@/context/GymContext';
+import { NotificationsProvider } from '@/context/NotificationsContext';
 
 const DEV_BOOTSTRAP_ROUTE = '/dev-bootstrap';
 
@@ -41,11 +44,14 @@ export default function RootLayout() {
   const colorScheme = useColorScheme();
 
   return (
-    <AuthProvider>
-      <GymProvider>
-        <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
+    <SafeAreaProvider>
+      <AuthProvider>
+        <GymProvider>
+          <NotificationsProvider>
+          <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
           <NavigationGuard />
           <Stack>
+            <Stack.Screen name="index" options={{ headerShown: false }} />
             <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
             <Stack.Screen name="login" options={{ headerShown: false }} />
             <Stack.Screen name="register" options={{ headerShown: false }} />
@@ -87,8 +93,10 @@ export default function RootLayout() {
             )}
           </Stack>
           <StatusBar style="auto" />
-        </ThemeProvider>
-      </GymProvider>
-    </AuthProvider>
+          </ThemeProvider>
+          </NotificationsProvider>
+        </GymProvider>
+      </AuthProvider>
+    </SafeAreaProvider>
   );
 }

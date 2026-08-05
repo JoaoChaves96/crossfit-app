@@ -23,6 +23,19 @@ jest.mock('@/hooks/useResponsiveLayout', () => ({
   useResponsiveLayout: () => ({ isDesktop: false }),
 }));
 
+// Notification state lives in an app-wide provider not mounted in these tests;
+// stub it so the profile screen's NotificationBell renders without a provider.
+jest.mock('@/hooks/useNotifications', () => ({
+  useNotifications: () => ({
+    notifications: [],
+    unreadCount: 0,
+    loading: false,
+    refresh: jest.fn(() => Promise.resolve()),
+    markAsRead: jest.fn(() => Promise.resolve()),
+    markAllAsRead: jest.fn(() => Promise.resolve()),
+  }),
+}));
+
 import { createApiClient } from '@/utils/api-client';
 
 // ─── Data factories ───────────────────────────────────────────────────────────

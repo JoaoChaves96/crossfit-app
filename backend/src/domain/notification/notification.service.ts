@@ -85,6 +85,14 @@ export class NotificationService {
     );
   }
 
+  async clearRead(userId: string): Promise<{ deletedCount: number }> {
+    const result = await this.notificationRepository.delete({
+      userId,
+      read: true,
+    });
+    return { deletedCount: result.affected ?? 0 };
+  }
+
   async getUnreadCount(userId: string): Promise<number> {
     return this.notificationRepository.count({
       where: { userId, read: false },

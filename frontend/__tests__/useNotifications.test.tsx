@@ -8,6 +8,7 @@ import React from 'react';
 import { renderHook, act, waitFor } from '@testing-library/react-native';
 
 import { AuthWrapper } from '@/test-utils/auth-wrapper';
+import { NotificationsProvider } from '@/context/NotificationsContext';
 import { useNotifications } from '@/hooks/useNotifications';
 import type { Notification } from '@/hooks/useNotifications';
 
@@ -15,12 +16,13 @@ import type { Notification } from '@/hooks/useNotifications';
 
 const mockGet = jest.fn();
 const mockPatch = jest.fn();
+const mockDelete = jest.fn();
 
 const mockApiClient = {
   get: mockGet,
   post: jest.fn(),
   patch: mockPatch,
-  delete: jest.fn(),
+  delete: mockDelete,
 };
 
 jest.mock('@/hooks/useApiClient', () => ({
@@ -56,7 +58,11 @@ function makeNotificationsResponse(notifications: Notification[], unreadCount?: 
 // ─── Wrapper ─────────────────────────────────────────────────────────────────
 
 function wrapper({ children }: { children: React.ReactNode }) {
-  return <AuthWrapper>{children}</AuthWrapper>;
+  return (
+    <AuthWrapper>
+      <NotificationsProvider>{children}</NotificationsProvider>
+    </AuthWrapper>
+  );
 }
 
 // ─── Tests ───────────────────────────────────────────────────────────────────
@@ -103,15 +109,24 @@ describe('useNotifications — fetching', () => {
     await waitFor(() => expect(mockGet).toHaveBeenCalledWith('/api/me/notifications?page=1&limit=20'));
   });
 
-  it('uses custom page and limit when provided', async () => {
+  it('does not fetch when the user is unauthenticated', async () => {
     // Arrange
-    mockGet.mockResolvedValueOnce(makeNotificationsResponse([]));
+    function unauthWrapper({ children }: { children: React.ReactNode }) {
+      return (
+        <AuthWrapper value={{ isAuthenticated: false }}>
+          <NotificationsProvider>{children}</NotificationsProvider>
+        </AuthWrapper>
+      );
+    }
 
     // Act
-    renderHook(() => useNotifications({ page: 2, limit: 10 }), { wrapper });
+    const { result } = renderHook(() => useNotifications(), { wrapper: unauthWrapper });
 
     // Assert
-    await waitFor(() => expect(mockGet).toHaveBeenCalledWith('/api/me/notifications?page=2&limit=10'));
+    await waitFor(() => expect(result.current.loading).toBe(false));
+    expect(mockGet).not.toHaveBeenCalled();
+    expect(result.current.notifications).toEqual([]);
+    expect(result.current.unreadCount).toBe(0);
   });
 
   it('keeps previous state when fetch fails', async () => {
@@ -225,5 +240,47 @@ describe('useNotifications — markAllAsRead', () => {
     // Assert
     expect(result.current.notifications.every((n) => n.read)).toBe(true);
     expect(result.current.unreadCount).toBe(0);
+  });
+});
+
+describe('useNotifications — clearRead', () => {
+  it('calls DELETE on the read endpoint', async () => {
+    // Arrange
+    const notifs = [
+      makeNotification({ id: 'n1', read: true }),
+      makeNotification({ id: 'n2', read: false }),
+    ];
+    mockGet.mockResolvedValueOnce(makeNotificationsResponse(notifs, 1));
+    mockDelete.mockResolvedValueOnce({ deletedCount: 1 });
+
+    const { result } = renderHook(() => useNotifications(), { wrapper });
+    await waitFor(() => expect(result.current.loading).toBe(false));
+
+    // Act
+    await act(async () => { await result.current.clearRead(); });
+
+    // Assert
+    expect(mockDelete).toHaveBeenCalledWith('/api/me/notifications/read');
+  });
+
+  it('removes read notifications locally and leaves unreadCount intact', async () => {
+    // Arrange
+    const notifs = [
+      makeNotification({ id: 'n1', read: true }),
+      makeNotification({ id: 'n2', read: false }),
+    ];
+    mockGet.mockResolvedValueOnce(makeNotificationsResponse(notifs, 1));
+    mockDelete.mockResolvedValueOnce({ deletedCount: 1 });
+
+    const { result } = renderHook(() => useNotifications(), { wrapper });
+    await waitFor(() => expect(result.current.loading).toBe(false));
+
+    // Act
+    await act(async () => { await result.current.clearRead(); });
+
+    // Assert — only the unread notification remains
+    expect(result.current.notifications).toHaveLength(1);
+    expect(result.current.notifications[0].id).toBe('n2');
+    expect(result.current.unreadCount).toBe(1);
   });
 });
