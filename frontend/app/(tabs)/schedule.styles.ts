@@ -26,6 +26,10 @@ export const desktopStyles = StyleSheet.create({
     flex: 1,
     gap: 16,
   },
+  // Controls (desktop): rely on innerWrap gap/padding — transparent, no extra chrome
+  controls: {
+    gap: Spacing.md,
+  },
 });
 
 export const styles = StyleSheet.create({
@@ -57,6 +61,67 @@ export const styles = StyleSheet.create({
     fontFamily: 'Inter',
     fontSize: FontSizes.xs,
     color: AppColors.textGray600,
+  },
+  // Controls (Week/Day toggle + class-type filter chips).
+  // Mobile: rendered inside the FlatList header, which already applies
+  // horizontal + top padding via listContent — so no extra padding here.
+  controls: {
+    gap: Spacing.md,
+    marginBottom: Spacing.sm,
+  },
+  // Segmented Week/Day toggle
+  segmented: {
+    flexDirection: 'row',
+    backgroundColor: AppColors.backgroundSubtle,
+    borderRadius: BorderRadius.mdLg,
+    padding: Spacing.tight,
+    gap: Spacing.tight,
+  },
+  segment: {
+    flex: 1,
+    height: 36,
+    borderRadius: BorderRadius.md,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  segmentActive: {
+    backgroundColor: AppColors.backgroundWhite,
+  },
+  segmentText: {
+    fontFamily: 'Inter',
+    fontSize: FontSizes.mdSm,
+    fontWeight: FontWeights.semibold,
+    color: AppColors.textGray500,
+  },
+  segmentTextActive: {
+    color: AppColors.textPrimary,
+  },
+  // Class-type filter chips
+  chipRow: {
+    flexDirection: 'row',
+    gap: Spacing.sm,
+    paddingRight: Spacing.lg,
+  },
+  chip: {
+    paddingHorizontal: Spacing.base,
+    paddingVertical: Spacing.sm,
+    borderRadius: BorderRadius.pill,
+    borderWidth: 1,
+    borderColor: AppColors.borderDefault,
+    backgroundColor: AppColors.backgroundWhite,
+  },
+  chipActive: {
+    backgroundColor: AppColors.textPrimary,
+    borderColor: AppColors.textPrimary,
+  },
+  chipText: {
+    fontFamily: 'Inter',
+    fontSize: FontSizes.mdSm,
+    fontWeight: FontWeights.semibold,
+    color: AppColors.textGray600,
+  },
+  chipTextActive: {
+    color: AppColors.backgroundWhite,
   },
   // List
   listContent: {
@@ -167,6 +232,17 @@ export const styles = StyleSheet.create({
     fontFamily: 'Inter',
     fontSize: FontSizes.body,
     fontWeight: FontWeights.semibold,
+  },
+  // Filtered-empty (controls active but nothing matches)
+  filteredEmpty: {
+    paddingVertical: Spacing.jumbo,
+    alignItems: 'center',
+  },
+  filteredEmptyText: {
+    fontFamily: 'Inter',
+    fontSize: FontSizes.body,
+    color: AppColors.textGray500,
+    textAlign: 'center',
   },
   // States
   centeredState: {

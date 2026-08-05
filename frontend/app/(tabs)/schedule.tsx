@@ -1,4 +1,4 @@
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import {
   View,
   Text,
@@ -52,6 +52,16 @@ const BADGE_CONFIG: Record<CardStatus, { bg: string; text: string; label: string
   in_progress: { bg: AppColors.surfaceBlueLight, text: AppColors.actionBlueDark, label: 'In Progress' },
   completed: { bg: AppColors.backgroundSubtle, text: AppColors.textGray500, label: 'Completed' },
 };
+
+// ─── Controls config ──────────────────────────────────────────────────────────
+// Canonical class-type chips from the design (frame wUe5e / Controls NzxqW).
+// "All" is always present; the remaining canonical chips are merged with any
+// additional class types present in the loaded data so the control reflects
+// real gym data while still honoring the design's baseline set.
+const ALL_FILTER = 'All';
+const CANONICAL_CLASS_TYPES = ['CrossFit', 'Gymnastics', 'Hyrox'] as const;
+
+type TimeView = 'week' | 'day';
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 function getSpotsText(bookedCount: number, capacity: number): string {
@@ -276,6 +286,69 @@ function DesktopGrid({ classes, onClassPress, onCancelBooking, cancellingBooking
   );
 }
 
+// ─── Controls (Week/Day toggle + class-type filter chips) ──────────────────────
+interface ScheduleControlsProps {
+  timeView: TimeView;
+  onTimeViewChange: (view: TimeView) => void;
+  typeFilters: string[];
+  activeFilter: string;
+  onFilterChange: (filter: string) => void;
+  containerStyle?: object;
+}
+
+function ScheduleControls({
+  timeView,
+  onTimeViewChange,
+  typeFilters,
+  activeFilter,
+  onFilterChange,
+  containerStyle,
+}: ScheduleControlsProps) {
+  return (
+    <View style={[styles.controls, containerStyle]}>
+      {/* Week / Day segmented toggle */}
+      <View style={styles.segmented}>
+        {(['week', 'day'] as const).map((view) => {
+          const isActive = timeView === view;
+          return (
+            <Pressable
+              key={view}
+              testID={`schedule-toggle-${view}`}
+              style={[styles.segment, isActive && styles.segmentActive]}
+              onPress={() => onTimeViewChange(view)}
+            >
+              <Text style={[styles.segmentText, isActive && styles.segmentTextActive]}>
+                {view === 'week' ? 'Week' : 'Day'}
+              </Text>
+            </Pressable>
+          );
+        })}
+      </View>
+
+      {/* Class-type filter chips */}
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={styles.chipRow}
+      >
+        {typeFilters.map((filter) => {
+          const isActive = activeFilter === filter;
+          return (
+            <Pressable
+              key={filter}
+              testID={`schedule-chip-${filter}`}
+              style={[styles.chip, isActive && styles.chipActive]}
+              onPress={() => onFilterChange(filter)}
+            >
+              <Text style={[styles.chipText, isActive && styles.chipTextActive]}>{filter}</Text>
+            </Pressable>
+          );
+        })}
+      </ScrollView>
+    </View>
+  );
+}
+
 // ─── Screen ───────────────────────────────────────────────────────────────────
 export default function ScheduleScreen() {
   const router = useRouter();
@@ -288,6 +361,35 @@ export default function ScheduleScreen() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [cancellingBookingId, setCancellingBookingId] = useState<string | null>(null);
+  const [timeView, setTimeView] = useState<TimeView>('week');
+  const [activeFilter, setActiveFilter] = useState<string>(ALL_FILTER);
+
+  // Today's local date as "YYYY-MM-DD" (matches the backend's wall-clock format).
+  const todayIso = useMemo(() => {
+    const now = new Date();
+    const pad = (n: number) => String(n).padStart(2, '0');
+    return `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`;
+  }, []);
+
+  // Available class-type chips: "All" + canonical design set + any extra types
+  // present in the loaded data, de-duplicated and order-stable.
+  const typeFilters = useMemo(() => {
+    const dataTypes = classes.map((c) => c.classTypeName).filter(Boolean);
+    const ordered = [...CANONICAL_CLASS_TYPES, ...dataTypes];
+    const unique = Array.from(new Set(ordered));
+    return [ALL_FILTER, ...unique];
+  }, [classes]);
+
+  // Client-side filtering over already-fetched classes:
+  //  - class-type chip (All shows everything)
+  //  - Week shows all; Day narrows to today's classes.
+  const visibleClasses = useMemo(() => {
+    return classes.filter((cls) => {
+      const typeMatch = activeFilter === ALL_FILTER || cls.classTypeName === activeFilter;
+      const dayMatch = timeView === 'week' || cls.scheduledDate === todayIso;
+      return typeMatch && dayMatch;
+    });
+  }, [classes, activeFilter, timeView, todayIso]);
 
   const fetchData = useCallback(async () => {
     if (authLoading || gymLoading || !token || !currentGymId) {
@@ -442,14 +544,30 @@ export default function ScheduleScreen() {
         <DesktopTopNav gymName={gymName} />
         <View style={desktopStyles.contentArea}>
           <View style={desktopStyles.innerWrap}>
+            <ScheduleControls
+              timeView={timeView}
+              onTimeViewChange={setTimeView}
+              typeFilters={typeFilters}
+              activeFilter={activeFilter}
+              onFilterChange={setActiveFilter}
+              containerStyle={desktopStyles.controls}
+            />
             {dateSeparator}
             <ScrollView showsVerticalScrollIndicator={false} style={{ flex: 1 }}>
-              <DesktopGrid
-                classes={classes}
-                onClassPress={handleClassPress}
-                onCancelBooking={handleCancelBooking}
-                cancellingBookingId={cancellingBookingId}
-              />
+              {visibleClasses.length === 0 ? (
+                <View style={styles.filteredEmpty}>
+                  <Text style={styles.filteredEmptyText}>
+                    No classes match the selected filters.
+                  </Text>
+                </View>
+              ) : (
+                <DesktopGrid
+                  classes={visibleClasses}
+                  onClassPress={handleClassPress}
+                  onCancelBooking={handleCancelBooking}
+                  cancellingBookingId={cancellingBookingId}
+                />
+              )}
             </ScrollView>
           </View>
         </View>
@@ -468,14 +586,36 @@ export default function ScheduleScreen() {
     </View>
   );
 
+  const controls = (
+    <ScheduleControls
+      timeView={timeView}
+      onTimeViewChange={setTimeView}
+      typeFilters={typeFilters}
+      activeFilter={activeFilter}
+      onFilterChange={setActiveFilter}
+    />
+  );
+
+  const listHeader = (
+    <View>
+      {controls}
+      {dateSeparator}
+    </View>
+  );
+
   return (
     <View style={styles.screen}>
       {header}
       <FlatList
-        data={classes}
+        data={visibleClasses}
         keyExtractor={(item) => item.id}
         contentContainerStyle={styles.listContent}
-        ListHeaderComponent={dateSeparator}
+        ListHeaderComponent={listHeader}
+        ListEmptyComponent={
+          <View style={styles.filteredEmpty}>
+            <Text style={styles.filteredEmptyText}>No classes match the selected filters.</Text>
+          </View>
+        }
         renderItem={({ item }) => (
           <ClassCard
             item={item}

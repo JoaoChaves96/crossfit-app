@@ -21,14 +21,6 @@ export default function TabLayout() {
         tabBarStyle: isDesktop ? { display: 'none' } : undefined,
       }}>
       <Tabs.Screen
-        name="index"
-        options={{
-          title: 'Home',
-          tabBarIcon: ({ color }) => <IconSymbol size={28} name="house.fill" color={color} />,
-          tabBarButtonTestID: 'tab-home',
-        }}
-      />
-      <Tabs.Screen
         name="schedule"
         options={{
           title: 'Schedule',

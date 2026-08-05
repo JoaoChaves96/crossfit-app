@@ -30,7 +30,7 @@ function NavigationGuard() {
       router.replace('/login' as never);
     }
     if (auth.isAuthenticated && pathname === DEV_BOOTSTRAP_ROUTE) {
-      router.replace('/(tabs)' as never);
+      router.replace('/(tabs)/schedule' as never);
     }
   }, [auth, isDevBootstrap, isPublicRoute, pathname, router]);
 
