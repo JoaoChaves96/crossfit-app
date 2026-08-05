@@ -100,6 +100,10 @@ MVP scope. Coach desktop has NO duplicate-header bug). Discovery/triage only; fi
   - `6a70cdb7` Results row athlete UUID → renders `userName` with initials avatar
   - `6a70cd97` Result value raw ("300 seconds") → formatted via `result-format` util ("18:42 min", frame `9ZqYx`)
   - `6a70cd94` Header collision "AthleteMetric" → `gap: Spacing.sm` on shared tableHeader/tableRow
+- 🔍 **🐞 Athlete/Schedule family** (3 cards) → **To Verify** — frontend `61c1d0b`.
+  - `6a70c8e2` Leftover Expo-starter tabs → deleted `(tabs)/index` + `explore`, repointed `/(tabs)` redirect + modal link to `/(tabs)/schedule`
+  - `6a70c8ea` Missing Week/Day toggle + filter chips → added Controls (segmented toggle + class-type chips, client-side filtering) on mobile + desktop. ⚠️ pixel-verify vs frame `wUe5e` pending (Pencil editor locked on gym-owner file)
+  - `6a70c8f2` Two-tier header / hardcoded gym name → verify-only; app already renders single header + real `gymName`
 - **Deferred (separate plan):** Notifications frontend migration — unit tests (17 failing) + tsc
   errors + expo 54 / expo-notifications 56 version mismatch. Held in `git stash` on `dev`; two
   🐞 cards remain in the board's Issues Found list. See `epics/NOTIFICATIONS_PLAN.md`.
