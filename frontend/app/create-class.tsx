@@ -25,10 +25,38 @@ import { styles, webDateTimeInputStyle } from './create-class.styles';
 
 type CreateClassPayload = components['schemas']['CreateClassDto'];
 type CreateClassResponse = components['schemas']['CreateClassResponseDto'];
+type CreateRecurringPayload = components['schemas']['CreateRecurringClassesDto'];
+type CreateRecurringResponse = components['schemas']['CreateRecurringClassesResponseDto'];
 type Coach = components['schemas']['CoachListItemDto'];
 type GetCoachesResponse = components['schemas']['GetCoachesResponseDto'];
 type GetClassTypesResponse = components['schemas']['GetClassTypesResponseDto'];
 type GetSpacesResponse = components['schemas']['GetSpacesResponseDto'];
+
+type ScheduleMode = 'single' | 'recurring';
+
+// Weekday chips map to the backend's day-of-week encoding (0=Sunday … 6=Saturday).
+const WEEKDAYS: { label: string; value: number }[] = [
+  { label: 'Mon', value: 1 },
+  { label: 'Tue', value: 2 },
+  { label: 'Wed', value: 3 },
+  { label: 'Thu', value: 4 },
+  { label: 'Fri', value: 5 },
+  { label: 'Sat', value: 6 },
+  { label: 'Sun', value: 0 },
+];
+
+const DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
+const TIME_PATTERN = /^\d{2}:\d{2}$/;
+
+// Human-readable summary of a recurring-create result. Used both for the
+// success toast-style line and the zero-created informational banner.
+function summarizeRecurring(result: CreateRecurringResponse): string {
+  const noun = result.created === 1 ? 'class' : 'classes';
+  if (result.created === 0) {
+    return `No classes were created. ${result.skippedPast} skipped (in the past) · ${result.skippedDuplicate} skipped (already scheduled). Adjust the date range or weekdays and try again.`;
+  }
+  return `Created ${result.created} ${noun} · ${result.skippedPast} skipped (past) · ${result.skippedDuplicate} skipped (already scheduled).`;
+}
 
 interface PickerItem {
   id: string;
@@ -242,6 +270,49 @@ function DateTimeField({ label, mode, value, onChange, error, testID }: DateTime
   );
 }
 
+// ─── Weekday Selector ────────────────────────────────────────────────────────
+//
+// Seven toggle chips (Mon–Sun) styled from the same token set as the input
+// fields. Selected chips fill with the heading color to echo the primary
+// Save button; unselected chips read as bordered value boxes.
+
+interface WeekdaySelectorProps {
+  label: string;
+  selected: number[];
+  onToggle: (value: number) => void;
+  error?: string;
+  testID?: string;
+}
+
+function WeekdaySelector({ label, selected, onToggle, error, testID }: WeekdaySelectorProps) {
+  return (
+    <View style={styles.fieldContainer}>
+      <Text style={styles.fieldLabel}>{label}</Text>
+      <View style={styles.weekdayRow} testID={testID}>
+        {WEEKDAYS.map((day) => {
+          const isSelected = selected.includes(day.value);
+          return (
+            <TouchableOpacity
+              key={day.value}
+              testID={`create-class-weekday-${day.value}`}
+              accessibilityRole="button"
+              accessibilityState={{ selected: isSelected }}
+              style={[styles.weekdayChip, isSelected && styles.weekdayChipSelected]}
+              onPress={() => onToggle(day.value)}
+              activeOpacity={0.7}>
+              <Text
+                style={[styles.weekdayChipText, isSelected && styles.weekdayChipTextSelected]}>
+                {day.label}
+              </Text>
+            </TouchableOpacity>
+          );
+        })}
+      </View>
+      {error ? <Text style={styles.validationErrorText}>{error}</Text> : null}
+    </View>
+  );
+}
+
 // ─── Main Screen ───────────────────────────────────────────────────────────────
 
 interface FormState {
@@ -250,6 +321,9 @@ interface FormState {
   spaceId: string;
   scheduledDate: string;
   scheduledTime: string;
+  startDate: string;
+  endDate: string;
+  weekdays: number[];
   capacity: string;
   duration: string;
 }
@@ -260,25 +334,52 @@ interface FormErrors {
   spaceId?: string;
   scheduledDate?: string;
   scheduledTime?: string;
+  startDate?: string;
+  endDate?: string;
+  weekdays?: string;
   capacity?: string;
   duration?: string;
 }
 
-function validate(form: FormState): FormErrors {
+function validate(form: FormState, mode: ScheduleMode): FormErrors {
   const errors: FormErrors = {};
   if (!form.classTypeId) errors.classTypeId = 'Class type is required';
   if (!form.coachUserId) errors.coachUserId = 'Coach is required';
   if (!form.spaceId) errors.spaceId = 'Space is required';
-  if (!form.scheduledDate.trim()) {
-    errors.scheduledDate = 'Date is required (YYYY-MM-DD)';
-  } else if (!/^\d{4}-\d{2}-\d{2}$/.test(form.scheduledDate.trim())) {
-    errors.scheduledDate = 'Use format YYYY-MM-DD';
-  }
+
   if (!form.scheduledTime.trim()) {
     errors.scheduledTime = 'Time is required (HH:mm)';
-  } else if (!/^\d{2}:\d{2}$/.test(form.scheduledTime.trim())) {
+  } else if (!TIME_PATTERN.test(form.scheduledTime.trim())) {
     errors.scheduledTime = 'Use format HH:mm';
   }
+
+  if (mode === 'single') {
+    if (!form.scheduledDate.trim()) {
+      errors.scheduledDate = 'Date is required (YYYY-MM-DD)';
+    } else if (!DATE_PATTERN.test(form.scheduledDate.trim())) {
+      errors.scheduledDate = 'Use format YYYY-MM-DD';
+    }
+  } else {
+    const start = form.startDate.trim();
+    const end = form.endDate.trim();
+    if (!start) {
+      errors.startDate = 'Start date is required (YYYY-MM-DD)';
+    } else if (!DATE_PATTERN.test(start)) {
+      errors.startDate = 'Use format YYYY-MM-DD';
+    }
+    if (!end) {
+      errors.endDate = 'End date is required (YYYY-MM-DD)';
+    } else if (!DATE_PATTERN.test(end)) {
+      errors.endDate = 'Use format YYYY-MM-DD';
+    }
+    if (!errors.startDate && !errors.endDate && end < start) {
+      errors.endDate = 'End date must be on or after the start date';
+    }
+    if (form.weekdays.length === 0) {
+      errors.weekdays = 'Select at least one day';
+    }
+  }
+
   if (form.capacity.trim()) {
     const cap = Number(form.capacity);
     if (isNaN(cap) || cap <= 0) {
@@ -311,12 +412,17 @@ export default function CreateClassScreen() {
     status: 'loading',
   });
 
+  const [mode, setMode] = useState<ScheduleMode>('single');
+
   const [form, setForm] = useState<FormState>({
     classTypeId: '',
     coachUserId: '',
     spaceId: '',
     scheduledDate: '',
     scheduledTime: '',
+    startDate: '',
+    endDate: '',
+    weekdays: [],
     capacity: '',
     duration: '',
   });
@@ -324,6 +430,24 @@ export default function CreateClassScreen() {
   const [formErrors, setFormErrors] = useState<FormErrors>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
+  const [recurringNotice, setRecurringNotice] = useState<string | null>(null);
+
+  const toggleWeekday = (value: number) => {
+    setForm((s) => ({
+      ...s,
+      weekdays: s.weekdays.includes(value)
+        ? s.weekdays.filter((d) => d !== value)
+        : [...s.weekdays, value],
+    }));
+  };
+
+  const switchMode = (next: ScheduleMode) => {
+    if (next === mode) return;
+    setMode(next);
+    setFormErrors({});
+    setSubmitError(null);
+    setRecurringNotice(null);
+  };
 
   const fetchDropdownData = useCallback(async () => {
     if (!token || !currentGymId) return;
@@ -377,16 +501,45 @@ export default function CreateClassScreen() {
   }, [fetchDropdownData]);
 
   const handleSubmit = async () => {
-    const errors = validate(form);
+    const errors = validate(form, mode);
     setFormErrors(errors);
     if (Object.keys(errors).length > 0) return;
     if (!token || !currentGymId) return;
 
     setIsSubmitting(true);
     setSubmitError(null);
+    setRecurringNotice(null);
 
     try {
       const client = createApiClient({ token });
+
+      if (mode === 'recurring') {
+        const payload: CreateRecurringPayload = {
+          classTypeId: form.classTypeId,
+          coachUserId: form.coachUserId,
+          spaceId: form.spaceId,
+          weekdays: form.weekdays,
+          scheduledTime: form.scheduledTime.trim(),
+          startDate: form.startDate.trim(),
+          endDate: form.endDate.trim(),
+          ...(form.capacity.trim() ? { capacity: Number(form.capacity) } : {}),
+          ...(form.duration.trim() ? { duration: Number(form.duration) } : {}),
+        };
+        const result = await client.post<CreateRecurringResponse>(
+          `/api/gyms/${currentGymId}/classes/recurring`,
+          payload as unknown as Record<string, unknown>
+        );
+
+        if (result.created === 0) {
+          // Nothing was created — keep the owner on the screen to adjust the
+          // range or weekdays. Surface why via the informational banner.
+          setRecurringNotice(summarizeRecurring(result));
+          return;
+        }
+        router.back();
+        return;
+      }
+
       const payload: CreateClassPayload = {
         classTypeId: form.classTypeId,
         coachUserId: form.coachUserId,
@@ -441,29 +594,114 @@ export default function CreateClassScreen() {
         {/* Form card */}
         <View style={[styles.formCard, isMobile && styles.formCardMobile]}>
 
-          {/* Row 1 — Date and Time */}
-          <View style={[styles.row, isMobile && styles.rowMobile]}>
-            <View style={styles.rowItem}>
-              <DateTimeField
-                testID="create-class-date-input"
-                label="Date"
-                mode="date"
-                value={form.scheduledDate}
-                onChange={(v) => setForm((s) => ({ ...s, scheduledDate: v }))}
-                error={formErrors.scheduledDate}
-              />
-            </View>
-            <View style={styles.rowItem}>
-              <DateTimeField
-                testID="create-class-time-input"
-                label="Time"
-                mode="time"
-                value={form.scheduledTime}
-                onChange={(v) => setForm((s) => ({ ...s, scheduledTime: v }))}
-                error={formErrors.scheduledTime}
-              />
-            </View>
+          {/* Schedule mode — segmented toggle */}
+          <View style={styles.segmented}>
+            <TouchableOpacity
+              testID="create-class-mode-single"
+              accessibilityRole="button"
+              accessibilityState={{ selected: mode === 'single' }}
+              style={[styles.segmentedItem, mode === 'single' && styles.segmentedItemActive]}
+              onPress={() => switchMode('single')}
+              activeOpacity={0.7}>
+              <Text
+                style={[
+                  styles.segmentedText,
+                  mode === 'single' && styles.segmentedTextActive,
+                ]}>
+                Single
+              </Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              testID="create-class-mode-recurring"
+              accessibilityRole="button"
+              accessibilityState={{ selected: mode === 'recurring' }}
+              style={[styles.segmentedItem, mode === 'recurring' && styles.segmentedItemActive]}
+              onPress={() => switchMode('recurring')}
+              activeOpacity={0.7}>
+              <Text
+                style={[
+                  styles.segmentedText,
+                  mode === 'recurring' && styles.segmentedTextActive,
+                ]}>
+                Recurring
+              </Text>
+            </TouchableOpacity>
           </View>
+
+          {mode === 'single' ? (
+            /* Row 1 — Date and Time */
+            <View style={[styles.row, isMobile && styles.rowMobile]}>
+              <View style={styles.rowItem}>
+                <DateTimeField
+                  testID="create-class-date-input"
+                  label="Date"
+                  mode="date"
+                  value={form.scheduledDate}
+                  onChange={(v) => setForm((s) => ({ ...s, scheduledDate: v }))}
+                  error={formErrors.scheduledDate}
+                />
+              </View>
+              <View style={styles.rowItem}>
+                <DateTimeField
+                  testID="create-class-time-input"
+                  label="Time"
+                  mode="time"
+                  value={form.scheduledTime}
+                  onChange={(v) => setForm((s) => ({ ...s, scheduledTime: v }))}
+                  error={formErrors.scheduledTime}
+                />
+              </View>
+            </View>
+          ) : (
+            <>
+              {/* Row 1 — Start and End Date */}
+              <View style={[styles.row, isMobile && styles.rowMobile]}>
+                <View style={styles.rowItem}>
+                  <DateTimeField
+                    testID="create-class-start-date-input"
+                    label="Start Date"
+                    mode="date"
+                    value={form.startDate}
+                    onChange={(v) => setForm((s) => ({ ...s, startDate: v }))}
+                    error={formErrors.startDate}
+                  />
+                </View>
+                <View style={styles.rowItem}>
+                  <DateTimeField
+                    testID="create-class-end-date-input"
+                    label="End Date"
+                    mode="date"
+                    value={form.endDate}
+                    onChange={(v) => setForm((s) => ({ ...s, endDate: v }))}
+                    error={formErrors.endDate}
+                  />
+                </View>
+              </View>
+
+              {/* Row — Repeat on (weekdays) and Time */}
+              <View style={[styles.row, isMobile && styles.rowMobile]}>
+                <View style={styles.rowItem}>
+                  <WeekdaySelector
+                    testID="create-class-weekdays"
+                    label="Repeat on"
+                    selected={form.weekdays}
+                    onToggle={toggleWeekday}
+                    error={formErrors.weekdays}
+                  />
+                </View>
+                <View style={styles.rowItem}>
+                  <DateTimeField
+                    testID="create-class-time-input"
+                    label="Time"
+                    mode="time"
+                    value={form.scheduledTime}
+                    onChange={(v) => setForm((s) => ({ ...s, scheduledTime: v }))}
+                    error={formErrors.scheduledTime}
+                  />
+                </View>
+              </View>
+            </>
+          )}
 
           {/* Row 2 — Class Type */}
           <View style={[styles.row, isMobile && styles.rowMobile]}>
@@ -549,6 +787,13 @@ export default function CreateClassScreen() {
             </View>
           ) : null}
 
+          {/* Recurring result — informational (no classes created) */}
+          {recurringNotice ? (
+            <View style={styles.noticeBanner} testID="create-class-recurring-notice">
+              <Text style={styles.noticeText}>{recurringNotice}</Text>
+            </View>
+          ) : null}
+
           {/* Buttons */}
           <View style={[styles.btnRow, isMobile && styles.btnRowMobile]}>
             <TouchableOpacity
@@ -566,7 +811,9 @@ export default function CreateClassScreen() {
               {isSubmitting ? (
                 <ActivityIndicator size="small" color={AppColors.backgroundWhite} />
               ) : (
-                <Text style={styles.saveBtnText}>Save Class</Text>
+                <Text style={styles.saveBtnText}>
+                  {mode === 'recurring' ? 'Create Series' : 'Save Class'}
+                </Text>
               )}
             </TouchableOpacity>
           </View>

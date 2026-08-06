@@ -140,6 +140,82 @@ export const styles = StyleSheet.create({
     color: AppColors.errorDefault,
     lineHeight: LineHeights.body,
   },
+  noticeBanner: {
+    borderRadius: BorderRadius.md,
+    borderWidth: 1,
+    borderColor: AppColors.surfaceBlueDim,
+    backgroundColor: AppColors.surfaceBlue,
+    padding: Spacing.md,
+  },
+  noticeText: {
+    fontSize: FontSizes.mdSm,
+    color: AppColors.actionBlueDark,
+    lineHeight: LineHeights.body,
+  },
+
+  // Segmented mode toggle (Single / Recurring)
+  segmented: {
+    flexDirection: 'row',
+    alignSelf: 'flex-start',
+    borderWidth: 1,
+    borderColor: AppColors.separatorDefault,
+    borderRadius: BorderRadius.md,
+    backgroundColor: AppColors.backgroundLight,
+    padding: Spacing.micro,
+    gap: Spacing.micro,
+  },
+  segmentedItem: {
+    paddingHorizontal: Spacing.lg,
+    paddingVertical: Spacing.sm,
+    borderRadius: BorderRadius.mdSm,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  segmentedItemActive: {
+    backgroundColor: AppColors.backgroundWhite,
+  },
+  segmentedText: {
+    fontFamily: 'Inter',
+    fontSize: FontSizes.mdSm,
+    fontWeight: FontWeights.medium,
+    color: AppColors.textMuted,
+  },
+  segmentedTextActive: {
+    color: AppColors.textHeading,
+    fontWeight: FontWeights.semibold,
+  },
+
+  // Weekday selector chips
+  weekdayRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: Spacing.sm,
+  },
+  weekdayChip: {
+    minWidth: 42,
+    paddingHorizontal: Spacing.md,
+    paddingVertical: Spacing.sm,
+    borderWidth: 1,
+    borderColor: AppColors.separatorDefault,
+    borderRadius: BorderRadius.md,
+    backgroundColor: AppColors.backgroundWhite,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  weekdayChipSelected: {
+    backgroundColor: AppColors.textHeading,
+    borderColor: AppColors.textHeading,
+  },
+  weekdayChipText: {
+    fontFamily: 'Inter',
+    fontSize: FontSizes.mdSm,
+    fontWeight: FontWeights.medium,
+    color: AppColors.textSecondary,
+  },
+  weekdayChipTextSelected: {
+    color: AppColors.backgroundWhite,
+    fontWeight: FontWeights.semibold,
+  },
   btnRow: {
     flexDirection: 'row',
     justifyContent: 'flex-end',
