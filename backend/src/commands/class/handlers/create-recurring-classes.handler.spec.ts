@@ -111,6 +111,22 @@ describe('CreateRecurringClassesHandler', () => {
     expect(saved.every((c: any) => c.state === 'published')).toBe(true);
     expect(saved.every((c: any) => c.seriesId === result.seriesId)).toBe(true);
     expect(saved.every((c: any) => c.capacity === 30)).toBe(true); // space base capacity
+    // Series stores the raw nullable capacity: null means "use space base at generation".
+    const savedSeries = (seriesRepository.save as jest.Mock).mock.calls[0][0];
+    expect(savedSeries.capacity).toBeNull();
+  });
+
+  it('persists explicit capacity on the series and resolves it onto classes', async () => {
+    okPreconditions();
+    const dto = { ...baseDto, capacity: 15 };
+    const result = await handler.execute(
+      new CreateRecurringClassesCommand(userId, gymId, dto as any),
+    );
+    expect(result.created).toBe(6);
+    const savedSeries = (seriesRepository.save as jest.Mock).mock.calls[0][0];
+    expect(savedSeries.capacity).toBe(15);
+    const savedClasses = (classRepository.saveMany as jest.Mock).mock.calls[0][0];
+    expect(savedClasses.every((c: any) => c.capacity === 15)).toBe(true);
   });
 
   it('skips past occurrences and reports them', async () => {
