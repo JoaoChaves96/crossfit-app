@@ -15,6 +15,7 @@ import { AthleteMembershipPlanEntity } from '../domain/athlete-membership-plan/e
 import { InviteEntity } from '../domain/invite/entities/invite.entity';
 import { NotificationEntity } from '../domain/notification/entities/notification.entity';
 import { PushTokenEntity } from '../domain/notification/entities/push-token.entity';
+import { ClassSeriesEntity } from '../domain/class-series/entities/class-series.entity';
 
 export const databaseConfig: TypeOrmModuleOptions = {
   type: 'postgres',
@@ -40,6 +41,7 @@ export const databaseConfig: TypeOrmModuleOptions = {
     InviteEntity,
     NotificationEntity,
     PushTokenEntity,
+    ClassSeriesEntity,
   ],
   synchronize: process.env.NODE_ENV !== 'production',
   logging: process.env.DATABASE_LOGGING === 'true',

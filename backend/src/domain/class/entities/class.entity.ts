@@ -50,6 +50,9 @@ export class ClassEntity {
   @Column('integer', { default: 60 })
   duration: number;
 
+  @Column('uuid', { nullable: true })
+  seriesId: string | null;
+
   @Column('boolean', { default: true })
   loggable: boolean;
 
