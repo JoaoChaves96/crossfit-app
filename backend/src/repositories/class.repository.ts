@@ -128,4 +128,38 @@ export class ClassRepository {
     });
     return count > 0;
   }
+
+  /**
+   * Find non-deleted classes that exactly match a series' shared fields on any
+   * of the given dates at the given time. Used to skip exact-duplicate
+   * occurrences when generating a recurring series (idempotent re-runs).
+   */
+  async findMatchingOccurrences(params: {
+    gymId: string;
+    classTypeId: string;
+    coachUserId: string;
+    spaceId: string;
+    dates: string[];
+    scheduledTime: string;
+  }): Promise<Array<{ scheduledDate: string }>> {
+    if (params.dates.length === 0) return [];
+    const rows = await this.classRepository.find({
+      where: {
+        gymId: params.gymId,
+        classTypeId: params.classTypeId,
+        coachUserId: params.coachUserId,
+        spaceId: params.spaceId,
+        scheduledTime: params.scheduledTime,
+        scheduledDate: In(params.dates) as unknown as Date,
+        deletedAt: IsNull(),
+      },
+      select: ['scheduledDate'],
+    });
+    return rows.map((r) => ({
+      scheduledDate:
+        r.scheduledDate instanceof Date
+          ? r.scheduledDate.toISOString().slice(0, 10)
+          : String(r.scheduledDate),
+    }));
+  }
 }
