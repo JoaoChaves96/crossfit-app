@@ -1,7 +1,7 @@
 # EPIC: Recurring Class Series (B1 — Create Only)
 
-**Status:** 📋 PLANNED (2026-08-06)
-**Start Date:** TBD
+**Status:** ✅ DONE (B1 delivered 2026-08-06)
+**Start Date:** 2026-08-06
 **Owner:** Backend + Frontend
 **Depends on:** `epics/CLASS_MANAGEMENT_EPIC.md` — ✅ (single-class create/edit exists)
 **Next epic:** TBD (B2 — Series Management: edit/cancel "this & following")
@@ -55,17 +55,17 @@ without a data migration. B1 does not build any management UI or cascade behavio
 
 ## Scope
 
-### Included
+### Included — all delivered ✅
 
-- New `ClassSeries` entity (gym-scoped, stores the full recurrence rule).
-- New nullable `seriesId` FK column on `ClassEntity` (null for single classes).
-- `POST /api/gyms/:gymId/classes/recurring` (owner-only) — validates, expands,
+- ✅ New `ClassSeries` entity (gym-scoped, stores the full recurrence rule).
+- ✅ New nullable `seriesId` FK column on `ClassEntity` (null for single classes).
+- ✅ `POST /api/gyms/:gymId/classes/recurring` (owner-only) — validates, expands,
   skips past + exact-duplicate occurrences, bulk-creates the remainder, persists
   the series, returns a summary `{ seriesId, created, skippedPast, skippedDuplicate }`.
-- Swagger decorators for the new endpoint + DTOs; frontend types regenerated.
-- Frontend: `create-class.tsx` gains a **Single | Recurring** mode toggle. Recurring
+- ✅ Swagger decorators for the new endpoint + DTOs; frontend types regenerated.
+- ✅ Frontend: `create-class.tsx` gains a **Single | Recurring** mode toggle. Recurring
   mode adds a weekday selector + start/end date, and shows the creation summary.
-- Built with Impeccable directly on `frontend/` code, matching the current
+- ✅ Built with Impeccable directly on `frontend/` code, matching the current
   owner-screen styling (existing create-class screen is the reference).
 
 ### Excluded (deferred to B2 or later)

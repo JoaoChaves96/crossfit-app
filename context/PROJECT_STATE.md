@@ -395,6 +395,7 @@ MVP scope. Coach desktop has NO duplicate-header bug). Discovery/triage only; fi
 ✅ POST /gym-configuration/spaces (owner)  
 ✅ POST /gym-configuration/class-types (owner)  
 ✅ POST /api/gyms/:gymId/classes (owner)  
+✅ POST /api/gyms/:gymId/classes/recurring (owner — generate a recurring class series)  
 ✅ POST /api/gyms/:gymId/configuration/coaches (owner)  
 ✅ GET /api/gyms/:gymId/configuration/coaches (owner)  
 ✅ GET /api/gyms/:gymId/schedule (owner)  
