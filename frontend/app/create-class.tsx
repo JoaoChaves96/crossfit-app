@@ -13,10 +13,10 @@ import { useRouter } from 'expo-router';
 import { useAuth } from '@/hooks/useAuth';
 import { useGym } from '@/hooks/useGym';
 import { useResponsiveLayout } from '@/hooks/useResponsiveLayout';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useSafeAreaTop } from '@/components/SafeScreen';
 import { createApiClient } from '@/utils/api-client';
 import { components } from '@/types/api.gen';
-import { AppColors } from '@/constants/theme';
+import { AppColors, Spacing } from '@/constants/theme';
 import { OwnerSidebar } from '@/components/OwnerSidebar';
 import { formatShortDate, formatTime12h } from '@/utils/datetime';
 import { styles, webDateTimeInputStyle } from './create-class.styles';
@@ -299,7 +299,7 @@ export default function CreateClassScreen() {
   const { token } = useAuth();
   const { currentGymId } = useGym();
   const { isMobile } = useResponsiveLayout();
-  const insets = useSafeAreaInsets();
+  const safeTop = useSafeAreaTop();
 
   const [classTypesFetch, setClassTypesFetch] = useState<FetchState<PickerItem[]>>({
     status: 'loading',
@@ -428,7 +428,7 @@ export default function CreateClassScreen() {
     <KeyboardAvoidingView
       style={styles.screen}
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-      <ScrollView contentContainerStyle={[styles.scrollContent, isMobile && styles.scrollContentMobile, isMobile && { paddingTop: insets.top + 16 }]} keyboardShouldPersistTaps="handled">
+      <ScrollView contentContainerStyle={[styles.scrollContent, isMobile && styles.scrollContentMobile, isMobile && { paddingTop: safeTop + Spacing.base }]} keyboardShouldPersistTaps="handled">
 
         {/* Header */}
         <View style={styles.header}>

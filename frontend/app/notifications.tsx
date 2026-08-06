@@ -4,7 +4,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useRouter, useFocusEffect } from 'expo-router';
 import { useNotifications, type Notification, type NotificationType } from '@/hooks/useNotifications';
 import { AppColors, Spacing } from '@/constants/theme';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { SafeScreen } from '@/components/SafeScreen';
 import { styles } from './notifications.styles';
 
 type IoniconName = React.ComponentProps<typeof Ionicons>['name'];
@@ -96,7 +96,6 @@ function NotificationItem({
 export default function NotificationsScreen() {
   const { notifications, loading, refresh, markAsRead, markAllAsRead, clearRead, unreadCount } =
     useNotifications();
-  const insets = useSafeAreaInsets();
   const router = useRouter();
 
   // Refetch each time the screen gains focus, so opening the bell shows the
@@ -136,7 +135,7 @@ export default function NotificationsScreen() {
 
   return (
     <View style={styles.screen} testID="notifications-screen">
-      <View style={[styles.headerRow, { paddingTop: insets.top + Spacing.md }]}>
+      <SafeScreen style={styles.headerRow} extraTopPadding={Spacing.md}>
         <View style={styles.headerLeft}>
           <TouchableOpacity
             onPress={() => router.back()}
@@ -167,7 +166,7 @@ export default function NotificationsScreen() {
             </TouchableOpacity>
           )}
         </View>
-      </View>
+      </SafeScreen>
 
       <FlatList
         data={notifications}

@@ -12,7 +12,8 @@ import { useRouter } from 'expo-router';
 import { useAuth } from '@/hooks/useAuth';
 import { useGym } from '@/hooks/useGym';
 import { useResponsiveLayout } from '@/hooks/useResponsiveLayout';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { SafeScreen } from '@/components/SafeScreen';
+import { Spacing } from '@/constants/theme';
 import { createApiClient } from '@/utils/api-client';
 import { components } from '@/types/api.gen';
 import { OwnerSidebar, OWNER_NAV_ITEMS } from '@/components/OwnerSidebar';
@@ -285,7 +286,6 @@ export default function ScheduleDashboard() {
   const { token } = useAuth();
   const { currentGymId } = useGym();
   const { isMobile } = useResponsiveLayout();
-  const insets = useSafeAreaInsets();
   const [drawerOpen, setDrawerOpen] = useState(false);
 
   const [weekStart, setWeekStart] = useState<Date>(() => getWeekStart(new Date()));
@@ -460,7 +460,7 @@ export default function ScheduleDashboard() {
         </Modal>
       )}
 
-      <View style={[styles.main, isMobile && styles.mainMobile, isMobile && { paddingTop: insets.top + 16 }]}>
+      <SafeScreen style={[styles.main, isMobile && styles.mainMobile]} applyTopInset={isMobile} extraTopPadding={Spacing.base}>
         {/* Header */}
         <View style={[styles.header, isMobile && styles.headerMobile]}>
           <View style={styles.headerLeft}>
@@ -546,7 +546,7 @@ export default function ScheduleDashboard() {
 
         {/* Content */}
         {renderContent()}
-      </View>
+      </SafeScreen>
     </View>
   );
 }

@@ -1,6 +1,7 @@
 import React from 'react';
 import { Text, TouchableOpacity, View } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { SafeScreen } from '@/components/SafeScreen';
+import { Spacing } from '@/constants/theme';
 import { styles } from './class-management.styles';
 
 const NAV_ITEMS: { label: string; key: string; enabled: boolean }[] = [
@@ -17,9 +18,8 @@ interface ClassManagementSidebarProps {
 }
 
 export function ClassManagementSidebar({ onNavigate }: ClassManagementSidebarProps) {
-  const insets = useSafeAreaInsets();
   return (
-    <View style={[styles.sidebar, { paddingTop: insets.top + 20 }]}>
+    <SafeScreen style={styles.sidebar} extraTopPadding={Spacing.lg}>
       <View style={styles.sidebarLogo}>
         <View style={styles.sidebarLogoIcon} />
         <Text style={styles.sidebarLogoText}>CrossFit Box</Text>
@@ -59,6 +59,6 @@ export function ClassManagementSidebar({ onNavigate }: ClassManagementSidebarPro
           );
         })}
       </View>
-    </View>
+    </SafeScreen>
   );
 }

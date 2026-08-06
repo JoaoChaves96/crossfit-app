@@ -13,10 +13,10 @@ import { useRouter } from 'expo-router';
 import { useAuth } from '@/hooks/useAuth';
 import { useGym } from '@/hooks/useGym';
 import { useResponsiveLayout } from '@/hooks/useResponsiveLayout';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { SafeScreen } from '@/components/SafeScreen';
 import { createApiClient } from '@/utils/api-client';
 import { components } from '@/types/api.gen';
-import { AppColors } from '@/constants/theme';
+import { AppColors, Spacing } from '@/constants/theme';
 import { OwnerSidebar, OWNER_NAV_ITEMS } from '@/components/OwnerSidebar';
 import { styles } from './coaches.styles';
 
@@ -400,7 +400,6 @@ export default function CoachesScreen() {
   const { token } = useAuth();
   const { currentGymId } = useGym();
   const { isMobile } = useResponsiveLayout();
-  const insets = useSafeAreaInsets();
 
   const [coaches, setCoaches] = useState<CoachListItem[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -483,7 +482,7 @@ export default function CoachesScreen() {
         </Modal>
       )}
 
-      <View style={[styles.main, isMobile && styles.mainMobile, isMobile && { paddingTop: insets.top + 16 }]}>
+      <SafeScreen style={[styles.main, isMobile && styles.mainMobile]} applyTopInset={isMobile} extraTopPadding={Spacing.base}>
         {/* Header */}
         <View style={styles.header}>
           <View style={styles.headerLeft}>
@@ -585,7 +584,7 @@ export default function CoachesScreen() {
             />
           </View>
         )}
-      </View>
+      </SafeScreen>
 
       {currentGymId !== null && currentGymId !== undefined ? (
         <InviteModal

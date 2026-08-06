@@ -13,7 +13,7 @@ import { useGym } from '@/hooks/useGym';
 import { createApiClient } from '@/utils/api-client';
 import { components } from '@/types/api.gen';
 import { AppColors } from '@/constants/theme';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { SafeScreen } from '@/components/SafeScreen';
 import { formatResultValue, formatMetricLabel } from '@/utils/result-format';
 import { useResponsiveLayout } from '@/hooks/useResponsiveLayout';
 import { DesktopTopNav } from '@/components/DesktopTopNav';
@@ -95,7 +95,6 @@ export default function TrainingHistoryScreen() {
   const { token, isLoading: authLoading } = useAuth();
   const { currentGymId, isLoading: gymLoading } = useGym();
   const { isDesktop } = useResponsiveLayout();
-  const insets = useSafeAreaInsets();
 
   const [history, setHistory] = useState<TrainingHistoryItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -203,7 +202,7 @@ export default function TrainingHistoryScreen() {
 
   // ── Mobile layout ─────────────────────────────────────────────────────────
   return (
-    <View style={[styles.container, { paddingTop: insets.top }]}>
+    <SafeScreen style={styles.container}>
       <View style={styles.contentWrap}>
         <View style={styles.header}>
           <Text style={styles.headerTitle}>Training History</Text>
@@ -224,7 +223,7 @@ export default function TrainingHistoryScreen() {
           />
         )}
       </View>
-    </View>
+    </SafeScreen>
   );
 }
 

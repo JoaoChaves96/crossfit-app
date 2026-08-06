@@ -12,7 +12,8 @@ import { useRouter } from 'expo-router';
 import { useAuth } from '@/hooks/useAuth';
 import { useGym } from '@/hooks/useGym';
 import { useResponsiveLayout } from '@/hooks/useResponsiveLayout';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { SafeScreen } from '@/components/SafeScreen';
+import { Spacing } from '@/constants/theme';
 import { createApiClient } from '@/utils/api-client';
 import { components } from '@/types/api.gen';
 import { OwnerSidebar, OWNER_NAV_ITEMS } from '@/components/OwnerSidebar';
@@ -148,7 +149,6 @@ export default function MembersScreen() {
   const { token } = useAuth();
   const { currentGymId } = useGym();
   const { isMobile } = useResponsiveLayout();
-  const insets = useSafeAreaInsets();
   const [drawerOpen, setDrawerOpen] = useState(false);
 
   const [members, setMembers] = useState<GymMember[]>([]);
@@ -200,7 +200,7 @@ export default function MembersScreen() {
         </Modal>
       )}
 
-      <View style={[styles.main, isMobile && styles.mainMobile, isMobile && { paddingTop: insets.top + 16 }]}>
+      <SafeScreen style={[styles.main, isMobile && styles.mainMobile]} applyTopInset={isMobile} extraTopPadding={Spacing.base}>
         {/* Page Header */}
         <View style={styles.pageHeader}>
           {isMobile && (
@@ -250,7 +250,7 @@ export default function MembersScreen() {
             </ScrollView>
           </View>
         )}
-      </View>
+      </SafeScreen>
     </View>
   );
 }

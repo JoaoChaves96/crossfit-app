@@ -15,7 +15,8 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useAuth } from '@/hooks/useAuth';
 import { useGym } from '@/hooks/useGym';
 import { useResponsiveLayout } from '@/hooks/useResponsiveLayout';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useSafeAreaTop } from '@/components/SafeScreen';
+import { Spacing } from '@/constants/theme';
 import { createApiClient } from '@/utils/api-client';
 import { trimTime } from '@/utils/datetime';
 import { components } from '@/types/api.gen';
@@ -249,7 +250,7 @@ export default function EditClassScreen() {
   const { token } = useAuth();
   const { currentGymId } = useGym();
   const { isMobile } = useResponsiveLayout();
-  const insets = useSafeAreaInsets();
+  const safeTop = useSafeAreaTop();
   const { classId } = useLocalSearchParams<{ classId: string }>();
 
   const [classLoadState, setClassLoadState] = useState<FetchState<ClassDetail>>({
@@ -442,7 +443,7 @@ export default function EditClassScreen() {
     <KeyboardAvoidingView
       style={styles.screen}
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-      <ScrollView contentContainerStyle={[styles.scrollContent, isMobile && styles.scrollContentMobile, isMobile && { paddingTop: insets.top + 16 }]} keyboardShouldPersistTaps="handled">
+      <ScrollView contentContainerStyle={[styles.scrollContent, isMobile && styles.scrollContentMobile, isMobile && { paddingTop: safeTop + Spacing.base }]} keyboardShouldPersistTaps="handled">
         {/* Header */}
         <View style={styles.header}>
           <Text style={[FONT.title, { color: COLOR.bodyText }]}>Edit Class</Text>

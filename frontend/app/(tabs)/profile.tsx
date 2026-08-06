@@ -15,7 +15,7 @@ import { createApiClient } from '@/utils/api-client';
 import type { components } from '@/types/api.gen';
 import { AppColors } from '@/constants/theme';
 import { useResponsiveLayout } from '@/hooks/useResponsiveLayout';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useSafeAreaTop } from '@/components/SafeScreen';
 import { DesktopTopNav } from '@/components/DesktopTopNav';
 import { NotificationBell } from '@/components/NotificationBell';
 import { styles, desktopStyles } from './profile.styles';
@@ -57,7 +57,7 @@ export default function ProfileScreen() {
   const { token, logout } = useAuth();
   const router = useRouter();
   const { isDesktop } = useResponsiveLayout();
-  const insets = useSafeAreaInsets();
+  const safeTop = useSafeAreaTop();
   const [screenState, setScreenState] = useState<ScreenState>({ status: 'loading' });
   const [isEditing, setIsEditing] = useState(false);
   const [editedName, setEditedName] = useState('');
@@ -290,7 +290,7 @@ export default function ProfileScreen() {
   return (
     <ScrollView style={styles.screen} contentContainerStyle={styles.contentWrap}>
       {/* Status bar / notch spacer — real top inset on device, 0 on web */}
-      <View style={{ height: insets.top }} />
+      <View style={{ height: safeTop }} />
 
       {/* Page header */}
       <View style={styles.pageHeader}>

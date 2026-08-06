@@ -14,7 +14,7 @@ import { createApiClient } from '@/utils/api-client';
 import { showConfirm, showError } from '@/utils/alert';
 import { components } from '@/types/api.gen';
 import { AppColors } from '@/constants/theme';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { SafeScreen } from '@/components/SafeScreen';
 import { formatShortDate, formatTime12h } from '@/utils/datetime';
 import { useRefreshOnAppActive } from '@/hooks/useRefreshOnAppActive';
 import { useResponsiveLayout } from '@/hooks/useResponsiveLayout';
@@ -321,7 +321,6 @@ export default function MyBookingsScreen() {
   const { token, isLoading: authLoading } = useAuth();
   const { currentGymId, isLoading: gymLoading } = useGym();
   const { isDesktop } = useResponsiveLayout();
-  const insets = useSafeAreaInsets();
 
   const [bookings, setBookings] = useState<BookingWithClassDetails[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -526,7 +525,7 @@ export default function MyBookingsScreen() {
 
   // ── Mobile layout ─────────────────────────────────────────────────────────
   return (
-    <View style={[styles.container, { paddingTop: insets.top }]}>
+    <SafeScreen style={styles.container}>
       <View style={styles.contentWrap}>
         <View style={styles.header}>
           <Text style={styles.headerTitle}>My Bookings</Text>
@@ -569,7 +568,7 @@ export default function MyBookingsScreen() {
           />
         )}
       </View>
-    </View>
+    </SafeScreen>
   );
 }
 

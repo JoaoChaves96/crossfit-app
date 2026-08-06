@@ -14,7 +14,7 @@ import { createApiClient } from '@/utils/api-client';
 import { showConfirm, showError } from '@/utils/alert';
 import { components } from '@/types/api.gen';
 import { AppColors, Spacing } from '@/constants/theme';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { SafeScreen } from '@/components/SafeScreen';
 import { formatShortDate, formatTimeRange } from '@/utils/datetime';
 import { formatResultValue, formatMetricLabel } from '@/utils/result-format';
 import { useResponsiveLayout } from '@/hooks/useResponsiveLayout';
@@ -204,7 +204,6 @@ export default function ClassDetailsScreen() {
   const { classId } = useLocalSearchParams();
   const { isDesktop } = useResponsiveLayout();
   const { refresh: refreshNotifications } = useNotifications();
-  const insets = useSafeAreaInsets();
 
   const [classData, setClassData] = useState<ClassDetailsItem | null>(null);
   const [bookingStatus, setBookingStatus] = useState<BookingStatus>('open');
@@ -516,12 +515,12 @@ export default function ClassDetailsScreen() {
   return (
     <View style={styles.screen}>
       {/* Header */}
-      <View style={[styles.header, { paddingTop: insets.top + Spacing.md }]}>
+      <SafeScreen style={styles.header} extraTopPadding={Spacing.md}>
         <TouchableOpacity onPress={() => router.back()} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
           <Ionicons name="chevron-back" size={24} color={AppColors.black} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Class Details</Text>
-      </View>
+      </SafeScreen>
 
       {/* Scrollable content */}
       <ScrollView

@@ -4,7 +4,8 @@ import { useRouter } from 'expo-router';
 import { useAuth } from '@/hooks/useAuth';
 import { useGym } from '@/hooks/useGym';
 import { useResponsiveLayout } from '@/hooks/useResponsiveLayout';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { SafeScreen } from '@/components/SafeScreen';
+import { Spacing } from '@/constants/theme';
 import { styles } from './gym-settings.styles';
 import { SettingsSidebar } from './SettingsSidebar';
 import { SettingsTabBar, ActiveTab } from './SettingsTabBar';
@@ -27,7 +28,6 @@ export default function GymSettings() {
   const { token } = useAuth();
   const { currentGymId } = useGym();
   const { isMobile } = useResponsiveLayout();
-  const insets = useSafeAreaInsets();
   const [activeTab, setActiveTab] = useState<ActiveTab>('spaces');
   const [drawerOpen, setDrawerOpen] = useState(false);
 
@@ -57,7 +57,7 @@ export default function GymSettings() {
       )}
 
       <View style={[styles.main, isMobile && styles.mainMobile]}>
-        <View style={[styles.pageTitleRow, isMobile && { paddingTop: insets.top + 16 }]}>
+        <SafeScreen style={styles.pageTitleRow} applyTopInset={isMobile} extraTopPadding={Spacing.base}>
           {isMobile && (
             <TouchableOpacity
               testID="hamburger-btn"
@@ -67,7 +67,7 @@ export default function GymSettings() {
             </TouchableOpacity>
           )}
           <Text style={styles.pageTitle}>Gym Settings</Text>
-        </View>
+        </SafeScreen>
 
         <SettingsTabBar activeTab={activeTab} onTabChange={setActiveTab} />
 

@@ -22,7 +22,7 @@ import { useRefreshOnAppActive } from '@/hooks/useRefreshOnAppActive';
 import { DesktopTopNav } from '@/components/DesktopTopNav';
 import { NotificationBell } from '@/components/NotificationBell';
 import { GymMenu } from '@/components/GymMenu';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { SafeScreen } from '@/components/SafeScreen';
 import { styles, desktopStyles } from './schedule.styles';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -381,7 +381,6 @@ export default function ScheduleScreen() {
   const { token, isLoading: authLoading } = useAuth();
   const { currentGymId, isLoading: gymLoading } = useGym();
   const { isDesktop } = useResponsiveLayout();
-  const insets = useSafeAreaInsets();
 
   const [classes, setClasses] = useState<EnrichedClass[]>([]);
   const [gymName, setGymName] = useState('My Gym');
@@ -566,10 +565,10 @@ export default function ScheduleScreen() {
     return (
       <View style={isDesktop ? desktopStyles.screen : styles.screen}>
         {isDesktop ? <DesktopTopNav gymName={gymName} /> : (
-          <View style={[styles.header, { paddingTop: insets.top + Spacing.md }]}>
+          <SafeScreen style={styles.header} extraTopPadding={Spacing.md}>
             <GymMenu gymName={gymName} />
             <NotificationBell />
-          </View>
+          </SafeScreen>
         )}
         <View style={styles.emptyContainer}>
           <View style={styles.emptyIconCircle}>
@@ -629,10 +628,10 @@ export default function ScheduleScreen() {
 
   // ── Mobile list ────────────────────────────────────────────────────────────
   const header = (
-    <View style={[styles.header, { paddingTop: insets.top + Spacing.md }]}>
+    <SafeScreen style={styles.header} extraTopPadding={Spacing.md}>
       <GymMenu gymName={gymName} />
       <NotificationBell />
-    </View>
+    </SafeScreen>
   );
 
   const controls = (
