@@ -56,6 +56,26 @@ export interface paths {
         patch: operations["ClassSchedulingController_editClass"];
         trace?: never;
     };
+    "/api/gyms/{gymId}/classes/recurring": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Create a recurring series of classes
+         * @description Generate multiple classes from a weekly recurrence rule (weekdays + shared time, bounded by an end date within 6 months). Skips past and exact-duplicate occurrences and returns a summary. Only gym owners can create classes.
+         */
+        post: operations["ClassSchedulingController_createRecurringClasses"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/gyms/{gymId}/classes/{classId}/bookings": {
         parameters: {
             query?: never;
@@ -1004,6 +1024,64 @@ export interface components {
              * @example 2024-01-01T00:00:00.000Z
              */
             lastModifiedAt: string;
+        };
+        CreateRecurringClassesDto: {
+            /** @example uuid-class-type-id */
+            classTypeId: string;
+            /** @example uuid-coach-user-id */
+            coachUserId: string;
+            /** @example uuid-space-id */
+            spaceId: string;
+            /**
+             * @description Days of week. 0=Sunday … 6=Saturday. At least one, unique.
+             * @example [
+             *       1,
+             *       3,
+             *       5
+             *     ]
+             */
+            weekdays: number[];
+            /**
+             * @description Time in HH:mm format
+             * @example 08:00
+             */
+            scheduledTime: string;
+            /**
+             * @description ISO date (YYYY-MM-DD)
+             * @example 2026-08-03
+             */
+            startDate: string;
+            /**
+             * @description ISO date (YYYY-MM-DD)
+             * @example 2026-12-31
+             */
+            endDate: string;
+            /** @example 20 */
+            capacity?: number;
+            /** @example 60 */
+            duration?: number;
+        };
+        CreateRecurringClassesResponseDto: {
+            /**
+             * @description The created series id, or null when no classes were created.
+             * @example uuid-series-id
+             */
+            seriesId: string | null;
+            /**
+             * @description Number of classes created.
+             * @example 24
+             */
+            created: number;
+            /**
+             * @description Occurrences skipped for being in the past.
+             * @example 2
+             */
+            skippedPast: number;
+            /**
+             * @description Occurrences skipped as exact duplicates.
+             * @example 1
+             */
+            skippedDuplicate: number;
         };
         EditClassDto: {
             /** @example uuid-class-type-id */
@@ -2760,6 +2838,54 @@ export interface operations {
             };
             /** @description Class not found in gym */
             404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    ClassSchedulingController_createRecurringClasses: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Gym ID */
+                gymId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateRecurringClassesDto"];
+            };
+        };
+        responses: {
+            /** @description Series generated */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CreateRecurringClassesResponseDto"];
+                };
+            };
+            /** @description Invalid rule (bad range, >6 months, etc.) */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Forbidden - Owner role required */
+            403: {
                 headers: {
                     [name: string]: unknown;
                 };

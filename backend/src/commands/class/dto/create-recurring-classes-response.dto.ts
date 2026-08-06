@@ -2,6 +2,7 @@ import { ApiProperty } from '@nestjs/swagger';
 
 export class CreateRecurringClassesResponseDto {
   @ApiProperty({
+    type: String,
     example: 'uuid-series-id',
     nullable: true,
     description: 'The created series id, or null when no classes were created.',
