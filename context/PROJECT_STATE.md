@@ -419,6 +419,14 @@ MVP scope. Coach desktop has NO duplicate-header bug). Discovery/triage only; fi
 - No analytics dashboard
 - No admin panel
 
+## Deferred Follow-Ups (planned, not yet scheduled)
+
+- **Recurring Class Series — B2 (Series Management):** edit/cancel a series,
+  "this & following" cascade, and the UI for it. B1 (create-only) ships the
+  `ClassSeries` breadcrumb so B2 needs no migration. See
+  `epics/RECURRING_CLASSES_EPIC.md` (Excluded section) — deferred until an owner
+  asks for it.
+
 ## Verified Working Flows (Waitlist)
 
 ✅ Schedule — full class cards show "Full · Waitlist Open" in orange  
