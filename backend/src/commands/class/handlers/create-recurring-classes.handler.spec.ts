@@ -4,14 +4,16 @@ import {
   NotFoundException,
   BadRequestException,
 } from '@nestjs/common';
+import { DataSource } from 'typeorm';
 import { CreateRecurringClassesHandler } from './create-recurring-classes.handler';
 import { CreateRecurringClassesCommand } from '../create-recurring-classes.command';
 import { ClassRepository } from '../../../repositories/class.repository';
-import { ClassSeriesRepository } from '../../../repositories/class-series.repository';
 import { GymService } from '../../../domain/gym/gym.service';
 import { GymStaffService } from '../../../domain/gym-staff/gym-staff.service';
 import { SpaceService } from '../../../domain/space/space.service';
 import { ClassTypeService } from '../../../domain/class-type/class-type.service';
+import { ClassEntity } from '../../../domain/class/entities/class.entity';
+import { ClassSeriesEntity } from '../../../domain/class-series/entities/class-series.entity';
 
 // A fixed "now" so the 2026 test dates split deterministically into past/future.
 // Handler reads current time via `new Date()`; we fake it with jest timers.
@@ -20,14 +22,24 @@ const NOW = new Date('2026-08-01T09:00:00.000Z');
 describe('CreateRecurringClassesHandler', () => {
   let handler: CreateRecurringClassesHandler;
   let classRepository: ClassRepository;
-  let seriesRepository: ClassSeriesRepository;
   let gymService: GymService;
   let gymStaffService: GymStaffService;
   let spaceService: SpaceService;
   let classTypeService: ClassTypeService;
 
+  // Records everything persisted through the transaction manager so tests can
+  // assert on the series row and the class rows independently.
+  let managerSave: jest.Mock;
+
   const gymId = 'gym-1';
   const userId = 'owner-1';
+
+  // Pull the single ClassSeriesEntity saved through the manager.
+  const savedSeries = (): any =>
+    managerSave.mock.calls.find((c) => c[0] === ClassSeriesEntity)?.[1];
+  // Pull the ClassEntity[] saved through the manager.
+  const savedClasses = (): any[] =>
+    managerSave.mock.calls.find((c) => c[0] === ClassEntity)?.[1] ?? [];
 
   const baseDto = {
     classTypeId: 'ct-1',
@@ -57,6 +69,17 @@ describe('CreateRecurringClassesHandler', () => {
 
   beforeEach(async () => {
     jest.useFakeTimers().setSystemTime(NOW);
+
+    // Fake transactional manager: save(Entity, obj) records the call and
+    // resolves to obj. transaction(cb) runs cb with this manager so the two
+    // saves share one atomic scope.
+    managerSave = jest.fn((_entity, obj) => Promise.resolve(obj));
+    const dataSource = {
+      transaction: jest.fn((cb: (m: any) => Promise<unknown>) =>
+        cb({ save: managerSave }),
+      ),
+    };
+
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         CreateRecurringClassesHandler,
@@ -67,10 +90,7 @@ describe('CreateRecurringClassesHandler', () => {
             findMatchingOccurrences: jest.fn().mockResolvedValue([]),
           },
         },
-        {
-          provide: ClassSeriesRepository,
-          useValue: { save: jest.fn((s) => Promise.resolve(s)) },
-        },
+        { provide: DataSource, useValue: dataSource },
         { provide: GymService, useValue: { getGymById: jest.fn() } },
         {
           provide: GymStaffService,
@@ -86,7 +106,6 @@ describe('CreateRecurringClassesHandler', () => {
 
     handler = module.get(CreateRecurringClassesHandler);
     classRepository = module.get(ClassRepository);
-    seriesRepository = module.get(ClassSeriesRepository);
     gymService = module.get(GymService);
     gymStaffService = module.get(GymStaffService);
     spaceService = module.get(SpaceService);
@@ -105,15 +124,14 @@ describe('CreateRecurringClassesHandler', () => {
     expect(result.skippedPast).toBe(0);
     expect(result.skippedDuplicate).toBe(0);
     expect(result.seriesId).toBeTruthy();
-    expect(seriesRepository.save).toHaveBeenCalledTimes(1);
-    const saved = (classRepository.saveMany as jest.Mock).mock.calls[0][0];
+    expect(savedSeries()).toBeDefined();
+    const saved = savedClasses();
     expect(saved).toHaveLength(6);
     expect(saved.every((c: any) => c.state === 'published')).toBe(true);
     expect(saved.every((c: any) => c.seriesId === result.seriesId)).toBe(true);
     expect(saved.every((c: any) => c.capacity === 30)).toBe(true); // space base capacity
     // Series stores the raw nullable capacity: null means "use space base at generation".
-    const savedSeries = (seriesRepository.save as jest.Mock).mock.calls[0][0];
-    expect(savedSeries.capacity).toBeNull();
+    expect(savedSeries().capacity).toBeNull();
   });
 
   it('persists explicit capacity on the series and resolves it onto classes', async () => {
@@ -123,10 +141,32 @@ describe('CreateRecurringClassesHandler', () => {
       new CreateRecurringClassesCommand(userId, gymId, dto as any),
     );
     expect(result.created).toBe(6);
-    const savedSeries = (seriesRepository.save as jest.Mock).mock.calls[0][0];
-    expect(savedSeries.capacity).toBe(15);
-    const savedClasses = (classRepository.saveMany as jest.Mock).mock.calls[0][0];
-    expect(savedClasses.every((c: any) => c.capacity === 15)).toBe(true);
+    expect(savedSeries().capacity).toBe(15);
+    expect(savedClasses().every((c: any) => c.capacity === 15)).toBe(true);
+  });
+
+  it('persists series and classes atomically in one transaction', async () => {
+    okPreconditions();
+    await handler.execute(
+      new CreateRecurringClassesCommand(userId, gymId, baseDto as any),
+    );
+    // Both writes happen inside a single transaction scope.
+    expect(managerSave).toHaveBeenCalledWith(ClassSeriesEntity, expect.anything());
+    expect(managerSave).toHaveBeenCalledWith(ClassEntity, expect.any(Array));
+  });
+
+  it('propagates and does not swallow a failure inside the transaction', async () => {
+    okPreconditions();
+    // Class save rejects → the whole transaction (and execute) must reject,
+    // so no orphan series is left behind by the handler.
+    managerSave.mockImplementation((entity, obj) =>
+      entity === ClassEntity
+        ? Promise.reject(new Error('classes write failed'))
+        : Promise.resolve(obj),
+    );
+    await expect(
+      handler.execute(new CreateRecurringClassesCommand(userId, gymId, baseDto as any)),
+    ).rejects.toThrow('classes write failed');
   });
 
   it('skips past occurrences and reports them', async () => {
@@ -161,7 +201,7 @@ describe('CreateRecurringClassesHandler', () => {
     );
     expect(result.created).toBe(0);
     expect(result.seriesId).toBeNull();
-    expect(seriesRepository.save).not.toHaveBeenCalled();
+    expect(managerSave).not.toHaveBeenCalled();
     expect(classRepository.saveMany).not.toHaveBeenCalled();
   });
 

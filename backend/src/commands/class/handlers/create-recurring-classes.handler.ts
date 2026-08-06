@@ -1,10 +1,10 @@
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { Inject } from '@nestjs/common';
+import { DataSource } from 'typeorm';
 import { v4 as uuid } from 'uuid';
 import { CreateRecurringClassesCommand } from '../create-recurring-classes.command';
 import { CreateRecurringClassesResponseDto } from '../dto/create-recurring-classes-response.dto';
 import { ClassRepository } from '../../../repositories/class.repository';
-import { ClassSeriesRepository } from '../../../repositories/class-series.repository';
 import { ClassEntity } from '../../../domain/class/entities/class.entity';
 import { ClassSeriesEntity } from '../../../domain/class-series/entities/class-series.entity';
 import { GymService } from '../../../domain/gym/gym.service';
@@ -29,13 +29,12 @@ export class CreateRecurringClassesHandler
 {
   constructor(
     @Inject(ClassRepository) private readonly classRepository: ClassRepository,
-    @Inject(ClassSeriesRepository)
-    private readonly seriesRepository: ClassSeriesRepository,
     @Inject(GymService) private readonly gymService: GymService,
     @Inject(GymStaffService) private readonly gymStaffService: GymStaffService,
     @Inject(SpaceService) private readonly spaceService: SpaceService,
     @Inject(ClassTypeService)
     private readonly classTypeService: ClassTypeService,
+    @Inject(DataSource) private readonly dataSource: DataSource,
   ) {}
 
   async execute(
@@ -138,7 +137,8 @@ export class CreateRecurringClassesHandler
       return { seriesId: null, created: 0, skippedPast, skippedDuplicate };
     }
 
-    // Persist series then classes
+    // Build the series + classes, then persist both in ONE transaction so a
+    // failure to save the classes never leaves an orphaned ClassSeries row.
     const seriesId = uuid();
     const series = new ClassSeriesEntity();
     series.id = seriesId;
@@ -154,7 +154,6 @@ export class CreateRecurringClassesHandler
     series.endDate = end;
     series.createdByUserId = userId;
     series.createdAt = now;
-    await this.seriesRepository.save(series);
 
     const classes = finalDates.map((date) => {
       const c = new ClassEntity();
@@ -174,7 +173,12 @@ export class CreateRecurringClassesHandler
       c.deletedAt = null;
       return c;
     });
-    await this.classRepository.saveMany(classes);
+
+    // ATOMIC: series + classes commit together or not at all.
+    await this.dataSource.transaction(async (manager) => {
+      await manager.save(ClassSeriesEntity, series);
+      await manager.save(ClassEntity, classes);
+    });
 
     return {
       seriesId,
