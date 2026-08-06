@@ -2,16 +2,19 @@ import { Module } from '@nestjs/common';
 import { CqrsModule } from '@nestjs/cqrs';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ClassEntity } from './entities/class.entity';
+import { ClassSeriesEntity } from '../class-series/entities/class-series.entity';
 import { BookingEntity } from '../booking/entities/booking.entity';
 import { AttendanceEntity } from '../attendance/entities/attendance.entity';
 import { ResultEntity } from '../result/entities/result.entity';
 import { ProgrammingEntity } from '../programming/entities/programming.entity';
 import { ClassRepository } from '../../repositories/class.repository';
+import { ClassSeriesRepository } from '../../repositories/class-series.repository';
 import { BookingRepository } from '../../repositories/booking.repository';
 import { AttendanceRepository } from '../../repositories/attendance.repository';
 import { ResultRepository } from '../../repositories/result.repository';
 import { ProgrammingRepository } from '../../repositories/programming.repository';
 import { CreateClassHandler } from '../../commands/class/handlers/create-class.handler';
+import { CreateRecurringClassesHandler } from '../../commands/class/handlers/create-recurring-classes.handler';
 import { BookClassHandler } from '../../commands/class/handlers/book-class.handler';
 import { CancelBookingHandler } from '../../commands/class/handlers/cancel-booking.handler';
 import { MarkAttendanceHandler } from '../../commands/class/handlers/mark-attendance.handler';
@@ -39,6 +42,7 @@ import { ClassLifecycleScheduler } from './class-lifecycle.scheduler';
 
 const CommandHandlers = [
   CreateClassHandler,
+  CreateRecurringClassesHandler,
   BookClassHandler,
   CancelBookingHandler,
   MarkAttendanceHandler,
@@ -57,6 +61,7 @@ const CommandHandlers = [
     CqrsModule,
     TypeOrmModule.forFeature([
       ClassEntity,
+      ClassSeriesEntity,
       BookingEntity,
       AttendanceEntity,
       ResultEntity,
@@ -72,6 +77,7 @@ const CommandHandlers = [
   ],
   providers: [
     ClassRepository,
+    ClassSeriesRepository,
     BookingRepository,
     AttendanceRepository,
     ResultRepository,

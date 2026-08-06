@@ -19,6 +19,9 @@ import { CurrentUser } from '../../auth/decorators/current-user.decorator';
 import { CreateClassDto } from '../../commands/class/dto/create-class.dto';
 import { CreateClassCommand } from '../../commands/class/create-class.command';
 import { CreateClassResponseDto } from '../../commands/class/dto/create-class-response.dto';
+import { CreateRecurringClassesDto } from '../../commands/class/dto/create-recurring-classes.dto';
+import { CreateRecurringClassesCommand } from '../../commands/class/create-recurring-classes.command';
+import { CreateRecurringClassesResponseDto } from '../../commands/class/dto/create-recurring-classes-response.dto';
 import { EditClassDto } from '../../commands/class/dto/edit-class.dto';
 import { EditClassCommand } from '../../commands/class/edit-class.command';
 import { EditClassResponseDto } from '../../commands/class/dto/edit-class-response.dto';
@@ -132,6 +135,36 @@ export class ClassSchedulingController {
     );
 
     return this.commandBus.execute(command);
+  }
+
+  @Post('/recurring')
+  @Role('owner')
+  @ApiOperation({
+    summary: 'Create a recurring series of classes',
+    description:
+      'Generate multiple classes from a weekly recurrence rule (weekdays + shared time, bounded by an end date within 6 months). Skips past and exact-duplicate occurrences and returns a summary. Only gym owners can create classes.',
+  })
+  @ApiParam({ name: 'gymId', description: 'Gym ID' })
+  @ApiBody({ type: CreateRecurringClassesDto })
+  @ApiResponse({
+    status: 201,
+    description: 'Series generated',
+    type: CreateRecurringClassesResponseDto,
+  })
+  @ApiResponse({
+    status: 400,
+    description: 'Invalid rule (bad range, >6 months, etc.)',
+  })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiResponse({ status: 403, description: 'Forbidden - Owner role required' })
+  async createRecurringClasses(
+    @Param('gymId') gymId: string,
+    @Body(ValidationPipe) dto: CreateRecurringClassesDto,
+    @CurrentUser() userId: string,
+  ): Promise<CreateRecurringClassesResponseDto> {
+    return this.commandBus.execute(
+      new CreateRecurringClassesCommand(userId, gymId, dto),
+    );
   }
 
   @Patch('/:classId')
