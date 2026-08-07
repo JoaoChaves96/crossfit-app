@@ -1,5 +1,12 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import { ActivityIndicator, ScrollView, TouchableOpacity, View } from 'react-native';
+import {
+  ActivityIndicator,
+  KeyboardAvoidingView,
+  Platform,
+  ScrollView,
+  TouchableOpacity,
+  View,
+} from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useAuth } from '@/hooks/useAuth';
 import { useGym } from '@/hooks/useGym';
@@ -15,6 +22,7 @@ import { ClassManagementSidebar } from './ClassManagementSidebar';
 import { ClassHeader, ClassTitleRow, MobileClassInfoCard, ClassActions } from './ClassHeader';
 import { BookingsPanel } from './BookingsPanel';
 import { ResultsPanel } from './ResultsPanel';
+import { ProgrammingPanel } from './ProgrammingPanel';
 import { useClassTransition } from './useClassTransition';
 
 type ClassDetail = components['schemas']['ClassScheduleItemDto'];
@@ -23,7 +31,14 @@ type GetClassBookingsResponse = components['schemas']['GetClassBookingsResponseD
 type ClassResultItem = components['schemas']['ClassResultItemDto'];
 type GetClassResultsResponse = components['schemas']['GetClassResultsResponseDto'];
 
-type MobileTab = 'info' | 'bookings' | 'results';
+type MobileTab = 'info' | 'bookings' | 'results' | 'programming';
+
+const MOBILE_TABS: { key: MobileTab; label: string }[] = [
+  { key: 'info', label: 'Info' },
+  { key: 'bookings', label: 'Bookings' },
+  { key: 'results', label: 'Results' },
+  { key: 'programming', label: 'Programming' },
+];
 
 export default function ClassManagement() {
   const router = useRouter();
@@ -133,18 +148,15 @@ export default function ClassManagement() {
     router.push(`/coach-mark-attendance?classId=${classId}&gymId=${currentGymId}` as never);
   }, [router, classId, currentGymId]);
 
-  const handleAddProgramming = useCallback(() => {
-    if (!classId || !currentGymId) return;
-    router.push(`/coach-class-details?classId=${classId}&gymId=${currentGymId}` as never);
-  }, [router, classId, currentGymId]);
-
   const handleEditClass = useCallback(() => {
     if (!classId || !currentGymId) return;
     router.push(`/edit-class?classId=${classId}&gymId=${currentGymId}` as never);
   }, [router, classId, currentGymId]);
 
   return (
-    <View style={styles.root}>
+    <KeyboardAvoidingView
+      style={styles.root}
+      behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
       {!isMobile && <ClassManagementSidebar onNavigate={handleNavigate} />}
 
       {/* Mobile drawer */}
@@ -157,7 +169,8 @@ export default function ClassManagement() {
       <ScrollView
         style={styles.mainScroll}
         contentContainerStyle={[styles.mainContent, isMobile && styles.mainContentMobile, isMobile && { paddingTop: safeTop + Space.base }]}
-        showsVerticalScrollIndicator={false}>
+        showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled">
 
         {isMobile ? (
           <View style={styles.topBar}>
@@ -210,7 +223,6 @@ export default function ClassManagement() {
                 isTransitioning={isTransitioning}
                 onTransition={handleTransition}
                 onMarkAttendance={handleMarkAttendance}
-                onAddProgramming={handleAddProgramming}
                 onEditClass={handleEditClass}
               />
             )}
@@ -239,64 +251,66 @@ export default function ClassManagement() {
                 ) : null}
               </View>
             ) : isMobile ? (
-              /* Mobile: 3-tab interface Info | Bookings | Results */
+              /* Mobile: Info | Bookings | Results | Programming */
               <View style={styles.mobileTabsContainer}>
                 <View style={styles.mobileTabBar}>
-                  <TouchableOpacity
-                    style={[styles.mobileTab, mobileTab === 'info' && styles.mobileTabActive]}
-                    onPress={() => setMobileTab('info')}>
-                    <Text
-                      size="body"
-                      weight={mobileTab === 'info' ? 'semibold' : 'regular'}
-                      tone={mobileTab === 'info' ? 'strong' : 'muted'}>
-                      Info
-                    </Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity
-                    style={[styles.mobileTab, mobileTab === 'bookings' && styles.mobileTabActive]}
-                    onPress={() => setMobileTab('bookings')}>
-                    <Text
-                      size="body"
-                      weight={mobileTab === 'bookings' ? 'semibold' : 'regular'}
-                      tone={mobileTab === 'bookings' ? 'strong' : 'muted'}>
-                      Bookings
-                    </Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity
-                    style={[styles.mobileTab, mobileTab === 'results' && styles.mobileTabActive]}
-                    onPress={() => setMobileTab('results')}>
-                    <Text
-                      size="body"
-                      weight={mobileTab === 'results' ? 'semibold' : 'regular'}
-                      tone={mobileTab === 'results' ? 'strong' : 'muted'}>
-                      Results
-                    </Text>
-                  </TouchableOpacity>
+                  {MOBILE_TABS.map((tab) => {
+                    const isActive = mobileTab === tab.key;
+                    return (
+                      <TouchableOpacity
+                        key={tab.key}
+                        testID={`class-management-tab-${tab.key}`}
+                        style={[styles.mobileTab, isActive && styles.mobileTabActive]}
+                        onPress={() => setMobileTab(tab.key)}>
+                        <Text
+                          size="meta"
+                          weight={isActive ? 'semibold' : 'regular'}
+                          tone={isActive ? 'strong' : 'muted'}>
+                          {tab.label}
+                        </Text>
+                      </TouchableOpacity>
+                    );
+                  })}
                 </View>
                 {mobileTab === 'info' ? (
                   <View>
                     <MobileClassInfoCard classDetail={classDetail} />
                     <ClassActions
                       onMarkAttendance={handleMarkAttendance}
-                      onAddProgramming={handleAddProgramming}
                       onEditClass={handleEditClass}
+                      isMobile
                     />
                   </View>
                 ) : mobileTab === 'bookings' ? (
                   <BookingsPanel bookedList={bookedList} waitlistedList={waitlistedList} />
-                ) : (
+                ) : mobileTab === 'results' ? (
                   <ResultsPanel results={results} />
+                ) : (
+                  <ProgrammingPanel
+                    token={token}
+                    currentGymId={currentGymId}
+                    classId={classId}
+                    classState={classDetail.state}
+                  />
                 )}
               </View>
             ) : (
-              <View style={styles.listsRow}>
-                <BookingsPanel bookedList={bookedList} waitlistedList={waitlistedList} />
-                <ResultsPanel results={results} />
-              </View>
+              <>
+                <View style={styles.listsRow}>
+                  <BookingsPanel bookedList={bookedList} waitlistedList={waitlistedList} />
+                  <ResultsPanel results={results} />
+                </View>
+                <ProgrammingPanel
+                  token={token}
+                  currentGymId={currentGymId}
+                  classId={classId}
+                  classState={classDetail.state}
+                />
+              </>
             )}
           </>
         ) : null}
       </ScrollView>
-    </View>
+    </KeyboardAvoidingView>
   );
 }

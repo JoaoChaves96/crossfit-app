@@ -1,5 +1,5 @@
 import { StyleSheet } from 'react-native';
-import { Ground, Ink, Line, Radius, Space, Elevation } from '@/constants/design';
+import { Ground, Ink, Line, Radius, Space, Elevation, Status, Type } from '@/constants/design';
 
 export const styles = StyleSheet.create({
   root: {
@@ -191,12 +191,97 @@ export const styles = StyleSheet.create({
   actionBtnWrap: {
     minWidth: 160,
   },
+  // Mobile: the primary action takes its own full-width row and the secondary
+  // actions stack full-width beneath it. A phone can't fit two 160pt buttons
+  // side by side, so wrapping would produce a ragged stack of stubby boxes.
+  actionRowMobile: {
+    flexDirection: 'column',
+    flexWrap: 'nowrap',
+    gap: Space.sm,
+  },
+  actionBtnWrapMobile: {
+    width: '100%',
+    minWidth: 0,
+  },
 
   // Lists row
   listsRow: {
     flexDirection: 'row',
     gap: Space.lg,
     flex: 1,
+  },
+
+  // Programming section
+  progSection: {
+    gap: Space.md,
+  },
+  progLoggableRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Space.sm,
+  },
+  progCard: {
+    backgroundColor: Ground.surface,
+    borderRadius: Radius.card,
+    borderWidth: 1,
+    borderColor: Line.hairline,
+    padding: Space.base,
+    gap: Space.sm,
+    ...Elevation.card,
+  },
+  progFeedback: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: Space.lg,
+    gap: Space.md,
+  },
+  // Applied to the TextInput itself; the face must be named explicitly since a
+  // TextInput can't route through the Text primitive.
+  progInput: {
+    borderWidth: 1,
+    borderColor: Line.divider,
+    borderRadius: Radius.control,
+    paddingHorizontal: Space.md,
+    paddingVertical: Space.sm,
+    backgroundColor: Ground.surface,
+    color: Ink.strong,
+    fontFamily: Type.family.regular,
+    fontSize: Type.size.body,
+    lineHeight: Type.lineHeight.body,
+  },
+  progReadonly: {
+    lineHeight: Type.lineHeight.relaxed,
+  },
+  progErrorBanner: {
+    borderRadius: Radius.control,
+    borderWidth: 1,
+    borderColor: Status.danger,
+    backgroundColor: Status.dangerWash,
+    padding: Space.md,
+  },
+  progFooter: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: Space.md,
+  },
+  progFooterMobile: {
+    flexDirection: 'column',
+    alignItems: 'stretch',
+    gap: Space.sm,
+  },
+  progSaveWrap: {
+    minWidth: 180,
+  },
+  progSaveWrapMobile: {
+    width: '100%',
+    minWidth: 0,
+  },
+
+  // Mobile: Attendance + Waitlist stack full-width with one rhythm gap. No
+  // flex here on purpose — the cards keep their content height.
+  bookingsStackMobile: {
+    gap: Space.lg,
   },
 
   // List sections
@@ -207,6 +292,13 @@ export const styles = StyleSheet.create({
   waitSection: {
     width: 280,
     gap: Space.md,
+  },
+  // Mobile: the two booking cards stack in a column, so each must fill the
+  // column width (not the 280pt waitlist rail) and take its content height
+  // rather than growing to divide the leftover space.
+  sectionStackedMobile: {
+    width: '100%',
+    flex: 0,
   },
   listHeader: {
     flexDirection: 'row',
@@ -240,6 +332,12 @@ export const styles = StyleSheet.create({
     width: 100,
     alignItems: 'flex-start',
   },
+  // Waitlist queue position — a narrow leading column. Stays monochrome: the
+  // accent is reserved for the primary action, not for a rank number.
+  tableColPos: {
+    width: 28,
+    alignItems: 'flex-start',
+  },
   tableRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -248,9 +346,6 @@ export const styles = StyleSheet.create({
     paddingVertical: Space.sm,
     borderTopWidth: 1,
     borderTopColor: Line.hairline,
-  },
-  tableRowWait: {
-    gap: Space.sm,
   },
   tableRowName: {
     flex: 1,
@@ -274,6 +369,18 @@ export const styles = StyleSheet.create({
     backgroundColor: Ground.sunken,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+
+  // Mobile results accordion — the expansion body under a tapped row. Sunken
+  // ground + no top hairline reads as part of the row above it, not a new row.
+  resDetail: {
+    backgroundColor: Ground.base,
+    paddingHorizontal: Space.md,
+    paddingVertical: Space.md,
+    gap: Space.md,
+  },
+  resDetailPair: {
+    gap: Space.hair,
   },
 
   // Results table columns

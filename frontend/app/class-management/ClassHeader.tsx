@@ -149,20 +149,19 @@ export function MobileClassInfoCard({ classDetail }: { classDetail: ClassDetail 
 
 interface ClassActionsProps {
   onMarkAttendance: () => void;
-  onAddProgramming: () => void;
   onEditClass: () => void;
+  /** Mobile stacks the actions full-width; desktop keeps them on one row. */
+  isMobile?: boolean;
 }
 
-export function ClassActions({ onMarkAttendance, onAddProgramming, onEditClass }: ClassActionsProps) {
+export function ClassActions({ onMarkAttendance, onEditClass, isMobile }: ClassActionsProps) {
+  const btnWrap = [styles.actionBtnWrap, isMobile && styles.actionBtnWrapMobile];
   return (
-    <View style={styles.actionRow}>
-      <View style={styles.actionBtnWrap}>
+    <View style={[styles.actionRow, isMobile && styles.actionRowMobile]}>
+      <View style={btnWrap}>
         <Button testID="mark-attendance-btn" label="Mark Attendance" variant="primary" onPress={onMarkAttendance} />
       </View>
-      <View style={styles.actionBtnWrap}>
-        <Button testID="add-programming-btn" label="Add Programming" variant="quiet" onPress={onAddProgramming} />
-      </View>
-      <View style={styles.actionBtnWrap}>
+      <View style={btnWrap}>
         <Button testID="edit-class-btn" label="Edit" variant="quiet" onPress={onEditClass} />
       </View>
     </View>
@@ -176,7 +175,6 @@ interface ClassHeaderProps {
   isTransitioning: boolean;
   onTransition: () => void;
   onMarkAttendance: () => void;
-  onAddProgramming: () => void;
   onEditClass: () => void;
 }
 
@@ -185,18 +183,13 @@ export function ClassHeader({
   isTransitioning,
   onTransition,
   onMarkAttendance,
-  onAddProgramming,
   onEditClass,
 }: ClassHeaderProps) {
   return (
     <>
       <ClassTitleRow classDetail={classDetail} isTransitioning={isTransitioning} onTransition={onTransition} />
       <InfoCard classDetail={classDetail} />
-      <ClassActions
-        onMarkAttendance={onMarkAttendance}
-        onAddProgramming={onAddProgramming}
-        onEditClass={onEditClass}
-      />
+      <ClassActions onMarkAttendance={onMarkAttendance} onEditClass={onEditClass} />
     </>
   );
 }
