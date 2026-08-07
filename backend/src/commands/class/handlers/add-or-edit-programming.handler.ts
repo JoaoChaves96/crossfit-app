@@ -4,7 +4,7 @@ import { AddOrEditProgrammingCommand } from '../add-or-edit-programming.command'
 import { AddOrEditProgrammingResponseDto } from '../dto/add-or-edit-programming-response.dto';
 import { ClassRepository } from '../../../repositories/class.repository';
 import { ProgrammingRepository } from '../../../repositories/programming.repository';
-import { GymStaffService } from '../../../domain/gym-staff/gym-staff.service';
+import { ClassContentAccessService } from '../../../domain/class/class-content-access.service';
 import { ProgrammingEntity } from '../../../domain/programming/entities/programming.entity';
 import { notFound, forbidden, invalidState } from '../../../http/exceptions';
 import { v4 as uuid } from 'uuid';
@@ -13,13 +13,14 @@ import { v4 as uuid } from 'uuid';
  * AddOrEditProgrammingHandler: Orchestrates programming creation/update
  *
  * Responsibilities:
- * - Enforce all preconditions (coach assigned to class, class in publishable state)
+ * - Enforce all preconditions (gym owner or assigned coach, class in publishable state)
  * - Create or update ProgrammingEntity with content
  * - Optionally update Class.loggable if provided
  * - Persist both entities
  * - Return programming details
  *
  * USER_JOURNEYS reference: Coach Journey Step 2
+ * DECISIONS reference: Programming Authorship (owner or assigned coach)
  */
 @CommandHandler(AddOrEditProgrammingCommand)
 export class AddOrEditProgrammingHandler implements ICommandHandler<AddOrEditProgrammingCommand> {
@@ -27,8 +28,8 @@ export class AddOrEditProgrammingHandler implements ICommandHandler<AddOrEditPro
     @Inject(ClassRepository) private readonly classRepository: ClassRepository,
     @Inject(ProgrammingRepository)
     private readonly programmingRepository: ProgrammingRepository,
-    @Inject(GymStaffService)
-    private readonly gymStaffService: GymStaffService,
+    @Inject(ClassContentAccessService)
+    private readonly classContentAccessService: ClassContentAccessService,
   ) {}
 
   async execute(
@@ -48,27 +49,20 @@ export class AddOrEditProgrammingHandler implements ICommandHandler<AddOrEditPro
       throw forbidden('Class does not belong to the specified gym');
     }
 
-    // Precondition 2: Verify coach is assigned to the class
-    if (classEntity.coachUserId !== command.userId) {
-      throw forbidden('Coach is not assigned to this class');
-    }
-
-    // Verify coach is active in the gym
-    const isCoachActive = await this.gymStaffService.isCoachAssignedToClass(
+    // Precondition 2: Caller must be the gym owner or the assigned, active coach
+    await this.classContentAccessService.assertCanEditClassContent(
       command.userId,
-      command.classId,
-      classEntity.gymId,
+      classEntity,
     );
-    if (!isCoachActive) {
-      throw forbidden('Coach is not active for this gym');
-    }
 
     // Precondition 3: Verify class is in publishable state (published or booking_closed)
     if (
       classEntity.state !== 'published' &&
       classEntity.state !== 'booking_closed'
     ) {
-      throw invalidState('Programming can only be added/edited while class is published or booking closed');
+      throw invalidState(
+        'Programming can only be added/edited while class is published or booking closed',
+      );
     }
 
     // State Change: Update class loggable flag if provided

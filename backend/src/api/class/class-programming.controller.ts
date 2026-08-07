@@ -82,11 +82,11 @@ export class ClassProgrammingController {
   }
 
   @Post('/:classId/programming')
-  @Role('coach')
+  @Role(['coach', 'owner'])
   @ApiOperation({
     summary: 'Add or edit class programming',
     description:
-      'Create or update workout content and loggable status for a class. Coaches only. Programming can be edited while class is published or booking closed.',
+      'Create or update workout content and loggable status for a class. The gym owner may edit programming for any class in their gym; a coach may edit only a class they are assigned to. Programming can be edited while the class is published or booking closed.',
   })
   @ApiParam({ name: 'gymId', description: 'Gym ID' })
   @ApiParam({ name: 'classId', description: 'Class ID' })
@@ -96,8 +96,18 @@ export class ClassProgrammingController {
     description: 'Programming saved',
     type: AddOrEditProgrammingResponseDto,
   })
+  @ApiResponse({
+    status: 400,
+    description:
+      'Class is not in published or booking_closed state, or request body is invalid',
+  })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
-  @ApiResponse({ status: 403, description: 'Forbidden - Coach role required' })
+  @ApiResponse({
+    status: 403,
+    description:
+      'Forbidden - gymId mismatch, or caller is neither the gym owner nor the coach assigned to this class',
+  })
+  @ApiResponse({ status: 404, description: 'Class not found in gym' })
   async addOrEditProgramming(
     @Param('gymId') gymId: string,
     @Param('classId') classId: string,
@@ -120,11 +130,11 @@ export class ClassProgrammingController {
   }
 
   @Post('/:classId/toggle-loggable')
-  @Role('coach')
+  @Role(['coach', 'owner'])
   @ApiOperation({
     summary: 'Toggle class loggable status',
     description:
-      'Toggle whether athletes can log results for this class. Coaches only.',
+      'Toggle whether athletes can log results for this class. The gym owner may toggle any class in their gym; a coach may toggle only a class they are assigned to. Editable while the class is published or booking closed.',
   })
   @ApiParam({ name: 'gymId', description: 'Gym ID' })
   @ApiParam({ name: 'classId', description: 'Class ID' })
@@ -134,8 +144,18 @@ export class ClassProgrammingController {
     description: 'Loggable status toggled',
     type: ToggleLoggableStatusResponseDto,
   })
+  @ApiResponse({
+    status: 400,
+    description:
+      'Class is not in published or booking_closed state, or request body is invalid',
+  })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
-  @ApiResponse({ status: 403, description: 'Forbidden - Coach role required' })
+  @ApiResponse({
+    status: 403,
+    description:
+      'Forbidden - gymId mismatch, or caller is neither the gym owner nor the coach assigned to this class',
+  })
+  @ApiResponse({ status: 404, description: 'Class not found in gym' })
   async toggleLoggableStatus(
     @Param('gymId') gymId: string,
     @Param('classId') classId: string,
@@ -146,7 +166,7 @@ export class ClassProgrammingController {
       throw new Error('Class ID mismatch');
     }
 
-    const command = new ToggleLoggableStatusCommand(userId, classId);
+    const command = new ToggleLoggableStatusCommand(userId, classId, gymId);
 
     return this.commandBus.execute(command);
   }
@@ -167,7 +187,10 @@ export class ClassProgrammingController {
     type: ManuallyTransitionClassStateResponseDto,
   })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
-  @ApiResponse({ status: 403, description: 'Forbidden - Coach or owner role required' })
+  @ApiResponse({
+    status: 403,
+    description: 'Forbidden - Coach or owner role required',
+  })
   async manuallyTransitionClassState(
     @Param('gymId') gymId: string,
     @Param('classId') classId: string,
@@ -205,7 +228,10 @@ export class ClassProgrammingController {
     type: UpdateClassStructureResponseDto,
   })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
-  @ApiResponse({ status: 403, description: 'Forbidden - Coach or owner role required' })
+  @ApiResponse({
+    status: 403,
+    description: 'Forbidden - Coach or owner role required',
+  })
   async updateClassStructure(
     @Param('gymId') gymId: string,
     @Param('classId') classId: string,

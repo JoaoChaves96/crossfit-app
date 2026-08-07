@@ -36,6 +36,7 @@ describe('Results, Attendance, and Programming (e2e)', () => {
   const coachUserId = uuidv4();
   const athleteUserId = uuidv4();
   const otherGymOwnerUserId = uuidv4();
+  const otherCoachUserId = uuidv4();
   const spaceId = uuidv4();
 
   // classTypeId with resultMetrics='time' so results can be logged
@@ -45,6 +46,7 @@ describe('Results, Attendance, and Programming (e2e)', () => {
   let publishedClassId: string;       // state = 'published'   — for toggle-loggable, programming
   let inProgressClassId: string;      // state = 'in_progress' — for attendance
   let completedClassId: string;       // state = 'completed'   — for log result
+  let otherCoachClassId: string;      // state = 'published', assigned to a different coach
 
   // IDs created during tests (for edit result)
   let loggedResultId: string;
@@ -117,7 +119,8 @@ describe('Results, Attendance, and Programming (e2e)', () => {
         ($1,  $2,  'Test Owner',       'active', NOW()),
         ($3,  $4,  'Test Coach',       'active', NOW()),
         ($5,  $6,  'Test Athlete',     'active', NOW()),
-        ($7,  $8,  'Other Gym Owner',  'active', NOW())`,
+        ($7,  $8,  'Other Gym Owner',  'active', NOW()),
+        ($9,  $10, 'Other Coach',      'active', NOW())`,
       [
         ownerUserId,
         `owner-${uuidv4()}@test.local`,
@@ -127,6 +130,8 @@ describe('Results, Attendance, and Programming (e2e)', () => {
         `athlete-${uuidv4()}@test.local`,
         otherGymOwnerUserId,
         `other-owner-${uuidv4()}@test.local`,
+        otherCoachUserId,
+        `other-coach-${uuidv4()}@test.local`,
       ],
     );
 
@@ -153,6 +158,13 @@ describe('Results, Attendance, and Programming (e2e)', () => {
         uuidv4(), gymId, ownerUserId, 'owner', 'active',
         uuidv4(), gymId, coachUserId, 'coach', 'active',
       ],
+    );
+
+    // Staff: a second coach in the primary gym (for not-assigned-coach tests)
+    await dataSource.query(
+      `INSERT INTO gym_staff (id, "gymId", "userId", role, status, "assignedAt")
+       VALUES ($1, $2, $3, $4, $5, NOW())`,
+      [uuidv4(), gymId, otherCoachUserId, 'coach', 'active'],
     );
 
     // Staff: owner in other gym (so wrongGymToken passes RolesGuard on other-gym routes)
@@ -196,6 +208,15 @@ describe('Results, Attendance, and Programming (e2e)', () => {
       [publishedClassId, gymId, classTypeId, coachUserId, spaceId, baseDate, baseTime, 20, 'published', true],
     );
 
+    // Class in 'published' state assigned to a DIFFERENT coach
+    otherCoachClassId = uuidv4();
+    await dataSource.query(
+      `INSERT INTO classes (id, "gymId", "classTypeId", "coachUserId", "spaceId",
+         "scheduledDate", "scheduledTime", capacity, state, loggable, "createdAt", "lastModifiedAt")
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, NOW(), NOW())`,
+      [otherCoachClassId, gymId, classTypeId, otherCoachUserId, spaceId, baseDate, '18:00:00', 20, 'published', true],
+    );
+
     // Class in 'in_progress' state — for attendance tests
     inProgressClassId = uuidv4();
     await dataSource.query(
@@ -228,23 +249,23 @@ describe('Results, Attendance, and Programming (e2e)', () => {
     try {
       // Results
       await dataSource.query(
-        `DELETE FROM results WHERE "classId" IN ($1, $2, $3)`,
-        [publishedClassId, inProgressClassId, completedClassId],
+        `DELETE FROM results WHERE "classId" IN ($1, $2, $3, $4)`,
+        [publishedClassId, inProgressClassId, completedClassId, otherCoachClassId],
       );
       // Programming
       await dataSource.query(
-        `DELETE FROM programming WHERE "classId" IN ($1, $2, $3)`,
-        [publishedClassId, inProgressClassId, completedClassId],
+        `DELETE FROM programming WHERE "classId" IN ($1, $2, $3, $4)`,
+        [publishedClassId, inProgressClassId, completedClassId, otherCoachClassId],
       );
       // Attendance
       await dataSource.query(
-        `DELETE FROM attendance WHERE "classId" IN ($1, $2, $3)`,
-        [publishedClassId, inProgressClassId, completedClassId],
+        `DELETE FROM attendance WHERE "classId" IN ($1, $2, $3, $4)`,
+        [publishedClassId, inProgressClassId, completedClassId, otherCoachClassId],
       );
       // Classes
       await dataSource.query(
-        `DELETE FROM classes WHERE id IN ($1, $2, $3)`,
-        [publishedClassId, inProgressClassId, completedClassId],
+        `DELETE FROM classes WHERE id IN ($1, $2, $3, $4)`,
+        [publishedClassId, inProgressClassId, completedClassId, otherCoachClassId],
       );
       await dataSource.query(`DELETE FROM class_types WHERE "gymId" = $1`, [gymId]);
       await dataSource.query(`DELETE FROM spaces WHERE "gymId" = $1`, [gymId]);
@@ -252,8 +273,8 @@ describe('Results, Attendance, and Programming (e2e)', () => {
       await dataSource.query(`DELETE FROM gym_staff WHERE "gymId" IN ($1, $2)`, [gymId, otherGymId]);
       await dataSource.query(`DELETE FROM gyms WHERE id IN ($1, $2)`, [gymId, otherGymId]);
       await dataSource.query(
-        `DELETE FROM users WHERE id IN ($1, $2, $3, $4)`,
-        [ownerUserId, coachUserId, athleteUserId, otherGymOwnerUserId],
+        `DELETE FROM users WHERE id IN ($1, $2, $3, $4, $5)`,
+        [ownerUserId, coachUserId, athleteUserId, otherGymOwnerUserId, otherCoachUserId],
       );
     } catch {
       // silently ignore cleanup errors
@@ -267,18 +288,19 @@ describe('Results, Attendance, and Programming (e2e)', () => {
   describe('POST /api/gyms/:gymId/classes/:classId/results — log result', () => {
     const endpoint = () => `/api/gyms/${gymId}/classes/${completedClassId}/results`;
 
-    const validBody = {
+    // Lazy: completedClassId is assigned in beforeAll, after describe body runs
+    const validBody = () => ({
       classId: completedClassId,
       metricType: 'time',
       value: '300',
       unit: 'seconds',
-    };
+    });
 
     it('happy path: athlete, completed class, present → 201', async () => {
       const res = await request(app.getHttpServer())
         .post(endpoint())
         .set('Authorization', `Bearer ${athleteToken}`)
-        .send(validBody)
+        .send(validBody())
         .expect(201);
 
       const body = res.body as Record<string, unknown>;
@@ -296,7 +318,7 @@ describe('Results, Attendance, and Programming (e2e)', () => {
     it('no auth token → 401', async () => {
       await request(app.getHttpServer())
         .post(endpoint())
-        .send(validBody)
+        .send(validBody())
         .expect(401);
     });
 
@@ -304,7 +326,7 @@ describe('Results, Attendance, and Programming (e2e)', () => {
       await request(app.getHttpServer())
         .post(endpoint())
         .set('Authorization', `Bearer ${wrongGymToken}`)
-        .send(validBody)
+        .send(validBody())
         .expect(403);
     });
 
@@ -312,7 +334,7 @@ describe('Results, Attendance, and Programming (e2e)', () => {
       await request(app.getHttpServer())
         .post(`/api/gyms/${gymId}/classes/${publishedClassId}/results`)
         .set('Authorization', `Bearer ${athleteToken}`)
-        .send({ ...validBody, classId: publishedClassId })
+        .send({ ...validBody(), classId: publishedClassId })
         .expect(400);
     });
   });
@@ -471,13 +493,14 @@ describe('Results, Attendance, and Programming (e2e)', () => {
     const endpoint = () =>
       `/api/gyms/${gymId}/classes/${publishedClassId}/toggle-loggable`;
 
-    const validBody = { classId: publishedClassId };
+    // Lazy: publishedClassId is assigned in beforeAll, after describe body runs
+    const validBody = () => ({ classId: publishedClassId });
 
     it('happy path: coach toggles loggable on published class → 201', async () => {
       const res = await request(app.getHttpServer())
         .post(endpoint())
         .set('Authorization', `Bearer ${coachToken}`)
-        .send(validBody)
+        .send(validBody())
         .expect(201);
 
       const body = res.body as Record<string, unknown>;
@@ -488,23 +511,27 @@ describe('Results, Attendance, and Programming (e2e)', () => {
     it('no auth token → 401', async () => {
       await request(app.getHttpServer())
         .post(endpoint())
-        .send(validBody)
+        .send(validBody())
         .expect(401);
     });
 
-    it('wrong role: owner cannot toggle loggable (coach-only) → 403', async () => {
-      await request(app.getHttpServer())
+    it('happy path: gym owner toggles loggable on a class they do not coach → 201', async () => {
+      const res = await request(app.getHttpServer())
         .post(endpoint())
         .set('Authorization', `Bearer ${ownerToken}`)
-        .send(validBody)
-        .expect(403);
+        .send(validBody())
+        .expect(201);
+
+      const body = res.body as Record<string, unknown>;
+      expect(body).toHaveProperty('id', publishedClassId);
+      expect(body).toHaveProperty('loggable');
     });
 
     it('wrong role: athlete cannot toggle loggable → 403', async () => {
       await request(app.getHttpServer())
         .post(endpoint())
         .set('Authorization', `Bearer ${athleteToken}`)
-        .send(validBody)
+        .send(validBody())
         .expect(403);
     });
 
@@ -512,7 +539,7 @@ describe('Results, Attendance, and Programming (e2e)', () => {
       await request(app.getHttpServer())
         .post(endpoint())
         .set('Authorization', `Bearer ${wrongGymToken}`)
-        .send(validBody)
+        .send(validBody())
         .expect(403);
     });
 
@@ -533,18 +560,19 @@ describe('Results, Attendance, and Programming (e2e)', () => {
     const endpoint = () =>
       `/api/gyms/${gymId}/classes/${inProgressClassId}/attendance`;
 
-    const validBody = {
+    // Lazy: inProgressClassId is assigned in beforeAll, after describe body runs
+    const validBody = () => ({
       classId: inProgressClassId,
       attendanceRecords: [
         { athleteUserId, present: true },
       ],
-    };
+    });
 
     it('happy path: coach marks attendance on in-progress class → 201', async () => {
       const res = await request(app.getHttpServer())
         .post(endpoint())
         .set('Authorization', `Bearer ${coachToken}`)
-        .send(validBody)
+        .send(validBody())
         .expect(201);
 
       const body = res.body as Record<string, unknown>;
@@ -562,7 +590,7 @@ describe('Results, Attendance, and Programming (e2e)', () => {
     it('no auth token → 401', async () => {
       await request(app.getHttpServer())
         .post(endpoint())
-        .send(validBody)
+        .send(validBody())
         .expect(401);
     });
 
@@ -570,7 +598,7 @@ describe('Results, Attendance, and Programming (e2e)', () => {
       await request(app.getHttpServer())
         .post(endpoint())
         .set('Authorization', `Bearer ${athleteToken}`)
-        .send(validBody)
+        .send(validBody())
         .expect(403);
     });
 
@@ -578,7 +606,7 @@ describe('Results, Attendance, and Programming (e2e)', () => {
       await request(app.getHttpServer())
         .post(endpoint())
         .set('Authorization', `Bearer ${wrongGymToken}`)
-        .send(validBody)
+        .send(validBody())
         .expect(403);
     });
 
@@ -653,37 +681,50 @@ describe('Results, Attendance, and Programming (e2e)', () => {
     const endpoint = () =>
       `/api/gyms/${gymId}/classes/${publishedClassId}/programming`;
 
-    const validBody = {
+    // Lazy: publishedClassId is assigned in beforeAll, after describe body runs
+    const validBody = () => ({
       classId: publishedClassId,
       content: '5 rounds: 20 box jumps, 15 pull-ups, 10 burpees. For time.',
       loggable: true,
-    };
+    });
 
     it('happy path: coach adds programming to published class → 201', async () => {
       const res = await request(app.getHttpServer())
         .post(endpoint())
         .set('Authorization', `Bearer ${coachToken}`)
-        .send(validBody)
+        .send(validBody())
         .expect(201);
 
       const body = res.body as Record<string, unknown>;
       expect(body).toHaveProperty('classId', publishedClassId);
-      expect(body).toHaveProperty('content', validBody.content);
+      expect(body).toHaveProperty('content', validBody().content);
       expect(body).toHaveProperty('createdByUserId', coachUserId);
     });
 
     it('no auth token → 401', async () => {
       await request(app.getHttpServer())
         .post(endpoint())
-        .send(validBody)
+        .send(validBody())
         .expect(401);
     });
 
-    it('wrong role: owner cannot add programming (coach-only) → 403', async () => {
-      await request(app.getHttpServer())
+    it('happy path: gym owner adds programming to a class they do not coach → 201', async () => {
+      const res = await request(app.getHttpServer())
         .post(endpoint())
         .set('Authorization', `Bearer ${ownerToken}`)
-        .send(validBody)
+        .send({ ...validBody(), content: 'Owner-authored WOD: 21-15-9.' })
+        .expect(201);
+
+      const body = res.body as Record<string, unknown>;
+      expect(body).toHaveProperty('classId', publishedClassId);
+      expect(body).toHaveProperty('content', 'Owner-authored WOD: 21-15-9.');
+    });
+
+    it('coach not assigned to the class cannot add programming → 403', async () => {
+      await request(app.getHttpServer())
+        .post(`/api/gyms/${gymId}/classes/${otherCoachClassId}/programming`)
+        .set('Authorization', `Bearer ${coachToken}`)
+        .send({ ...validBody(), classId: otherCoachClassId })
         .expect(403);
     });
 
@@ -691,7 +732,7 @@ describe('Results, Attendance, and Programming (e2e)', () => {
       await request(app.getHttpServer())
         .post(endpoint())
         .set('Authorization', `Bearer ${athleteToken}`)
-        .send(validBody)
+        .send(validBody())
         .expect(403);
     });
 
@@ -699,7 +740,7 @@ describe('Results, Attendance, and Programming (e2e)', () => {
       await request(app.getHttpServer())
         .post(endpoint())
         .set('Authorization', `Bearer ${wrongGymToken}`)
-        .send(validBody)
+        .send(validBody())
         .expect(403);
     });
 
@@ -707,7 +748,7 @@ describe('Results, Attendance, and Programming (e2e)', () => {
       await request(app.getHttpServer())
         .post(`/api/gyms/${gymId}/classes/${completedClassId}/programming`)
         .set('Authorization', `Bearer ${coachToken}`)
-        .send({ ...validBody, classId: completedClassId })
+        .send({ ...validBody(), classId: completedClassId })
         .expect(400);
     });
   });

@@ -39,6 +39,7 @@ import { ClassTypeModule } from '../class-type/class-type.module';
 import { GymMembershipModule } from '../gym-membership/gym-membership.module';
 import { AthleteMembershipPlanModule } from '../athlete-membership-plan/athlete-membership-plan.module';
 import { ClassLifecycleScheduler } from './class-lifecycle.scheduler';
+import { ClassContentAccessService } from './class-content-access.service';
 
 const CommandHandlers = [
   CreateClassHandler,
@@ -88,6 +89,7 @@ const CommandHandlers = [
     GetClassProgrammingService,
     GetClassBookingsService,
     ClassLifecycleScheduler,
+    ClassContentAccessService,
     ...CommandHandlers,
   ],
   exports: [
