@@ -3,6 +3,7 @@ import { Pressable, Text, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { SafeScreen } from '@/components/SafeScreen';
 import { Spacing } from '@/constants/theme';
+import { useAuth } from '@/hooks/useAuth';
 import { styles } from './OwnerSidebar.styles';
 
 // ─── Nav model ──────────────────────────────────────────────────────────────
@@ -42,6 +43,7 @@ interface OwnerSidebarProps {
 
 export function OwnerSidebar({ activeItem, onNavigate }: OwnerSidebarProps) {
   const router = useRouter();
+  const { logout } = useAuth();
 
   const handlePress = (item: OwnerNavItem) => {
     if (onNavigate) {
@@ -51,6 +53,11 @@ export function OwnerSidebar({ activeItem, onNavigate }: OwnerSidebarProps) {
     if (item.route) {
       router.push(item.route as never);
     }
+  };
+
+  const handleLogout = async () => {
+    await logout();
+    router.replace('/login' as never);
   };
 
   return (
@@ -92,6 +99,18 @@ export function OwnerSidebar({ activeItem, onNavigate }: OwnerSidebarProps) {
             </Pressable>
           );
         })}
+      </View>
+
+      {/* Log Out lives at the foot of the shared owner nav — the only sign-out
+          path for owner/coach screens, which have no GymMenu. */}
+      <View style={styles.footer}>
+        <Pressable
+          testID="nav-logout"
+          style={styles.logoutItem}
+          onPress={handleLogout}>
+          <View style={styles.logoutIcon} />
+          <Text style={styles.logoutLabel}>Log Out</Text>
+        </Pressable>
       </View>
     </SafeScreen>
   );

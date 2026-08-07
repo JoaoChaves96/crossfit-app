@@ -71,4 +71,30 @@ export const styles = StyleSheet.create({
   navLabelDisabled: {
     color: AppColors.textDisabled,
   },
+  // Log Out pinned to the foot of the nav shell.
+  footer: {
+    marginTop: 'auto',
+    paddingTop: Spacing.md,
+    borderTopWidth: 1,
+    borderTopColor: AppColors.backgroundDivider,
+  },
+  logoutItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.smMd,
+    paddingHorizontal: Spacing.md,
+    paddingVertical: Spacing.smMd,
+    borderRadius: BorderRadius.mdSm,
+  },
+  logoutIcon: {
+    width: 16,
+    height: 16,
+    borderRadius: BorderRadius.hairline,
+    backgroundColor: AppColors.errorMaterial,
+  },
+  logoutLabel: {
+    fontSize: FontSizes.body,
+    fontWeight: FontWeights.medium,
+    color: AppColors.errorMaterial,
+  },
 });

@@ -1,5 +1,11 @@
 import React from 'react';
 import { render, fireEvent } from '@testing-library/react-native';
+
+const mockLogout = jest.fn(() => Promise.resolve());
+jest.mock('@/hooks/useAuth', () => ({
+  useAuth: jest.fn(() => ({ logout: mockLogout })),
+}));
+
 import { OwnerSidebar, OWNER_NAV_ITEMS } from '@/components/OwnerSidebar';
 import { getMockRouter } from '@/test-utils/mock-navigation';
 
@@ -74,6 +80,24 @@ describe('OwnerSidebar', () => {
       fireEvent.press(utils.getByTestId('nav-members'));
 
       expect(getMockRouter().push).toHaveBeenCalledWith('/members');
+    });
+  });
+
+  describe('log out', () => {
+    it('renders a Log Out control (the only sign-out path for owner screens)', () => {
+      const utils = render(<OwnerSidebar activeItem="schedule" />);
+      expect(utils.getByTestId('nav-logout')).toBeTruthy();
+    });
+
+    it('logs out and redirects to /login when pressed, ignoring onNavigate', async () => {
+      const onNavigate = jest.fn();
+      const utils = render(<OwnerSidebar activeItem="schedule" onNavigate={onNavigate} />);
+
+      await fireEvent.press(utils.getByTestId('nav-logout'));
+
+      expect(mockLogout).toHaveBeenCalled();
+      expect(getMockRouter().replace).toHaveBeenCalledWith('/login');
+      expect(onNavigate).not.toHaveBeenCalled();
     });
   });
 });
