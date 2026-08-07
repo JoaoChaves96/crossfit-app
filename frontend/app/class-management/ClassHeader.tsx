@@ -1,18 +1,22 @@
 import React from 'react';
-import { ActivityIndicator, Text, TouchableOpacity, View } from 'react-native';
-import { AppColors } from '@/constants/theme';
+import { ActivityIndicator, TouchableOpacity, View } from 'react-native';
+import { Text, Icon, Button, StatusChip, type ChipTone } from '@/components/cleanink';
+import { Ink } from '@/constants/design';
 import { components } from '@/types/api.gen';
 import { styles } from './class-management.styles';
 import { STATE_NEXT_MAP, STATE_LABEL, ClassState } from './classStates';
 
 type ClassDetail = components['schemas']['ClassScheduleItemDto'];
 
-const STATE_DOT_COLOR: Record<ClassState, string> = {
-  published: AppColors.successVivid,
-  booking_closed: AppColors.warningDefault,
-  in_progress: AppColors.iconBlue,
-  completed: AppColors.accentTeal,
-  archived: AppColors.textDisabled,
+// Lifecycle tone: Published reads as an available/active "open" state; every
+// sunken lifecycle state (Booking Closed / In Progress / Completed / Archived)
+// is a quiet neutral. The accent is never used for lifecycle.
+const STATE_CHIP_TONE: Record<ClassState, ChipTone> = {
+  published: 'open',
+  booking_closed: 'neutral',
+  in_progress: 'neutral',
+  completed: 'neutral',
+  archived: 'neutral',
 };
 
 function formatDateSubtitle(scheduledDate: string, scheduledTime: string): string {
@@ -32,7 +36,7 @@ function formatDateSubtitle(scheduledDate: string, scheduledTime: string): strin
   return `${dateStr} · ${displayHour}:${String(minute).padStart(2, '0')} ${period}`;
 }
 
-// ─── State Badge ──────────────────────────────────────────────────────────────
+// ─── State Badge (lifecycle chip + transition affordance) ───────────────────────
 
 interface StateBadgeProps {
   state: ClassState;
@@ -52,12 +56,11 @@ function StateBadge({ state, isTransitioning, onPress }: StateBadgeProps) {
       disabled={isTerminal || isTransitioning}
       activeOpacity={isTerminal ? 1 : 0.7}>
       {isTransitioning ? (
-        <ActivityIndicator size="small" color={AppColors.textMuted} />
+        <ActivityIndicator size="small" color={Ink.muted} />
       ) : (
         <>
-          <View style={[styles.stateDot, { backgroundColor: STATE_DOT_COLOR[state] }]} />
-          <Text style={styles.stateText}>{STATE_LABEL[state]}</Text>
-          {!isTerminal && <Text style={styles.stateChevron}>v</Text>}
+          <StatusChip tone={STATE_CHIP_TONE[state]} label={STATE_LABEL[state]} />
+          {!isTerminal && <Icon name="chevronDown" size={16} tone="faint" />}
         </>
       )}
     </TouchableOpacity>
@@ -84,10 +87,10 @@ function InfoCard({ classDetail }: InfoCardProps) {
 
   return (
     <View style={styles.infoCard}>
-      {items.map((item, index) => (
-        <View key={item.label} style={[styles.infoItem, index > 0 && styles.infoItemSeparator]}>
-          <Text style={styles.infoLabel}>{item.label}</Text>
-          <Text style={styles.infoValue}>{item.value}</Text>
+      {items.map((item) => (
+        <View key={item.label} style={styles.infoItem}>
+          <Text size="label" weight="semibold" tone="faint" upper>{item.label}</Text>
+          <Text size="body" weight="medium">{item.value}</Text>
         </View>
       ))}
     </View>
@@ -106,8 +109,8 @@ export function ClassTitleRow({ classDetail, isTransitioning, onTransition }: Cl
   return (
     <View style={styles.headerRow}>
       <View style={styles.headerLeft}>
-        <Text style={styles.headerTitle}>{classDetail.classTypeName}</Text>
-        <Text style={styles.headerSubtitle}>
+        <Text size="screen" weight="bold">{classDetail.classTypeName}</Text>
+        <Text size="meta" tone="muted">
           {formatDateSubtitle(classDetail.scheduledDate, classDetail.scheduledTime)}
         </Text>
       </View>
@@ -134,8 +137,8 @@ export function MobileClassInfoCard({ classDetail }: { classDetail: ClassDetail 
     <View style={styles.mobileInfoGrid}>
       {items.map((item) => (
         <View key={item.label} style={styles.mobileInfoGridCell}>
-          <Text style={styles.mobileInfoGridLabel}>{item.label}</Text>
-          <Text style={styles.mobileInfoGridValue}>{item.value}</Text>
+          <Text size="label" weight="semibold" tone="faint" upper>{item.label}</Text>
+          <Text size="body" weight="medium">{item.value}</Text>
         </View>
       ))}
     </View>
@@ -153,15 +156,15 @@ interface ClassActionsProps {
 export function ClassActions({ onMarkAttendance, onAddProgramming, onEditClass }: ClassActionsProps) {
   return (
     <View style={styles.actionRow}>
-      <TouchableOpacity testID="mark-attendance-btn" style={styles.primaryBtn} onPress={onMarkAttendance}>
-        <Text style={styles.primaryBtnText}>MARK ATTENDANCE</Text>
-      </TouchableOpacity>
-      <TouchableOpacity testID="add-programming-btn" style={styles.outlinedBtn} onPress={onAddProgramming}>
-        <Text style={styles.outlinedBtnText}>ADD PROGRAMMING</Text>
-      </TouchableOpacity>
-      <TouchableOpacity testID="edit-class-btn" style={styles.outlinedBtn} onPress={onEditClass}>
-        <Text style={styles.outlinedBtnText}>EDIT</Text>
-      </TouchableOpacity>
+      <View style={styles.actionBtnWrap}>
+        <Button testID="mark-attendance-btn" label="Mark Attendance" variant="primary" onPress={onMarkAttendance} />
+      </View>
+      <View style={styles.actionBtnWrap}>
+        <Button testID="add-programming-btn" label="Add Programming" variant="quiet" onPress={onAddProgramming} />
+      </View>
+      <View style={styles.actionBtnWrap}>
+        <Button testID="edit-class-btn" label="Edit" variant="quiet" onPress={onEditClass} />
+      </View>
     </View>
   );
 }

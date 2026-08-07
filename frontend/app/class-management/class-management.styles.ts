@@ -1,93 +1,60 @@
 import { StyleSheet } from 'react-native';
-import { AppColors, BorderRadius, FontSizes, FontWeights, Spacing } from '@/constants/theme';
+import { Ground, Ink, Line, Radius, Space, Elevation } from '@/constants/design';
 
 export const styles = StyleSheet.create({
   root: {
     flex: 1,
     flexDirection: 'row',
-    backgroundColor: AppColors.backgroundWhite,
+    backgroundColor: Ground.base,
   },
 
   // Sidebar
   sidebar: {
     width: 220,
-    backgroundColor: AppColors.backgroundLight,
-    paddingHorizontal: Spacing.base,
-    paddingVertical: Spacing.xl,
-    gap: Spacing.tight,
+    backgroundColor: Ground.surface,
+    borderRightWidth: 1,
+    borderRightColor: Line.hairline,
+    paddingHorizontal: Space.base,
+    paddingVertical: Space.xl,
+    gap: Space.xs,
   },
   sidebarLogo: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: Spacing.sm,
-    paddingBottom: Spacing.lg,
-  },
-  sidebarLogoIcon: {
-    width: 28,
-    height: 28,
-    borderRadius: BorderRadius.mdSm,
-    backgroundColor: AppColors.textMuted,
-  },
-  sidebarLogoText: {
-    fontSize: FontSizes.md,
-    fontWeight: FontWeights.bold,
-    color: AppColors.textHeading,
+    gap: Space.sm,
+    paddingBottom: Space.lg,
   },
   navGroup: {
-    gap: Spacing.hairline,
+    gap: Space.hair,
   },
   navItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: Spacing.smMd,
-    paddingHorizontal: Spacing.md,
-    paddingVertical: Spacing.smMd,
-    borderRadius: BorderRadius.mdSm,
+    gap: Space.sm,
+    paddingHorizontal: Space.md,
+    paddingVertical: Space.sm,
+    borderRadius: Radius.control,
   },
   navItemActive: {
-    backgroundColor: AppColors.badgeBlueBg,
+    // Clean Ink: active nav reads as a quiet neutral fill, not the accent.
+    backgroundColor: Ground.sunken,
   },
   navItemDisabled: {
     opacity: 0.4,
   },
-  navIcon: {
-    width: 16,
-    height: 16,
-    borderRadius: BorderRadius.hairline,
-  },
-  navIconActive: {
-    backgroundColor: AppColors.textSecondary,
-  },
-  navIconInactive: {
-    backgroundColor: AppColors.textDisabled,
-  },
-  navIconMuted: {
-    backgroundColor: AppColors.textDisabled,
-  },
-  navLabel: {
-    fontSize: FontSizes.body,
-  },
-  navLabelActive: {
-    fontWeight: FontWeights.semibold,
-    color: AppColors.actionBlue,
-  },
-  navLabelInactive: {
-    fontWeight: FontWeights.regular,
-    color: AppColors.textMuted,
-  },
-  navLabelMuted: {
-    color: AppColors.textDisabled,
-  },
 
-  // Mobile drawer
-  drawerOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.4)',
+  // Mobile top bar
+  topBar: {
     flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
   },
-  drawerContainer: {
-    width: 220,
-    height: '100%',
+  backBtn: {
+    width: 44,
+    height: 44,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginLeft: -10,
   },
   hamburgerBtn: {
     width: 44,
@@ -95,80 +62,60 @@ export const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  hamburgerText: {
-    fontSize: FontSizes.xl,
-    color: AppColors.textHeading,
-  },
 
   // Main content
   mainScroll: {
     flex: 1,
   },
   mainContent: {
-    paddingHorizontal: Spacing.xxxl,
-    paddingVertical: Spacing.xl,
-    gap: Spacing.lg,
+    paddingHorizontal: Space.xxl,
+    paddingVertical: Space.xl,
+    gap: Space.lg,
     flexGrow: 1,
   },
   mainContentMobile: {
-    paddingHorizontal: Spacing.base,
-    paddingVertical: Spacing.base,
+    paddingHorizontal: Space.base,
+    paddingVertical: Space.base,
   },
 
   // Mobile tabs
   mobileTabsContainer: {
     flex: 1,
-    gap: Spacing.base,
+    gap: Space.base,
   },
   mobileTabBar: {
     flexDirection: 'row',
     borderBottomWidth: 1,
-    borderBottomColor: AppColors.backgroundDivider,
+    borderBottomColor: Line.hairline,
   },
   mobileTab: {
     flex: 1,
-    paddingVertical: Spacing.md,
+    paddingVertical: Space.md,
     alignItems: 'center',
     justifyContent: 'center',
     minHeight: 44,
   },
   mobileTabActive: {
     borderBottomWidth: 2,
-    borderBottomColor: AppColors.textHeading,
-  },
-  mobileTabText: {
-    fontSize: FontSizes.body,
-    fontWeight: FontWeights.regular,
-    color: AppColors.textMuted,
-    fontFamily: 'Inter',
-  },
-  mobileTabTextActive: {
-    fontWeight: FontWeights.semibold,
-    color: AppColors.textHeading,
+    borderBottomColor: Ink.strong,
   },
 
   // Loading / error
   centeredFeedback: {
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: Spacing.jumbo,
-    gap: Spacing.md,
+    paddingVertical: Space.xxl,
+    gap: Space.md,
   },
   errorText: {
-    fontSize: FontSizes.body,
-    color: AppColors.errorDefault,
     textAlign: 'center',
   },
   retryBtn: {
-    paddingHorizontal: Spacing.lg,
-    paddingVertical: Spacing.sm,
-    borderRadius: BorderRadius.mdSm,
+    paddingHorizontal: Space.lg,
+    paddingVertical: Space.sm,
+    borderRadius: Radius.control,
     borderWidth: 1,
-    borderColor: AppColors.separatorDefault,
-  },
-  retryBtnText: {
-    fontSize: FontSizes.body,
-    color: AppColors.textHeading,
+    borderColor: Line.divider,
   },
 
   // Header row
@@ -178,224 +125,113 @@ export const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   headerLeft: {
-    gap: Spacing.tight,
+    gap: Space.hair,
     flex: 1,
-    marginRight: Spacing.md,
-  },
-  headerTitle: {
-    fontSize: FontSizes.title,
-    fontWeight: FontWeights.bold,
-    color: AppColors.textHeading,
-    fontFamily: 'Inter',
-  },
-  headerSubtitle: {
-    fontSize: FontSizes.mdSm,
-    color: AppColors.textMuted,
-    fontFamily: 'Inter',
+    marginRight: Space.md,
   },
 
-  // State badge
+  // State badge (lifecycle transition control)
   stateBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: Spacing.compact,
-    paddingHorizontal: Spacing.base,
-    paddingVertical: Spacing.sm,
-    borderRadius: BorderRadius.md,
+    gap: Space.sm,
+    paddingHorizontal: Space.md,
+    paddingVertical: Space.sm,
+    borderRadius: Radius.control,
     borderWidth: 1,
-    borderColor: AppColors.separatorDefault,
+    borderColor: Line.divider,
+    backgroundColor: Ground.surface,
   },
   stateBadgeDisabled: {
     opacity: 0.6,
   },
-  stateDot: {
-    width: 8,
-    height: 8,
-    borderRadius: BorderRadius.sm,
-  },
-  stateText: {
-    fontSize: FontSizes.mdSm,
-    fontWeight: FontWeights.medium,
-    color: AppColors.textSecondary,
-    fontFamily: 'Inter',
-  },
-  stateChevron: {
-    fontSize: FontSizes.sm,
-    color: AppColors.textDisabled,
-    fontFamily: 'Inter',
-  },
 
-  // Info card
+  // Info card (desktop)
   infoCard: {
     flexDirection: 'row',
-    backgroundColor: AppColors.backgroundScreen,
-    borderRadius: BorderRadius.mdLg,
+    backgroundColor: Ground.surface,
+    borderRadius: Radius.card,
     borderWidth: 1,
-    borderColor: AppColors.backgroundDivider,
-    paddingHorizontal: Spacing.xl,
-    paddingVertical: Spacing.lg,
-    gap: Spacing.xxxl,
+    borderColor: Line.hairline,
+    paddingHorizontal: Space.xl,
+    paddingVertical: Space.lg,
+    gap: Space.xxl,
     flexWrap: 'wrap',
+    ...Elevation.card,
   },
   infoItem: {
-    gap: Spacing.tight,
+    gap: Space.hair,
     minWidth: 80,
-  },
-  infoItemSeparator: {
-    // gap between items is handled by parent gap
-  },
-  infoLabel: {
-    fontSize: FontSizes.sm,
-    fontWeight: FontWeights.semibold,
-    color: AppColors.textDisabled,
-    letterSpacing: 0.5,
-    fontFamily: 'Inter',
-  },
-  infoValue: {
-    fontSize: FontSizes.body,
-    fontWeight: FontWeights.medium,
-    color: AppColors.textHeading,
-    fontFamily: 'Inter',
   },
 
   // Mobile compact info grid (2-col)
   mobileInfoGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    backgroundColor: AppColors.backgroundScreen,
+    backgroundColor: Ground.surface,
     borderWidth: 1,
-    borderColor: AppColors.backgroundDivider,
-    borderRadius: BorderRadius.mdLg,
-    padding: Spacing.base,
-    marginBottom: Spacing.base,
+    borderColor: Line.hairline,
+    borderRadius: Radius.card,
+    padding: Space.base,
+    marginBottom: Space.base,
+    ...Elevation.card,
   },
   mobileInfoGridCell: {
     width: '50%',
-    marginBottom: Spacing.md,
-  },
-  mobileInfoGridLabel: {
-    fontSize: FontSizes.sm,
-    fontWeight: FontWeights.semibold,
-    letterSpacing: 0.5,
-    color: AppColors.textDisabled,
-    marginBottom: Spacing.tight,
-    fontFamily: 'Inter',
-  },
-  mobileInfoGridValue: {
-    fontSize: FontSizes.body,
-    fontWeight: FontWeights.medium,
-    color: AppColors.textHeading,
-    fontFamily: 'Inter',
+    marginBottom: Space.md,
+    gap: Space.hair,
   },
 
   // Action row
   actionRow: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: Spacing.smMd,
+    gap: Space.sm,
   },
-  primaryBtn: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: AppColors.textHeading,
-    paddingHorizontal: Spacing.basePlus,
-    paddingVertical: Spacing.smMd,
-    borderRadius: BorderRadius.md,
-  },
-  primaryBtnText: {
-    fontSize: FontSizes.mdSm,
-    fontWeight: FontWeights.medium,
-    color: AppColors.backgroundWhite,
-    fontFamily: 'Inter',
-  },
-  outlinedBtn: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: Spacing.basePlus,
-    paddingVertical: Spacing.smMd,
-    borderRadius: BorderRadius.md,
-    borderWidth: 1,
-    borderColor: AppColors.separatorDefault,
-  },
-  outlinedBtnText: {
-    fontSize: FontSizes.mdSm,
-    fontWeight: FontWeights.medium,
-    color: AppColors.textSecondary,
-    fontFamily: 'Inter',
+  actionBtnWrap: {
+    minWidth: 160,
   },
 
   // Lists row
   listsRow: {
     flexDirection: 'row',
-    gap: Spacing.lg,
+    gap: Space.lg,
     flex: 1,
   },
 
-  // Attendance section
+  // List sections
   listSection: {
     flex: 1,
-    gap: Spacing.md,
+    gap: Space.md,
   },
   waitSection: {
     width: 280,
-    gap: Spacing.md,
+    gap: Space.md,
   },
   listHeader: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
   },
-  listTitle: {
-    fontSize: FontSizes.bodyMd,
-    fontWeight: FontWeights.semibold,
-    color: AppColors.textHeading,
-    fontFamily: 'Inter',
-  },
-  attBadge: {
-    backgroundColor: AppColors.badgeBlueBg,
-    borderRadius: BorderRadius.lg,
-    paddingHorizontal: Spacing.smMd,
-    paddingVertical: Spacing.micro,
-  },
-  attBadgeText: {
-    fontSize: FontSizes.smMd,
-    fontWeight: FontWeights.medium,
-    color: AppColors.actionBlue,
-    fontFamily: 'Inter',
-  },
-  waitBadge: {
-    backgroundColor: AppColors.warningBg,
-    borderRadius: BorderRadius.lg,
-    paddingHorizontal: Spacing.smMd,
-    paddingVertical: Spacing.micro,
-  },
-  waitBadgeText: {
-    fontSize: FontSizes.smMd,
-    fontWeight: FontWeights.medium,
-    color: AppColors.warningText,
-    fontFamily: 'Inter',
-  },
 
   // Table
   table: {
-    borderRadius: BorderRadius.md,
+    backgroundColor: Ground.surface,
+    borderRadius: Radius.card,
     borderWidth: 1,
-    borderColor: AppColors.backgroundDivider,
+    borderColor: Line.hairline,
     overflow: 'hidden',
+    ...Elevation.card,
   },
   tableHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: Spacing.sm,
-    backgroundColor: AppColors.backgroundScreen,
-    paddingHorizontal: Spacing.mdPlus,
-    paddingVertical: Spacing.smMd,
-  },
-  tableHeaderText: {
-    fontSize: FontSizes.smMd,
-    fontWeight: FontWeights.semibold,
-    color: AppColors.textMuted,
-    fontFamily: 'Inter',
+    gap: Space.sm,
+    backgroundColor: Ground.base,
+    paddingHorizontal: Space.md,
+    paddingVertical: Space.sm,
+    borderBottomWidth: 1,
+    borderBottomColor: Line.hairline,
   },
   tableColFill: {
     flex: 1,
@@ -407,79 +243,37 @@ export const styles = StyleSheet.create({
   tableRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: Spacing.sm,
-    paddingHorizontal: Spacing.mdPlus,
-    paddingVertical: Spacing.smMd,
+    gap: Space.sm,
+    paddingHorizontal: Space.md,
+    paddingVertical: Space.sm,
     borderTopWidth: 1,
-    borderTopColor: AppColors.backgroundDivider,
+    borderTopColor: Line.hairline,
   },
   tableRowWait: {
-    gap: Spacing.sm,
+    gap: Space.sm,
   },
   tableRowName: {
     flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
-    gap: Spacing.sm,
+    gap: Space.sm,
   },
   tableEmpty: {
-    paddingHorizontal: Spacing.mdPlus,
-    paddingVertical: Spacing.base,
+    paddingHorizontal: Space.md,
+    paddingVertical: Space.base,
     borderTopWidth: 1,
-    borderTopColor: AppColors.backgroundDivider,
+    borderTopColor: Line.hairline,
     alignItems: 'center',
-  },
-  tableEmptyText: {
-    fontSize: FontSizes.mdSm,
-    color: AppColors.textDisabled,
-    fontFamily: 'Inter',
   },
 
   // Avatar
   avatar: {
     width: 24,
     height: 24,
-    borderRadius: BorderRadius.lg,
-    backgroundColor: AppColors.backgroundDivider,
+    borderRadius: 12,
+    backgroundColor: Ground.sunken,
     alignItems: 'center',
     justifyContent: 'center',
-  },
-  avatarText: {
-    fontSize: FontSizes.tiny,
-    fontWeight: FontWeights.semibold,
-    color: AppColors.textMuted,
-    fontFamily: 'Inter',
-  },
-  athleteName: {
-    fontSize: FontSizes.mdSm,
-    color: AppColors.textHeading,
-    fontFamily: 'Inter',
-  },
-
-  // Booking status badge
-  bookingBadge: {
-    borderRadius: BorderRadius.mdLg,
-    paddingHorizontal: Spacing.sm,
-    paddingVertical: Spacing.hairline,
-  },
-  bookingBadgeText: {
-    fontSize: FontSizes.sm,
-    fontWeight: FontWeights.medium,
-    fontFamily: 'Inter',
-  },
-
-  // Results badge
-  resBadge: {
-    backgroundColor: AppColors.badgeBlueBg,
-    borderRadius: BorderRadius.lg,
-    paddingHorizontal: Spacing.smMd,
-    paddingVertical: Spacing.micro,
-  },
-  resBadgeText: {
-    fontSize: FontSizes.smMd,
-    fontWeight: FontWeights.medium,
-    color: AppColors.actionBlue,
-    fontFamily: 'Inter',
   },
 
   // Results table columns
@@ -494,23 +288,5 @@ export const styles = StyleSheet.create({
   resColNotes: {
     width: 100,
     justifyContent: 'center',
-  },
-
-  // Results row cell text
-  resMetricText: {
-    fontSize: FontSizes.mdSm,
-    color: AppColors.textSecondary,
-    fontFamily: 'Inter',
-  },
-  resValueText: {
-    fontSize: FontSizes.mdSm,
-    fontWeight: FontWeights.medium,
-    color: AppColors.textHeading,
-    fontFamily: 'Inter',
-  },
-  resNotesText: {
-    fontSize: FontSizes.mdSm,
-    color: AppColors.textMuted,
-    fontFamily: 'Inter',
   },
 });

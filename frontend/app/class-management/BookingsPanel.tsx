@@ -1,6 +1,6 @@
 import React from 'react';
-import { Text, View } from 'react-native';
-import { AppColors } from '@/constants/theme';
+import { View } from 'react-native';
+import { Text, StatusChip } from '@/components/cleanink';
 import { components } from '@/types/api.gen';
 import { styles } from './class-management.styles';
 
@@ -15,27 +15,17 @@ function getInitials(name: string): string {
 }
 
 // ─── Booking Status Badge ─────────────────────────────────────────────────────
+// Confirmed booking reads as an "open"/held state; waitlisted is a quiet neutral.
 
 interface BookingStatusBadgeProps {
   status: ClassBookingItem['status'];
 }
 
 function BookingStatusBadge({ status }: BookingStatusBadgeProps) {
-  const isBooked = status === 'booked';
-  return (
-    <View
-      style={[
-        styles.bookingBadge,
-        { backgroundColor: isBooked ? AppColors.successBgVivid : AppColors.warningBg },
-      ]}>
-      <Text
-        style={[
-          styles.bookingBadgeText,
-          { color: isBooked ? AppColors.successDefault : AppColors.warningText },
-        ]}>
-        {isBooked ? 'Confirmed' : 'Waitlisted'}
-      </Text>
-    </View>
+  return status === 'booked' ? (
+    <StatusChip tone="open" label="Confirmed" />
+  ) : (
+    <StatusChip tone="neutral" label="Waitlisted" />
   );
 }
 
@@ -49,28 +39,30 @@ function AttendanceList({ bookings }: AttendanceListProps) {
   return (
     <View style={styles.listSection}>
       <View style={styles.listHeader}>
-        <Text style={styles.listTitle}>Attendance List</Text>
-        <View style={styles.attBadge}>
-          <Text style={styles.attBadgeText}>{bookings.length} booked</Text>
-        </View>
+        <Text size="title" weight="semibold">Attendance List</Text>
+        <StatusChip tone="neutral" label={`${bookings.length} booked`} />
       </View>
       <View style={styles.table}>
         <View style={styles.tableHeader}>
-          <Text style={[styles.tableHeaderText, styles.tableColFill]}>Athlete</Text>
-          <Text style={[styles.tableHeaderText, styles.tableColStatus]}>Status</Text>
+          <View style={styles.tableColFill}>
+            <Text size="label" weight="semibold" tone="faint" upper>Athlete</Text>
+          </View>
+          <View style={styles.tableColStatus}>
+            <Text size="label" weight="semibold" tone="faint" upper>Status</Text>
+          </View>
         </View>
         {bookings.length === 0 ? (
           <View style={styles.tableEmpty}>
-            <Text style={styles.tableEmptyText}>No booked athletes</Text>
+            <Text size="meta" tone="faint">No booked athletes</Text>
           </View>
         ) : (
           bookings.map((booking) => (
             <View key={booking.bookingId} style={styles.tableRow}>
               <View style={styles.tableRowName}>
                 <View style={styles.avatar}>
-                  <Text style={styles.avatarText}>{getInitials(booking.displayName)}</Text>
+                  <Text size="label" weight="semibold" tone="muted">{getInitials(booking.displayName)}</Text>
                 </View>
-                <Text style={styles.athleteName}>{booking.displayName}</Text>
+                <Text size="meta">{booking.displayName}</Text>
               </View>
               <View style={styles.tableColStatus}>
                 <BookingStatusBadge status={booking.status} />
@@ -93,26 +85,24 @@ function Waitlist({ bookings }: WaitlistProps) {
   return (
     <View style={styles.waitSection}>
       <View style={styles.listHeader}>
-        <Text style={styles.listTitle}>Waitlist</Text>
-        <View style={styles.waitBadge}>
-          <Text style={styles.waitBadgeText}>{bookings.length} waiting</Text>
-        </View>
+        <Text size="title" weight="semibold">Waitlist</Text>
+        <StatusChip tone="neutral" label={`${bookings.length} waiting`} />
       </View>
       <View style={styles.table}>
         <View style={styles.tableHeader}>
-          <Text style={styles.tableHeaderText}>Athlete</Text>
+          <Text size="label" weight="semibold" tone="faint" upper>Athlete</Text>
         </View>
         {bookings.length === 0 ? (
           <View style={styles.tableEmpty}>
-            <Text style={styles.tableEmptyText}>No one on waitlist</Text>
+            <Text size="meta" tone="faint">No one on waitlist</Text>
           </View>
         ) : (
           bookings.map((booking) => (
             <View key={booking.bookingId} style={[styles.tableRow, styles.tableRowWait]}>
               <View style={styles.avatar}>
-                <Text style={styles.avatarText}>{getInitials(booking.displayName)}</Text>
+                <Text size="label" weight="semibold" tone="muted">{getInitials(booking.displayName)}</Text>
               </View>
-              <Text style={styles.athleteName}>{booking.displayName}</Text>
+              <Text size="meta">{booking.displayName}</Text>
             </View>
           ))
         )}

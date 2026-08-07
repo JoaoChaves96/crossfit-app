@@ -1,12 +1,14 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import { ActivityIndicator, Modal, ScrollView, Text, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, ScrollView, TouchableOpacity, View } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useAuth } from '@/hooks/useAuth';
 import { useGym } from '@/hooks/useGym';
 import { useResponsiveLayout } from '@/hooks/useResponsiveLayout';
 import { useSafeAreaTop } from '@/components/SafeScreen';
+import { Text, Icon } from '@/components/cleanink';
+import { OwnerNavDrawer } from '@/components/OwnerNavDrawer';
+import { Ink, Space } from '@/constants/design';
 import { createApiClient } from '@/utils/api-client';
-import { AppColors, Spacing } from '@/constants/theme';
 import { components } from '@/types/api.gen';
 import { styles } from './class-management.styles';
 import { ClassManagementSidebar } from './ClassManagementSidebar';
@@ -147,38 +149,51 @@ export default function ClassManagement() {
 
       {/* Mobile drawer */}
       {isMobile && (
-        <Modal visible={drawerOpen} transparent animationType="fade" onRequestClose={() => setDrawerOpen(false)}>
-          <TouchableOpacity style={styles.drawerOverlay} activeOpacity={1} onPress={() => setDrawerOpen(false)}>
-            <View style={styles.drawerContainer}>
-              <ClassManagementSidebar onNavigate={handleNavigate} />
-            </View>
-          </TouchableOpacity>
-        </Modal>
+        <OwnerNavDrawer visible={drawerOpen} onClose={() => setDrawerOpen(false)}>
+          <ClassManagementSidebar onNavigate={handleNavigate} />
+        </OwnerNavDrawer>
       )}
 
       <ScrollView
         style={styles.mainScroll}
-        contentContainerStyle={[styles.mainContent, isMobile && styles.mainContentMobile, isMobile && { paddingTop: safeTop + Spacing.base }]}
+        contentContainerStyle={[styles.mainContent, isMobile && styles.mainContentMobile, isMobile && { paddingTop: safeTop + Space.base }]}
         showsVerticalScrollIndicator={false}>
 
-        {isMobile && (
+        {isMobile ? (
+          <View style={styles.topBar}>
+            <TouchableOpacity
+              testID="class-management-back-btn"
+              style={styles.backBtn}
+              onPress={() => router.back()}
+              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+              <Icon name="back" size={24} tone={Ink.strong} />
+            </TouchableOpacity>
+            <TouchableOpacity
+              testID="hamburger-btn"
+              style={styles.hamburgerBtn}
+              onPress={() => setDrawerOpen(true)}>
+              <Icon name="menu" size={24} tone="strong" />
+            </TouchableOpacity>
+          </View>
+        ) : (
           <TouchableOpacity
-            testID="hamburger-btn"
-            style={styles.hamburgerBtn}
-            onPress={() => setDrawerOpen(true)}>
-            <Text style={styles.hamburgerText}>☰</Text>
+            testID="class-management-back-btn"
+            style={styles.backBtn}
+            onPress={() => router.back()}
+            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+            <Icon name="back" size={24} tone={Ink.strong} />
           </TouchableOpacity>
         )}
 
         {isLoadingClass ? (
           <View style={styles.centeredFeedback}>
-            <ActivityIndicator size="large" color={AppColors.textHeading} />
+            <ActivityIndicator size="large" color={Ink.strong} />
           </View>
         ) : classError ? (
           <View style={styles.centeredFeedback}>
-            <Text style={styles.errorText}>{classError}</Text>
+            <Text size="body" tone={Ink.strong} style={styles.errorText}>{classError}</Text>
             <TouchableOpacity style={styles.retryBtn} onPress={fetchClassDetail}>
-              <Text style={styles.retryBtnText}>Retry</Text>
+              <Text size="body" weight="medium">Retry</Text>
             </TouchableOpacity>
           </View>
         ) : classDetail ? (
@@ -202,23 +217,23 @@ export default function ClassManagement() {
 
             {isLoadingBookings || isLoadingResults ? (
               <View style={styles.centeredFeedback}>
-                <ActivityIndicator size="small" color={AppColors.textMuted} />
+                <ActivityIndicator size="small" color={Ink.muted} />
               </View>
             ) : bookingsError || resultsError ? (
               <View style={styles.centeredFeedback}>
                 {bookingsError ? (
                   <>
-                    <Text style={styles.errorText}>{bookingsError}</Text>
+                    <Text size="body" tone={Ink.strong} style={styles.errorText}>{bookingsError}</Text>
                     <TouchableOpacity style={styles.retryBtn} onPress={fetchBookings}>
-                      <Text style={styles.retryBtnText}>Retry</Text>
+                      <Text size="body" weight="medium">Retry</Text>
                     </TouchableOpacity>
                   </>
                 ) : null}
                 {resultsError ? (
                   <>
-                    <Text style={styles.errorText}>{resultsError}</Text>
+                    <Text size="body" tone={Ink.strong} style={styles.errorText}>{resultsError}</Text>
                     <TouchableOpacity style={styles.retryBtn} onPress={fetchResults}>
-                      <Text style={styles.retryBtnText}>Retry</Text>
+                      <Text size="body" weight="medium">Retry</Text>
                     </TouchableOpacity>
                   </>
                 ) : null}
@@ -230,21 +245,30 @@ export default function ClassManagement() {
                   <TouchableOpacity
                     style={[styles.mobileTab, mobileTab === 'info' && styles.mobileTabActive]}
                     onPress={() => setMobileTab('info')}>
-                    <Text style={[styles.mobileTabText, mobileTab === 'info' && styles.mobileTabTextActive]}>
+                    <Text
+                      size="body"
+                      weight={mobileTab === 'info' ? 'semibold' : 'regular'}
+                      tone={mobileTab === 'info' ? 'strong' : 'muted'}>
                       Info
                     </Text>
                   </TouchableOpacity>
                   <TouchableOpacity
                     style={[styles.mobileTab, mobileTab === 'bookings' && styles.mobileTabActive]}
                     onPress={() => setMobileTab('bookings')}>
-                    <Text style={[styles.mobileTabText, mobileTab === 'bookings' && styles.mobileTabTextActive]}>
+                    <Text
+                      size="body"
+                      weight={mobileTab === 'bookings' ? 'semibold' : 'regular'}
+                      tone={mobileTab === 'bookings' ? 'strong' : 'muted'}>
                       Bookings
                     </Text>
                   </TouchableOpacity>
                   <TouchableOpacity
                     style={[styles.mobileTab, mobileTab === 'results' && styles.mobileTabActive]}
                     onPress={() => setMobileTab('results')}>
-                    <Text style={[styles.mobileTabText, mobileTab === 'results' && styles.mobileTabTextActive]}>
+                    <Text
+                      size="body"
+                      weight={mobileTab === 'results' ? 'semibold' : 'regular'}
+                      tone={mobileTab === 'results' ? 'strong' : 'muted'}>
                       Results
                     </Text>
                   </TouchableOpacity>

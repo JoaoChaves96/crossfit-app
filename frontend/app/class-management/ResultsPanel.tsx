@@ -1,5 +1,6 @@
 import React from 'react';
-import { Text, View } from 'react-native';
+import { View } from 'react-native';
+import { Text, StatusChip } from '@/components/cleanink';
 import { components } from '@/types/api.gen';
 import { formatMetricLabel, formatResultValue } from '@/utils/result-format';
 import { styles } from './class-management.styles';
@@ -32,21 +33,27 @@ export function ResultsPanel({ results }: ResultsPanelProps) {
   return (
     <View style={styles.listSection}>
       <View style={styles.listHeader}>
-        <Text style={styles.listTitle}>Results</Text>
-        <View style={styles.resBadge}>
-          <Text style={styles.resBadgeText}>{results.length} logged</Text>
-        </View>
+        <Text size="title" weight="semibold">Results</Text>
+        <StatusChip tone="neutral" label={`${results.length} logged`} />
       </View>
       <View style={styles.table}>
         <View style={styles.tableHeader}>
-          <Text style={[styles.tableHeaderText, styles.tableColFill]}>Athlete</Text>
-          <Text style={[styles.tableHeaderText, styles.resColMetric]}>Metric</Text>
-          <Text style={[styles.tableHeaderText, styles.resColValue]}>Value</Text>
-          <Text style={[styles.tableHeaderText, styles.resColNotes]}>Notes</Text>
+          <View style={styles.tableColFill}>
+            <Text size="label" weight="semibold" tone="faint" upper>Athlete</Text>
+          </View>
+          <View style={styles.resColMetric}>
+            <Text size="label" weight="semibold" tone="faint" upper>Metric</Text>
+          </View>
+          <View style={styles.resColValue}>
+            <Text size="label" weight="semibold" tone="faint" upper>Value</Text>
+          </View>
+          <View style={styles.resColNotes}>
+            <Text size="label" weight="semibold" tone="faint" upper>Notes</Text>
+          </View>
         </View>
         {results.length === 0 ? (
           <View style={styles.tableEmpty}>
-            <Text style={styles.tableEmptyText}>No results logged yet</Text>
+            <Text size="meta" tone="faint">No results logged yet</Text>
           </View>
         ) : (
           results.map((result) => {
@@ -64,24 +71,24 @@ export function ResultsPanel({ results }: ResultsPanelProps) {
               <View key={result.id} style={styles.tableRow}>
                 <View style={[styles.tableRowName, styles.tableColFill]}>
                   <View style={styles.avatar}>
-                    <Text style={styles.avatarText}>
+                    <Text size="label" weight="semibold" tone="muted">
                       {initialsFor(result.userName)}
                     </Text>
                   </View>
-                  <Text style={styles.athleteName} numberOfLines={1}>
+                  <Text size="meta" numberOfLines={1}>
                     {result.userName}
                   </Text>
                 </View>
                 <View style={styles.resColMetric}>
-                  <Text style={styles.resMetricText}>
+                  <Text size="meta" tone="muted">
                     {formatMetricLabel(result.metricType)}
                   </Text>
                 </View>
                 <View style={styles.resColValue}>
-                  <Text style={styles.resValueText}>{valueWithUnit}</Text>
+                  <Text size="meta" weight="medium">{valueWithUnit}</Text>
                 </View>
                 <View style={styles.resColNotes}>
-                  <Text style={styles.resNotesText}>{truncatedNotes}</Text>
+                  <Text size="meta" tone="muted">{truncatedNotes}</Text>
                 </View>
               </View>
             );
