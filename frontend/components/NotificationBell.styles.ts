@@ -1,26 +1,29 @@
 import { StyleSheet } from 'react-native';
-import { AppColors, BorderRadius, FontSizes, FontWeights, Spacing } from '@/constants/theme';
+import { Ground, Space, Status } from '@/constants/design';
 
 export const styles = StyleSheet.create({
   container: {
-    padding: Spacing.sm,
+    padding: Space.sm,
     position: 'relative',
   },
   badge: {
     position: 'absolute',
     top: 2,
     right: 2,
-    backgroundColor: AppColors.errorDefault,
-    borderRadius: BorderRadius.mdLg,
+    // Two Reds: unread urgency reads in the deeper danger red, never the accent.
+    backgroundColor: Status.danger,
+    borderRadius: 999,
     minWidth: 18,
     height: 18,
     alignItems: 'center',
     justifyContent: 'center',
-    paddingHorizontal: Spacing.tight,
+    paddingHorizontal: Space.xs,
+    // A thin ground-colored ring lifts the badge off the bell glyph.
+    borderWidth: 2,
+    borderColor: Ground.surface,
   },
   badgeText: {
-    color: AppColors.backgroundWhite,
-    fontSize: FontSizes.sm,
-    fontWeight: FontWeights.bold,
+    // Face/size/tone come from the Text primitive; keep the count optically centered.
+    lineHeight: 14,
   },
 });

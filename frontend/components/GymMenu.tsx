@@ -1,10 +1,9 @@
 import React, { useState } from 'react';
-import { View, Text, Pressable, StyleSheet, Modal, TouchableOpacity } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import { View, Pressable, StyleSheet, Modal, TouchableOpacity } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useAuth } from '@/hooks/useAuth';
-import { AppColors, BorderRadius, FontSizes, Spacing } from '@/constants/theme';
-import { Type } from '@/constants/design';
+import { Icon, Text } from '@/components/cleanink';
+import { Elevation, Ground, Line, Radius, Space, Status } from '@/constants/design';
 
 interface GymMenuProps {
   gymName: string;
@@ -37,8 +36,10 @@ export function GymMenu({ gymName, nameStyle }: GymMenuProps) {
         onPress={() => setOpen(true)}
         testID="gym-menu-trigger"
       >
-        <Text style={[menuStyles.gymName, nameStyle]}>{gymName}</Text>
-        <Ionicons name="chevron-down" size={14} color={AppColors.textGray600} />
+        <Text weight="bold" tone="strong" tracking="snug" style={[menuStyles.gymName, nameStyle]}>
+          {gymName}
+        </Text>
+        <Icon name="chevronDown" size={14} tone="faint" />
       </Pressable>
 
       <Modal
@@ -51,8 +52,8 @@ export function GymMenu({ gymName, nameStyle }: GymMenuProps) {
         <Pressable style={menuStyles.backdrop} onPress={() => setOpen(false)}>
           <View style={menuStyles.menuCard}>
             <View style={menuStyles.gymRow}>
-              <Text style={menuStyles.gymRowName}>{gymName}</Text>
-              <Text style={menuStyles.gymRowSub}>Your gym</Text>
+              <Text weight="semibold" size="body" tone="strong">{gymName}</Text>
+              <Text size="label" tone="faint" style={menuStyles.gymRowSub}>Your gym</Text>
             </View>
             <View style={menuStyles.divider} />
             <TouchableOpacity
@@ -60,8 +61,9 @@ export function GymMenu({ gymName, nameStyle }: GymMenuProps) {
               onPress={handleLogout}
               testID="gym-menu-logout"
             >
-              <Ionicons name="log-out-outline" size={18} color={AppColors.errorMaterial} />
-              <Text style={menuStyles.logoutLabel}>Log Out</Text>
+              {/* Two Reds: destructive Log Out uses the deeper danger red, not the accent. */}
+              <Icon name="logout" size={18} tone={Status.danger} />
+              <Text weight="medium" size="body" tone={Status.danger}>Log Out</Text>
             </TouchableOpacity>
           </View>
         </Pressable>
@@ -74,13 +76,11 @@ const menuStyles = StyleSheet.create({
   selector: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: Spacing.sm,
+    gap: Space.sm,
   },
   gymName: {
-    fontFamily: Type.family.bold,
-    fontSize: FontSizes.lg,
-    letterSpacing: -0.3,
-    color: AppColors.textPrimary,
+    // Clean Ink lead size for the header gym label; face/tone from the Text primitive.
+    fontSize: 18,
   },
   backdrop: {
     flex: 1,
@@ -91,47 +91,30 @@ const menuStyles = StyleSheet.create({
     top: 60,
     left: 20,
     minWidth: 200,
-    backgroundColor: AppColors.backgroundWhite,
-    borderRadius: BorderRadius.lg,
-    borderWidth: 1,
-    borderColor: AppColors.borderDefault,
-    paddingVertical: Spacing.sm,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.12,
-    shadowRadius: 12,
-    elevation: 6,
+    backgroundColor: Ground.surface,
+    borderRadius: Radius.card,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: Line.hairline,
+    paddingVertical: Space.sm,
+    ...Elevation.raised,
   },
   gymRow: {
-    paddingHorizontal: Spacing.base,
-    paddingVertical: Spacing.sm,
-  },
-  gymRowName: {
-    fontFamily: Type.family.semibold,
-    fontSize: FontSizes.md,
-    color: AppColors.textPrimary,
+    paddingHorizontal: Space.base,
+    paddingVertical: Space.sm,
   },
   gymRowSub: {
-    fontFamily: Type.family.regular,
-    fontSize: FontSizes.xs,
-    color: AppColors.textGray500,
     marginTop: 2,
   },
   divider: {
-    height: 1,
-    backgroundColor: AppColors.borderDefault,
-    marginVertical: Spacing.tight,
+    height: StyleSheet.hairlineWidth,
+    backgroundColor: Line.hairline,
+    marginVertical: Space.xs,
   },
   logoutRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: Spacing.sm,
-    paddingHorizontal: Spacing.base,
-    paddingVertical: Spacing.smMd,
-  },
-  logoutLabel: {
-    fontFamily: Type.family.medium,
-    fontSize: FontSizes.md,
-    color: AppColors.errorMaterial,
+    gap: Space.sm,
+    paddingHorizontal: Space.base,
+    paddingVertical: Space.md,
   },
 });

@@ -1,7 +1,8 @@
 import React from 'react';
-import { View, Text, Pressable, StyleSheet } from 'react-native';
+import { View, Pressable, StyleSheet } from 'react-native';
 import { useRouter, usePathname } from 'expo-router';
-import { AppColors, FontSizes, FontWeights } from '@/constants/theme';
+import { Text } from '@/components/cleanink';
+import { Accent, Ground, Line, Space } from '@/constants/design';
 import { NotificationBell } from '@/components/NotificationBell';
 import { GymMenu } from '@/components/GymMenu';
 
@@ -39,11 +40,10 @@ export function DesktopTopNav({ gymName = 'My Gym' }: DesktopTopNavProps) {
               key={item.path}
               onPress={() => router.push(item.path as never)}
             >
+              {/* Clean Ink: the one accent marks the active nav item; the rest is quiet ink. */}
               <Text
-                style={[
-                  navStyles.navLabel,
-                  active ? navStyles.navLabelActive : navStyles.navLabelInactive,
-                ]}
+                weight={active ? 'semibold' : 'medium'}
+                tone={active ? Accent.base : 'muted'}
               >
                 {item.label}
               </Text>
@@ -61,29 +61,17 @@ export function DesktopTopNav({ gymName = 'My Gym' }: DesktopTopNavProps) {
 const navStyles = StyleSheet.create({
   topBar: {
     height: 64,
-    backgroundColor: AppColors.backgroundWhite,
+    backgroundColor: Ground.surface,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: 40,
-    borderBottomWidth: 1,
-    borderBottomColor: AppColors.borderDefault,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: Line.hairline,
   },
   navTabs: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 32,
-  },
-  navLabel: {
-    fontFamily: 'Inter',
-    fontSize: FontSizes.body,
-  },
-  navLabelActive: {
-    fontWeight: FontWeights.semibold,
-    color: AppColors.textPrimary,
-  },
-  navLabelInactive: {
-    fontWeight: FontWeights.medium,
-    color: AppColors.textGray600,
+    gap: Space.xxl,
   },
 });

@@ -1,10 +1,9 @@
 import React from 'react';
-import { TouchableOpacity, View, Text } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import { TouchableOpacity, View } from 'react-native';
 import { useNotifications } from '@/hooks/useNotifications';
 import { useRouter } from 'expo-router';
 import { useAuth } from '@/hooks/useAuth';
-import { AppColors } from '@/constants/theme';
+import { Icon, Text } from '@/components/cleanink';
 import { styles } from './NotificationBell.styles';
 
 function NotificationBellInner() {
@@ -17,10 +16,10 @@ function NotificationBellInner() {
       style={styles.container}
       testID="notification-bell"
     >
-      <Ionicons size={24} name="notifications-outline" color={AppColors.textDark3} />
+      <Icon size={24} name="bell" tone="strong" />
       {unreadCount > 0 && (
         <View style={styles.badge} testID="notification-badge">
-          <Text style={styles.badgeText}>
+          <Text style={styles.badgeText} size="label" weight="bold" tone="inverse">
             {unreadCount > 9 ? '9+' : unreadCount}
           </Text>
         </View>
