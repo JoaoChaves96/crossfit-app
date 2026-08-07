@@ -160,13 +160,41 @@ Phase-0 primitives (no new world decisions):
 
 **Gate:** athlete flow verified live end-to-end before starting another role.
 
-### Phase 2 — Gym Owner rollout (follow-on)
+### Phase 2 — Gym Owner rollout — ✅ CODE-COMPLETE (2026-08-07, UNCOMMITTED)
 
-`schedule-dashboard`, `create-class`, `edit-class`, `class-management/*`,
-`members`, `coaches`, `invites`, `gym-setup`, `gym-settings/*`,
-`DesktopTopNav`, `OwnerSidebar`. Owner screens are data-dense — the Clean Ink
-system holds via a quiet table/list variant (hairline rows, ink + one accent),
-no new world decisions.
+Owner screens are data-dense — the Clean Ink system holds via a quiet table/list
+variant (hairline rows, ink + one accent), no new world decisions.
+
+- ✅ **Nav shell** — `OwnerSidebar` + styles, `ClassManagementSidebar`,
+  `SettingsSidebar` on Clean Ink; NEW `components/OwnerNavDrawer.tsx` slide-in
+  drawer replaces the old fade Modal on all owner screens; back buttons added;
+  Icon set extended with owner nav glyphs + `menu`/`add`/`chevronForward`.
+- ✅ **`schedule-dashboard`** (the owner exemplar) — dropped the rainbow
+  class-type palette (violated One Accent) → monochrome white cards on hairlines;
+  class time = ink Lead number; full-capacity = Status.danger; Week/List =
+  SegmentedToggle; accent only on Create CTA + active day pill.
+- ✅ **`members`**, **`coaches`** — list/table + detail-panel variant; status →
+  StatusChip (active=open/inactive=neutral); actions → Button (danger/quiet);
+  Invite CTA = the one crimson primary.
+- ✅ **`create-class` + `edit-class`** — form screens; 📅🕐→Icon calendar/time,
+  `v`→chevronDown; Save/Create=primary, Cancel=quiet, Delete=danger; weekday
+  selected chip earns the accent; inline mode/weekday toggles kept for testID/a11y.
+- ✅ **`invites`** (owner list) — status→StatusChip (accepted=open, pending=
+  neutral, expired/revoked=danger); Send=primary, Revoke=danger (spinner retained).
+- ✅ **`class-management/*`** (index/ClassHeader/BookingsPanel/ResultsPanel) —
+  lifecycle state→StatusChip (Published=open, else neutral, never accent);
+  attendance/booking→StatusChip; Mark Attendance=primary, Cancel/Archive=danger.
+- ✅ **`gym-settings/*`** (index + ProfileTab/ClassTypesTab/SpacesTab) +
+  **`gym-setup`** — local hex consts removed; SettingsTabBar→SegmentedToggle
+  (testIDs preserved); Save/Add=primary, Delete=danger; loggable/active→StatusChip;
+  wizard step indicator reads through ink+weight, not accent.
+- **Gate:** `tsc` clean (only 2 known pre-existing `__tests__` errors); jest
+  204/207 (the 3 `schedule-dashboard.test` failures PRE-EXIST on clean `b877713`,
+  verified via `git stash` — capacity `5/20 spots` + day-column "No classes").
+- **Open items for live review:** (1) button labels moved ALL-CAPS→Title Case via
+  the Button primitive (uppercase reserved for micro-labels in Clean Ink) —
+  confirm acceptable as copy. **Not committed** — awaiting live screenshot review
+  (chrome-devtools) + explicit go-ahead.
 
 ### Phase 3 — Coach rollout (follow-on)
 
