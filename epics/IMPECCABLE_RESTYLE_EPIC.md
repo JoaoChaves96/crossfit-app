@@ -160,7 +160,11 @@ Phase-0 primitives (no new world decisions):
 
 **Gate:** athlete flow verified live end-to-end before starting another role.
 
-### Phase 2 — Gym Owner rollout — ✅ CODE-COMPLETE (2026-08-07, UNCOMMITTED)
+### Phase 2 — Gym Owner rollout — 🚧 IN PROGRESS (2026-08-07)
+
+**First pass PUSHED to dev** (`b877713..f7a06a0`, 7 commits). Phase 2 is NOT closed —
+a live device review produced a second round of UX work, tracked at the end of this
+section.
 
 Owner screens are data-dense — the Clean Ink system holds via a quiet table/list
 variant (hairline rows, ink + one accent), no new world decisions.
@@ -191,14 +195,82 @@ variant (hairline rows, ink + one accent), no new world decisions.
 - **Gate:** `tsc` clean (only 2 known pre-existing `__tests__` errors); jest
   204/207 (the 3 `schedule-dashboard.test` failures PRE-EXIST on clean `b877713`,
   verified via `git stash` — capacity `5/20 spots` + day-column "No classes").
-- **Open items for live review:** (1) button labels moved ALL-CAPS→Title Case via
-  the Button primitive (uppercase reserved for micro-labels in Clean Ink) —
-  confirm acceptable as copy. **Not committed** — awaiting live screenshot review
-  (chrome-devtools) + explicit go-ahead.
+- ✅ **Title Case verdict:** button labels ALL-CAPS→Title Case CONFIRMED by the user
+  as the intended copy (uppercase stays reserved for micro-labels: table column
+  headers, field labels). Two stragglers fixed after the fact — `gym-setup`'s
+  `+ Add Space`/`+ Add Class Type` lost the literal `+` in favour of a new optional
+  `icon` prop on the Button primitive, and `Create your first class` → Title Case.
+
+#### Round 2 — live device review follow-ups (2026-08-07)
+
+Six issues reported from iPhone testing. Two are behaviour/product changes, not
+restyle, and required backend work + a Tier 1 decision.
+
+- ✅ **Owner programming** — `Add Programming` on a class pushed `/coach-class-details`
+  (a COACH screen) with only `classId`+`gymId` while the coach entry point passes 8
+  params, so owners saw `—` for date/time/space and `0 / 0` capacity, a disabled coach
+  sidebar and a duplicate Mark Attendance. Resolved per `docs/DECISIONS.md`
+  → "Programming Authorship": programming is now a **section of Class Management**
+  (a 4th mobile tab + a full-width desktop panel), the `Add Programming` button and
+  that navigation are gone, and class CTAs are back to 2 (Mark Attendance + Edit).
+  New `ProgrammingPanel.tsx` + `useClassProgramming.ts`, lifecycle-locked read-only
+  outside `published`/`booking_closed`.
+- ✅ **BACKEND: owner may write programming** — `POST /:classId/programming` and
+  `/:classId/toggle-loggable` widened to `@Role(['coach','owner'])` behind a new
+  shared `class-content-access.service.ts` (owner → any class in own gym; coach →
+  only a class they're assigned to, unchanged). Swagger updated. Recorded in
+  `docs/DECISIONS.md`, which also resolves the `MVP_SCREENS` ↔ `DATA_MODEL` conflict
+  over who authors programming.
+- ✅ **WOD/notes marker hack removed** — the two-input WOD+Notes UI was faked by
+  joining with a literal `'\n\nNotes:\n'` and re-splitting on read; typing "Notes:"
+  in a WOD corrupted the round-trip. Backend has ONE `content` field, so both the
+  owner panel and the coach screen now use a single Programming input.
+  `docs/DECISIONS.md` → "Programming Content Shape".
+- ✅ **BACKEND: waitlist position exposed** — `ClassBookingItemDto` gained
+  `waitlistPosition: number | null` (1-based, authoritative promotion order, null for
+  `booked`). The list endpoint now returns booked first then waitlisted in
+  `bookedPosition ASC` order — previously it ordered by `createdAt`, which is NOT the
+  order promotion follows, so any UI numbering would have been misleading.
+- ✅ **Waitlist formatting** — `waitSection` had a hard `width: 280` with no mobile
+  override (rendered narrow under a full-width Attendance card), an unwrapped header
+  `Text` misaligned against its rows, rows missing the `tableRowName` wrapper, and a
+  no-op `tableRowWait`. Fixed, plus a `#` position column.
+- ✅ **CTA layouts** — class-management's `actionRow` had `flexWrap` + `minWidth: 160`
+  per button and no mobile variant (3×160px needs ~496px; a phone gives ~343px → a
+  ragged stack of stubby unequal boxes). Both it and the `edit-class` footer now use
+  the chosen arrangement: primary full-width on its own row, secondaries paired 50/50.
+- ✅ **Stray notification bell** — removed from `invites.tsx`; it was the only owner
+  screen rendering `NotificationBell`, which is an athlete-surface affordance.
+- ✅ **Results table → mobile accordion** — `ResultsPanel` rendered one four-column
+  table at every width. `resColMetric` 90 + `resColValue` 90 + `resColNotes` 100 +
+  gaps ≈ 305pt of FIXED width, so on a ~343pt phone the `flex: 1` athlete column got
+  ~14pt: the header wrapped to `ATH/LET/E` and the name overlapped the metric. Desktop
+  keeps the table; mobile is now one expandable row per athlete (collapsed = athlete +
+  value + chevron, expansion = metric + the full untruncated note), single-open,
+  `accessibilityState.expanded` exposed. 13 new tests; mutation-verified (forcing the
+  table onto mobile fails 8 of them).
+- ✅ **BACKEND: nullable DTO fields typed opaquely** — `ClassResultItemDto.notes` and
+  `.editedAt` used `@ApiProperty({ nullable: true })` with no `type`, which Nest cannot
+  infer from a `string | null` / `Date | null` union, so Swagger emitted an empty object
+  and the generated frontend type was `Record<string, never> | null`. The old UI hid
+  this behind an `as unknown` cast. Added explicit `type:`; regenerated types now read
+  `string | null`, and the cast is gone.
+  ⚠️ **Known remaining debt:** the same pattern still affects 9 other generated fields
+  (`bookedPosition`, `cancelledAt`, `lastModifiedByUserId`, `deletedAt`, `expiresAt`,
+  `description`, `data`, `acceptedAt`, `AcceptInviteRequestDto`). Not fixed here to
+  avoid scope creep — worth a dedicated sweep.
+- ✅ **Coach screen bug fixes** (bugs only, restyle deferred to Phase 3) —
+  `coach-class-details` had NO safe-area handling at all (the `← Back` pill collided
+  with the notch), no `KeyboardAvoidingView` (keyboard covered the input), and inputs
+  pinned at `height: 80` with no auto-grow.
 
 ### Phase 3 — Coach rollout (follow-on)
 
 `coach-classes`, `coach-class-details`, `coach-mark-attendance`.
+
+Note: `coach-class-details` has had its safe-area / keyboard / auto-grow bugs fixed
+already (Phase 2 round 2) but is deliberately still on the old `AppColors`/`Spacing`
+tokens — its Clean Ink migration belongs here.
 
 ---
 
