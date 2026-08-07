@@ -47,7 +47,9 @@ const CLASS_DETAIL = {
   scheduledTime: '09:00',
   capacity: 20,
   duration: 60,
-  status: 'published',
+  // The DTO field is `state`, not `status` — a published class is the only one
+  // the backend lets you edit or delete.
+  state: 'published',
   bookedCount: 0,
 };
 
@@ -72,9 +74,12 @@ const SPACES_RESPONSE = {
   ],
 };
 
-function buildApiClientWithClassData(mockApi = createMockApiClient()) {
+function buildApiClientWithClassData(
+  mockApi = createMockApiClient(),
+  classDetail: Record<string, unknown> = CLASS_DETAIL,
+) {
   mockApi.get.mockImplementation((url: string) => {
-    if (url.includes(`/classes/${CLASS_ID}`)) return Promise.resolve(CLASS_DETAIL);
+    if (url.includes(`/classes/${CLASS_ID}`)) return Promise.resolve(classDetail);
     if (url.includes('class-types')) return Promise.resolve(CLASS_TYPES_RESPONSE);
     if (url.includes('coaches')) return Promise.resolve(COACHES_RESPONSE);
     if (url.includes('spaces')) return Promise.resolve(SPACES_RESPONSE);
@@ -204,6 +209,10 @@ describe('EditClassScreen', () => {
         expect(utils.getByDisplayValue('2026-06-01')).toBeTruthy();
       });
 
+      // Save only enables once something changes, so dirty the duration and
+      // assert every other field still rides along in the payload.
+      fireEvent.changeText(utils.getByDisplayValue('60'), '45');
+
       await act(async () => {
         fireEvent.press(utils.getByText('Save Changes'));
       });
@@ -218,7 +227,7 @@ describe('EditClassScreen', () => {
             scheduledDate: '2026-06-01',
             scheduledTime: '09:00',
             capacity: 20,
-            duration: 60,
+            duration: 45,
           })
         );
       });
@@ -325,6 +334,9 @@ describe('EditClassScreen', () => {
         expect(utils.getByDisplayValue('2026-06-01')).toBeTruthy();
       });
 
+      // Save is disabled on a pristine form, so make a change first.
+      fireEvent.changeText(utils.getByDisplayValue('2026-06-01'), '2026-07-15');
+
       await act(async () => {
         fireEvent.press(utils.getByText('Save Changes'));
       });
@@ -371,6 +383,136 @@ describe('EditClassScreen', () => {
       fireEvent.press(utils.getByText('Cancel'));
 
       expect(mockRouter.back).toHaveBeenCalled();
+    });
+  });
+
+  // ─── Save gating ────────────────────────────────────────────────────────────
+  // Save must stay disabled until the form actually differs from the loaded
+  // class, so an owner cannot fire a no-op PATCH by tapping a pristine form.
+
+  describe('Save is disabled until the form changes', () => {
+    it('disables Save on a freshly loaded form', async () => {
+      const utils = renderScreen();
+
+      await waitFor(() => {
+        expect(utils.getByDisplayValue('2026-06-01')).toBeTruthy();
+      });
+
+      expect(utils.getByTestId('edit-class-save-btn').props.accessibilityState.disabled).toBe(true);
+    });
+
+    it('does not PATCH when Save is pressed on a pristine form', async () => {
+      const mockApi = buildApiClientWithClassData();
+      const utils = renderScreen(mockApi);
+
+      await waitFor(() => {
+        expect(utils.getByDisplayValue('2026-06-01')).toBeTruthy();
+      });
+
+      await act(async () => {
+        fireEvent.press(utils.getByText('Save Changes'));
+      });
+
+      expect(mockApi.patch).not.toHaveBeenCalled();
+    });
+
+    it('enables Save once a field is edited', async () => {
+      const utils = renderScreen();
+
+      await waitFor(() => {
+        expect(utils.getByDisplayValue('2026-06-01')).toBeTruthy();
+      });
+
+      fireEvent.changeText(utils.getByDisplayValue('2026-06-01'), '2026-07-15');
+
+      expect(utils.getByTestId('edit-class-save-btn').props.accessibilityState.disabled).toBe(false);
+    });
+
+    it('disables Save again when the edit is reverted by hand', async () => {
+      const utils = renderScreen();
+
+      await waitFor(() => {
+        expect(utils.getByDisplayValue('2026-06-01')).toBeTruthy();
+      });
+
+      fireEvent.changeText(utils.getByDisplayValue('2026-06-01'), '2026-07-15');
+      fireEvent.changeText(utils.getByDisplayValue('2026-07-15'), '2026-06-01');
+
+      expect(utils.getByTestId('edit-class-save-btn').props.accessibilityState.disabled).toBe(true);
+    });
+  });
+
+  // ─── Lifecycle gating ───────────────────────────────────────────────────────
+  // The backend rejects edit AND delete unless the class is `published`
+  // (edit-class.handler / delete-class.handler). Past that, the screen must not
+  // offer actions that would fail.
+
+  describe('a class past published renders read-only', () => {
+    const LOCKED_STATES = ['booking_closed', 'in_progress', 'completed', 'archived'] as const;
+
+    function renderLocked(state: string) {
+      const mockApi = buildApiClientWithClassData(createMockApiClient(), {
+        ...CLASS_DETAIL,
+        state,
+      });
+      return renderScreen(mockApi);
+    }
+
+    it.each(LOCKED_STATES)('hides Save, Delete and the form when state is %s', async (state) => {
+      const utils = renderLocked(state);
+
+      await waitFor(() => {
+        expect(utils.getByTestId('edit-class-readonly-notice')).toBeTruthy();
+      });
+
+      expect(utils.queryByTestId('edit-class-save-btn')).toBeNull();
+      expect(utils.queryByTestId('edit-class-delete-btn')).toBeNull();
+      expect(utils.queryByTestId('edit-class-date-input')).toBeNull();
+    });
+
+    it('shows the class values as read-only text instead', async () => {
+      const utils = renderLocked('completed');
+
+      await waitFor(() => {
+        expect(utils.getByTestId('edit-class-readonly-notice')).toBeTruthy();
+      });
+
+      expect(utils.getByText('2026-06-01')).toBeTruthy();
+      expect(utils.getByText('09:00')).toBeTruthy();
+      expect(utils.getByText('60 min')).toBeTruthy();
+    });
+
+    it('titles the screen Class Details rather than Edit Class', async () => {
+      const utils = renderLocked('archived');
+
+      await waitFor(() => {
+        expect(utils.getByText('Class Details')).toBeTruthy();
+      });
+
+      expect(utils.queryByText('Edit Class')).toBeNull();
+    });
+
+    it('still offers a way back', async () => {
+      const utils = renderLocked('completed');
+
+      await waitFor(() => {
+        expect(utils.getByTestId('edit-class-back-to-class-btn')).toBeTruthy();
+      });
+
+      fireEvent.press(utils.getByTestId('edit-class-back-to-class-btn'));
+
+      expect(mockRouter.back).toHaveBeenCalled();
+    });
+
+    it('keeps the form editable for a published class', async () => {
+      const utils = renderScreen();
+
+      await waitFor(() => {
+        expect(utils.getByDisplayValue('2026-06-01')).toBeTruthy();
+      });
+
+      expect(utils.queryByTestId('edit-class-readonly-notice')).toBeNull();
+      expect(utils.getByTestId('edit-class-save-btn')).toBeTruthy();
     });
   });
 });

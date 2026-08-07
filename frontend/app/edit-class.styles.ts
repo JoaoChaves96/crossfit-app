@@ -141,6 +141,27 @@ export const styles = StyleSheet.create({
     gap: Space.hair,
   },
 
+  // Read-only view for a class past `published`, where the backend rejects both
+  // edits and deletes. A quiet summary + notice, no controls and no Save.
+  readOnlyNotice: {
+    borderRadius: Radius.control,
+    borderWidth: 1,
+    borderColor: Line.divider,
+    backgroundColor: Ground.sunken,
+    padding: Space.md,
+    gap: Space.hair,
+  },
+  readOnlyGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    rowGap: Space.base,
+  },
+  readOnlyCell: {
+    width: '50%',
+    gap: Space.hair,
+    paddingRight: Space.md,
+  },
+
   // Mobile responsive styles
   scrollContentMobile: {
     padding: Space.base,
@@ -155,7 +176,7 @@ export const styles = StyleSheet.create({
     gap: Space.md,
   },
   // Mobile footer: primary action on its own full-width row, then Cancel +
-  // Delete paired 50/50, then the Delete caption beneath the whole row.
+  // Delete paired 50/50.
   footerMobile: {
     gap: Space.md,
   },
@@ -165,9 +186,5 @@ export const styles = StyleSheet.create({
   },
   pairedItemMobile: {
     flex: 1,
-  },
-  deleteCaptionMobile: {
-    marginTop: -Space.sm,
-    textAlign: 'right',
   },
 });

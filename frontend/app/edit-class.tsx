@@ -20,6 +20,7 @@ import { Ink, Space, Status } from '@/constants/design';
 import { createApiClient } from '@/utils/api-client';
 import { trimTime } from '@/utils/datetime';
 import { components } from '@/types/api.gen';
+import { ClassState, STATE_LABEL } from './class-management/classStates';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -32,7 +33,20 @@ type GetCoachesResponse = components['schemas']['GetCoachesResponseDto'];
 type GetClassTypesResponse = components['schemas']['GetClassTypesResponseDto'];
 type GetSpacesResponse = components['schemas']['GetSpacesResponseDto'];
 
-const DELETE_CAPTION = 'Only available for published classes';
+/**
+ * The backend permits editing and deleting a class only while it is `published`
+ * (see edit-class.handler / delete-class.handler, both of which reject anything
+ * else with an invalid-state error). Once booking closes the class is history, so
+ * the form renders read-only rather than offering actions that would 400.
+ *
+ * Keyed by every non-published state, so this map doubles as the lock predicate.
+ */
+const READ_ONLY_NOTICE: Record<Exclude<ClassState, 'published'>, string> = {
+  booking_closed: 'Booking has closed, so this class can no longer be edited.',
+  in_progress: 'This class is in progress and can no longer be edited.',
+  completed: 'This class has finished and can no longer be edited.',
+  archived: 'This class is archived and can no longer be edited.',
+};
 
 interface PickerItem {
   id: string;
@@ -105,6 +119,36 @@ interface FormErrors {
   duration?: string;
 }
 
+/** The form as loaded, before the user touched anything. */
+const EMPTY_FORM: FormState = {
+  classTypeId: '',
+  coachUserId: '',
+  spaceId: '',
+  scheduledDate: '',
+  scheduledTime: '',
+  capacity: '',
+  duration: '',
+};
+
+function formFromClass(data: ClassDetail): FormState {
+  return {
+    classTypeId: data.classTypeId,
+    coachUserId: data.coachUserId,
+    spaceId: data.spaceId,
+    scheduledDate: data.scheduledDate,
+    scheduledTime: trimTime(data.scheduledTime),
+    capacity: String(data.capacity),
+    duration: String(data.duration),
+  };
+}
+
+/** True when any field differs from what was loaded. */
+function isFormDirty(form: FormState, baseline: FormState): boolean {
+  return (Object.keys(baseline) as (keyof FormState)[]).some(
+    (key) => form[key] !== baseline[key],
+  );
+}
+
 function validate(form: FormState): FormErrors {
   const errors: FormErrors = {};
   if (form.scheduledDate.trim() && !/^\d{4}-\d{2}-\d{2}$/.test(form.scheduledDate.trim())) {
@@ -126,6 +170,76 @@ function validate(form: FormState): FormErrors {
     }
   }
   return errors;
+}
+
+// ─── Read-only summary (class past `published`) ────────────────────────────────
+
+interface ReadOnlyClassSummaryProps {
+  classDetail: ClassDetail;
+  classState: Exclude<ClassState, 'published'>;
+  classTypeItems: PickerItem[];
+  coachItems: PickerItem[];
+  spaceItems: PickerItem[];
+  onBack: () => void;
+}
+
+function labelFor(items: PickerItem[], id: string, fallback: string): string {
+  return items.find((i) => i.id === id)?.label || fallback || '—';
+}
+
+/**
+ * What the form would have shown, as plain text. Offering disabled inputs and a
+ * dead Save button would imply the class is merely temporarily locked; it isn't —
+ * the backend will refuse the edit outright.
+ */
+function ReadOnlyClassSummary({
+  classDetail,
+  classState,
+  classTypeItems,
+  coachItems,
+  spaceItems,
+  onBack,
+}: ReadOnlyClassSummaryProps) {
+  const fields: { label: string; value: string }[] = [
+    { label: 'Class Type', value: labelFor(classTypeItems, classDetail.classTypeId, classDetail.classTypeName) },
+    { label: 'Coach', value: labelFor(coachItems, classDetail.coachUserId, classDetail.coachName) },
+    { label: 'Space', value: labelFor(spaceItems, classDetail.spaceId, classDetail.spaceName) },
+    { label: 'Date', value: classDetail.scheduledDate },
+    { label: 'Time', value: trimTime(classDetail.scheduledTime) },
+    { label: 'Capacity', value: `${classDetail.bookedCount} / ${classDetail.capacity}` },
+    { label: 'Duration', value: `${classDetail.duration} min` },
+  ];
+
+  return (
+    <>
+      <View testID="edit-class-readonly-notice" style={styles.readOnlyNotice}>
+        <Text size="label" weight="semibold" tone="faint" upper>
+          {STATE_LABEL[classState]}
+        </Text>
+        <Text size="meta" tone="muted">{READ_ONLY_NOTICE[classState]}</Text>
+      </View>
+
+      <View style={styles.readOnlyGrid}>
+        {fields.map((field) => (
+          <View key={field.label} style={styles.readOnlyCell}>
+            <Text size="label" weight="semibold" tone="faint" upper>{field.label}</Text>
+            <Text size="body" weight="medium">{field.value || '—'}</Text>
+          </View>
+        ))}
+      </View>
+
+      <View style={styles.divider} />
+
+      <View style={styles.btnWrap}>
+        <Button
+          testID="edit-class-back-to-class-btn"
+          label="Back"
+          variant="quiet"
+          onPress={onBack}
+        />
+      </View>
+    </>
+  );
 }
 
 // ─── Main Screen ──────────────────────────────────────────────────────────────
@@ -151,15 +265,10 @@ export default function EditClassScreen() {
     status: 'loading',
   });
 
-  const [form, setForm] = useState<FormState>({
-    classTypeId: '',
-    coachUserId: '',
-    spaceId: '',
-    scheduledDate: '',
-    scheduledTime: '',
-    capacity: '',
-    duration: '',
-  });
+  const [form, setForm] = useState<FormState>(EMPTY_FORM);
+  // Snapshot of the loaded class, so Save can stay disabled until something
+  // actually changes and re-enable if the user reverts their edit by hand.
+  const [baselineForm, setBaselineForm] = useState<FormState>(EMPTY_FORM);
 
   const [formErrors, setFormErrors] = useState<FormErrors>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -175,15 +284,9 @@ export default function EditClassScreen() {
       .get<ClassDetail>(`/api/gyms/${currentGymId}/classes/${classId}`)
       .then((data) => {
         setClassLoadState({ status: 'success', data });
-        setForm({
-          classTypeId: data.classTypeId,
-          coachUserId: data.coachUserId,
-          spaceId: data.spaceId,
-          scheduledDate: data.scheduledDate,
-          scheduledTime: trimTime(data.scheduledTime),
-          capacity: String(data.capacity),
-          duration: String(data.duration),
-        });
+        const loaded = formFromClass(data);
+        setForm(loaded);
+        setBaselineForm(loaded);
       })
       .catch((err: unknown) => {
         const message = err instanceof Error ? err.message : 'Failed to load class';
@@ -305,6 +408,17 @@ export default function EditClassScreen() {
   const isInitialLoading = classLoadState.status === 'loading';
   const hasInitialError = classLoadState.status === 'error';
 
+  // Lock only on a state we recognise as past `published`. An absent or unknown
+  // state falls through to the editable form and lets the backend be the
+  // authority, rather than stranding the owner on a read-only screen.
+  const classState = classLoadState.status === 'success' ? classLoadState.data.state : null;
+  const lockedState = classState !== null && classState in READ_ONLY_NOTICE
+    ? (classState as Exclude<ClassState, 'published'>)
+    : null;
+  const isMutable = lockedState === null;
+  const isDirty = isFormDirty(form, baselineForm);
+  const isBusy = isSubmitting || isDeleting;
+
   if (isInitialLoading) {
     return (
       <View style={styles.centeredFeedback}>
@@ -338,11 +452,22 @@ export default function EditClassScreen() {
             hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
             <Icon name="back" size={24} tone={Ink.strong} />
           </TouchableOpacity>
-          <Text size="screen" weight="bold">Edit Class</Text>
+          <Text size="screen" weight="bold">{isMutable ? 'Edit Class' : 'Class Details'}</Text>
         </View>
 
         {/* Form card */}
         <View style={[styles.formCard, isMobile && styles.formCardMobile]}>
+          {lockedState !== null && classLoadState.status === 'success' ? (
+            <ReadOnlyClassSummary
+              classDetail={classLoadState.data}
+              classState={lockedState}
+              classTypeItems={classTypeItems}
+              coachItems={coachItems}
+              spaceItems={spaceItems}
+              onBack={() => router.back()}
+            />
+          ) : (
+          <>
           {/* Row 1 — Class Type + Coach */}
           <View style={[styles.row, isMobile && styles.rowMobile, styles.rowPickerTop]}>
             <View style={styles.rowItem}>
@@ -445,14 +570,15 @@ export default function EditClassScreen() {
           {/* Footer actions */}
           {isMobile ? (
             <View style={styles.footerMobile}>
-              {/* Primary action leads, full width */}
+              {/* Primary action leads, full width. Stays disabled until the form
+                  actually differs from the loaded class. */}
               <Button
                 testID="edit-class-save-btn"
                 label="Save Changes"
                 variant="primary"
                 onPress={handleSave}
                 loading={isSubmitting}
-                disabled={isSubmitting || isDeleting}
+                disabled={isBusy || !isDirty}
               />
               {/* Cancel + Delete share the row 50/50 */}
               <View style={styles.pairedRowMobile}>
@@ -462,7 +588,7 @@ export default function EditClassScreen() {
                     label="Cancel"
                     variant="quiet"
                     onPress={() => router.back()}
-                    disabled={isSubmitting || isDeleting}
+                    disabled={isBusy}
                   />
                 </View>
                 <View style={styles.pairedItemMobile}>
@@ -472,14 +598,10 @@ export default function EditClassScreen() {
                     variant="danger"
                     onPress={handleDelete}
                     loading={isDeleting}
-                    disabled={isSubmitting || isDeleting}
+                    disabled={isBusy}
                   />
                 </View>
               </View>
-              {/* Caption sits under the full row, aligned to the Delete half */}
-              <Text size="label" tone="faint" style={styles.deleteCaptionMobile}>
-                {DELETE_CAPTION}
-              </Text>
             </View>
           ) : (
             <View style={styles.btnRow}>
@@ -491,7 +613,7 @@ export default function EditClassScreen() {
                     label="Cancel"
                     variant="quiet"
                     onPress={() => router.back()}
-                    disabled={isSubmitting || isDeleting}
+                    disabled={isBusy}
                   />
                 </View>
                 <View style={styles.btnWrap}>
@@ -501,7 +623,7 @@ export default function EditClassScreen() {
                     variant="primary"
                     onPress={handleSave}
                     loading={isSubmitting}
-                    disabled={isSubmitting || isDeleting}
+                    disabled={isBusy || !isDirty}
                   />
                 </View>
               </View>
@@ -515,14 +637,13 @@ export default function EditClassScreen() {
                     variant="danger"
                     onPress={handleDelete}
                     loading={isDeleting}
-                    disabled={isSubmitting || isDeleting}
+                    disabled={isBusy}
                   />
                 </View>
-                <Text size="label" tone="faint">
-                  {DELETE_CAPTION}
-                </Text>
               </View>
             </View>
+          )}
+          </>
           )}
         </View>
       </ScrollView>

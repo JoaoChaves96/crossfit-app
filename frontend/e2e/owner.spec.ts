@@ -337,8 +337,9 @@ test.describe('Flow 9: Class management — bookings panel', () => {
     await spotsText.click();
 
     // Assert — class management screen loaded: action buttons are visible
+    // Programming is a section of this screen now, not a button that navigates
+    // away, so the class CTAs are just Mark Attendance + Edit.
     await expect(page.getByTestId('mark-attendance-btn')).toBeVisible({ timeout: 15_000 });
-    await expect(page.getByTestId('add-programming-btn')).toBeVisible();
     await expect(page.getByTestId('edit-class-btn')).toBeVisible();
 
     // Assert — bookings panel content rendered
