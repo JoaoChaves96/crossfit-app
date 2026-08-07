@@ -1,8 +1,9 @@
 import React from 'react';
-import { Pressable, Text, View } from 'react-native';
+import { Pressable, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { SafeScreen } from '@/components/SafeScreen';
-import { Spacing } from '@/constants/theme';
+import { Text, Icon, type IconName } from '@/components/cleanink';
+import { Ink, Space, Status } from '@/constants/design';
 import { useAuth } from '@/hooks/useAuth';
 import { styles } from './OwnerSidebar.styles';
 
@@ -11,23 +12,25 @@ import { styles } from './OwnerSidebar.styles';
 // Canonical owner navigation shell, shared across the owner screen suite.
 // `route` is the expo-router path a nav item points at; `enabled: false` items
 // are shown but not yet wired to a destination (Dashboard/Classes are deferred).
+// `icon` keys the Clean Ink glyph drawn beside each label.
 
 export interface OwnerNavItem {
   label: string;
   key: string;
   enabled: boolean;
   route?: string;
+  icon: IconName;
 }
 
 export const OWNER_NAV_ITEMS: OwnerNavItem[] = [
-  { label: 'Dashboard', key: 'dashboard', enabled: false },
-  { label: 'Schedule', key: 'schedule', enabled: true, route: '/schedule-dashboard' },
-  { label: 'Classes', key: 'classes', enabled: false },
-  { label: 'Members', key: 'members', enabled: true, route: '/members' },
-  { label: 'Coaches', key: 'coaches', enabled: true, route: '/coaches' },
-  { label: 'Plans', key: 'plans', enabled: false },
-  { label: 'Invites', key: 'invites', enabled: true, route: '/invites' },
-  { label: 'Settings', key: 'settings', enabled: true, route: '/gym-settings' },
+  { label: 'Dashboard', key: 'dashboard', enabled: false, icon: 'dashboard' },
+  { label: 'Schedule', key: 'schedule', enabled: true, route: '/schedule-dashboard', icon: 'schedule' },
+  { label: 'Classes', key: 'classes', enabled: false, icon: 'classes' },
+  { label: 'Members', key: 'members', enabled: true, route: '/members', icon: 'members' },
+  { label: 'Coaches', key: 'coaches', enabled: true, route: '/coaches', icon: 'coach' },
+  { label: 'Plans', key: 'plans', enabled: false, icon: 'plans' },
+  { label: 'Invites', key: 'invites', enabled: true, route: '/invites', icon: 'invites' },
+  { label: 'Settings', key: 'settings', enabled: true, route: '/gym-settings', icon: 'settings' },
 ];
 
 interface OwnerSidebarProps {
@@ -61,15 +64,18 @@ export function OwnerSidebar({ activeItem, onNavigate }: OwnerSidebarProps) {
   };
 
   return (
-    <SafeScreen style={styles.sidebar} extraTopPadding={Spacing.lg}>
+    <SafeScreen style={styles.sidebar} extraTopPadding={Space.lg}>
       <View style={styles.sidebarLogo}>
-        <View style={styles.sidebarLogoIcon} />
-        <Text style={styles.sidebarLogoText}>CrossFit Box</Text>
+        <Icon name="gym" size={20} tone="strong" />
+        <Text weight="bold" size="title" tone="strong">CrossFit Box</Text>
       </View>
       <View style={styles.navGroup}>
         {OWNER_NAV_ITEMS.map((item) => {
           const isActive = item.key === activeItem;
           const isDisabled = !item.enabled;
+          // One accent marks the active item; the rest is quiet ink, and
+          // deferred items read as faint.
+          const tone = isDisabled ? 'faint' : isActive ? 'strong' : 'muted';
           return (
             <Pressable
               key={item.key}
@@ -81,19 +87,8 @@ export function OwnerSidebar({ activeItem, onNavigate }: OwnerSidebarProps) {
               ]}
               onPress={isDisabled ? undefined : () => handlePress(item)}
               disabled={isDisabled}>
-              <View
-                style={[
-                  styles.navIcon,
-                  isActive ? styles.navIconActive : styles.navIconInactive,
-                  isDisabled && styles.navIconDisabled,
-                ]}
-              />
-              <Text
-                style={[
-                  styles.navLabel,
-                  isActive ? styles.navLabelActive : styles.navLabelInactive,
-                  isDisabled && styles.navLabelDisabled,
-                ]}>
+              <Icon name={item.icon} size={18} tone={tone} />
+              <Text weight={isActive ? 'semibold' : 'medium'} tone={tone}>
                 {item.label}
               </Text>
             </Pressable>
@@ -108,8 +103,8 @@ export function OwnerSidebar({ activeItem, onNavigate }: OwnerSidebarProps) {
           testID="nav-logout"
           style={styles.logoutItem}
           onPress={handleLogout}>
-          <View style={styles.logoutIcon} />
-          <Text style={styles.logoutLabel}>Log Out</Text>
+          <Icon name="logout" size={18} tone={Status.danger} />
+          <Text weight="medium" tone={Status.danger}>Log Out</Text>
         </Pressable>
       </View>
     </SafeScreen>

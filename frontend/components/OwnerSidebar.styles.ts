@@ -1,100 +1,50 @@
 import { StyleSheet } from 'react-native';
-import { AppColors, BorderRadius, FontSizes, FontWeights, Spacing } from '@/constants/theme';
+import { Ground, Line, Radius, Space } from '@/constants/design';
 
 export const styles = StyleSheet.create({
   sidebar: {
     width: 220,
-    backgroundColor: AppColors.backgroundLight,
-    paddingHorizontal: Spacing.base,
-    paddingVertical: Spacing.xl,
-    gap: Spacing.tight,
+    backgroundColor: Ground.base,
+    paddingHorizontal: Space.base,
+    paddingVertical: Space.xl,
+    gap: Space.xs,
   },
   sidebarLogo: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: Spacing.sm,
-    paddingBottom: Spacing.lg,
-  },
-  sidebarLogoIcon: {
-    width: 28,
-    height: 28,
-    borderRadius: BorderRadius.mdSm,
-    backgroundColor: AppColors.textMuted,
-  },
-  sidebarLogoText: {
-    fontSize: FontSizes.md,
-    fontWeight: FontWeights.bold,
-    color: AppColors.textHeading,
+    gap: Space.sm,
+    paddingBottom: Space.lg,
   },
   navGroup: {
-    gap: Spacing.hairline,
+    gap: Space.hair,
   },
   navItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: Spacing.smMd,
-    paddingHorizontal: Spacing.md,
-    paddingVertical: Spacing.smMd,
-    borderRadius: BorderRadius.mdSm,
+    gap: Space.md,
+    paddingHorizontal: Space.md,
+    paddingVertical: Space.sm,
+    borderRadius: Radius.control,
   },
   navItemActive: {
-    backgroundColor: AppColors.backgroundDivider,
-  },
-  navIcon: {
-    width: 16,
-    height: 16,
-    borderRadius: BorderRadius.hairline,
-  },
-  navIconActive: {
-    backgroundColor: AppColors.textSecondary,
-  },
-  navIconInactive: {
-    backgroundColor: AppColors.textDisabled,
-  },
-  navLabel: {
-    fontSize: FontSizes.body,
-  },
-  navLabelActive: {
-    fontWeight: FontWeights.medium,
-    color: AppColors.textHeading,
-  },
-  navLabelInactive: {
-    fontWeight: FontWeights.regular,
-    color: AppColors.textMuted,
+    backgroundColor: Ground.sunken,
   },
   navItemDisabled: {
     opacity: 0.4,
   },
-  navIconDisabled: {
-    backgroundColor: AppColors.textDisabled,
-  },
-  navLabelDisabled: {
-    color: AppColors.textDisabled,
-  },
   // Log Out pinned to the foot of the nav shell.
   footer: {
     marginTop: 'auto',
-    paddingTop: Spacing.md,
-    borderTopWidth: 1,
-    borderTopColor: AppColors.backgroundDivider,
+    paddingTop: Space.md,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: Line.hairline,
   },
   logoutItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: Spacing.smMd,
-    paddingHorizontal: Spacing.md,
-    paddingVertical: Spacing.smMd,
-    borderRadius: BorderRadius.mdSm,
-  },
-  logoutIcon: {
-    width: 16,
-    height: 16,
-    borderRadius: BorderRadius.hairline,
-    backgroundColor: AppColors.errorMaterial,
-  },
-  logoutLabel: {
-    fontSize: FontSizes.body,
-    fontWeight: FontWeights.medium,
-    color: AppColors.errorMaterial,
+    gap: Space.md,
+    paddingHorizontal: Space.md,
+    paddingVertical: Space.sm,
+    borderRadius: Radius.control,
   },
 });
