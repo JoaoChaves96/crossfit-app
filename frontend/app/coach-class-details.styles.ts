@@ -1,56 +1,21 @@
 import { StyleSheet } from 'react-native';
-import { AppColors, BorderRadius, FontSizes, FontWeights, LineHeights, Spacing } from '@/constants/theme';
+import { Ground, Line, Radius, Space, Elevation, Ink, Type, Status } from '@/constants/design';
+
+// ─── Desktop Styles ─────────────────────────────────────────────────────────
 
 export const styles = StyleSheet.create({
   root: {
     flex: 1,
     flexDirection: 'row',
-    backgroundColor: AppColors.backgroundWarm,
-  },
-
-  // Sidebar
-  sidebar: {
-    width: 220,
-    backgroundColor: AppColors.darkSurface2,
-    paddingHorizontal: Spacing.base,
-    paddingVertical: Spacing.xl,
-    gap: Spacing.tight,
-  },
-  sidebarLogo: {
-    fontSize: FontSizes.md,
-    fontWeight: FontWeights.bold,
-    color: AppColors.backgroundWhite,
-    letterSpacing: 0.5,
-  },
-  navSpacer: {
-    height: 24,
-  },
-  navGroup: {
-    gap: Spacing.tight,
-  },
-  navItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.smMd,
-    paddingHorizontal: Spacing.md,
-    paddingVertical: Spacing.sm,
-    borderRadius: BorderRadius.mdSm,
-    height: 40,
-  },
-  navLabel: {
-    fontSize: FontSizes.body,
-  },
-  navLabelInactive: {
-    fontWeight: FontWeights.regular,
-    color: AppColors.darkTextMuted,
+    backgroundColor: Ground.base,
   },
 
   // Main area
   main: {
     flex: 1,
-    paddingHorizontal: Spacing.xxl,
-    paddingVertical: Spacing.xl,
-    gap: Spacing.lg,
+    paddingHorizontal: Space.xxl,
+    paddingVertical: Space.xl,
+    gap: Space.lg,
   },
 
   // Header
@@ -58,245 +23,135 @@ export const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    gap: Spacing.base,
+    gap: Space.base,
   },
   backBtn: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: Spacing.sm,
-    paddingHorizontal: Spacing.mdPlus,
-    paddingVertical: Spacing.sm,
-    borderRadius: BorderRadius.mdSm,
-    backgroundColor: AppColors.backgroundWhite,
+    gap: Space.xs,
+    paddingHorizontal: Space.md,
+    paddingVertical: Space.sm,
+    borderRadius: Radius.control,
+    backgroundColor: Ground.surface,
     borderWidth: 1,
-    borderColor: AppColors.borderLight,
-  },
-  backBtnText: {
-    fontSize: FontSizes.mdSm,
-    color: AppColors.darkTextDim,
-    fontWeight: FontWeights.regular,
+    borderColor: Line.divider,
   },
   headerTitle: {
     flex: 1,
-    fontSize: FontSizes.title,
-    fontWeight: FontWeights.bold,
-    color: AppColors.darkSurface,
     textAlign: 'center',
-  },
-  statusBadge: {
-    borderRadius: BorderRadius.mdLg,
-    paddingHorizontal: Spacing.mdPlus,
-    paddingVertical: Spacing.tightPlus,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  statusBadgeText: {
-    fontSize: FontSizes.mdSm,
-    fontWeight: FontWeights.semibold,
   },
 
   // Content row
   contentRow: {
     flex: 1,
     flexDirection: 'row',
-    gap: Spacing.lg,
+    gap: Space.lg,
   },
 
-  // Info panel
+  // Panels
   infoPanel: {
     width: 320,
-    backgroundColor: AppColors.backgroundWhite,
-    borderRadius: BorderRadius.mdLg,
+    backgroundColor: Ground.surface,
+    borderRadius: Radius.card,
     borderWidth: 1,
-    borderColor: AppColors.borderLight,
-    padding: Spacing.xl,
+    borderColor: Line.hairline,
+    padding: Space.xl,
+    gap: Space.base,
+    ...Elevation.card,
   },
-  panelTitle: {
-    fontSize: FontSizes.lg,
-    fontWeight: FontWeights.bold,
-    color: AppColors.darkSurface,
-    marginBottom: Spacing.base,
+  progPanel: {
+    flex: 1,
+    backgroundColor: Ground.surface,
+    borderRadius: Radius.card,
+    borderWidth: 1,
+    borderColor: Line.hairline,
+    padding: Space.xl,
+    gap: Space.base,
+    ...Elevation.card,
   },
+
+  // Shared field/list bits
   separator: {
     height: 1,
-    backgroundColor: AppColors.borderLight,
+    backgroundColor: Line.hairline,
   },
-  separatorSpacing: {
-    marginTop: Spacing.base,
-  },
-  fieldLabel: {
-    fontSize: FontSizes.sm,
-    fontWeight: FontWeights.bold,
-    color: AppColors.darkTextMuted,
-    letterSpacing: 0.8,
-    textTransform: 'uppercase',
-    marginTop: Spacing.base,
-  },
-  fieldLabelSpacing: {
-    marginTop: Spacing.base,
-  },
-  fieldValueBold: {
-    fontSize: FontSizes.bodyMd,
-    fontWeight: FontWeights.semibold,
-    color: AppColors.darkSurface,
-    marginTop: Spacing.tight,
-  },
-  fieldValue: {
-    fontSize: FontSizes.body,
-    fontWeight: FontWeights.regular,
-    color: AppColors.darkTextDim,
-    marginTop: Spacing.tight,
+  fieldBlock: {
+    gap: Space.hair,
   },
   bookedRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: Spacing.sm,
-    backgroundColor: AppColors.backgroundWarm,
-    borderRadius: BorderRadius.mdSm,
-    paddingHorizontal: Spacing.md,
-    paddingVertical: Spacing.sm,
-    marginTop: Spacing.tight,
-  },
-  bookedRowText: {
-    fontSize: FontSizes.mdSm,
-    color: AppColors.darkCard,
-  },
-  actionBtn: {
-    backgroundColor: AppColors.darkSurface,
-    borderRadius: BorderRadius.md,
-    paddingVertical: Spacing.smMd,
-    paddingHorizontal: Spacing.basePlus,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginTop: Spacing.base,
-  },
-  actionBtnDisabled: {
-    opacity: 0.6,
-  },
-  actionBtnText: {
-    fontSize: FontSizes.body,
-    fontWeight: FontWeights.semibold,
-    color: AppColors.backgroundWhite,
+    gap: Space.sm,
+    backgroundColor: Ground.base,
+    borderRadius: Radius.control,
+    paddingHorizontal: Space.md,
+    paddingVertical: Space.sm,
   },
 
-  // Programming panel
-  progPanel: {
-    flex: 1,
-    backgroundColor: AppColors.backgroundWhite,
-    borderRadius: BorderRadius.mdLg,
-    borderWidth: 1,
-    borderColor: AppColors.borderLight,
-    padding: Spacing.xl,
-  },
+  // Programming panel bits
   progHeader: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginBottom: Spacing.base,
   },
   loggableRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: Spacing.smMd,
+    gap: Space.sm,
   },
-  loggableLabel: {
-    fontSize: FontSizes.mdSm,
-    color: AppColors.darkTextMuted,
-    fontWeight: FontWeights.regular,
-  },
-  toggle: {
-    width: 44,
-    height: 24,
-    borderRadius: BorderRadius.lg,
-    paddingHorizontal: Spacing.hairline,
-    justifyContent: 'center',
-  },
-  toggleOn: {
-    backgroundColor: AppColors.darkSurface,
-    alignItems: 'flex-end',
-  },
-  toggleOff: {
-    backgroundColor: AppColors.darkTextMuted,
-    alignItems: 'flex-start',
-  },
-  toggleKnob: {
-    width: 20,
-    height: 20,
-    borderRadius: BorderRadius.mdLg,
-    backgroundColor: AppColors.backgroundWhite,
-  },
-  toggleKnobRight: {},
-  toggleKnobLeft: {},
-
-  // Programming loading
-  programmingLoadingContainer: {
-    paddingVertical: Spacing.xl,
+  progFeedback: {
     alignItems: 'center',
     justifyContent: 'center',
+    paddingVertical: Space.lg,
   },
-
-  // WOD display
+  // WOD display block — a quiet sunken panel.
   wodContent: {
-    backgroundColor: AppColors.backgroundWarm,
-    borderRadius: BorderRadius.md,
-    padding: Spacing.base,
-    marginTop: Spacing.sm,
-  },
-  wodText: {
-    fontSize: FontSizes.body,
-    color: AppColors.darkCard,
-    lineHeight: LineHeights.comfortable,
+    backgroundColor: Ground.base,
+    borderRadius: Radius.control,
+    padding: Space.base,
   },
   emptyProgramming: {
-    backgroundColor: AppColors.backgroundWarm,
-    borderRadius: BorderRadius.md,
-    padding: Spacing.base,
-    marginTop: Spacing.sm,
+    backgroundColor: Ground.base,
+    borderRadius: Radius.control,
+    padding: Space.base,
     alignItems: 'center',
   },
-  emptyProgrammingText: {
-    fontSize: FontSizes.body,
-    color: AppColors.darkTextMuted,
-    fontStyle: 'italic',
+  // Replaces the whole edit form once the class is past editing.
+  lockedNotice: {
+    lineHeight: Type.lineHeight.relaxed,
   },
-
-  // Form
-  formTitle: {
-    fontSize: FontSizes.bodyMd,
-    fontWeight: FontWeights.semibold,
-    color: AppColors.darkSurface,
-    marginTop: Spacing.base,
-  },
+  // Applied to the TextInput itself; the face must be named explicitly since a
+  // TextInput can't route through the Text primitive.
   // Height is applied inline from measured content (auto-grow).
-  textInputLarge: {
-    backgroundColor: AppColors.backgroundWhite,
-    borderRadius: BorderRadius.md,
+  progInput: {
     borderWidth: 1,
-    borderColor: AppColors.borderLight,
-    paddingHorizontal: Spacing.mdPlus,
-    paddingVertical: Spacing.md,
-    fontSize: FontSizes.mdSm,
-    color: AppColors.darkCard,
-    marginTop: Spacing.sm,
+    borderColor: Line.divider,
+    borderRadius: Radius.control,
+    paddingHorizontal: Space.md,
+    paddingVertical: Space.sm,
+    backgroundColor: Ground.surface,
+    color: Ink.strong,
+    fontFamily: Type.family.regular,
+    fontSize: Type.size.body,
+    lineHeight: Type.lineHeight.body,
   },
-
-  // Success / error
-  successBanner: {
-    backgroundColor: AppColors.successBgLight,
-    borderRadius: BorderRadius.mdSm,
-    paddingHorizontal: Spacing.mdPlus,
-    paddingVertical: Spacing.smMd,
-    marginTop: Spacing.md,
+  // Save error banner — deeper red, distinct from the accent.
+  errorBanner: {
+    borderRadius: Radius.control,
+    borderWidth: 1,
+    borderColor: Status.danger,
+    backgroundColor: Status.dangerWash,
+    padding: Space.md,
   },
-  successText: {
-    fontSize: FontSizes.mdSm,
-    color: AppColors.successLabel,
-    fontWeight: FontWeights.medium,
+  // Footer holding the quiet saved/updated meta and the save action.
+  progFooter: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: Space.md,
   },
-  errorText: {
-    fontSize: FontSizes.mdSm,
-    color: AppColors.errorDefault,
-    marginTop: Spacing.md,
+  saveWrap: {
+    minWidth: 180,
   },
 });
 
@@ -306,25 +161,24 @@ export const mobileStyles = StyleSheet.create({
   root: {
     flex: 1,
     flexDirection: 'column',
-    backgroundColor: AppColors.backgroundWarm,
+    backgroundColor: Ground.base,
   },
-
-  keyboardAvoider: {
-    flex: 1,
-  },
-
-  // Main area — no sidebar
   main: {
     flex: 1,
-    paddingHorizontal: Spacing.lg,
-    paddingVertical: Spacing.base,
-    gap: Spacing.base,
+    paddingHorizontal: Space.base,
+    paddingVertical: Space.base,
+  },
+  // Trailing room so the Save button below the input can also clear the
+  // keyboard once the focused field has been scrolled up.
+  scrollContent: {
+    gap: Space.base,
+    paddingBottom: Space.jumbo,
   },
 
   // Header
   header: {
     flexDirection: 'column',
-    gap: Spacing.sm,
+    gap: Space.sm,
   },
   headerTopRow: {
     flexDirection: 'row',
@@ -334,82 +188,37 @@ export const mobileStyles = StyleSheet.create({
   backBtn: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: Spacing.sm,
-    paddingHorizontal: Spacing.md,
-    paddingVertical: Spacing.smMd,
-    borderRadius: BorderRadius.mdSm,
-    backgroundColor: AppColors.backgroundWhite,
-    borderWidth: 1,
-    borderColor: AppColors.borderLight,
+    gap: Space.xs,
+    paddingHorizontal: Space.sm,
+    paddingVertical: Space.sm,
+    marginLeft: -Space.xs,
     minHeight: 44,
-  },
-  backBtnText: {
-    fontSize: FontSizes.mdSm,
-    color: AppColors.darkTextDim,
-    fontWeight: FontWeights.regular,
-  },
-  headerTitle: {
-    fontSize: FontSizes.lg,
-    fontWeight: FontWeights.bold,
-    color: AppColors.darkSurface,
-  },
-  statusBadge: {
-    borderRadius: BorderRadius.mdLg,
-    paddingHorizontal: Spacing.smMd,
-    paddingVertical: Spacing.micro,
-    alignSelf: 'flex-start',
-  },
-  statusBadgeText: {
-    fontSize: FontSizes.smMd,
-    fontWeight: FontWeights.semibold,
   },
 
   // Content — stacked single column
   contentColumn: {
     flex: 1,
-    gap: Spacing.base,
+    gap: Space.base,
   },
 
-  // Info panel
+  // Panels
   infoPanel: {
-    backgroundColor: AppColors.backgroundWhite,
-    borderRadius: BorderRadius.lg,
+    backgroundColor: Ground.surface,
+    borderRadius: Radius.card,
     borderWidth: 1,
-    borderColor: AppColors.borderLight,
-    padding: Spacing.base,
+    borderColor: Line.hairline,
+    padding: Space.base,
+    gap: Space.base,
+    ...Elevation.card,
   },
-  panelTitle: {
-    fontSize: FontSizes.md,
-    fontWeight: FontWeights.bold,
-    color: AppColors.darkSurface,
-    marginBottom: Spacing.md,
-  },
-  separator: {
-    height: 1,
-    backgroundColor: AppColors.borderLight,
-  },
-  separatorSpacing: {
-    marginTop: Spacing.base,
-  },
-  fieldLabel: {
-    fontSize: FontSizes.sm,
-    fontWeight: FontWeights.bold,
-    color: AppColors.darkTextMuted,
-    letterSpacing: 0.8,
-    textTransform: 'uppercase',
-    marginTop: Spacing.md,
-  },
-  fieldValueBold: {
-    fontSize: FontSizes.bodyMd,
-    fontWeight: FontWeights.semibold,
-    color: AppColors.darkSurface,
-    marginTop: Spacing.tight,
-  },
-  fieldValue: {
-    fontSize: FontSizes.body,
-    fontWeight: FontWeights.regular,
-    color: AppColors.darkTextDim,
-    marginTop: Spacing.tight,
+  progPanel: {
+    backgroundColor: Ground.surface,
+    borderRadius: Radius.card,
+    borderWidth: 1,
+    borderColor: Line.hairline,
+    padding: Space.base,
+    gap: Space.base,
+    ...Elevation.card,
   },
 
   // Compact 2-col info grid
@@ -419,170 +228,86 @@ export const mobileStyles = StyleSheet.create({
   },
   infoGridCell: {
     width: '50%',
-    marginBottom: Spacing.base,
+    marginBottom: Space.base,
+    gap: Space.hair,
   },
-  infoGridCellLabel: {
-    fontSize: FontSizes.sm,
-    fontWeight: FontWeights.bold,
-    letterSpacing: 0.8,
-    textTransform: 'uppercase',
-    color: AppColors.darkTextMuted,
-    marginBottom: Spacing.tight,
+
+  // Shared field/list bits
+  separator: {
+    height: 1,
+    backgroundColor: Line.hairline,
   },
-  infoGridCellValue: {
-    fontSize: FontSizes.body,
-    fontWeight: FontWeights.regular,
-    color: AppColors.darkTextDim,
+  fieldBlock: {
+    gap: Space.hair,
   },
   bookedRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: Spacing.sm,
-    backgroundColor: AppColors.backgroundWarm,
-    borderRadius: BorderRadius.mdSm,
-    paddingHorizontal: Spacing.md,
-    paddingVertical: Spacing.sm,
-    marginTop: Spacing.tight,
-  },
-  bookedRowText: {
-    fontSize: FontSizes.mdSm,
-    color: AppColors.darkCard,
-  },
-  actionBtn: {
-    backgroundColor: AppColors.darkSurface,
-    borderRadius: BorderRadius.md,
-    paddingVertical: Spacing.md,
-    paddingHorizontal: Spacing.basePlus,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginTop: Spacing.base,
-    minHeight: 48,
-  },
-  actionBtnDisabled: {
-    opacity: 0.6,
-  },
-  actionBtnText: {
-    fontSize: FontSizes.body,
-    fontWeight: FontWeights.semibold,
-    color: AppColors.backgroundWhite,
+    gap: Space.sm,
+    backgroundColor: Ground.base,
+    borderRadius: Radius.control,
+    paddingHorizontal: Space.md,
+    paddingVertical: Space.sm,
   },
 
-  // Programming panel
-  progPanel: {
-    backgroundColor: AppColors.backgroundWhite,
-    borderRadius: BorderRadius.lg,
-    borderWidth: 1,
-    borderColor: AppColors.borderLight,
-    padding: Spacing.base,
-  },
+  // Programming panel bits
   progHeader: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginBottom: Spacing.md,
   },
   loggableRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: Spacing.smMd,
+    gap: Space.sm,
   },
-  loggableLabel: {
-    fontSize: FontSizes.mdSm,
-    color: AppColors.darkTextMuted,
-    fontWeight: FontWeights.regular,
-  },
-  toggle: {
-    width: 52,
-    height: 32,
-    borderRadius: BorderRadius.xl,
-    paddingHorizontal: Spacing.micro,
-    justifyContent: 'center',
-  },
-  toggleOn: {
-    backgroundColor: AppColors.darkSurface,
-    alignItems: 'flex-end',
-  },
-  toggleOff: {
-    backgroundColor: AppColors.darkTextMuted,
-    alignItems: 'flex-start',
-  },
-  toggleKnob: {
-    width: 26,
-    height: 26,
-    borderRadius: BorderRadius.lg,
-    backgroundColor: AppColors.backgroundWhite,
-  },
-  toggleKnobRight: {},
-  toggleKnobLeft: {},
-
-  // Programming loading
-  programmingLoadingContainer: {
-    paddingVertical: Spacing.xl,
+  progFeedback: {
     alignItems: 'center',
     justifyContent: 'center',
+    paddingVertical: Space.lg,
   },
-
-  // WOD display
   wodContent: {
-    backgroundColor: AppColors.backgroundWarm,
-    borderRadius: BorderRadius.md,
-    padding: Spacing.base,
-    marginTop: Spacing.sm,
-  },
-  wodText: {
-    fontSize: FontSizes.body,
-    color: AppColors.darkCard,
-    lineHeight: LineHeights.comfortable,
+    backgroundColor: Ground.base,
+    borderRadius: Radius.control,
+    padding: Space.base,
   },
   emptyProgramming: {
-    backgroundColor: AppColors.backgroundWarm,
-    borderRadius: BorderRadius.md,
-    padding: Spacing.base,
-    marginTop: Spacing.sm,
+    backgroundColor: Ground.base,
+    borderRadius: Radius.control,
+    padding: Space.base,
     alignItems: 'center',
   },
-  emptyProgrammingText: {
-    fontSize: FontSizes.body,
-    color: AppColors.darkTextMuted,
-    fontStyle: 'italic',
-  },
-
-  // Form
-  formTitle: {
-    fontSize: FontSizes.bodyMd,
-    fontWeight: FontWeights.semibold,
-    color: AppColors.darkSurface,
-    marginTop: Spacing.base,
+  // Replaces the whole edit form once the class is past editing.
+  lockedNotice: {
+    lineHeight: Type.lineHeight.relaxed,
   },
   // Height is applied inline from measured content (auto-grow).
-  textInputLarge: {
-    backgroundColor: AppColors.backgroundWhite,
-    borderRadius: BorderRadius.md,
+  progInput: {
     borderWidth: 1,
-    borderColor: AppColors.borderLight,
-    paddingHorizontal: Spacing.mdPlus,
-    paddingVertical: Spacing.md,
-    fontSize: FontSizes.body,
-    color: AppColors.darkCard,
-    marginTop: Spacing.sm,
+    borderColor: Line.divider,
+    borderRadius: Radius.control,
+    paddingHorizontal: Space.md,
+    paddingVertical: Space.sm,
+    backgroundColor: Ground.surface,
+    color: Ink.strong,
+    fontFamily: Type.family.regular,
+    fontSize: Type.size.body,
+    lineHeight: Type.lineHeight.body,
   },
-
-  // Success / error
-  successBanner: {
-    backgroundColor: AppColors.successBgLight,
-    borderRadius: BorderRadius.mdSm,
-    paddingHorizontal: Spacing.mdPlus,
-    paddingVertical: Spacing.smMd,
-    marginTop: Spacing.md,
+  errorBanner: {
+    borderRadius: Radius.control,
+    borderWidth: 1,
+    borderColor: Status.danger,
+    backgroundColor: Status.dangerWash,
+    padding: Space.md,
   },
-  successText: {
-    fontSize: FontSizes.mdSm,
-    color: AppColors.successLabel,
-    fontWeight: FontWeights.medium,
+  // Mobile: meta stacks above a full-width save button.
+  progFooter: {
+    flexDirection: 'column',
+    alignItems: 'stretch',
+    gap: Space.sm,
   },
-  errorText: {
-    fontSize: FontSizes.mdSm,
-    color: AppColors.errorDefault,
-    marginTop: Spacing.md,
+  saveWrap: {
+    width: '100%',
   },
 });

@@ -1,23 +1,12 @@
 import React from 'react';
 import { ActivityIndicator, TouchableOpacity, View } from 'react-native';
-import { Text, Icon, Button, StatusChip, type ChipTone } from '@/components/cleanink';
+import { Text, Icon, Button, StatusChip } from '@/components/cleanink';
 import { Ink } from '@/constants/design';
 import { components } from '@/types/api.gen';
 import { styles } from './class-management.styles';
-import { STATE_NEXT_MAP, STATE_LABEL, ClassState } from './classStates';
+import { STATE_NEXT_MAP, STATE_LABEL, STATE_CHIP_TONE, ClassState } from './classStates';
 
 type ClassDetail = components['schemas']['ClassScheduleItemDto'];
-
-// Lifecycle tone: Published reads as an available/active "open" state; every
-// sunken lifecycle state (Booking Closed / In Progress / Completed / Archived)
-// is a quiet neutral. The accent is never used for lifecycle.
-const STATE_CHIP_TONE: Record<ClassState, ChipTone> = {
-  published: 'open',
-  booking_closed: 'neutral',
-  in_progress: 'neutral',
-  completed: 'neutral',
-  archived: 'neutral',
-};
 
 function formatDateSubtitle(scheduledDate: string, scheduledTime: string): string {
   const [year, month, day] = scheduledDate.split('-').map(Number);

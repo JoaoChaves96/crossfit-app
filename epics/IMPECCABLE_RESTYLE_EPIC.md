@@ -1,7 +1,7 @@
 # EPIC: Impeccable Full-App Restyle — "Clean Ink"
 
 **Status:** 🟢 Phase 1 (athlete) COMPLETE · Phase 2 (gym owner) **CLOSED** 2026-08-07
-— next up Phase 3 (coach)
+· Phase 3 (coach) **COMMITTED** 2026-08-07 — keyboard fix pending device re-test
 **Start Date:** 2026-08-07 (Phase 0 pilot built)
 **Owner:** Frontend + Impeccable design system
 **Depends on:** none (visual layer only; no API/contract changes)
@@ -279,13 +279,116 @@ restyle, and required backend work + a Tier 1 decision.
   with the notch), no `KeyboardAvoidingView` (keyboard covered the input), and inputs
   pinned at `height: 80` with no auto-grow.
 
-### Phase 3 — Coach rollout — ⬜ NEXT
+### Phase 3 — Coach rollout — ✅ COMMITTED (2026-08-07)
+
+All three screens migrated, gates re-run independently (`tsc` clean apart from the two
+known pre-existing `__tests__` errors; e2e `tsc` clean; zero legacy tokens, zero raw hex,
+zero orphaned style keys), and reviewed live at desktop 1280×832 and mobile 390×844.
+
+⚠️ The keyboard-follow fix (round 3 below) is **web-verified only** — its native path
+still needs a device re-test.
+
 
 `coach-classes`, `coach-class-details`, `coach-mark-attendance`.
 
 Note: `coach-class-details` has had its safe-area / keyboard / auto-grow bugs fixed
 already (Phase 2 round 2) but is deliberately still on the old `AppColors`/`Spacing`
-tokens — its Clean Ink migration belongs here.
+tokens — its Clean Ink migration belongs here. Those fixes must survive the restyle.
+
+**Design authority:** `DESIGN.md` (Clean Ink), as in Phases 1–2. Pencil is parked,
+so no `ux-designer` pre-check run applies to this phase.
+
+**Shared surface built first (to avoid parallel-agent collision):**
+`components/CoachSidebar.tsx` — the canonical coach nav shell, replacing the three
+duplicated dark-surface `Sidebar` copies the coach screens each carried. Reuses
+`OwnerSidebar.styles.ts` and mirrors `OwnerSidebar`'s props, tone-based active
+state, and foot-pinned Log Out. Nav set is My Classes + Profile (Profile deferred),
+matching `designs/coach-screens.pen` frame `eT7ZY`. Mobile gains a nav drawer on
+`coach-classes` via the existing `OwnerNavDrawer` — that screen previously had no
+mobile nav and no sign-out path at all.
+
+**Per-screen migration, one agent each:**
+- `coach-classes` — legacy sidebar → `CoachSidebar` + mobile drawer; rainbow
+  lifecycle badges → `StatusChip` on the authoritative `STATE_CHIP_TONE` map;
+  Upcoming/Past buttons → `SegmentedToggle`; zebra rows → hairlines; per-row
+  action → `Button` variant `quiet` (N crimson buttons in a list would violate
+  the One Accent Rule).
+- `coach-class-details` — hand-rolled toggle knob → real `Switch` styled as in
+  `ProgrammingPanel`; `Save Programming` is the one primary action so
+  `Mark Attendance` drops to `quiet`; green success banner → the quiet
+  `Saved` / `Updated …` meta precedent (Clean Ink has no success role).
+- `coach-mark-attendance` — three blue/green/red stat cards → monochrome ink
+  numerals; gray-square avatar placeholders → `Icon` glyph or dropped; local
+  `STATUS_LABEL` duplicate → shared `STATE_LABEL` + `StatusChip`.
+
+Every existing `testID` is preserved — `e2e/coach.spec.ts` depends on them, and its
+header documents the testIDs that were added specifically to unblock its coverage.
+
+**Follow-ups found during diff + live review (all fixed):**
+- `STATE_CHIP_TONE` promoted into `app/class-management/classStates.ts` as the single
+  source of truth. All four call sites (`ClassHeader`, and the three coach screens)
+  import it, so lifecycle chip tone can no longer drift per screen.
+- `SegmentedToggle` gained an optional per-segment `testID`. The `{prefix}-{value}`
+  default would have renamed `filter-upcoming-btn` / `filter-past-btn`, silently
+  breaking `coach.spec.ts`.
+- **`e2e/coach.spec.ts` asserted a string the restyle deleted.** It still expected the
+  green banner's `Programming saved successfully.`, which is now the quiet `Saved`
+  meta line — that test would have failed. Spec rewritten onto the new testIDs, the
+  fragile `getByText('View').first()` / `getByText('Absent')` selectors replaced with
+  testID-prefix locators, and all stale MISSING-TESTID blocks removed.
+- **Pre-existing crash fixed, not a restyle regression:** `coach-class-details` threw
+  `Maximum update depth exceeded`. `onContentSizeChange` added padding to the measured
+  height and fed the result back into `contentSize`, looping forever. Proven pre-existing
+  by reproducing it at HEAD on the legacy `Spacing.base` version. Now tracks the measured
+  height verbatim with a 1px deadband.
+- **Pre-existing desktop layout gap fixed:** the `coach-classes` table used six fixed
+  columns (850px) inside a ~1550px card, leaving ~700px dead space with View buttons
+  floating mid-table. `colSpace` now flexes and `colAction` right-aligns, matching the
+  already-migrated owner `coaches.styles.ts`.
+- Mobile `coach-mark-attendance` drew a leading hairline above its first athlete row,
+  doubling the card's own top border. First row now suppresses it.
+
+**Round-3 fixes from live device review (2026-08-07):**
+- **`measureLayout` warning + programming input still under the keyboard.** The
+  keyboard-follow scroll passed `scrollRef.current.getInnerViewNode()` (a numeric node
+  handle) as `measureLayout`'s relative node. Under the New Architecture Fabric's
+  `ReactNativeElement.measureLayout` does an `instanceof ReactNativeElement` check on
+  that argument and bails with *"must be called with a ref to a native component"* —
+  so the scroll never ran at all. Now uses `measureInWindow`, which needs no relative
+  node. Two further causes of hidden lines: the scroll was a one-shot on focus (the
+  caret sank back under the keyboard as the input auto-grew — `onContentSizeChange`
+  now re-runs it), and it targeted the input's *top* edge (now scrolls by the overflow
+  of the *bottom* edge past the keyboard's measured `endCoordinates.screenY`).
+  Also: `automaticallyAdjustKeyboardInsets` is iOS-only, so Android had no room to
+  scroll into — now gated to iOS with the keyboard height applied as real
+  `paddingBottom` on Android. **Still needs a device re-test** (web takes the
+  `Platform.OS === 'web'` early return, so only a device exercises this path).
+- **Save Programming offered on past classes.** `isProgrammingEditable()` promoted into
+  `classStates.ts` — the owner `ProgrammingPanel` already had this predicate defined
+  privately, so this removes the second copy. It mirrors `add-or-edit-programming.handler`,
+  which accepts only `published` / `booking_closed`. Gating on state rather than on a
+  date comparison is deliberate: the lifecycle scheduler advances past classes into one
+  of the rejected states anyway, so state matches the server exactly. Past that point
+  `coach-class-details` renders a locked notice instead of the form, and the Loggable
+  switch becomes a read-only chip (with no Save there was nothing to persist a toggle
+  with). Follows the `9f97c2a` precedent: remove the control, don't disable it — a
+  disabled button implies a temporary lock, the backend refuses permanently.
+
+**Flagged, deliberately not fixed (app-wide, pre-existing, outside Phase 3 scope):**
+- The browser-default blue focus ring (`rgb(0, 95, 204)`) on multiline inputs is a
+  foreign hue in Clean Ink. The owner `progInput` has the identical default; there is
+  no global CSS reset. Wants one app-wide fix, not a coach-only patch.
+- **3 failing tests in `__tests__/schedule-dashboard.test.tsx`** (athlete screen, Phase 1).
+  Verified pre-existing by stashing all Phase 3 work and re-running — they fail
+  identically at HEAD. Untouched by this phase, but they are red.
+- No unit tests cover `coach-class-details` lifecycle gating; the owner equivalent has
+  them in `edit-class.test.tsx`. The new `isProgrammingEditable` gate is live-verified
+  across all five states but not test-locked.
+- API errors surface as raw JSON (`{"message":"…","statusCode":400}`) because
+  `ApiError` carries `response.text()` verbatim. Visible when submitting attendance on
+  a `published` class — the backend correctly refuses (lifecycle invariant: attendance
+  requires `in_progress` or `completed`), but the message is unreadable. `api-client.ts`
+  is untouched by this phase and every screen shares the behaviour.
 
 ---
 

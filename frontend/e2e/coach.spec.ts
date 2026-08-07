@@ -7,33 +7,20 @@
  *   3. Mark attendance
  *   4. View results
  *
- * MISSING TESTID NOTICE:
- * The coach screens (coach-classes.tsx, coach-class-details.tsx,
- * coach-mark-attendance.tsx) were not instrumented with testID attributes
- * during the setup task. All three files contain zero testID props.
+ * TESTID NOTICE:
+ * The coach screens are now instrumented (coach-classes-screen,
+ * coach-class-list, coach-class-row-{id}, coach-class-view-btn-{id},
+ * coach-class-details-screen, programming-wod-input, programming-save-btn,
+ * programming-wod-content, mark-attendance-nav-btn, mark-attendance-screen,
+ * select-all-btn, athlete-toggle-btn-{id}, submit-attendance-btn). The
+ * remaining text-based selectors below are deliberate: they target the first
+ * row of an unknown-id list, or a visible label the flow actually depends on.
  *
- * Consequence per TEST_ONLY rules:
- *   - Tests that depend on missing testIDs fall back to text-based selectors
- *     where a unique visible string exists.
- *   - Assertions that cannot be reliably made without a testID are skipped
- *     with a comment explaining the blocker.
- *   - No production code is modified by this file.
+ * There are no success-banner testIDs by design — Clean Ink has no success
+ * role, so save feedback is a quiet meta line (see DESIGN.md).
  *
- * Required testIDs to unblock full coverage (to be added by BUG_FIX/FEATURE task):
- *   coach-classes-screen        — root view of CoachClassesScreen
- *   coach-class-list            — ScrollView containing class rows
- *   coach-class-row-{id}        — each ClassRow view
- *   coach-class-view-btn-{id}   — View button inside each ClassRow
- *   coach-class-details-screen  — root view of CoachClassDetailsScreen
- *   programming-wod-input       — TextInput for the single programming content
- *   programming-save-btn        — Save Programming TouchableOpacity
- *   programming-success-banner  — success banner View
- *   programming-wod-content     — displayed WOD text View after save
- *   mark-attendance-screen      — root view of CoachMarkAttendanceScreen
- *   athlete-toggle-btn-{id}     — Present/Absent toggle per athlete row
- *   submit-attendance-btn       — Submit Attendance TouchableOpacity
- *   attendance-success-banner   — success banner View after submission
- *   results-panel               — results section (not yet implemented in screens)
+ * Still blocked by missing screen implementation, not testIDs:
+ *   results-panel — no results section exists on coach-class-details yet
  */
 
 import { test, expect } from '@playwright/test';
@@ -47,11 +34,7 @@ test.describe('Coach: Login → assigned classes list loads', () => {
     await loginAs(page, 'coach');
 
     // Assert
-    // MISSING TESTID: coach-classes-screen
-    // Falling back to visible heading text as the only stable anchor.
-    // Once testID="coach-classes-screen" is added to the root View in
-    // coach-classes.tsx, replace this with:
-    //   await expect(page.getByTestId('coach-classes-screen')).toBeVisible();
+    await expect(page.getByTestId('coach-classes-screen')).toBeVisible({ timeout: 15_000 });
     await expect(
       page.getByText('My Assigned Classes'),
     ).toBeVisible({ timeout: 15_000 });
@@ -62,12 +45,8 @@ test.describe('Coach: Login → assigned classes list loads', () => {
     await loginAs(page, 'coach');
 
     // Assert
-    // MISSING TESTID: filter buttons have no testID attributes.
-    // Falling back to button text. Add testID="filter-upcoming-btn" and
-    // testID="filter-past-btn" to the TouchableOpacity elements in
-    // coach-classes.tsx to use getByTestId() here.
-    await expect(page.getByText('Upcoming')).toBeVisible({ timeout: 15_000 });
-    await expect(page.getByText('Past')).toBeVisible({ timeout: 15_000 });
+    await expect(page.getByTestId('filter-upcoming-btn')).toBeVisible({ timeout: 15_000 });
+    await expect(page.getByTestId('filter-past-btn')).toBeVisible({ timeout: 15_000 });
   });
 });
 
@@ -79,13 +58,9 @@ test.describe('Coach: Open a class → add programming → programming saved', (
     await loginAs(page, 'coach');
     await expect(page.getByText('My Assigned Classes')).toBeVisible({ timeout: 15_000 });
 
-    // Act
-    // MISSING TESTID: coach-class-view-btn-{id}
-    // There is no testID on the View button inside ClassRow.
-    // Clicking the first visible "View" button by text as a fallback.
-    // Add testID="coach-class-view-btn-{gymClass.id}" to the TouchableOpacity
-    // in ClassRow (coach-classes.tsx) so each row is individually addressable.
-    const firstViewBtn = page.getByText('View').first();
+    // Act — open the first listed class. Ids are seed-dependent, so match the
+    // per-row View button by testID prefix.
+    const firstViewBtn = page.locator('[data-testid^="coach-class-view-btn-"]').first();
     const hasClasses = await firstViewBtn.isVisible().catch(() => false);
 
     if (!hasClasses) {
@@ -99,9 +74,8 @@ test.describe('Coach: Open a class → add programming → programming saved', (
 
     await firstViewBtn.click();
 
-    // Assert — WOD Programming panel heading is present on the details screen
-    // MISSING TESTID: coach-class-details-screen
-    // Falling back to panel title text.
+    // Assert — details screen rendered with its WOD Programming panel
+    await expect(page.getByTestId('coach-class-details-screen')).toBeVisible({ timeout: 15_000 });
     await expect(page.getByText('WOD Programming')).toBeVisible({ timeout: 15_000 });
   });
 
@@ -110,7 +84,7 @@ test.describe('Coach: Open a class → add programming → programming saved', (
     await loginAs(page, 'coach');
     await expect(page.getByText('My Assigned Classes')).toBeVisible({ timeout: 15_000 });
 
-    const firstViewBtn = page.getByText('View').first();
+    const firstViewBtn = page.locator('[data-testid^="coach-class-view-btn-"]').first();
     const hasClasses = await firstViewBtn.isVisible().catch(() => false);
 
     if (!hasClasses) {
@@ -130,18 +104,14 @@ test.describe('Coach: Open a class → add programming → programming saved', (
     const programmingInput = page.getByTestId('programming-wod-input');
     await programmingInput.fill('3 rounds: 10 pull-ups, 20 push-ups, 30 air squats');
 
-    // MISSING TESTID: programming-save-btn
-    // The Save Programming TouchableOpacity has no testID.
-    // Falling back to button text.
-    await page.getByText('Save Programming').click();
+    await page.getByTestId('programming-save-btn').click();
 
     // Assert
-    // MISSING TESTID: programming-success-banner
-    // The success banner View has no testID. Falling back to success message text.
-    // Add testID="programming-success-banner" to the success banner View in
-    // coach-class-details.tsx to use getByTestId() here.
+    // Save feedback is a quiet `Saved` meta line (Clean Ink has no success
+    // role — see DESIGN.md), matching the owner ProgrammingPanel. There is no
+    // success banner to target by testID.
     await expect(
-      page.getByText('Programming saved successfully.'),
+      page.getByText('Saved', { exact: true }),
     ).toBeVisible({ timeout: 10_000 });
   });
 });
@@ -154,7 +124,7 @@ test.describe('Coach: Mark attendance', () => {
     await loginAs(page, 'coach');
     await expect(page.getByText('My Assigned Classes')).toBeVisible({ timeout: 15_000 });
 
-    const firstViewBtn = page.getByText('View').first();
+    const firstViewBtn = page.locator('[data-testid^="coach-class-view-btn-"]').first();
     const hasClasses = await firstViewBtn.isVisible().catch(() => false);
 
     if (!hasClasses) {
@@ -169,17 +139,10 @@ test.describe('Coach: Mark attendance', () => {
     await expect(page.getByText('WOD Programming')).toBeVisible({ timeout: 15_000 });
 
     // Act — navigate to attendance screen via the Mark Attendance button
-    // MISSING TESTID: mark-attendance-nav-btn
-    // The TouchableOpacity that routes to /coach-mark-attendance has no testID
-    // in coach-class-details.tsx. Falling back to button text.
-    await page.getByText('Mark Attendance').click();
+    await page.getByTestId('mark-attendance-nav-btn').click();
 
-    // Assert — the attendance screen rendered. Match the exact "Attendance List"
-    // section title: a bare /Attendance/ regex also matches the "Mark
-    // Attendance" button and the "Attendance — <date>" heading (strict-mode
-    // violation).
-    // MISSING TESTID: mark-attendance-screen
-    await expect(page.getByText('Attendance List', { exact: true }).first()).toBeVisible({ timeout: 15_000 });
+    // Assert — the attendance screen rendered.
+    await expect(page.getByTestId('mark-attendance-screen')).toBeVisible({ timeout: 15_000 });
   });
 
   test('can submit attendance when athletes are booked', async ({ page }) => {
@@ -187,7 +150,7 @@ test.describe('Coach: Mark attendance', () => {
     await loginAs(page, 'coach');
     await expect(page.getByText('My Assigned Classes')).toBeVisible({ timeout: 15_000 });
 
-    const firstViewBtn = page.getByText('View').first();
+    const firstViewBtn = page.locator('[data-testid^="coach-class-view-btn-"]').first();
     const hasClasses = await firstViewBtn.isVisible().catch(() => false);
 
     if (!hasClasses) {
@@ -198,28 +161,21 @@ test.describe('Coach: Mark attendance', () => {
 
     await firstViewBtn.click();
     await expect(page.getByText('WOD Programming')).toBeVisible({ timeout: 15_000 });
-    await page.getByText('Mark Attendance').click();
-    await expect(page.getByText('Attendance List', { exact: true }).first()).toBeVisible({ timeout: 15_000 });
+    await page.getByTestId('mark-attendance-nav-btn').click();
+    await expect(page.getByTestId('mark-attendance-screen')).toBeVisible({ timeout: 15_000 });
 
-    // MISSING TESTID: athlete-toggle-btn-{id}
-    // AthleteRow toggle buttons have no testID. Without testIDs we cannot
-    // reliably target individual athlete rows.
-    // Add testID={`athlete-toggle-btn-${slot.athleteUserId}`} to the
-    // TouchableOpacity in AthleteRow (coach-mark-attendance.tsx).
-    //
-    // Falling back: click the first visible "Absent" toggle if one exists.
-    const firstAbsentBtn = page.getByText('Absent').first();
-    const hasAthletes = await firstAbsentBtn.isVisible().catch(() => false);
+    // Every athlete starts marked Present, so flipping the first row's toggle
+    // must land on "Absent". Row ids are seed-dependent, hence `.first()`.
+    const firstToggle = page.locator('[data-testid^="athlete-toggle-btn-"]').first();
+    const hasAthletes = await firstToggle.isVisible().catch(() => false);
 
     if (hasAthletes) {
-      await firstAbsentBtn.click();
-      // After toggle the label should flip to "Present"
-      await expect(page.getByText('Present').first()).toBeVisible({ timeout: 5_000 });
+      await expect(firstToggle).toHaveText(/Present/);
+      await firstToggle.click();
+      await expect(firstToggle).toHaveText(/Absent/, { timeout: 5_000 });
     }
 
-    // MISSING TESTID: submit-attendance-btn
-    // The Submit Attendance TouchableOpacity has no testID.
-    const submitBtn = page.getByText('Submit Attendance');
+    const submitBtn = page.getByTestId('submit-attendance-btn');
     const canSubmit = await submitBtn.isVisible().catch(() => false);
 
     if (!canSubmit) {
@@ -233,9 +189,7 @@ test.describe('Coach: Mark attendance', () => {
 
     await submitBtn.click();
 
-    // Assert
-    // MISSING TESTID: attendance-success-banner
-    // The success banner View in coach-mark-attendance.tsx has no testID.
+    // Assert — quiet meta confirmation line (no success banner by design).
     await expect(
       page.getByText('Attendance submitted successfully.'),
     ).toBeVisible({ timeout: 10_000 });
@@ -250,7 +204,7 @@ test.describe('Coach: View results', () => {
     await loginAs(page, 'coach');
     await expect(page.getByText('My Assigned Classes')).toBeVisible({ timeout: 15_000 });
 
-    const firstViewBtn = page.getByText('View').first();
+    const firstViewBtn = page.locator('[data-testid^="coach-class-view-btn-"]').first();
     const hasClasses = await firstViewBtn.isVisible().catch(() => false);
 
     if (!hasClasses) {

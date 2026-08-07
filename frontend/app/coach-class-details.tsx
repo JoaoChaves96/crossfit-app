@@ -1,32 +1,37 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
-  KeyboardAvoidingView,
+  Keyboard,
   Platform,
+  Pressable,
   ScrollView,
-  Text,
+  Switch,
   TextInput,
-  TouchableOpacity,
   View,
-  useWindowDimensions,
 } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useAuth } from '@/hooks/useAuth';
 import { useGym } from '@/hooks/useGym';
+import { useResponsiveLayout } from '@/hooks/useResponsiveLayout';
 import { SafeScreen } from '@/components/SafeScreen';
+import { CoachSidebar } from '@/components/CoachSidebar';
+import { Text, Icon, Button, StatusChip } from '@/components/cleanink';
+import { Accent, Ground, Ink, Line, Space } from '@/constants/design';
 import { createApiClient } from '@/utils/api-client';
 import { components } from '@/types/api.gen';
-import { AppColors, Spacing } from '@/constants/theme';
 import { formatDayMonth, formatTimeRange } from '@/utils/datetime';
+import {
+  STATE_LABEL,
+  STATE_CHIP_TONE,
+  isProgrammingEditable,
+  type ClassState,
+} from './class-management/classStates';
 import { styles, mobileStyles } from './coach-class-details.styles';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
-type CoachClassItem = components['schemas']['CoachClassItemDto'];
 type AddOrEditProgrammingResponse = components['schemas']['AddOrEditProgrammingResponseDto'];
 type GetClassProgrammingResponse = components['schemas']['GetClassProgrammingResponseDto'];
-
-const MOBILE_BREAKPOINT = 768;
 
 /** Minimum visible height of the auto-growing programming input, in px. */
 const PROGRAMMING_INPUT_MIN_HEIGHT = 140;
@@ -52,61 +57,16 @@ function formatHeaderTitle(date: string, time: string): string {
   return `WOD — ${dayName} ${day} ${month} · ${hour}:${minute}`;
 }
 
-interface StatusConfig {
-  label: string;
-  bg: string;
-  textColor: string;
-}
-
-function getStatusConfig(state: CoachClassItem['state']): StatusConfig {
-  switch (state) {
-    case 'published':
-      return { label: 'Published', bg: AppColors.successBgLight, textColor: AppColors.darkSurface };
-    case 'booking_closed':
-      return { label: 'Booking Closed', bg: AppColors.warningBgAmber, textColor: AppColors.warningLabel };
-    case 'in_progress':
-      return { label: 'In Progress', bg: AppColors.badgeBlueBgLight, textColor: AppColors.actionBlueDarker };
-    case 'completed':
-      return { label: 'Completed', bg: AppColors.borderFaint, textColor: AppColors.errorLabel };
-    case 'archived':
-      return { label: 'Archived', bg: AppColors.borderFaint, textColor: AppColors.errorLabel };
-  }
-}
-
-// ─── Sidebar ──────────────────────────────────────────────────────────────────
-
-const COACH_NAV_ITEMS = [
-  { label: 'My Classes', key: 'classes', enabled: true },
-  { label: 'Profile', key: 'profile', enabled: false },
-] as const;
-
-function Sidebar() {
-  return (
-    <View style={styles.sidebar}>
-      <Text style={styles.sidebarLogo}>CrossFit Manager</Text>
-      <View style={styles.navSpacer} />
-      <View style={styles.navGroup}>
-        {COACH_NAV_ITEMS.map((item) => {
-          const isDisabled = !item.enabled;
-          return (
-            <TouchableOpacity
-              key={item.key}
-              style={styles.navItem}
-              disabled={isDisabled}
-              activeOpacity={isDisabled ? 1 : 0.7}>
-              <Text
-                style={[
-                  styles.navLabel,
-                  styles.navLabelInactive,
-                ]}>
-                {item.label}
-              </Text>
-            </TouchableOpacity>
-          );
-        })}
-      </View>
-    </View>
-  );
+function formatLastUpdated(iso: string): string {
+  const date = new Date(iso);
+  if (Number.isNaN(date.getTime())) return iso;
+  return date.toLocaleDateString('en-US', {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+    hour: 'numeric',
+    minute: '2-digit',
+  });
 }
 
 // ─── Main Screen ──────────────────────────────────────────────────────────────
@@ -115,8 +75,7 @@ export default function CoachClassDetailsScreen() {
   const router = useRouter();
   const { token } = useAuth();
   const { currentGymId } = useGym();
-  const { width } = useWindowDimensions();
-  const isMobile = width <= MOBILE_BREAKPOINT;
+  const { isMobile } = useResponsiveLayout();
 
   const params = useLocalSearchParams<{
     classId: string;
@@ -127,7 +86,7 @@ export default function CoachClassDetailsScreen() {
     spaceName: string;
     capacity: string;
     bookedCount: string;
-    state: CoachClassItem['state'];
+    state: ClassState;
   }>();
 
   const {
@@ -144,13 +103,69 @@ export default function CoachClassDetailsScreen() {
 
   const capacityNum = capacity ? parseInt(capacity, 10) : 0;
   const bookedCountNum = bookedCount ? parseInt(bookedCount, 10) : 0;
-  const classState: CoachClassItem['state'] = state ?? 'published';
+  const classState: ClassState = state ?? 'published';
+  const canEditProgramming = isProgrammingEditable(classState);
 
   // Programming form state — a single `content` string, held verbatim
   // (see DECISIONS.md → "Programming Content Shape").
   const [content, setContent] = useState('');
   const [loggable, setLoggable] = useState(false);
   const [inputHeight, setInputHeight] = useState(PROGRAMMING_INPUT_MIN_HEIGHT);
+
+  // Mobile: keep the programming input clear of the on-screen keyboard.
+  // `automaticallyAdjustKeyboardInsets` only reserves the inset; it does not
+  // bring an off-screen field up, and it does not follow the input as it grows.
+  const scrollRef = useRef<ScrollView>(null);
+  const inputWrapRef = useRef<View>(null);
+  const scrollOffsetRef = useRef(0);
+  const isInputFocusedRef = useRef(false);
+  /** Top edge of the keyboard in window coords; null while it is dismissed. */
+  const keyboardTopRef = useRef<number | null>(null);
+  const [keyboardHeight, setKeyboardHeight] = useState(0);
+
+  // Scroll just enough to bring the input's bottom edge (where the caret sits
+  // while typing) above the keyboard. Measured in window coords against the
+  // keyboard's own frame: `measureLayout` needs a native-component ref as its
+  // relative node — `getInnerViewNode()` returns a node handle, which Fabric
+  // rejects with "must be called with a ref to a native component".
+  const scrollInputAboveKeyboard = useCallback((animated: boolean) => {
+    if (Platform.OS === 'web') return;
+    const keyboardTop = keyboardTopRef.current;
+    const wrap = inputWrapRef.current;
+    if (keyboardTop == null || wrap == null) return;
+    wrap.measureInWindow((_x: number, y: number, _w: number, h: number) => {
+      const overflow = y + h + Space.base - keyboardTop;
+      if (overflow <= 0) return;
+      scrollRef.current?.scrollTo({ y: scrollOffsetRef.current + overflow, animated });
+    });
+  }, []);
+
+  useEffect(() => {
+    if (Platform.OS === 'web') return;
+    const onShow = Keyboard.addListener('keyboardDidShow', (e) => {
+      keyboardTopRef.current = e.endCoordinates.screenY;
+      setKeyboardHeight(e.endCoordinates.height);
+      if (isInputFocusedRef.current) scrollInputAboveKeyboard(true);
+    });
+    const onHide = Keyboard.addListener('keyboardDidHide', () => {
+      keyboardTopRef.current = null;
+      setKeyboardHeight(0);
+    });
+    return () => {
+      onShow.remove();
+      onHide.remove();
+    };
+  }, [scrollInputAboveKeyboard]);
+
+  const handleInputFocus = useCallback(() => {
+    isInputFocusedRef.current = true;
+    // If the keyboard is already up, focus won't fire keyboardDidShow — scroll now.
+    scrollInputAboveKeyboard(true);
+  }, [scrollInputAboveKeyboard]);
+
+  const handleInputBlur = useCallback(() => {
+    isInputFocusedRef.current = false;
+  }, []);
 
   // Existing programming fetch state
   const [isProgrammingLoading, setIsProgrammingLoading] = useState(true);
@@ -160,7 +175,8 @@ export default function CoachClassDetailsScreen() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [savedProgramming, setSavedProgramming] = useState<AddOrEditProgrammingResponse | null>(null);
-  const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const [didSave, setDidSave] = useState(false);
+  const [lastUpdatedAt, setLastUpdatedAt] = useState<string | null>(null);
 
   useEffect(() => {
     if (!token || !currentGymId || !classId) {
@@ -174,6 +190,7 @@ export default function CoachClassDetailsScreen() {
       .get<GetClassProgrammingResponse>(`/api/gyms/${currentGymId}/classes/${classId}/programming`)
       .then((data) => {
         setExistingProgramming(data);
+        setLastUpdatedAt(data.lastUpdatedAt);
         if (data.content !== null) {
           setLoggable(data.loggable);
           setContent(data.content);
@@ -198,7 +215,7 @@ export default function CoachClassDetailsScreen() {
 
     setIsSubmitting(true);
     setSubmitError(null);
-    setSuccessMessage(null);
+    setDidSave(false);
 
     try {
       const client = createApiClient({ token });
@@ -212,7 +229,8 @@ export default function CoachClassDetailsScreen() {
       );
       setContent(result.content);
       setSavedProgramming(result);
-      setSuccessMessage('Programming saved successfully.');
+      setLastUpdatedAt(result.lastModifiedAt);
+      setDidSave(true);
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'Failed to save programming.';
       setSubmitError(msg);
@@ -221,7 +239,21 @@ export default function CoachClassDetailsScreen() {
     }
   };
 
-  const statusConfig = getStatusConfig(classState);
+  const handleMarkAttendance = () => {
+    router.push({
+      pathname: '/coach-mark-attendance',
+      params: {
+        classId,
+        gymId: currentGymId ?? '',
+        classTypeName: classTypeName ?? '',
+        scheduledDate: scheduledDate ?? '',
+        scheduledTime: scheduledTime ?? '',
+        state: classState,
+        bookedCount: String(bookedCountNum),
+      },
+    });
+  };
+
   const headerTitle = scheduledDate && scheduledTime
     ? formatHeaderTitle(scheduledDate, scheduledTime)
     : classTypeName ?? 'Class Details';
@@ -230,35 +262,183 @@ export default function CoachClassDetailsScreen() {
     ? formatDateTime(scheduledDate, scheduledTime, durationMinutes)
     : '—';
 
+  // Resolve the WOD content to display (post-save wins over the fetched value).
+  const displayedProgramming = savedProgramming?.content
+    ?? (existingProgramming?.content ?? null);
+
+  // ─── Info fields (shared between layouts) ──────────────────────────────────
+
+  const infoItems: { label: string; value: string }[] = [
+    { label: 'CLASS TYPE', value: classTypeName ?? '—' },
+    { label: 'DATE & TIME', value: formattedDateTime },
+    { label: 'SPACE', value: spaceName ?? '—' },
+    { label: 'CAPACITY', value: `${bookedCountNum} / ${capacityNum} booked` },
+  ];
+
+  // ─── Loggable toggle (shared) ──────────────────────────────────────────────
+
+  // Past the editable states the toggle becomes a read-only chip — there is
+  // nothing to save it with, so an interactive switch would be a dead control.
+  const loggableToggle = (s: typeof styles | typeof mobileStyles) =>
+    canEditProgramming ? (
+      <View style={s.loggableRow}>
+        <Text size="meta" tone="muted">Loggable</Text>
+        <Switch
+          value={loggable}
+          onValueChange={setLoggable}
+          disabled={isSubmitting}
+          trackColor={{ false: Line.divider, true: Accent.base }}
+          thumbColor={Ground.surface}
+          ios_backgroundColor={Line.divider}
+          // activeThumbColor is a react-native-web-only prop (absent from
+          // core RN Switch types) — keeps the on-state thumb white instead
+          // of the web default green.
+          {...{ activeThumbColor: Ground.surface }}
+        />
+      </View>
+    ) : (
+      <StatusChip tone="neutral" label={loggable ? 'Loggable' : 'Not loggable'} />
+    );
+
+  // ─── Programming display + edit form (shared) ──────────────────────────────
+
+  const programmingBody = (s: typeof styles | typeof mobileStyles) => (
+    <>
+      {isProgrammingLoading ? (
+        <View style={s.progFeedback}>
+          <ActivityIndicator size="small" color={Ink.muted} />
+        </View>
+      ) : displayedProgramming !== null ? (
+        <View style={s.fieldBlock}>
+          <Text size="label" weight="semibold" tone="faint" upper>Programming</Text>
+          <View testID="programming-wod-content" style={s.wodContent}>
+            <Text size="body">{displayedProgramming}</Text>
+          </View>
+        </View>
+      ) : (
+        <View style={s.fieldBlock}>
+          <Text size="label" weight="semibold" tone="faint" upper>Programming</Text>
+          <View style={s.emptyProgramming}>
+            <Text size="body" tone="faint">No programming added yet.</Text>
+          </View>
+        </View>
+      )}
+
+      {/* Edit form — only while the class is still editable. Past that the
+          backend rejects the save outright, so no form and no Save is offered;
+          the read-only WOD content above is the whole story. */}
+      {!canEditProgramming ? (
+        <Text testID="programming-locked-notice" size="meta" tone="faint" style={s.lockedNotice}>
+          Programming can no longer be edited — this class is {STATE_LABEL[classState].toLowerCase()}.
+        </Text>
+      ) : (
+        <>
+          <View style={s.separator} />
+
+          {/* Edit Programming Form */}
+          <View ref={inputWrapRef} collapsable={false} style={s.fieldBlock}>
+            <Text size="title" weight="semibold">Edit Programming</Text>
+            <Text size="label" weight="semibold" tone="faint" upper>Programming</Text>
+            <TextInput
+              testID="programming-wod-input"
+              onFocus={handleInputFocus}
+              onBlur={handleInputBlur}
+              style={[
+                s.progInput,
+                { height: Math.max(PROGRAMMING_INPUT_MIN_HEIGHT, inputHeight) },
+              ]}
+              placeholder="Describe the workout, scaling and any notes…"
+              placeholderTextColor={Ink.faint}
+              value={content}
+              onChangeText={(t) => {
+                setContent(t);
+                if (didSave) setDidSave(false);
+              }}
+              onContentSizeChange={(e) => {
+                // Track the measured content height verbatim. Padding it out (or
+                // re-measuring the height we just applied) feeds the new height
+                // straight back into contentSize and loops until React aborts
+                // with "Maximum update depth exceeded". The 1px deadband absorbs
+                // sub-pixel jitter from web's fractional scrollHeight.
+                const measured = Math.ceil(e.nativeEvent.contentSize.height);
+                setInputHeight((prev) => (Math.abs(prev - measured) > 1 ? measured : prev));
+                // Growing pushes the caret line down, back under the keyboard —
+                // follow it. Unanimated so the scroll keeps pace with typing.
+                if (isInputFocusedRef.current) scrollInputAboveKeyboard(false);
+              }}
+              multiline
+              textAlignVertical="top"
+              editable={!isSubmitting}
+            />
+          </View>
+
+          {submitError !== null && (
+            <View style={s.errorBanner}>
+              <Text size="meta" tone="strong">{submitError}</Text>
+            </View>
+          )}
+
+          <View style={s.progFooter}>
+            {didSave ? (
+              <Text size="meta" tone="muted">Saved</Text>
+            ) : lastUpdatedAt ? (
+              <Text size="meta" tone="faint">Updated {formatLastUpdated(lastUpdatedAt)}</Text>
+            ) : (
+              <View />
+            )}
+            <View style={s.saveWrap}>
+              <Button
+                testID="programming-save-btn"
+                label="Save Programming"
+                variant="primary"
+                loading={isSubmitting}
+                onPress={handleSaveProgramming}
+              />
+            </View>
+          </View>
+        </>
+      )}
+    </>
+  );
+
   // ─── Mobile Layout ─────────────────────────────────────────────────────────
 
   if (isMobile) {
     const ms = mobileStyles;
     return (
       <SafeScreen style={ms.root} testID="coach-class-details-screen">
-        <KeyboardAvoidingView
-          style={ms.keyboardAvoider}
-          behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+          {/* `automaticallyAdjustKeyboardInsets` (iOS) reserves the keyboard inset so
+              content can scroll clear of it; Android has no equivalent, so the inset
+              is added as real bottom padding from the measured keyboard height. The
+              inset alone doesn't move the focused field — `scrollInputAboveKeyboard`
+              does that, both on focus and as the input auto-grows. */}
           <ScrollView
+            ref={scrollRef}
             style={ms.main}
+            contentContainerStyle={[
+              ms.scrollContent,
+              Platform.OS === 'android' ? { paddingBottom: keyboardHeight } : null,
+            ]}
+            automaticallyAdjustKeyboardInsets={Platform.OS === 'ios'}
+            onScroll={(e) => {
+              scrollOffsetRef.current = e.nativeEvent.contentOffset.y;
+            }}
+            scrollEventThrottle={16}
             showsVerticalScrollIndicator={false}
             keyboardShouldPersistTaps="handled">
             {/* Header */}
             <View style={ms.header}>
               <View style={ms.headerTopRow}>
-                <TouchableOpacity
+                <Pressable
                   style={ms.backBtn}
                   onPress={() => router.back()}
                   hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
-                  <Text style={ms.backBtnText}>{'← Back'}</Text>
-                </TouchableOpacity>
-                <View style={[ms.statusBadge, { backgroundColor: statusConfig.bg }]}>
-                  <Text style={[ms.statusBadgeText, { color: statusConfig.textColor }]}>
-                    {statusConfig.label}
-                  </Text>
-                </View>
+                  <Icon name="back" size={18} tone="muted" />
+                  <Text size="body" tone="muted">Back</Text>
+                </Pressable>
+                <StatusChip tone={STATE_CHIP_TONE[classState]} label={STATE_LABEL[classState]} />
               </View>
-              <Text style={ms.headerTitle} numberOfLines={2}>{headerTitle}</Text>
+              <Text size="lead" weight="bold" numberOfLines={2}>{headerTitle}</Text>
             </View>
 
             {/* Content — stacked */}
@@ -266,157 +446,44 @@ export default function CoachClassDetailsScreen() {
               {/* Info Panel */}
               <View style={ms.infoPanel}>
                 <View style={ms.infoGrid}>
-                  <View style={ms.infoGridCell}>
-                    <Text style={ms.infoGridCellLabel}>CLASS TYPE</Text>
-                    <Text style={ms.infoGridCellValue}>{classTypeName ?? '—'}</Text>
-                  </View>
-                  <View style={ms.infoGridCell}>
-                    <Text style={ms.infoGridCellLabel}>DATE &amp; TIME</Text>
-                    <Text style={ms.infoGridCellValue}>{formattedDateTime}</Text>
-                  </View>
-                  <View style={ms.infoGridCell}>
-                    <Text style={ms.infoGridCellLabel}>SPACE</Text>
-                    <Text style={ms.infoGridCellValue}>{spaceName ?? '—'}</Text>
-                  </View>
-                  <View style={ms.infoGridCell}>
-                    <Text style={ms.infoGridCellLabel}>CAPACITY</Text>
-                    <Text style={ms.infoGridCellValue}>{bookedCountNum} / {capacityNum} booked</Text>
-                  </View>
-                </View>
-
-                <View style={[ms.separator, ms.separatorSpacing]} />
-
-                <Text style={ms.fieldLabel}>BOOKED ATHLETES</Text>
-                <View style={ms.bookedRow}>
-                  <Text style={ms.bookedRowText}>
-                    {bookedCountNum} {bookedCountNum === 1 ? 'athlete' : 'athletes'} booked
-                  </Text>
-                </View>
-
-                <TouchableOpacity
-                  testID="mark-attendance-nav-btn"
-                  style={ms.actionBtn}
-                  onPress={() => {
-                    router.push({
-                      pathname: '/coach-mark-attendance',
-                      params: {
-                        classId,
-                        gymId: currentGymId ?? '',
-                        classTypeName: classTypeName ?? '',
-                        scheduledDate: scheduledDate ?? '',
-                        scheduledTime: scheduledTime ?? '',
-                        state: classState,
-                        bookedCount: String(bookedCountNum),
-                      },
-                    });
-                  }}
-                  activeOpacity={0.8}>
-                  <Text style={ms.actionBtnText}>Mark Attendance</Text>
-                </TouchableOpacity>
-              </View>
-
-              {/* Programming Panel */}
-              <View style={ms.progPanel}>
-                {/* Programming header row */}
-                <View style={ms.progHeader}>
-                  <Text style={ms.panelTitle}>WOD Programming</Text>
-                  <View style={ms.loggableRow}>
-                    <Text style={ms.loggableLabel}>Loggable</Text>
-                    <TouchableOpacity
-                      style={[
-                        ms.toggle,
-                        loggable ? ms.toggleOn : ms.toggleOff,
-                      ]}
-                      onPress={() => setLoggable((prev) => !prev)}
-                      activeOpacity={0.8}>
-                      <View style={[
-                        ms.toggleKnob,
-                        loggable ? ms.toggleKnobRight : ms.toggleKnobLeft,
-                      ]} />
-                    </TouchableOpacity>
-                  </View>
+                  {infoItems.map((item) => (
+                    <View key={item.label} style={ms.infoGridCell}>
+                      <Text size="label" weight="semibold" tone="faint" upper>{item.label}</Text>
+                      <Text size="body" weight="medium">{item.value}</Text>
+                    </View>
+                  ))}
                 </View>
 
                 <View style={ms.separator} />
 
-                {/* Saved programming display */}
-                {isProgrammingLoading ? (
-                  <View style={ms.programmingLoadingContainer}>
-                    <ActivityIndicator size="small" color={AppColors.darkTextMuted} />
+                <View style={ms.fieldBlock}>
+                  <Text size="label" weight="semibold" tone="faint" upper>Booked Athletes</Text>
+                  <View style={ms.bookedRow}>
+                    <Text size="body" tone="muted">
+                      {bookedCountNum} {bookedCountNum === 1 ? 'athlete' : 'athletes'} booked
+                    </Text>
                   </View>
-                ) : savedProgramming !== null ? (
-                  <>
-                    <Text style={ms.fieldLabel}>PROGRAMMING</Text>
-                    <View testID="programming-wod-content" style={ms.wodContent}>
-                      <Text style={ms.wodText}>{savedProgramming.content}</Text>
-                    </View>
-                  </>
-                ) : existingProgramming !== null && existingProgramming.content !== null ? (
-                  <>
-                    <Text style={ms.fieldLabel}>PROGRAMMING</Text>
-                    <View testID="programming-wod-content" style={ms.wodContent}>
-                      <Text style={ms.wodText}>{existingProgramming.content}</Text>
-                    </View>
-                  </>
-                ) : (
-                  <>
-                    <Text style={ms.fieldLabel}>PROGRAMMING</Text>
-                    <View style={ms.emptyProgramming}>
-                      <Text style={ms.emptyProgrammingText}>No programming added yet.</Text>
-                    </View>
-                  </>
-                )}
+                </View>
 
-                <View style={[ms.separator, ms.separatorSpacing]} />
-
-                {/* Edit Programming Form */}
-                <Text style={ms.formTitle}>Edit Programming</Text>
-
-                <Text style={ms.fieldLabel}>PROGRAMMING</Text>
-                <TextInput
-                  testID="programming-wod-input"
-                  style={[
-                    ms.textInputLarge,
-                    { height: Math.max(PROGRAMMING_INPUT_MIN_HEIGHT, inputHeight) },
-                  ]}
-                  placeholder="Describe the workout, scaling and any notes…"
-                  placeholderTextColor={AppColors.darkTextMuted}
-                  value={content}
-                  onChangeText={setContent}
-                  onContentSizeChange={(e) =>
-                    setInputHeight(e.nativeEvent.contentSize.height + Spacing.base)
-                  }
-                  multiline
-                  textAlignVertical="top"
-                  editable={!isSubmitting}
+                <Button
+                  testID="mark-attendance-nav-btn"
+                  label="Mark Attendance"
+                  variant="quiet"
+                  onPress={handleMarkAttendance}
                 />
+              </View>
 
-                {successMessage !== null && (
-                  <View style={ms.successBanner}>
-                    <Text style={ms.successText}>{successMessage}</Text>
-                  </View>
-                )}
-
-                {submitError !== null && (
-                  <Text style={ms.errorText}>{submitError}</Text>
-                )}
-
-                <TouchableOpacity
-                  testID="programming-save-btn"
-                  style={[ms.actionBtn, isSubmitting && ms.actionBtnDisabled]}
-                  onPress={handleSaveProgramming}
-                  disabled={isSubmitting}
-                  activeOpacity={0.8}>
-                  {isSubmitting ? (
-                    <ActivityIndicator size="small" color={AppColors.backgroundWhite} />
-                  ) : (
-                    <Text style={ms.actionBtnText}>Save Programming</Text>
-                  )}
-                </TouchableOpacity>
+              {/* Programming Panel */}
+              <View style={ms.progPanel}>
+                <View style={ms.progHeader}>
+                  <Text size="title" weight="semibold">WOD Programming</Text>
+                  {loggableToggle(ms)}
+                </View>
+                <View style={ms.separator} />
+                {programmingBody(ms)}
               </View>
             </View>
           </ScrollView>
-        </KeyboardAvoidingView>
       </SafeScreen>
     );
   }
@@ -425,176 +492,66 @@ export default function CoachClassDetailsScreen() {
 
   return (
     <View style={styles.root} testID="coach-class-details-screen">
-      <Sidebar />
+      <CoachSidebar activeItem="classes" />
 
       <View style={styles.main}>
         {/* Header */}
         <View style={styles.header}>
-          <TouchableOpacity
+          <Pressable
             style={styles.backBtn}
             onPress={() => router.back()}
             hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
-            <Text style={styles.backBtnText}>{'← Back to My Classes'}</Text>
-          </TouchableOpacity>
-          <Text style={styles.headerTitle} numberOfLines={1}>{headerTitle}</Text>
-          <View style={[styles.statusBadge, { backgroundColor: statusConfig.bg }]}>
-            <Text style={[styles.statusBadgeText, { color: statusConfig.textColor }]}>
-              {statusConfig.label}
-            </Text>
-          </View>
+            <Icon name="back" size={18} tone="muted" />
+            <Text size="meta" tone="muted">Back to My Classes</Text>
+          </Pressable>
+          <Text size="screen" weight="bold" style={styles.headerTitle} numberOfLines={1}>{headerTitle}</Text>
+          <StatusChip tone={STATE_CHIP_TONE[classState]} label={STATE_LABEL[classState]} />
         </View>
 
         {/* Content Row */}
         <View style={styles.contentRow}>
           {/* Info Panel */}
           <View style={styles.infoPanel}>
-            <ScrollView showsVerticalScrollIndicator={false}>
-              <Text style={styles.panelTitle}>Class Info</Text>
+            <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ gap: Space.base }}>
+              <Text size="title" weight="semibold">Class Info</Text>
               <View style={styles.separator} />
 
-              <Text style={styles.fieldLabel}>CLASS TYPE</Text>
-              <Text style={styles.fieldValueBold}>{classTypeName ?? '—'}</Text>
+              {infoItems.map((item) => (
+                <View key={item.label} style={styles.fieldBlock}>
+                  <Text size="label" weight="semibold" tone="faint" upper>{item.label}</Text>
+                  <Text size="body" weight="medium">{item.value}</Text>
+                </View>
+              ))}
 
-              <Text style={[styles.fieldLabel, styles.fieldLabelSpacing]}>DATE &amp; TIME</Text>
-              <Text style={styles.fieldValue}>{formattedDateTime}</Text>
+              <View style={styles.separator} />
 
-              <Text style={[styles.fieldLabel, styles.fieldLabelSpacing]}>SPACE</Text>
-              <Text style={styles.fieldValue}>{spaceName ?? '—'}</Text>
-
-              <Text style={[styles.fieldLabel, styles.fieldLabelSpacing]}>CAPACITY</Text>
-              <Text style={styles.fieldValue}>{bookedCountNum} booked / {capacityNum} spots</Text>
-
-              <View style={[styles.separator, styles.separatorSpacing]} />
-
-              <Text style={styles.fieldLabel}>BOOKED ATHLETES</Text>
-              <View style={styles.bookedRow}>
-                <Text style={styles.bookedRowText}>
-                  {bookedCountNum} {bookedCountNum === 1 ? 'athlete' : 'athletes'} booked
-                </Text>
+              <View style={styles.fieldBlock}>
+                <Text size="label" weight="semibold" tone="faint" upper>Booked Athletes</Text>
+                <View style={styles.bookedRow}>
+                  <Text size="body" tone="muted">
+                    {bookedCountNum} {bookedCountNum === 1 ? 'athlete' : 'athletes'} booked
+                  </Text>
+                </View>
               </View>
 
-              <TouchableOpacity
+              <Button
                 testID="mark-attendance-nav-btn"
-                style={styles.actionBtn}
-                onPress={() => {
-                  router.push({
-                    pathname: '/coach-mark-attendance',
-                    params: {
-                      classId,
-                      gymId: currentGymId ?? '',
-                      classTypeName: classTypeName ?? '',
-                      scheduledDate: scheduledDate ?? '',
-                      scheduledTime: scheduledTime ?? '',
-                      state: classState,
-                      bookedCount: String(bookedCountNum),
-                    },
-                  });
-                }}
-                activeOpacity={0.8}>
-                <Text style={styles.actionBtnText}>Mark Attendance</Text>
-              </TouchableOpacity>
+                label="Mark Attendance"
+                variant="quiet"
+                onPress={handleMarkAttendance}
+              />
             </ScrollView>
           </View>
 
           {/* Programming Panel */}
           <View style={styles.progPanel}>
-            <ScrollView showsVerticalScrollIndicator={false}>
-              {/* Programming header row */}
+            <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ gap: Space.base }}>
               <View style={styles.progHeader}>
-                <Text style={styles.panelTitle}>WOD Programming</Text>
-                <View style={styles.loggableRow}>
-                  <Text style={styles.loggableLabel}>Loggable</Text>
-                  <TouchableOpacity
-                    style={[
-                      styles.toggle,
-                      loggable ? styles.toggleOn : styles.toggleOff,
-                    ]}
-                    onPress={() => setLoggable((prev) => !prev)}
-                    activeOpacity={0.8}>
-                    <View style={[
-                      styles.toggleKnob,
-                      loggable ? styles.toggleKnobRight : styles.toggleKnobLeft,
-                    ]} />
-                  </TouchableOpacity>
-                </View>
+                <Text size="title" weight="semibold">WOD Programming</Text>
+                {loggableToggle(styles)}
               </View>
-
               <View style={styles.separator} />
-
-              {/* Saved programming display */}
-              {isProgrammingLoading ? (
-                <View style={styles.programmingLoadingContainer}>
-                  <ActivityIndicator size="small" color={AppColors.darkTextMuted} />
-                </View>
-              ) : savedProgramming !== null ? (
-                <>
-                  <Text style={styles.fieldLabel}>PROGRAMMING</Text>
-                  <View testID="programming-wod-content" style={styles.wodContent}>
-                    <Text style={styles.wodText}>{savedProgramming.content}</Text>
-                  </View>
-                </>
-              ) : existingProgramming !== null && existingProgramming.content !== null ? (
-                <>
-                  <Text style={styles.fieldLabel}>PROGRAMMING</Text>
-                  <View testID="programming-wod-content" style={styles.wodContent}>
-                    <Text style={styles.wodText}>{existingProgramming.content}</Text>
-                  </View>
-                </>
-              ) : (
-                <>
-                  <Text style={styles.fieldLabel}>PROGRAMMING</Text>
-                  <View style={styles.emptyProgramming}>
-                    <Text style={styles.emptyProgrammingText}>No programming added yet.</Text>
-                  </View>
-                </>
-              )}
-
-              <View style={[styles.separator, styles.separatorSpacing]} />
-
-              {/* Edit Programming Form */}
-              <Text style={styles.formTitle}>Edit Programming</Text>
-
-              <Text style={[styles.fieldLabel, styles.fieldLabelSpacing]}>PROGRAMMING</Text>
-              <TextInput
-                testID="programming-wod-input"
-                style={[
-                  styles.textInputLarge,
-                  { height: Math.max(PROGRAMMING_INPUT_MIN_HEIGHT, inputHeight) },
-                ]}
-                placeholder="Describe the workout, scaling and any notes…"
-                placeholderTextColor={AppColors.darkTextMuted}
-                value={content}
-                onChangeText={setContent}
-                onContentSizeChange={(e) =>
-                  setInputHeight(e.nativeEvent.contentSize.height + Spacing.base)
-                }
-                multiline
-                textAlignVertical="top"
-                editable={!isSubmitting}
-              />
-
-              {successMessage !== null && (
-                <View style={styles.successBanner}>
-                  <Text style={styles.successText}>{successMessage}</Text>
-                </View>
-              )}
-
-              {submitError !== null && (
-                <Text style={styles.errorText}>{submitError}</Text>
-              )}
-
-              <TouchableOpacity
-                testID="programming-save-btn"
-                style={[styles.actionBtn, isSubmitting && styles.actionBtnDisabled]}
-                onPress={handleSaveProgramming}
-                disabled={isSubmitting}
-                activeOpacity={0.8}>
-                {isSubmitting ? (
-                  <ActivityIndicator size="small" color={AppColors.backgroundWhite} />
-                ) : (
-                  <Text style={styles.actionBtnText}>Save Programming</Text>
-                )}
-              </TouchableOpacity>
+              {programmingBody(styles)}
             </ScrollView>
           </View>
         </View>

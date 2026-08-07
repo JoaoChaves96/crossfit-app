@@ -1,20 +1,22 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import {
   ActivityIndicator,
-  Pressable,
   ScrollView,
-  Text,
   TouchableOpacity,
   View,
-  useWindowDimensions,
 } from 'react-native';
 import { useRouter } from 'expo-router';
-import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '@/hooks/useAuth';
 import { useGym } from '@/hooks/useGym';
+import { useResponsiveLayout } from '@/hooks/useResponsiveLayout';
+import { SafeScreen } from '@/components/SafeScreen';
+import { Text, Icon, StatusChip, Button, SegmentedToggle } from '@/components/cleanink';
+import { Ink, Status, Space } from '@/constants/design';
 import { createApiClient } from '@/utils/api-client';
 import { components } from '@/types/api.gen';
-import { AppColors } from '@/constants/theme';
+import { CoachSidebar, COACH_NAV_ITEMS } from '@/components/CoachSidebar';
+import { OwnerNavDrawer } from '@/components/OwnerNavDrawer';
+import { STATE_LABEL, STATE_CHIP_TONE } from './class-management/classStates';
 import { styles, mobileStyles } from './coach-classes.styles';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -24,7 +26,13 @@ type GetCoachClassesResponse = components['schemas']['GetCoachClassesResponseDto
 
 type FilterMode = 'upcoming' | 'past';
 
-const MOBILE_BREAKPOINT = 768;
+// Explicit testIDs keep the pre-restyle `filter-*-btn` names that
+// e2e/coach.spec.ts documents, which the `{prefix}-{value}` default would
+// otherwise rename.
+const FILTER_OPTIONS: { value: FilterMode; label: string; testID: string }[] = [
+  { value: 'upcoming', label: 'Upcoming', testID: 'filter-upcoming-btn' },
+  { value: 'past', label: 'Past', testID: 'filter-past-btn' },
+];
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -43,117 +51,55 @@ function formatDateTime(date: string, time: string): string {
   return `${dayName} ${day} ${month} · ${String(hour).padStart(2, '0')}:${minute}`;
 }
 
+function formatTime(time: string): string {
+  const [hourStr, minuteStr] = time.split(':');
+  return `${hourStr.padStart(2, '0')}:${(minuteStr ?? '00').padStart(2, '0')}`;
+}
+
 function isUpcoming(scheduledDate: string, scheduledTime: string): boolean {
   const classDateTime = new Date(`${scheduledDate}T${scheduledTime}`);
   return classDateTime >= new Date();
-}
-
-interface StatusConfig {
-  label: string;
-  bg: string;
-  textColor: string;
-}
-
-function getStatusConfig(state: CoachClassItem['state']): StatusConfig {
-  switch (state) {
-    case 'published':
-      return { label: 'Published', bg: AppColors.successBgLight, textColor: AppColors.darkSurface };
-    case 'booking_closed':
-      return { label: 'Booking Closed', bg: AppColors.warningBgAmber, textColor: AppColors.warningLabel };
-    case 'in_progress':
-      return { label: 'In Progress', bg: AppColors.badgeBlueBgLight, textColor: AppColors.actionBlueDarker };
-    case 'completed':
-      return { label: 'Completed', bg: AppColors.borderFaint, textColor: AppColors.errorLabel };
-    case 'archived':
-      return { label: 'Archived', bg: AppColors.borderFaint, textColor: AppColors.errorLabel };
-  }
-}
-
-// ─── Sidebar ──────────────────────────────────────────────────────────────────
-
-const COACH_NAV_ITEMS = [
-  { label: 'My Classes', key: 'classes', enabled: true },
-  { label: 'Profile', key: 'profile', enabled: false },
-] as const;
-
-interface SidebarProps {
-  activeItem: string;
-}
-
-function Sidebar({ activeItem }: SidebarProps) {
-  return (
-    <View style={styles.sidebar}>
-      <Text style={styles.sidebarLogo}>CrossFit Manager</Text>
-      <View style={styles.navSpacer} />
-      <View style={styles.navGroup}>
-        {COACH_NAV_ITEMS.map((item) => {
-          const isActive = item.key === activeItem;
-          const isDisabled = !item.enabled;
-          return (
-            <Pressable
-              key={item.key}
-              style={[
-                styles.navItem,
-                isActive && styles.navItemActive,
-              ]}
-              disabled={isDisabled}>
-              <Text
-                style={[
-                  styles.navLabel,
-                  isActive ? styles.navLabelActive : styles.navLabelInactive,
-                ]}>
-                {item.label}
-              </Text>
-            </Pressable>
-          );
-        })}
-      </View>
-    </View>
-  );
 }
 
 // ─── Table Row (Desktop) ─────────────────────────────────────────────────────
 
 interface ClassRowProps {
   gymClass: CoachClassItem;
-  isAlt: boolean;
   onView: (gymClass: CoachClassItem) => void;
 }
 
-function ClassRow({ gymClass, isAlt, onView }: ClassRowProps) {
-  const statusConfig = getStatusConfig(gymClass.state);
+function ClassRow({ gymClass, onView }: ClassRowProps) {
   const dateTimeLabel = formatDateTime(gymClass.scheduledDate, gymClass.scheduledTime);
+  const isFull = gymClass.bookedCount >= gymClass.capacity;
 
   return (
-    <View
-      testID={`coach-class-row-${gymClass.id}`}
-      style={[
-        styles.tableRow,
-        isAlt && styles.tableRowAlt,
-      ]}>
-      <Text style={[styles.rowCell, styles.colClassType]} numberOfLines={1}>
-        {gymClass.classTypeName}
-      </Text>
-      <Text style={[styles.rowCellSecondary, styles.colDateTime]} numberOfLines={1}>
-        {dateTimeLabel}
-      </Text>
-      <Text style={[styles.rowCellSecondary, styles.colSpace]} numberOfLines={1}>
-        {gymClass.spaceName}
-      </Text>
-      <Text style={[styles.rowCellSecondary, styles.colCapacity]}>
-        {gymClass.bookedCount} / {gymClass.capacity}
-      </Text>
+    <View testID={`coach-class-row-${gymClass.id}`} style={styles.tableRow}>
+      <View style={styles.colClassType}>
+        <Text size="body" weight="semibold" tone="strong" numberOfLines={1}>
+          {gymClass.classTypeName}
+        </Text>
+      </View>
+      <View style={styles.colDateTime}>
+        <Text size="meta" tone="muted" numberOfLines={1}>{dateTimeLabel}</Text>
+      </View>
+      <View style={styles.colSpace}>
+        <Text size="meta" tone="muted" numberOfLines={1}>{gymClass.spaceName}</Text>
+      </View>
+      <View style={styles.colCapacity}>
+        <Text size="meta" weight="medium" tone={isFull ? Status.danger : 'muted'}>
+          {gymClass.bookedCount} / {gymClass.capacity}
+        </Text>
+      </View>
       <View style={styles.colStatus}>
-        <View style={[styles.statusBadge, { backgroundColor: statusConfig.bg }]}>
-          <Text style={[styles.statusBadgeText, { color: statusConfig.textColor }]}>
-            {statusConfig.label}
-          </Text>
-        </View>
+        <StatusChip tone={STATE_CHIP_TONE[gymClass.state]} label={STATE_LABEL[gymClass.state]} />
       </View>
       <View style={styles.colAction}>
-        <Pressable testID={`coach-class-view-btn-${gymClass.id}`} style={styles.viewBtn} onPress={() => onView(gymClass)}>
-          <Text style={styles.viewBtnText}>View</Text>
-        </Pressable>
+        <Button
+          testID={`coach-class-view-btn-${gymClass.id}`}
+          label="View"
+          variant="quiet"
+          onPress={() => onView(gymClass)}
+        />
       </View>
     </View>
   );
@@ -167,45 +113,43 @@ interface MobileClassCardProps {
 }
 
 function MobileClassCard({ gymClass, onView }: MobileClassCardProps) {
-  const statusConfig = getStatusConfig(gymClass.state);
   const dateTimeLabel = formatDateTime(gymClass.scheduledDate, gymClass.scheduledTime);
+  const isFull = gymClass.bookedCount >= gymClass.capacity;
 
   return (
     <View testID={`coach-class-row-${gymClass.id}`} style={mobileStyles.classCard}>
-      <View style={mobileStyles.classCardHeader}>
-        <Text style={mobileStyles.classCardTitle} numberOfLines={1}>
-          {gymClass.classTypeName}
+      <View style={mobileStyles.classCardTop}>
+        <Text size="lead" weight="bold" tone="strong">
+          {formatTime(gymClass.scheduledTime)}
         </Text>
-        <View style={[mobileStyles.statusBadge, { backgroundColor: statusConfig.bg }]}>
-          <Text style={[mobileStyles.statusBadgeText, { color: statusConfig.textColor }]}>
-            {statusConfig.label}
-          </Text>
-        </View>
+        <StatusChip tone={STATE_CHIP_TONE[gymClass.state]} label={STATE_LABEL[gymClass.state]} />
       </View>
+
+      <Text size="title" weight="semibold" tone="strong" numberOfLines={1}>
+        {gymClass.classTypeName}
+      </Text>
+      <Text size="meta" tone="muted">{dateTimeLabel}</Text>
 
       <View style={mobileStyles.classCardMeta}>
         <View style={mobileStyles.classCardMetaRow}>
-          <Text style={mobileStyles.classCardMetaText}>{dateTimeLabel}</Text>
+          <Icon name="place" size={16} tone="faint" />
+          <Text size="meta" tone="muted">{gymClass.spaceName}</Text>
         </View>
         <View style={mobileStyles.classCardMetaRow}>
-          <Ionicons name="location-outline" size={16} color={AppColors.darkTextDim} />
-          <Text style={mobileStyles.classCardMetaText}>{gymClass.spaceName}</Text>
-        </View>
-        <View style={mobileStyles.classCardMetaRow}>
-          <Ionicons name="people-outline" size={16} color={AppColors.darkTextDim} />
-          <Text style={mobileStyles.classCardMetaText}>
+          <Icon name="people" size={16} tone="faint" />
+          <Text size="meta" weight="medium" tone={isFull ? Status.danger : 'muted'}>
             {gymClass.bookedCount} / {gymClass.capacity} booked
           </Text>
         </View>
       </View>
 
       <View style={mobileStyles.classCardFooter}>
-        <Pressable
+        <Button
           testID={`coach-class-view-btn-${gymClass.id}`}
-          style={mobileStyles.classCardViewBtn}
-          onPress={() => onView(gymClass)}>
-          <Text style={mobileStyles.classCardViewBtnText}>View Details</Text>
-        </Pressable>
+          label="View Details"
+          variant="quiet"
+          onPress={() => onView(gymClass)}
+        />
       </View>
     </View>
   );
@@ -217,8 +161,8 @@ export default function CoachClassesScreen() {
   const router = useRouter();
   const { token } = useAuth();
   const { currentGymId } = useGym();
-  const { width } = useWindowDimensions();
-  const isMobile = width <= MOBILE_BREAKPOINT;
+  const { isMobile } = useResponsiveLayout();
+  const [drawerOpen, setDrawerOpen] = useState(false);
 
   const [allClasses, setAllClasses] = useState<CoachClassItem[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -276,195 +220,141 @@ export default function CoachClassesScreen() {
     });
   };
 
-  // ─── Mobile Layout ─────────────────────────────────────────────────────────
+  const handleSidebarNav = (key: string) => {
+    setDrawerOpen(false);
+    const target = COACH_NAV_ITEMS.find((item) => item.key === key);
+    if (target?.route) router.push(target.route as never);
+  };
 
-  if (isMobile) {
-    return (
-      <View style={mobileStyles.root} testID="coach-classes-screen">
-        <View style={mobileStyles.main}>
-          {/* Header */}
-          <View style={mobileStyles.header}>
-            <Text style={mobileStyles.headerTitle}>My Assigned Classes</Text>
-          </View>
+  const emptyState = (
+    <View style={styles.emptyState}>
+      <Text size="title" weight="semibold" tone="strong" style={{ textAlign: 'center' }}>
+        {filterMode === 'upcoming'
+          ? 'No upcoming classes assigned'
+          : 'No past classes found'}
+      </Text>
+      <Text size="body" tone="muted" style={{ textAlign: 'center' }}>
+        {filterMode === 'upcoming'
+          ? 'Check back later or contact your gym owner.'
+          : 'Your past assigned classes will appear here.'}
+      </Text>
+    </View>
+  );
 
-          {/* Filter row */}
-          <View style={mobileStyles.filterRow}>
-            <TouchableOpacity
-              testID="filter-upcoming-btn"
-              style={[
-                mobileStyles.filterBtn,
-                filterMode === 'upcoming' && mobileStyles.filterBtnActive,
-              ]}
-              onPress={() => setFilterMode('upcoming')}>
-              <Text
-                style={[
-                  mobileStyles.filterBtnText,
-                  filterMode === 'upcoming' && mobileStyles.filterBtnTextActive,
-                ]}>
-                Upcoming
-              </Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              testID="filter-past-btn"
-              style={[
-                mobileStyles.filterBtn,
-                filterMode === 'past' && mobileStyles.filterBtnActive,
-              ]}
-              onPress={() => setFilterMode('past')}>
-              <Text
-                style={[
-                  mobileStyles.filterBtnText,
-                  filterMode === 'past' && mobileStyles.filterBtnTextActive,
-                ]}>
-                Past
-              </Text>
-            </TouchableOpacity>
-          </View>
-
-          {/* Class cards */}
-          {isLoading ? (
-            <View style={mobileStyles.centered}>
-              <ActivityIndicator size="large" color={AppColors.darkSurface} />
-            </View>
-          ) : error !== null ? (
-            <View style={mobileStyles.centered}>
-              <Text style={mobileStyles.errorText}>{error}</Text>
-              <TouchableOpacity style={mobileStyles.retryBtn} onPress={fetchClasses}>
-                <Text style={mobileStyles.retryBtnText}>Retry</Text>
-              </TouchableOpacity>
-            </View>
-          ) : filteredClasses.length === 0 ? (
-            <View style={mobileStyles.emptyState}>
-              <Text style={mobileStyles.emptyTitle}>
-                {filterMode === 'upcoming'
-                  ? 'No upcoming classes assigned'
-                  : 'No past classes found'}
-              </Text>
-              <Text style={mobileStyles.emptySubtitle}>
-                {filterMode === 'upcoming'
-                  ? 'Check back later or contact your gym owner.'
-                  : 'Your past assigned classes will appear here.'}
-              </Text>
-            </View>
-          ) : (
-            <ScrollView testID="coach-class-list" showsVerticalScrollIndicator={false}>
-              {filteredClasses.map((cls) => (
-                <View key={cls.id} style={{ marginBottom: 12 }}>
-                  <MobileClassCard gymClass={cls} onView={handleView} />
-                </View>
-              ))}
-            </ScrollView>
-          )}
+  const renderContent = () => {
+    if (isLoading) {
+      return (
+        <View style={styles.centered}>
+          <ActivityIndicator size="large" color={Ink.strong} />
         </View>
+      );
+    }
+
+    if (error !== null) {
+      return (
+        <View style={styles.centered}>
+          <Text size="body" tone={Status.danger} style={{ textAlign: 'center' }}>{error}</Text>
+          <TouchableOpacity style={styles.retryBtn} onPress={fetchClasses}>
+            <Text size="body" tone="strong">Retry</Text>
+          </TouchableOpacity>
+        </View>
+      );
+    }
+
+    // Mobile: vertical card list.
+    if (isMobile) {
+      if (filteredClasses.length === 0) return emptyState;
+      return (
+        <ScrollView
+          testID="coach-class-list"
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={mobileStyles.cardList}>
+          {filteredClasses.map((cls) => (
+            <MobileClassCard key={cls.id} gymClass={cls} onView={handleView} />
+          ))}
+        </ScrollView>
+      );
+    }
+
+    // Desktop: hairline table inside a card surface.
+    return (
+      <View style={styles.classesCard}>
+        <View style={styles.tableHeader}>
+          <View style={styles.colClassType}>
+            <Text size="label" weight="semibold" tone="faint" upper>Class Type</Text>
+          </View>
+          <View style={styles.colDateTime}>
+            <Text size="label" weight="semibold" tone="faint" upper>Date &amp; Time</Text>
+          </View>
+          <View style={styles.colSpace}>
+            <Text size="label" weight="semibold" tone="faint" upper>Space</Text>
+          </View>
+          <View style={styles.colCapacity}>
+            <Text size="label" weight="semibold" tone="faint" upper>Capacity</Text>
+          </View>
+          <View style={styles.colStatus}>
+            <Text size="label" weight="semibold" tone="faint" upper>Status</Text>
+          </View>
+          <View style={styles.colAction}>
+            <Text size="label" weight="semibold" tone="faint" upper>Action</Text>
+          </View>
+        </View>
+
+        {filteredClasses.length === 0 ? (
+          emptyState
+        ) : (
+          <ScrollView testID="coach-class-list" showsVerticalScrollIndicator={false}>
+            {filteredClasses.map((cls) => (
+              <ClassRow key={cls.id} gymClass={cls} onView={handleView} />
+            ))}
+          </ScrollView>
+        )}
       </View>
     );
-  }
-
-  // ─── Desktop Layout ────────────────────────────────────────────────────────
+  };
 
   return (
     <View style={styles.root} testID="coach-classes-screen">
-      <Sidebar activeItem="classes" />
+      {!isMobile && <CoachSidebar activeItem="classes" onNavigate={handleSidebarNav} />}
 
-      <View style={styles.main}>
+      {/* Mobile drawer */}
+      {isMobile && (
+        <OwnerNavDrawer visible={drawerOpen} onClose={() => setDrawerOpen(false)}>
+          <CoachSidebar activeItem="classes" onNavigate={handleSidebarNav} />
+        </OwnerNavDrawer>
+      )}
+
+      <SafeScreen
+        style={[styles.main, isMobile && styles.mainMobile]}
+        applyTopInset={isMobile}
+        extraTopPadding={Space.base}>
         {/* Header */}
         <View style={styles.header}>
-          <Text style={styles.headerTitle}>My Assigned Classes</Text>
-        </View>
-
-        {/* Filter row */}
-        <View style={styles.filterRow}>
-          <TouchableOpacity
-            testID="filter-upcoming-btn"
-            style={[
-              styles.filterBtn,
-              filterMode === 'upcoming' && styles.filterBtnActive,
-            ]}
-            onPress={() => setFilterMode('upcoming')}>
-            <Text
-              style={[
-                styles.filterBtnText,
-                filterMode === 'upcoming' && styles.filterBtnTextActive,
-              ]}>
-              Upcoming
-            </Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            testID="filter-past-btn"
-            style={[
-              styles.filterBtn,
-              filterMode === 'past' && styles.filterBtnActive,
-            ]}
-            onPress={() => setFilterMode('past')}>
-            <Text
-              style={[
-                styles.filterBtnText,
-                filterMode === 'past' && styles.filterBtnTextActive,
-              ]}>
-              Past
-            </Text>
-          </TouchableOpacity>
-        </View>
-
-        {/* Classes card */}
-        {isLoading ? (
-          <View style={styles.centered}>
-            <ActivityIndicator size="large" color={AppColors.darkSurface} />
-          </View>
-        ) : error !== null ? (
-          <View style={styles.centered}>
-            <Text style={styles.errorText}>{error}</Text>
-            <TouchableOpacity style={styles.retryBtn} onPress={fetchClasses}>
-              <Text style={styles.retryBtnText}>Retry</Text>
+          {isMobile && (
+            <TouchableOpacity
+              testID="hamburger-btn"
+              style={styles.hamburgerBtn}
+              onPress={() => setDrawerOpen(true)}>
+              <Icon name="menu" size={24} tone="strong" />
             </TouchableOpacity>
-          </View>
-        ) : (
-          <View style={styles.classesCard}>
-            {/* Table header */}
-            <View style={styles.tableHeader}>
-              <Text style={[styles.tableHeaderCell, styles.colClassType]}>
-                Class Type
-              </Text>
-              <Text style={[styles.tableHeaderCell, styles.colDateTime]}>
-                Date &amp; Time
-              </Text>
-              <Text style={[styles.tableHeaderCell, styles.colSpace]}>
-                Space
-              </Text>
-              <Text style={[styles.tableHeaderCell, styles.colCapacity]}>
-                Capacity
-              </Text>
-              <Text style={[styles.tableHeaderCell, styles.colStatus]}>
-                Status
-              </Text>
-              <Text style={[styles.tableHeaderCell, styles.colAction]}>
-                Action
-              </Text>
-            </View>
+          )}
+          <Text size="screen" weight="bold" tone="strong">My Assigned Classes</Text>
+        </View>
 
-            {filteredClasses.length === 0 ? (
-              <View style={styles.emptyState}>
-                <Text style={styles.emptyTitle}>
-                  {filterMode === 'upcoming'
-                    ? 'No upcoming classes assigned'
-                    : 'No past classes found'}
-                </Text>
-                <Text style={styles.emptySubtitle}>
-                  {filterMode === 'upcoming'
-                    ? 'Check back later or contact your gym owner.'
-                    : 'Your past assigned classes will appear here.'}
-                </Text>
-              </View>
-            ) : (
-              <ScrollView testID="coach-class-list" showsVerticalScrollIndicator={false}>
-                {filteredClasses.map((cls, idx) => (
-                  <ClassRow key={cls.id} gymClass={cls} isAlt={idx % 2 === 0} onView={handleView} />
-                ))}
-              </ScrollView>
-            )}
+        {/* Upcoming / Past filter */}
+        <View style={styles.filterRow}>
+          <View style={[styles.filterToggle, isMobile && styles.filterToggleMobile]}>
+            <SegmentedToggle<FilterMode>
+              options={FILTER_OPTIONS}
+              value={filterMode}
+              onChange={setFilterMode}
+            />
           </View>
-        )}
-      </View>
+        </View>
+
+        {/* Content */}
+        {renderContent()}
+      </SafeScreen>
     </View>
   );
 }

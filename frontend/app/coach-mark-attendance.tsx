@@ -1,23 +1,25 @@
 import React, { useState, useEffect } from 'react';
 import {
   ActivityIndicator,
+  Pressable,
   ScrollView,
-  Text,
-  TouchableOpacity,
   View,
-  useWindowDimensions,
 } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useAuth } from '@/hooks/useAuth';
 import { useGym } from '@/hooks/useGym';
+import { useResponsiveLayout } from '@/hooks/useResponsiveLayout';
+import { SafeScreen } from '@/components/SafeScreen';
+import { CoachSidebar } from '@/components/CoachSidebar';
+import { Text, Icon, StatusChip, Button } from '@/components/cleanink';
+import { Ink, Space, Status } from '@/constants/design';
 import { createApiClient } from '@/utils/api-client';
 import { components } from '@/types/api.gen';
-import { AppColors } from '@/constants/theme';
+import { STATE_LABEL, STATE_CHIP_TONE, type ClassState } from './class-management/classStates';
 import { styles, mobileStyles } from './coach-mark-attendance.styles';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
-type CoachClassItem = components['schemas']['CoachClassItemDto'];
 type MarkAttendanceDto = components['schemas']['MarkAttendanceDto'];
 type MarkAttendanceResponse = components['schemas']['MarkAttendanceResponseDto'];
 type AttendanceRecordDto = components['schemas']['AttendanceRecordDto'];
@@ -30,10 +32,9 @@ interface AthleteSlot {
   present: boolean;
 }
 
-const MOBILE_BREAKPOINT = 768;
-
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
+/** Everyone starts marked present — a deliberate earlier UX decision. */
 function buildSlotsFromBookings(bookings: ClassBookingItem[]): AthleteSlot[] {
   return bookings.map((b) => ({
     athleteUserId: b.athleteUserId,
@@ -42,13 +43,13 @@ function buildSlotsFromBookings(bookings: ClassBookingItem[]): AthleteSlot[] {
   }));
 }
 
-const STATUS_LABEL: Record<CoachClassItem['state'], string> = {
-  published: 'Published',
-  booking_closed: 'Booking Closed',
-  in_progress: 'In Progress',
-  completed: 'Completed',
-  archived: 'Archived',
-};
+function getInitials(name: string): string {
+  return name
+    .split(' ')
+    .slice(0, 2)
+    .map((part) => part[0]?.toUpperCase() ?? '')
+    .join('');
+}
 
 function formatDateTime(date: string, time: string): string {
   const d = new Date(`${date}T${time}`);
@@ -65,130 +66,87 @@ function formatDateTime(date: string, time: string): string {
   return `${dayName} ${day} ${month} · ${hour}:${minute}`;
 }
 
-// ─── Sidebar ──────────────────────────────────────────────────────────────────
+// ─── Stat Card (desktop) ────────────────────────────────────────────────────
+// Monochrome: a prominent ink count over a quiet uppercase caption. No color
+// per stat — structure comes from the hairline card and tonal ground.
 
-const COACH_NAV_ITEMS = [
-  { label: 'My Classes', key: 'classes', enabled: true },
-  { label: 'Profile', key: 'profile', enabled: false },
-] as const;
-
-function Sidebar() {
+function StatCard({ label, value }: { label: string; value: number }) {
   return (
-    <View style={styles.sidebar}>
-      <Text style={styles.sidebarLogo}>CrossFit Manager</Text>
-      <View style={styles.navSpacer} />
-      <View style={styles.navGroup}>
-        {COACH_NAV_ITEMS.map((item) => {
-          const isDisabled = !item.enabled;
-          return (
-            <TouchableOpacity
-              key={item.key}
-              style={styles.navItem}
-              disabled={isDisabled}
-              activeOpacity={isDisabled ? 1 : 0.7}>
-              <Text style={[styles.navLabel, styles.navLabelInactive]}>
-                {item.label}
-              </Text>
-            </TouchableOpacity>
-          );
-        })}
-      </View>
+    <View style={styles.statCard}>
+      <Text size="lead" weight="bold" tone="strong">{value}</Text>
+      <Text size="label" weight="semibold" tone="faint" upper>{label}</Text>
     </View>
   );
 }
 
-// ─── Stat Card ────────────────────────────────────────────────────────────────
+// ─── Present/Absent Toggle ────────────────────────────────────────────────────
+// A two-state per-row control. Selection reads through elevation + weight, not
+// color: Present is the affirmative default (lifted white surface + check),
+// Absent is the deliberate deviation (quiet sunken ground).
 
-interface StatCardProps {
-  label: string;
-  value: number;
-  valueBg: string;
-  valueColor: string;
-  isMobile?: boolean;
+interface AttendanceToggleProps {
+  slot: AthleteSlot;
+  onToggle: (athleteUserId: string, present: boolean) => void;
+  mobile?: boolean;
 }
 
-function StatCard({ label, value, valueBg, valueColor, isMobile: mobile }: StatCardProps) {
+function AttendanceToggle({ slot, onToggle, mobile }: AttendanceToggleProps) {
   const s = mobile ? mobileStyles : styles;
   return (
-    <View style={s.statCard}>
-      <Text style={s.statLabel}>{label}</Text>
-      <View style={[s.statValueBadge, { backgroundColor: valueBg }]}>
-        <Text style={[s.statValueText, { color: valueColor }]}>{value}</Text>
-      </View>
-    </View>
+    <Pressable
+      testID={`athlete-toggle-btn-${slot.athleteUserId}`}
+      style={[s.toggleBtn, slot.present ? s.toggleBtnPresent : s.toggleBtnAbsent]}
+      onPress={() => onToggle(slot.athleteUserId, !slot.present)}>
+      <Icon
+        name={slot.present ? 'check' : 'close'}
+        size={16}
+        tone={slot.present ? 'strong' : 'faint'}
+      />
+      <Text
+        size={mobile ? 'body' : 'meta'}
+        weight={slot.present ? 'semibold' : 'medium'}
+        tone={slot.present ? 'strong' : 'faint'}>
+        {slot.present ? 'Present' : 'Absent'}
+      </Text>
+    </Pressable>
   );
 }
 
-// ─── Athlete Row (Desktop) ───────────────────────────────────────────────────
+// ─── Athlete Row (desktop) ───────────────────────────────────────────────────
 
 interface AthleteRowProps {
   slot: AthleteSlot;
-  isAlt: boolean;
   onToggle: (athleteUserId: string, present: boolean) => void;
 }
 
-function AthleteRow({ slot, isAlt, onToggle }: AthleteRowProps) {
+function AthleteRow({ slot, onToggle }: AthleteRowProps) {
   return (
-    <View style={[styles.tableRow, isAlt && styles.tableRowAlt]}>
-      <View style={styles.athleteNameCell}>
-        <View style={styles.avatarPlaceholder} />
-        <Text style={styles.athleteNameText}>{slot.label}</Text>
+    <View style={styles.tableRow}>
+      <View style={styles.colAthlete}>
+        <View style={styles.avatar}>
+          <Text size="label" weight="semibold" tone="muted">{getInitials(slot.label)}</Text>
+        </View>
+        <Text size="meta">{slot.label}</Text>
       </View>
-      <View style={styles.attendanceToggleCell}>
-        <TouchableOpacity
-          testID={`athlete-toggle-btn-${slot.athleteUserId}`}
-          style={[
-            styles.toggleBtn,
-            slot.present ? styles.toggleBtnPresent : styles.toggleBtnAbsent,
-          ]}
-          onPress={() => onToggle(slot.athleteUserId, !slot.present)}
-          activeOpacity={0.8}>
-          <Text
-            style={[
-              styles.toggleBtnText,
-              slot.present ? styles.toggleBtnTextPresent : styles.toggleBtnTextAbsent,
-            ]}>
-            {slot.present ? 'Present' : 'Absent'}
-          </Text>
-        </TouchableOpacity>
+      <View style={styles.colStatus}>
+        <AttendanceToggle slot={slot} onToggle={onToggle} />
       </View>
     </View>
   );
 }
 
-// ─── Mobile Athlete Row (64px height, large touch targets) ───────────────────
+// ─── Mobile Athlete Row (generous touch target) ──────────────────────────────
 
-interface MobileAthleteRowProps {
-  slot: AthleteSlot;
-  isAlt: boolean;
-  onToggle: (athleteUserId: string, present: boolean) => void;
-}
-
-function MobileAthleteRow({ slot, isAlt, onToggle }: MobileAthleteRowProps) {
+function MobileAthleteRow({ slot, onToggle, isFirst }: AthleteRowProps & { isFirst?: boolean }) {
   return (
-    <View style={[mobileStyles.athleteRow, isAlt && mobileStyles.athleteRowAlt]}>
+    <View style={[mobileStyles.athleteRow, isFirst && mobileStyles.athleteRowFirst]}>
       <View style={mobileStyles.athleteNameCell}>
-        <View style={mobileStyles.avatarPlaceholder} />
-        <Text style={mobileStyles.athleteNameText}>{slot.label}</Text>
+        <View style={mobileStyles.avatar}>
+          <Text size="label" weight="semibold" tone="muted">{getInitials(slot.label)}</Text>
+        </View>
+        <Text size="body" weight="medium">{slot.label}</Text>
       </View>
-      <View style={mobileStyles.attendanceToggleCell}>
-        <TouchableOpacity
-          testID={`athlete-toggle-btn-${slot.athleteUserId}`}
-          style={[
-            mobileStyles.toggleBtn,
-            slot.present ? mobileStyles.toggleBtnPresent : mobileStyles.toggleBtnAbsent,
-          ]}
-          onPress={() => onToggle(slot.athleteUserId, !slot.present)}
-          activeOpacity={0.8}>
-          <Text
-            style={[
-              mobileStyles.toggleBtnText,
-              slot.present ? mobileStyles.toggleBtnTextPresent : mobileStyles.toggleBtnTextAbsent,
-            ]}>
-            {slot.present ? 'Present' : 'Absent'}
-          </Text>
-        </TouchableOpacity>
-      </View>
+      <AttendanceToggle slot={slot} onToggle={onToggle} mobile />
     </View>
   );
 }
@@ -199,8 +157,7 @@ export default function CoachMarkAttendanceScreen() {
   const router = useRouter();
   const { token } = useAuth();
   const { currentGymId } = useGym();
-  const { width } = useWindowDimensions();
-  const isMobile = width <= MOBILE_BREAKPOINT;
+  const { isMobile } = useResponsiveLayout();
 
   const params = useLocalSearchParams<{
     classId: string;
@@ -210,7 +167,7 @@ export default function CoachMarkAttendanceScreen() {
     spaceName: string;
     capacity: string;
     bookedCount: string;
-    state: CoachClassItem['state'];
+    state: ClassState;
   }>();
 
   const {
@@ -224,7 +181,7 @@ export default function CoachMarkAttendanceScreen() {
   } = params;
 
   const bookedCountNum = bookedCount ? parseInt(bookedCount, 10) : 0;
-  const classState: CoachClassItem['state'] = state ?? 'in_progress';
+  const classState: ClassState = state ?? 'in_progress';
 
   const [slots, setSlots] = useState<AthleteSlot[]>([]);
   const [isLoadingBookings, setIsLoadingBookings] = useState(true);
@@ -329,76 +286,77 @@ export default function CoachMarkAttendanceScreen() {
   if (isMobile) {
     const ms = mobileStyles;
     return (
-      <View style={ms.root} testID="mark-attendance-screen">
-        <ScrollView style={ms.main} showsVerticalScrollIndicator={false}>
+      <SafeScreen style={ms.root} extraTopPadding={Space.base} testID="mark-attendance-screen">
+        <ScrollView
+          style={ms.main}
+          contentContainerStyle={ms.scrollContent}
+          showsVerticalScrollIndicator={false}>
           {/* Header */}
           <View style={ms.header}>
-            <TouchableOpacity style={ms.backBtn} onPress={() => router.back()}>
-              <Text style={ms.backBtnText}>{'← Back'}</Text>
-            </TouchableOpacity>
-            <Text style={ms.headerTitle} numberOfLines={2}>{headerTitle}</Text>
+            <Pressable style={ms.backBtn} onPress={() => router.back()}>
+              <Icon name="back" size={18} tone="muted" />
+              <Text size="body" tone="muted">Back</Text>
+            </Pressable>
+            <Text size="screen" weight="bold" tone="strong" numberOfLines={2}>{headerTitle}</Text>
           </View>
 
           {/* Subheader with Select All */}
-          <View style={ms.subHeader}>
-            <View style={ms.subHeaderRow}>
-              <Text style={ms.subHeaderCount}>
-                {isLoadingBookings ? bookedCountNum : slots.length} athletes booked
-              </Text>
-              {slots.length > 0 && !isLoadingBookings ? (
-                <TouchableOpacity
-                  testID="select-all-btn"
-                  style={ms.selectAllBtn}
-                  onPress={handleSelectAll}
-                  activeOpacity={0.8}>
-                  <Text style={ms.selectAllText}>{allPresent ? 'Deselect All' : 'Select All'}</Text>
-                </TouchableOpacity>
-              ) : null}
-            </View>
+          <View style={ms.subHeaderRow}>
+            <Text size="meta" tone="muted">
+              {isLoadingBookings ? bookedCountNum : slots.length} athletes booked
+            </Text>
+            {slots.length > 0 && !isLoadingBookings ? (
+              <Pressable testID="select-all-btn" style={ms.selectAllBtn} onPress={handleSelectAll}>
+                <Text size="meta" weight="semibold" tone="strong">
+                  {allPresent ? 'Deselect All' : 'Select All'}
+                </Text>
+              </Pressable>
+            ) : null}
           </View>
 
           {/* Attendance card */}
           <View style={ms.attendanceCard}>
             {isLoadingBookings ? (
               <View style={ms.emptyState}>
-                <ActivityIndicator size="small" color={AppColors.darkTextDim} />
+                <ActivityIndicator size="small" color={Ink.muted} />
               </View>
             ) : bookingsError !== null ? (
               <View style={ms.emptyState}>
-                <Text style={ms.errorText}>{bookingsError}</Text>
+                <Text size="meta" tone={Ink.muted} style={{ textAlign: 'center' }}>{bookingsError}</Text>
               </View>
             ) : slots.length === 0 ? (
               <View style={ms.emptyState}>
-                <Text style={ms.emptyTitle}>No athletes booked for this class</Text>
+                <Text size="title" weight="semibold" tone="muted" style={{ textAlign: 'center' }}>
+                  No athletes booked for this class
+                </Text>
               </View>
             ) : (
-              <>
-                {/* Athlete rows */}
-                {slots.map((slot, idx) => (
-                  <MobileAthleteRow
-                    key={slot.athleteUserId}
-                    slot={slot}
-                    isAlt={idx % 2 !== 0}
-                    onToggle={handleToggle}
-                  />
-                ))}
-              </>
+              slots.map((slot, index) => (
+                <MobileAthleteRow
+                  key={slot.athleteUserId}
+                  slot={slot}
+                  onToggle={handleToggle}
+                  isFirst={index === 0}
+                />
+              ))
             )}
 
-            {/* Feedback */}
+            {/* Feedback — Clean Ink has no success role; a quiet meta line marks it saved. */}
             {successMessage !== null && (
-              <View style={ms.successBanner}>
-                <Text style={ms.successText}>{successMessage}</Text>
+              <View style={ms.feedbackRow}>
+                <Text size="meta" tone="muted">{successMessage}</Text>
               </View>
             )}
             {submitError !== null && (
-              <Text style={ms.errorText}>{submitError}</Text>
+              <View style={ms.feedbackRow}>
+                <Text size="meta" tone={Status.danger}>{submitError}</Text>
+              </View>
             )}
 
             {/* Footer count */}
             {slots.length > 0 && !isLoadingBookings ? (
               <View style={ms.footerRow}>
-                <Text style={ms.footerCountText}>
+                <Text size="meta" tone="muted">
                   {markedPresentCount} of {slots.length} marked present
                 </Text>
               </View>
@@ -406,22 +364,17 @@ export default function CoachMarkAttendanceScreen() {
 
             {/* Submit */}
             {slots.length > 0 && !isLoadingBookings && (
-              <TouchableOpacity
+              <Button
                 testID="submit-attendance-btn"
-                style={[ms.submitBtn, isSubmitting && ms.submitBtnDisabled]}
+                label="Submit Attendance"
+                variant="primary"
+                loading={isSubmitting}
                 onPress={handleSubmit}
-                disabled={isSubmitting}
-                activeOpacity={0.8}>
-                {isSubmitting ? (
-                  <ActivityIndicator size="small" color={AppColors.backgroundWhite} />
-                ) : (
-                  <Text style={ms.submitBtnText}>Submit Attendance</Text>
-                )}
-              </TouchableOpacity>
+              />
             )}
           </View>
         </ScrollView>
-      </View>
+      </SafeScreen>
     );
   }
 
@@ -429,15 +382,18 @@ export default function CoachMarkAttendanceScreen() {
 
   return (
     <View style={styles.root} testID="mark-attendance-screen">
-      <Sidebar />
+      <CoachSidebar activeItem="classes" />
 
-      <View style={styles.main}>
+      <SafeScreen style={styles.main} applyTopInset={false}>
         {/* Header */}
         <View style={styles.header}>
-          <TouchableOpacity style={styles.backBtn} onPress={() => router.back()}>
-            <Text style={styles.backBtnText}>{'← Back to Class Details'}</Text>
-          </TouchableOpacity>
-          <Text style={styles.headerTitle} numberOfLines={1}>{headerTitle}</Text>
+          <Pressable style={styles.backBtn} onPress={() => router.back()}>
+            <Icon name="back" size={18} tone="muted" />
+            <Text size="body" tone="muted">Back to Class Details</Text>
+          </Pressable>
+          <View style={styles.headerTitleWrap}>
+            <Text size="screen" weight="bold" tone="strong" numberOfLines={1}>{headerTitle}</Text>
+          </View>
           <View style={styles.headerSpacer} />
         </View>
 
@@ -445,121 +401,105 @@ export default function CoachMarkAttendanceScreen() {
         <View style={styles.infoCard}>
           {classTypeName ? (
             <View style={styles.infoItem}>
-              <Text style={styles.infoLabel}>CLASS TYPE</Text>
-              <Text style={styles.infoValue}>{classTypeName}</Text>
+              <Text size="label" weight="semibold" tone="faint" upper>Class Type</Text>
+              <Text size="body" weight="medium">{classTypeName}</Text>
             </View>
           ) : null}
           {scheduledDate && scheduledTime ? (
             <View style={styles.infoItem}>
-              <Text style={styles.infoLabel}>DATE &amp; TIME</Text>
-              <Text style={styles.infoValue}>{formatDateTime(scheduledDate, scheduledTime)}</Text>
+              <Text size="label" weight="semibold" tone="faint" upper>Date &amp; Time</Text>
+              <Text size="body" weight="medium">{formatDateTime(scheduledDate, scheduledTime)}</Text>
             </View>
           ) : null}
           {spaceName ? (
             <View style={styles.infoItem}>
-              <Text style={styles.infoLabel}>SPACE</Text>
-              <Text style={styles.infoValue}>{spaceName}</Text>
+              <Text size="label" weight="semibold" tone="faint" upper>Space</Text>
+              <Text size="body" weight="medium">{spaceName}</Text>
             </View>
           ) : null}
           <View style={styles.infoItem}>
-            <Text style={styles.infoLabel}>STATUS</Text>
-            <Text style={styles.infoValue}>{STATUS_LABEL[classState]}</Text>
+            <Text size="label" weight="semibold" tone="faint" upper>Status</Text>
+            <StatusChip tone={STATE_CHIP_TONE[classState]} label={STATE_LABEL[classState]} />
           </View>
         </View>
 
         {/* Summary stat cards */}
         <View style={styles.statsRow}>
-          <StatCard
-            label="Booked"
-            value={bookedCountNum}
-            valueBg={AppColors.badgeBlueBg}
-            valueColor={AppColors.actionBlue}
-          />
-          <StatCard
-            label="Marked Present"
-            value={markedPresentCount}
-            valueBg={AppColors.successBgVivid}
-            valueColor={AppColors.successDefault}
-          />
-          <StatCard
-            label="Marked Absent"
-            value={markedAbsentCount}
-            valueBg={AppColors.errorBgSoft}
-            valueColor={AppColors.errorDarkest}
-          />
+          <StatCard label="Booked" value={bookedCountNum} />
+          <StatCard label="Marked Present" value={markedPresentCount} />
+          <StatCard label="Marked Absent" value={markedAbsentCount} />
         </View>
 
         {/* Attendance card */}
         <View style={styles.attendanceCard}>
           {/* Section header */}
           <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>Attendance List</Text>
-            <View style={styles.sectionBadge}>
-              <Text style={styles.sectionBadgeText}>{isLoadingBookings ? bookedCountNum : slots.length} booked</Text>
-            </View>
+            <Text size="title" weight="semibold">Attendance List</Text>
+            <StatusChip
+              tone="neutral"
+              label={`${isLoadingBookings ? bookedCountNum : slots.length} booked`}
+            />
           </View>
 
           {isLoadingBookings ? (
             <View style={styles.emptyState}>
-              <ActivityIndicator size="small" color={AppColors.darkTextDim} />
+              <ActivityIndicator size="small" color={Ink.muted} />
             </View>
           ) : bookingsError !== null ? (
             <View style={styles.emptyState}>
-              <Text style={styles.errorText}>{bookingsError}</Text>
+              <Text size="meta" tone={Ink.muted} style={{ textAlign: 'center' }}>{bookingsError}</Text>
             </View>
           ) : slots.length === 0 ? (
             <View style={styles.emptyState}>
-              <Text style={styles.emptyTitle}>No athletes booked for this class</Text>
+              <Text size="title" weight="semibold" tone="muted">No athletes booked for this class</Text>
             </View>
           ) : (
-            <>
+            <View style={styles.table}>
               {/* Table header */}
               <View style={styles.tableHeader}>
-                <Text style={[styles.tableHeaderCell, styles.colAthlete]}>Athlete</Text>
-                <Text style={[styles.tableHeaderCell, styles.colStatus]}>Status</Text>
+                <View style={styles.colAthlete}>
+                  <Text size="label" weight="semibold" tone="faint" upper>Athlete</Text>
+                </View>
+                <View style={styles.colStatus}>
+                  <Text size="label" weight="semibold" tone="faint" upper>Status</Text>
+                </View>
               </View>
 
               {/* Athlete rows */}
               <ScrollView showsVerticalScrollIndicator={false} style={styles.tableBody}>
-                {slots.map((slot, idx) => (
-                  <AthleteRow
-                    key={slot.athleteUserId}
-                    slot={slot}
-                    isAlt={idx % 2 !== 0}
-                    onToggle={handleToggle}
-                  />
+                {slots.map((slot) => (
+                  <AthleteRow key={slot.athleteUserId} slot={slot} onToggle={handleToggle} />
                 ))}
               </ScrollView>
-            </>
+            </View>
           )}
 
-          {/* Feedback */}
+          {/* Feedback — Clean Ink has no success role; a quiet meta line marks it saved. */}
           {successMessage !== null && (
-            <View style={styles.successBanner}>
-              <Text style={styles.successText}>{successMessage}</Text>
+            <View style={styles.feedbackRow}>
+              <Text size="meta" tone="muted">{successMessage}</Text>
             </View>
           )}
           {submitError !== null && (
-            <Text style={styles.errorText}>{submitError}</Text>
+            <View style={styles.feedbackRow}>
+              <Text size="meta" tone={Status.danger}>{submitError}</Text>
+            </View>
           )}
 
           {/* Submit */}
           {slots.length > 0 && !isLoadingBookings && (
-            <TouchableOpacity
-              testID="submit-attendance-btn"
-              style={[styles.submitBtn, isSubmitting && styles.submitBtnDisabled]}
-              onPress={handleSubmit}
-              disabled={isSubmitting}
-              activeOpacity={0.8}>
-              {isSubmitting ? (
-                <ActivityIndicator size="small" color={AppColors.backgroundWhite} />
-              ) : (
-                <Text style={styles.submitBtnText}>Submit Attendance</Text>
-              )}
-            </TouchableOpacity>
+            <View style={styles.submitWrap}>
+              <Button
+                testID="submit-attendance-btn"
+                label="Submit Attendance"
+                variant="primary"
+                loading={isSubmitting}
+                onPress={handleSubmit}
+              />
+            </View>
           )}
         </View>
-      </View>
+      </SafeScreen>
     </View>
   );
 }

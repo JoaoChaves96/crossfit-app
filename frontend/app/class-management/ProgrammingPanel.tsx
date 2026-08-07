@@ -4,15 +4,8 @@ import { Text, Button, StatusChip } from '@/components/cleanink';
 import { useResponsiveLayout } from '@/hooks/useResponsiveLayout';
 import { Accent, Ground, Ink, Line, Space } from '@/constants/design';
 import { styles } from './class-management.styles';
-import { ClassState } from './classStates';
+import { ClassState, isProgrammingEditable } from './classStates';
 import { useClassProgramming } from './useClassProgramming';
-
-/** Programming is editable only while the class is published or booking_closed. */
-const EDITABLE_STATES: ClassState[] = ['published', 'booking_closed'];
-
-function isProgrammingEditable(state: ClassState): boolean {
-  return EDITABLE_STATES.includes(state);
-}
 
 /** Minimum visible height of the auto-growing programming input, in px. */
 const INPUT_MIN_HEIGHT = 140;

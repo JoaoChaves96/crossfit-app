@@ -1,56 +1,21 @@
 import { StyleSheet } from 'react-native';
-import { AppColors, BorderRadius, FontSizes, FontWeights, Spacing } from '@/constants/theme';
+import { Ground, Line, Radius, Space, Elevation } from '@/constants/design';
+
+// ─── Desktop Styles ────────────────────────────────────────────────────────
 
 export const styles = StyleSheet.create({
   root: {
     flex: 1,
     flexDirection: 'row',
-    backgroundColor: AppColors.backgroundWarm,
-  },
-
-  // Sidebar
-  sidebar: {
-    width: 220,
-    backgroundColor: AppColors.darkSurface2,
-    paddingHorizontal: Spacing.base,
-    paddingVertical: Spacing.xl,
-    gap: Spacing.tight,
-  },
-  sidebarLogo: {
-    fontSize: FontSizes.md,
-    fontWeight: FontWeights.bold,
-    color: AppColors.backgroundWhite,
-    letterSpacing: 0.5,
-  },
-  navSpacer: {
-    height: 24,
-  },
-  navGroup: {
-    gap: Spacing.tight,
-  },
-  navItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.smMd,
-    paddingHorizontal: Spacing.md,
-    paddingVertical: Spacing.sm,
-    borderRadius: BorderRadius.mdSm,
-    height: 40,
-  },
-  navLabel: {
-    fontSize: FontSizes.body,
-  },
-  navLabelInactive: {
-    fontWeight: FontWeights.regular,
-    color: AppColors.darkTextMuted,
+    backgroundColor: Ground.base,
   },
 
   // Main area
   main: {
     flex: 1,
-    paddingHorizontal: Spacing.xxxl,
-    paddingVertical: Spacing.xl,
-    gap: Spacing.lg,
+    paddingHorizontal: Space.xxl,
+    paddingVertical: Space.xl,
+    gap: Space.lg,
   },
 
   // Header
@@ -58,144 +23,98 @@ export const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    gap: Spacing.base,
+    gap: Space.base,
   },
   backBtn: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: Spacing.sm,
-    paddingHorizontal: Spacing.mdPlus,
-    paddingVertical: Spacing.sm,
-    borderRadius: BorderRadius.mdSm,
-    backgroundColor: AppColors.backgroundWhite,
+    gap: Space.xs,
+    paddingHorizontal: Space.md,
+    paddingVertical: Space.sm,
+    borderRadius: Radius.control,
     borderWidth: 1,
-    borderColor: AppColors.borderLight,
+    borderColor: Line.divider,
+    backgroundColor: Ground.surface,
   },
-  backBtnText: {
-    fontSize: FontSizes.mdSm,
-    color: AppColors.darkTextDim,
-    fontWeight: FontWeights.regular,
-  },
-  headerTitle: {
+  headerTitleWrap: {
     flex: 1,
-    fontSize: FontSizes.title,
-    fontWeight: FontWeights.bold,
-    color: AppColors.textHeading,
-    textAlign: 'center',
+    alignItems: 'center',
   },
+  // Balances the back button so the title stays visually centered.
   headerSpacer: {
-    width: 130,
+    width: 200,
   },
 
   // Info card
   infoCard: {
     flexDirection: 'row',
-    backgroundColor: AppColors.backgroundScreen,
-    borderRadius: BorderRadius.mdLg,
+    backgroundColor: Ground.surface,
+    borderRadius: Radius.card,
     borderWidth: 1,
-    borderColor: AppColors.backgroundDivider,
-    paddingHorizontal: Spacing.xl,
-    paddingVertical: Spacing.lg,
-    gap: Spacing.xxxl,
+    borderColor: Line.hairline,
+    paddingHorizontal: Space.xl,
+    paddingVertical: Space.lg,
+    gap: Space.xxl,
+    flexWrap: 'wrap',
+    alignItems: 'center',
+    ...Elevation.card,
   },
   infoItem: {
-    gap: Spacing.tight,
-  },
-  infoLabel: {
-    fontSize: FontSizes.sm,
-    fontWeight: FontWeights.semibold,
-    color: AppColors.textDisabled,
-    letterSpacing: 0.5,
-    textTransform: 'uppercase',
-  },
-  infoValue: {
-    fontSize: FontSizes.body,
-    fontWeight: FontWeights.medium,
-    color: AppColors.textHeading,
+    gap: Space.hair,
+    minWidth: 80,
   },
 
-  // Stats row
+  // Stats row — three quiet monochrome cards
   statsRow: {
     flexDirection: 'row',
-    gap: Spacing.md,
+    gap: Space.md,
   },
   statCard: {
     flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    backgroundColor: AppColors.backgroundWhite,
-    borderRadius: BorderRadius.mdLg,
+    backgroundColor: Ground.surface,
+    borderRadius: Radius.card,
     borderWidth: 1,
-    borderColor: AppColors.backgroundDivider,
-    paddingHorizontal: Spacing.lg,
-    paddingVertical: Spacing.base,
-  },
-  statLabel: {
-    fontSize: FontSizes.mdSm,
-    fontWeight: FontWeights.medium,
-    color: AppColors.textMuted,
-  },
-  statValueBadge: {
-    borderRadius: BorderRadius.lg,
-    paddingHorizontal: Spacing.md,
-    paddingVertical: Spacing.tight,
-    minWidth: 36,
-    alignItems: 'center',
-  },
-  statValueText: {
-    fontSize: FontSizes.body,
-    fontWeight: FontWeights.bold,
+    borderColor: Line.hairline,
+    paddingHorizontal: Space.lg,
+    paddingVertical: Space.base,
+    gap: Space.hair,
+    ...Elevation.card,
   },
 
   // Attendance card
   attendanceCard: {
     flex: 1,
-    backgroundColor: AppColors.backgroundWhite,
-    borderRadius: BorderRadius.mdLg,
+    backgroundColor: Ground.surface,
+    borderRadius: Radius.card,
     borderWidth: 1,
-    borderColor: AppColors.backgroundDivider,
-    paddingHorizontal: Spacing.lg,
-    paddingVertical: Spacing.base,
-    gap: Spacing.md,
+    borderColor: Line.hairline,
+    padding: Space.base,
+    gap: Space.md,
+    ...Elevation.card,
   },
   sectionHeader: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
   },
-  sectionTitle: {
-    fontSize: FontSizes.bodyMd,
-    fontWeight: FontWeights.semibold,
-    color: AppColors.textHeading,
-  },
-  sectionBadge: {
-    backgroundColor: AppColors.badgeBlueBg,
-    borderRadius: BorderRadius.lg,
-    paddingHorizontal: Spacing.smMd,
-    paddingVertical: Spacing.micro,
-  },
-  sectionBadgeText: {
-    fontSize: FontSizes.smMd,
-    fontWeight: FontWeights.medium,
-    color: AppColors.actionBlue,
-  },
 
   // Table
+  table: {
+    flex: 1,
+    borderRadius: Radius.card,
+    borderWidth: 1,
+    borderColor: Line.hairline,
+    overflow: 'hidden',
+  },
   tableHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: AppColors.backgroundScreen,
-    paddingHorizontal: Spacing.mdPlus,
-    paddingVertical: Spacing.smMd,
-    borderRadius: BorderRadius.md,
-    borderWidth: 1,
-    borderColor: AppColors.backgroundDivider,
-  },
-  tableHeaderCell: {
-    fontSize: FontSizes.smMd,
-    fontWeight: FontWeights.semibold,
-    color: AppColors.textMuted,
+    gap: Space.sm,
+    backgroundColor: Ground.base,
+    paddingHorizontal: Space.md,
+    paddingVertical: Space.sm,
+    borderBottomWidth: 1,
+    borderBottomColor: Line.hairline,
   },
   tableBody: {
     flex: 1,
@@ -203,419 +122,207 @@ export const styles = StyleSheet.create({
   tableRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: Spacing.mdPlus,
-    paddingVertical: Spacing.smMd,
+    gap: Space.sm,
+    paddingHorizontal: Space.md,
+    paddingVertical: Space.sm,
     borderTopWidth: 1,
-    borderTopColor: AppColors.backgroundDivider,
-  },
-  tableRowAlt: {
-    backgroundColor: AppColors.backgroundScreen,
+    borderTopColor: Line.hairline,
   },
 
   // Column widths
   colAthlete: {
     flex: 1,
-  },
-  colStatus: {
-    width: 120,
-    textAlign: 'right',
-  },
-
-  // Athlete cell
-  athleteNameCell: {
-    flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
-    gap: Spacing.sm,
+    gap: Space.sm,
   },
-  avatarPlaceholder: {
-    width: 24,
-    height: 24,
-    borderRadius: BorderRadius.lg,
-    backgroundColor: AppColors.backgroundDivider,
-  },
-  athleteNameText: {
-    fontSize: FontSizes.mdSm,
-    fontWeight: FontWeights.regular,
-    color: AppColors.textHeading,
-  },
-
-  // Toggle cell
-  attendanceToggleCell: {
-    width: 120,
+  colStatus: {
+    width: 132,
     alignItems: 'flex-end',
   },
-  toggleBtn: {
-    borderRadius: BorderRadius.mdLg,
-    paddingHorizontal: Spacing.md,
-    paddingVertical: Spacing.tight,
-  },
-  toggleBtnPresent: {
-    backgroundColor: AppColors.successBgVivid,
-  },
-  toggleBtnAbsent: {
-    backgroundColor: AppColors.errorBgSoft,
-  },
-  toggleBtnText: {
-    fontSize: FontSizes.sm,
-    fontWeight: FontWeights.medium,
-  },
-  toggleBtnTextPresent: {
-    color: AppColors.successDefault,
-  },
-  toggleBtnTextAbsent: {
-    color: AppColors.errorDarkest,
-  },
 
-  // Submit button
-  submitBtn: {
-    backgroundColor: AppColors.textHeading,
-    borderRadius: BorderRadius.md,
-    paddingVertical: Spacing.md,
+  // Avatar (initials) — consistent with BookingsPanel
+  avatar: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    backgroundColor: Ground.sunken,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  submitBtnDisabled: {
-    opacity: 0.6,
+
+  // Present/Absent toggle — selection reads through elevation + weight
+  toggleBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: Space.xs,
+    borderRadius: Radius.control,
+    borderWidth: 1,
+    paddingHorizontal: Space.md,
+    paddingVertical: Space.xs,
+    minWidth: 116,
   },
-  submitBtnText: {
-    fontSize: FontSizes.body,
-    fontWeight: FontWeights.semibold,
-    color: AppColors.backgroundWhite,
+  toggleBtnPresent: {
+    backgroundColor: Ground.surface,
+    borderColor: Line.hairline,
+    ...Elevation.card,
+  },
+  toggleBtnAbsent: {
+    backgroundColor: Ground.sunken,
+    borderColor: Line.divider,
+  },
+
+  // Submit button wrapper
+  submitWrap: {
+    minWidth: 200,
+    alignSelf: 'flex-start',
   },
 
   // Feedback
-  successBanner: {
-    backgroundColor: AppColors.successBgVivid,
-    borderRadius: BorderRadius.mdSm,
-    paddingHorizontal: Spacing.mdPlus,
-    paddingVertical: Spacing.smMd,
-  },
-  successText: {
-    fontSize: FontSizes.mdSm,
-    fontWeight: FontWeights.medium,
-    color: AppColors.successDefault,
-  },
-  errorText: {
-    fontSize: FontSizes.mdSm,
-    color: AppColors.errorDefault,
+  feedbackRow: {
+    paddingTop: Space.xs,
   },
 
-  // Empty state
+  // Empty / loading state
   emptyState: {
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: Spacing.jumboLg,
-    gap: Spacing.sm,
-  },
-  emptyTitle: {
-    fontSize: FontSizes.md,
-    fontWeight: FontWeights.semibold,
-    color: AppColors.darkSurface,
-  },
-  emptySubtitle: {
-    fontSize: FontSizes.body,
-    color: AppColors.darkTextDim,
-    textAlign: 'center',
+    paddingVertical: Space.jumbo,
+    gap: Space.sm,
   },
 });
 
-// ─── Mobile Styles (≤768px) ────────────────────────────────────────────────
+// ─── Mobile Styles (≤768px) ──────────────────────────────────────────────────
 
 export const mobileStyles = StyleSheet.create({
   root: {
     flex: 1,
     flexDirection: 'column',
-    backgroundColor: AppColors.backgroundWarm,
+    backgroundColor: Ground.base,
   },
-
-  // Main area — no sidebar
   main: {
     flex: 1,
-    paddingHorizontal: Spacing.lg,
-    paddingVertical: Spacing.base,
-    gap: Spacing.base,
+  },
+  scrollContent: {
+    paddingHorizontal: Space.base,
+    paddingBottom: Space.xl,
+    gap: Space.base,
   },
 
   // Header
   header: {
-    flexDirection: 'column',
-    gap: Spacing.sm,
+    gap: Space.sm,
+    paddingTop: Space.sm,
   },
   backBtn: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: Spacing.sm,
-    paddingHorizontal: Spacing.md,
-    paddingVertical: Spacing.smMd,
-    borderRadius: BorderRadius.mdSm,
-    backgroundColor: AppColors.backgroundWhite,
-    borderWidth: 1,
-    borderColor: AppColors.borderLight,
-    minHeight: 44,
+    gap: Space.xs,
     alignSelf: 'flex-start',
-  },
-  backBtnText: {
-    fontSize: FontSizes.mdSm,
-    color: AppColors.darkTextDim,
-    fontWeight: FontWeights.regular,
-  },
-  headerTitle: {
-    fontSize: FontSizes.lg,
-    fontWeight: FontWeights.bold,
-    color: AppColors.textHeading,
+    paddingRight: Space.sm,
+    paddingVertical: Space.sm,
+    minHeight: 44,
   },
 
-  // Info card — vertical on mobile
-  infoCard: {
-    backgroundColor: AppColors.backgroundScreen,
-    borderRadius: BorderRadius.lg,
-    borderWidth: 1,
-    borderColor: AppColors.backgroundDivider,
-    padding: Spacing.base,
-    gap: Spacing.md,
-  },
-  infoItem: {
+  // Subheader with Select All
+  subHeaderRow: {
     flexDirection: 'row',
+    alignItems: 'center',
     justifyContent: 'space-between',
-    alignItems: 'center',
   },
-  infoLabel: {
-    fontSize: FontSizes.sm,
-    fontWeight: FontWeights.semibold,
-    color: AppColors.textDisabled,
-    letterSpacing: 0.5,
-    textTransform: 'uppercase',
-  },
-  infoValue: {
-    fontSize: FontSizes.body,
-    fontWeight: FontWeights.medium,
-    color: AppColors.textHeading,
-  },
-
-  // Stats row — wrap on mobile
-  statsRow: {
-    flexDirection: 'row',
-    gap: Spacing.sm,
-    flexWrap: 'wrap',
-  },
-  statCard: {
-    flex: 1,
-    minWidth: 100,
-    flexDirection: 'column',
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: AppColors.backgroundWhite,
-    borderRadius: BorderRadius.lg,
+  selectAllBtn: {
+    paddingVertical: Space.sm,
+    paddingHorizontal: Space.md,
+    borderRadius: Radius.control,
     borderWidth: 1,
-    borderColor: AppColors.backgroundDivider,
-    paddingHorizontal: Spacing.sm,
-    paddingVertical: Spacing.md,
-    gap: Spacing.sm,
-  },
-  statLabel: {
-    fontSize: FontSizes.sm,
-    fontWeight: FontWeights.medium,
-    color: AppColors.textMuted,
-    textAlign: 'center',
-  },
-  statValueBadge: {
-    borderRadius: BorderRadius.lg,
-    paddingHorizontal: Spacing.md,
-    paddingVertical: Spacing.tight,
-    minWidth: 36,
-    alignItems: 'center',
-  },
-  statValueText: {
-    fontSize: FontSizes.body,
-    fontWeight: FontWeights.bold,
+    borderColor: Line.divider,
+    backgroundColor: Ground.surface,
+    minHeight: 44,
+    justifyContent: 'center',
   },
 
   // Attendance card
   attendanceCard: {
-    flex: 1,
-    backgroundColor: AppColors.backgroundWhite,
-    borderRadius: BorderRadius.lg,
+    backgroundColor: Ground.surface,
+    borderRadius: Radius.card,
     borderWidth: 1,
-    borderColor: AppColors.backgroundDivider,
-    paddingHorizontal: Spacing.base,
-    paddingVertical: Spacing.base,
-    gap: Spacing.md,
-  },
-  sectionHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  },
-  sectionTitle: {
-    fontSize: FontSizes.md,
-    fontWeight: FontWeights.semibold,
-    color: AppColors.textHeading,
-  },
-  sectionBadge: {
-    backgroundColor: AppColors.badgeBlueBg,
-    borderRadius: BorderRadius.lg,
-    paddingHorizontal: Spacing.smMd,
-    paddingVertical: Spacing.micro,
-  },
-  sectionBadgeText: {
-    fontSize: FontSizes.smMd,
-    fontWeight: FontWeights.medium,
-    color: AppColors.actionBlue,
+    borderColor: Line.hairline,
+    padding: Space.base,
+    gap: Space.md,
+    ...Elevation.card,
   },
 
-  // Athlete row — 64px height on mobile
+  // Athlete row — generous touch target
   athleteRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
+    gap: Space.sm,
     minHeight: 64,
-    paddingHorizontal: Spacing.md,
-    paddingVertical: Spacing.sm,
+    paddingVertical: Space.sm,
     borderTopWidth: 1,
-    borderTopColor: AppColors.backgroundDivider,
+    borderTopColor: Line.hairline,
   },
-  athleteRowAlt: {
-    backgroundColor: AppColors.backgroundScreen,
+  // The rows separate each other; the card border already closes the top edge,
+  // so the first row must not draw a leading hairline.
+  athleteRowFirst: {
+    borderTopWidth: 0,
   },
   athleteNameCell: {
     flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
-    gap: Spacing.smMd,
+    gap: Space.sm,
   },
-  avatarPlaceholder: {
+  avatar: {
     width: 32,
     height: 32,
-    borderRadius: BorderRadius.xl,
-    backgroundColor: AppColors.backgroundDivider,
-  },
-  athleteNameText: {
-    fontSize: FontSizes.body,
-    fontWeight: FontWeights.medium,
-    color: AppColors.textHeading,
-  },
-
-  // Toggle button — large touch target on mobile
-  attendanceToggleCell: {
-    alignItems: 'flex-end',
-  },
-  toggleBtn: {
-    borderRadius: BorderRadius.md,
-    paddingHorizontal: Spacing.base,
-    paddingVertical: Spacing.smMd,
-    minHeight: 44,
-    minWidth: 88,
+    borderRadius: 16,
+    backgroundColor: Ground.sunken,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  toggleBtnPresent: {
-    backgroundColor: AppColors.successBgVivid,
-  },
-  toggleBtnAbsent: {
-    backgroundColor: AppColors.errorBgSoft,
-  },
-  toggleBtnText: {
-    fontSize: FontSizes.body,
-    fontWeight: FontWeights.semibold,
-  },
-  toggleBtnTextPresent: {
-    color: AppColors.successDefault,
-  },
-  toggleBtnTextAbsent: {
-    color: AppColors.errorDarkest,
-  },
 
-  // Subheader with Select All
-  subHeader: {
-    paddingHorizontal: Spacing.base,
-    paddingTop: Spacing.sm,
-    paddingBottom: Spacing.md,
-  },
-  subHeaderTitle: {
-    fontSize: FontSizes.mdSm,
-    fontWeight: FontWeights.semibold,
-    color: AppColors.textHeading,
-  },
-  subHeaderRow: {
+  // Present/Absent toggle — large touch target
+  toggleBtn: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
-    marginTop: Spacing.tightPlus,
-  },
-  subHeaderCount: {
-    fontSize: FontSizes.mdSm,
-    color: AppColors.textMuted,
-  },
-  selectAllBtn: {
-    paddingVertical: Spacing.sm,
-    paddingHorizontal: Spacing.md,
-    borderRadius: BorderRadius.md,
+    justifyContent: 'center',
+    gap: Space.xs,
+    borderRadius: Radius.control,
     borderWidth: 1,
-    borderColor: AppColors.borderLight,
+    paddingHorizontal: Space.base,
+    minHeight: 44,
+    minWidth: 108,
   },
-  selectAllText: {
-    fontSize: FontSizes.mdSm,
-    fontWeight: FontWeights.semibold,
-    color: AppColors.textHeading,
+  toggleBtnPresent: {
+    backgroundColor: Ground.surface,
+    borderColor: Line.hairline,
+    ...Elevation.card,
   },
-  footerRow: {
-    alignItems: 'center',
-    paddingVertical: Spacing.base,
-  },
-  footerCountText: {
-    fontSize: FontSizes.body,
-    color: AppColors.textMuted,
+  toggleBtnAbsent: {
+    backgroundColor: Ground.sunken,
+    borderColor: Line.divider,
   },
 
-  // Submit button
-  submitBtn: {
-    backgroundColor: AppColors.textHeading,
-    borderRadius: BorderRadius.md,
-    paddingVertical: Spacing.mdPlus,
+  // Footer count
+  footerRow: {
     alignItems: 'center',
-    justifyContent: 'center',
-    minHeight: 50,
-  },
-  submitBtnDisabled: {
-    opacity: 0.6,
-  },
-  submitBtnText: {
-    fontSize: FontSizes.bodyMd,
-    fontWeight: FontWeights.semibold,
-    color: AppColors.backgroundWhite,
+    paddingTop: Space.xs,
   },
 
   // Feedback
-  successBanner: {
-    backgroundColor: AppColors.successBgVivid,
-    borderRadius: BorderRadius.mdSm,
-    paddingHorizontal: Spacing.mdPlus,
-    paddingVertical: Spacing.smMd,
-  },
-  successText: {
-    fontSize: FontSizes.mdSm,
-    fontWeight: FontWeights.medium,
-    color: AppColors.successDefault,
-  },
-  errorText: {
-    fontSize: FontSizes.mdSm,
-    color: AppColors.errorDefault,
+  feedbackRow: {
+    paddingTop: Space.xs,
   },
 
-  // Empty state
+  // Empty / loading state
   emptyState: {
-    flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: Spacing.jumboLg,
-    gap: Spacing.sm,
-  },
-  emptyTitle: {
-    fontSize: FontSizes.md,
-    fontWeight: FontWeights.semibold,
-    color: AppColors.darkSurface,
-    textAlign: 'center',
+    paddingVertical: Space.xxl,
+    gap: Space.sm,
   },
 });

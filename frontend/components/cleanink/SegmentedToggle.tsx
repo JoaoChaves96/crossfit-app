@@ -12,6 +12,12 @@ import { Ground, Ink, Radius, Space, Elevation } from '@/constants/design';
 export interface SegmentOption<T extends string> {
   value: T;
   label: string;
+  /**
+   * Exact testID for this segment, overriding the `{testIDPrefix}-{value}`
+   * default. Use when a screen must keep a pre-existing testID that the
+   * prefix convention would not reproduce.
+   */
+  testID?: string;
 }
 
 interface SegmentedToggleProps<T extends string> {
@@ -34,7 +40,7 @@ export function SegmentedToggle<T extends string>({
         return (
           <Pressable
             key={opt.value}
-            testID={testIDPrefix ? `${testIDPrefix}-${opt.value}` : undefined}
+            testID={opt.testID ?? (testIDPrefix ? `${testIDPrefix}-${opt.value}` : undefined)}
             onPress={() => onChange(opt.value)}
             style={[styles.segment, active && styles.segmentActive]}
           >
