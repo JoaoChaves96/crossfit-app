@@ -22,9 +22,20 @@ export class UpdateUserProfileHandler
     }
 
     if (command.notificationPreferences !== undefined) {
+      // Only merge keys that were actually sent. With `useDefineForClassFields`
+      // (TS target ES2023), class-transformer instantiates the nested DTO with
+      // every declared field as an own property — the unsent ones set to
+      // `undefined`. Spreading the DTO directly would overwrite the stored
+      // `true`s with `undefined`, and JSON/jsonb serialization drops those keys,
+      // silently wiping the other preferences on any partial update.
+      const sentPrefs = Object.fromEntries(
+        Object.entries(command.notificationPreferences).filter(
+          ([, value]) => value !== undefined,
+        ),
+      );
       user.notificationPreferences = {
         ...user.notificationPreferences,
-        ...command.notificationPreferences,
+        ...sentPrefs,
       };
     }
 
