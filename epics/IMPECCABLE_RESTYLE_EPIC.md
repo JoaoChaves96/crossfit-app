@@ -289,6 +289,35 @@ tokens — its Clean Ink migration belongs here.
 
 ---
 
+## Carried Debt (outlives this epic)
+
+### ⚠️ Nullable DTO fields generate as opaque `Record<string, never>`
+
+**Confirmed to revisit** (user, 2026-08-07) — deferred, not dropped.
+
+A DTO property declared `T | null` and annotated `@ApiProperty({ nullable: true })`
+with **no explicit `type:`** gives Nest nothing to infer from: the union defeats
+`reflect-metadata`, Swagger emits an empty object schema, and `openapi-typescript`
+generates `Record<string, never> | null`. Any real value assigned to it is then a
+type error at the call site, so the field is unusable without a cast.
+
+Fixed this way for `ClassResultItemDto.notes` / `.editedAt` (adding `type: String` /
+`type: Date`). **Nine fields still affected:** `bookedPosition`, `cancelledAt`,
+`lastModifiedByUserId`, `deletedAt`, `expiresAt`, `description`, `data`,
+`acceptedAt`, `AcceptInviteRequestDto`.
+
+- **Prioritise `bookedPosition`** — waitlist promotion order depends on it and the
+  owner bookings UI now surfaces it, so this one is a live correctness risk, not
+  cosmetic typing.
+- **Beware casts as cover.** The old `ResultsPanel` carried an `as unknown` cast that
+  hid the broken schema entirely; the bug only surfaced once the cast was removed.
+  Treat an existing cast around a generated type as a symptom to investigate.
+- **Wants its own sweep**, not a ride-along: it touches backend DTOs, Swagger, and
+  regenerated frontend types, which is explicitly outside this epic's visual-only
+  scope (see Excluded below).
+
+---
+
 ## Scope
 
 ### Included
