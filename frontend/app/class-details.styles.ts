@@ -1,82 +1,73 @@
 import { StyleSheet } from 'react-native';
-import { AppColors, BorderRadius, FontSizes, FontWeights, Spacing } from '@/constants/theme';
+import { Ground, Ink, Line, Status, Space, Radius, Elevation, Type } from '@/constants/design';
 
+// ── Desktop layout (side-by-side) ─────────────────────────────────────────────
 export const desktopStyles = StyleSheet.create({
   screen: {
     flex: 1,
-    backgroundColor: '#F8F8F8',
+    backgroundColor: Ground.base,
   },
   contentArea: {
     flexDirection: 'row',
     justifyContent: 'center',
-    paddingVertical: 32,
-    paddingHorizontal: 40,
-    gap: 32,
+    paddingVertical: Space.xxl,
+    paddingHorizontal: Space.jumbo,
+    gap: Space.xxl,
   },
   leftCol: {
     width: 520,
-    gap: 24,
+    gap: Space.xl,
   },
   rightCol: {
     width: 400,
-    gap: 24,
+    gap: Space.xl,
   },
+  // White surface cards on the desktop's Ground.base ground.
   rightCard: {
-    backgroundColor: AppColors.backgroundWhite,
-    borderRadius: BorderRadius.lg,
-    padding: 24,
+    backgroundColor: Ground.surface,
+    borderRadius: Radius.card,
+    padding: Space.xl,
     borderWidth: 1,
-    borderColor: AppColors.borderDefault,
-    gap: 12,
+    borderColor: Line.hairline,
+    gap: Space.md,
+    ...Elevation.card,
   },
   backRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
-  },
-  backText: {
-    fontFamily: 'Inter',
-    fontSize: FontSizes.body,
-    fontWeight: FontWeights.medium,
-    color: AppColors.textGray600,
-  },
-  className: {
-    fontFamily: 'Inter',
-    fontSize: FontSizes.display,
-    fontWeight: FontWeights.bold,
-    color: AppColors.textPrimary,
+    gap: Space.sm,
   },
   actionContainer: {
-    gap: Spacing.md,
+    gap: Space.md,
   },
 });
 
+// ── Shared / mobile ───────────────────────────────────────────────────────────
 export const styles = StyleSheet.create({
+  // A single white surface for the mobile detail page.
   screen: {
     flex: 1,
-    backgroundColor: AppColors.backgroundWhite,
+    backgroundColor: Ground.surface,
   },
   centered: {
     flex: 1,
-    backgroundColor: AppColors.backgroundWhite,
+    backgroundColor: Ground.surface,
     justifyContent: 'center',
     alignItems: 'center',
-    paddingHorizontal: Spacing.lg,
+    paddingHorizontal: Space.lg,
+    gap: Space.base,
   },
 
-  // Header
+  // Header — white surface with a hairline bottom rule (pilot pattern).
   header: {
+    backgroundColor: Ground.surface,
     flexDirection: 'row',
     alignItems: 'center',
-    gap: Spacing.md,
-    paddingHorizontal: Spacing.base,
-    paddingVertical: Spacing.md,
-  },
-  headerTitle: {
-    fontFamily: 'Inter',
-    fontSize: FontSizes.lg,
-    fontWeight: FontWeights.semibold,
-    color: AppColors.black,
+    gap: Space.md,
+    paddingHorizontal: Space.base,
+    paddingVertical: Space.md,
+    borderBottomWidth: 1,
+    borderBottomColor: Line.hairline,
   },
 
   // Scroll
@@ -84,53 +75,34 @@ export const styles = StyleSheet.create({
     flex: 1,
   },
   contentContainer: {
-    paddingHorizontal: Spacing.lg,
-    paddingBottom: Spacing.xl,
-    gap: Spacing.xl,
-  },
-
-  // Class name
-  className: {
-    fontFamily: 'Inter',
-    fontSize: FontSizes.titleLg,
-    fontWeight: FontWeights.bold,
-    color: AppColors.black,
+    paddingHorizontal: Space.lg,
+    paddingTop: Space.lg,
+    paddingBottom: Space.xl,
+    gap: Space.xl,
   },
 
   // Meta rows
   metaGroup: {
-    gap: Spacing.sm,
+    gap: Space.sm,
   },
   metaRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: Spacing.sm,
-  },
-  metaText: {
-    fontFamily: 'Inter',
-    fontSize: FontSizes.body,
-    fontWeight: FontWeights.regular,
-    color: AppColors.textGray600,
+    gap: Space.sm,
   },
 
-  // Divider
+  // Divider (hairline)
   divider: {
     height: 1,
-    backgroundColor: AppColors.borderDim,
+    backgroundColor: Line.hairline,
   },
 
   // Section groups
   sectionGap8: {
-    gap: Spacing.sm,
+    gap: Space.sm,
   },
   sectionGap10: {
-    gap: Spacing.smMd,
-  },
-  sectionLabel: {
-    fontFamily: 'Inter',
-    fontSize: FontSizes.body,
-    fontWeight: FontWeights.semibold,
-    color: AppColors.black,
+    gap: Space.md,
   },
 
   // Capacity
@@ -139,68 +111,35 @@ export const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
   },
-  capacityCount: {
-    fontFamily: 'Inter',
-    fontSize: FontSizes.body,
-    fontWeight: FontWeights.semibold,
-    color: AppColors.black,
-  },
   capacityBarBg: {
     flexDirection: 'row',
-    height: 8,
-    borderRadius: BorderRadius.sm,
-    backgroundColor: AppColors.borderDim,
+    height: Space.sm,
+    borderRadius: Radius.chip,
+    backgroundColor: Ground.sunken,
     overflow: 'hidden',
   },
   capacityBarFill: {
-    height: 8,
-    borderRadius: BorderRadius.sm,
-    backgroundColor: AppColors.warningDefault,
-  },
-  capacityNote: {
-    fontFamily: 'Inter',
-    fontSize: FontSizes.smMd,
-    fontWeight: FontWeights.regular,
-    color: AppColors.warningDefault,
+    height: Space.sm,
+    borderRadius: Radius.chip,
+    backgroundColor: Ink.strong,
   },
 
-  // Booking status badge
-  statusBadge: {
+  // Booking status — a status chip beside its descriptive line.
+  statusRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: Spacing.sm,
-    borderRadius: BorderRadius.md,
-    paddingVertical: Spacing.md,
-    paddingHorizontal: Spacing.base,
+    gap: Space.sm,
   },
-  statusBadgeText: {
-    fontFamily: 'Inter',
-    fontSize: FontSizes.body,
-    fontWeight: FontWeights.semibold,
+  statusText: {
+    flex: 1,
   },
 
   // Programming
-  wodTitle: {
-    fontFamily: 'Inter',
-    fontSize: FontSizes.body,
-    fontWeight: FontWeights.semibold,
-    color: AppColors.textDark3,
-  },
   programBlock: {
-    gap: Spacing.tight,
-  },
-  programSubLabel: {
-    fontFamily: 'Inter',
-    fontSize: FontSizes.smMd,
-    fontWeight: FontWeights.semibold,
-    color: AppColors.textGray500,
+    gap: Space.xs,
   },
   programText: {
-    fontFamily: 'Inter',
-    fontSize: FontSizes.mdSm,
-    fontWeight: FontWeights.regular,
-    color: AppColors.textDark2,
-    lineHeight: FontSizes.mdSm * 1.4,
+    lineHeight: Type.lineHeight.relaxed,
   },
 
   // Recent result
@@ -209,104 +148,21 @@ export const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
   },
-  resultMetric: {
-    fontFamily: 'Inter',
-    fontSize: FontSizes.mdSm,
-    fontWeight: FontWeights.regular,
-    color: AppColors.textGray600,
-  },
-  resultValue: {
-    fontFamily: 'Inter',
-    fontSize: FontSizes.md,
-    fontWeight: FontWeights.semibold,
-    color: AppColors.textPrimary,
-  },
 
   // Mutation error
   mutationErrorCard: {
-    backgroundColor: AppColors.errorBg,
-    borderLeftWidth: 4,
-    borderLeftColor: AppColors.errorDefault,
-    borderRadius: BorderRadius.mdSm,
-    padding: Spacing.md,
-  },
-  mutationErrorText: {
-    fontFamily: 'Inter',
-    fontSize: FontSizes.body,
-    fontWeight: FontWeights.medium,
-    color: AppColors.errorDark,
+    backgroundColor: Status.dangerWash,
+    borderLeftWidth: Space.xs,
+    borderLeftColor: Status.danger,
+    borderRadius: Radius.control,
+    padding: Space.md,
   },
 
   // Action button area
   actionContainer: {
-    paddingTop: Spacing.md,
-    paddingHorizontal: Spacing.lg,
-    paddingBottom: Spacing.xxxl,
-    gap: Spacing.md,
-  },
-  leaveWaitlistBtn: {
-    height: 50,
-    borderRadius: BorderRadius.lg,
-    backgroundColor: AppColors.backgroundWhite,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 2,
-    borderColor: AppColors.errorDefault,
-  },
-  leaveWaitlistBtnText: {
-    fontFamily: 'Inter',
-    fontSize: FontSizes.bodyMd,
-    fontWeight: FontWeights.bold,
-    color: AppColors.errorDefault,
-    letterSpacing: 0.5,
-  },
-  cancelBtn: {
-    height: 50,
-    borderRadius: BorderRadius.lg,
-    backgroundColor: AppColors.errorDefault,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  cancelBtnText: {
-    fontFamily: 'Inter',
-    fontSize: FontSizes.bodyMd,
-    fontWeight: FontWeights.bold,
-    color: AppColors.backgroundWhite,
-    letterSpacing: 0.5,
-  },
-  bookBtn: {
-    height: 50,
-    borderRadius: BorderRadius.lg,
-    backgroundColor: AppColors.textDark3,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  bookBtnText: {
-    fontFamily: 'Inter',
-    fontSize: FontSizes.bodyMd,
-    fontWeight: FontWeights.bold,
-    color: AppColors.backgroundWhite,
-    letterSpacing: 0.5,
-  },
-
-  // Error screen
-  errorText: {
-    fontFamily: 'Inter',
-    fontSize: FontSizes.md,
-    color: AppColors.errorDark,
-    textAlign: 'center',
-    marginBottom: Spacing.base,
-  },
-  errorBackBtn: {
-    paddingVertical: Spacing.md,
-    paddingHorizontal: Spacing.xl,
-    borderRadius: BorderRadius.md,
-    backgroundColor: AppColors.borderDim,
-  },
-  errorBackBtnText: {
-    fontFamily: 'Inter',
-    fontSize: FontSizes.body,
-    fontWeight: FontWeights.semibold,
-    color: AppColors.black,
+    paddingTop: Space.md,
+    paddingHorizontal: Space.lg,
+    paddingBottom: Space.xxl,
+    gap: Space.md,
   },
 });

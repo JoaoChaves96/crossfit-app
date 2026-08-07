@@ -1,7 +1,14 @@
+/*
+ * ─── Clean Ink · Log Results (form-heavy athlete screen) ─────────────────────
+ * The reference for how Clean Ink handles inputs, selects, and metadata rows on
+ * a form surface: hairline-bordered fields that focus to the one crimson accent,
+ * muted uppercase micro-labels, selection carried by FilterChips (accent) and a
+ * SegmentedToggle for units, and one primary crimson action. Monochrome ground,
+ * drawn Ionicons, Hanken Grotesk throughout — no native chrome, no emoji.
+ */
 import React, { useEffect, useState } from 'react';
 import {
   View,
-  Text,
   ScrollView,
   TouchableOpacity,
   TextInput,
@@ -9,42 +16,22 @@ import {
 } from 'react-native';
 import { styles, desktopStyles } from './log-results.styles';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '@/hooks/useAuth';
 import { useGym } from '@/hooks/useGym';
 import { createApiClient } from '@/utils/api-client';
 import { useResponsiveLayout } from '@/hooks/useResponsiveLayout';
 import { DesktopTopNav } from '@/components/DesktopTopNav';
-import { AppColors, Spacing } from '@/constants/theme';
 import { SafeScreen } from '@/components/SafeScreen';
 import { formatDayMonth } from '@/utils/datetime';
 import { components } from '@/types/api.gen';
-
-// --- Design tokens ---
-const COLORS = {
-  bg: '#FFFFFF',
-  fontPrimary: '#1A1A1A',
-  fontSecondary: '#666666',
-  fontTertiary: '#999999',
-  border: '#E0E0E0',
-  divider: '#E5E5E5',
-  accent: '#333333',
-  accentLight: '#F0F0F0',
-  black: '#000000',
-  white: '#FFFFFF',
-  danger: '#D32F2F',
-  errorBg: '#FFEBEE',
-  errorText: '#C62828',
-} as const;
-
-const FONT_SIZES = {
-  xs: 12,
-  sm: 13,
-  base: 14,
-  md: 15,
-  lg: 16,
-  xl: 18,
-} as const;
+import { Space, Ink, Accent, Status } from '@/constants/design';
+import {
+  Text,
+  Icon,
+  Button,
+  SegmentedToggle,
+  FilterChips,
+} from '@/components/cleanink';
 
 // --- Types from generated schema ---
 type ClassScheduleItem = components['schemas']['ClassScheduleItemDto'];
@@ -86,12 +73,22 @@ const DEFAULT_UNIT: Record<MetricType, MetricUnit> = {
 
 const ALL_METRIC_TYPES: MetricType[] = ['time', 'reps', 'weight', 'rounds', 'note'];
 
+// Metric-type chip labels are the display text; map back to the type on change.
+const METRIC_TYPE_OPTIONS = ALL_METRIC_TYPES.map((t) => METRIC_LABELS[t]);
+const METRIC_TYPE_BY_LABEL: Record<string, MetricType> = ALL_METRIC_TYPES.reduce(
+  (acc, t) => {
+    acc[METRIC_LABELS[t]] = t;
+    return acc;
+  },
+  {} as Record<string, MetricType>,
+);
+
 // --- Sub-components ---
 
 function LoadingScreen() {
   return (
     <View style={styles.centered}>
-      <ActivityIndicator size="large" color={COLORS.accent} />
+      <ActivityIndicator size="large" color={Accent.base} />
     </View>
   );
 }
@@ -99,16 +96,14 @@ function LoadingScreen() {
 function ErrorScreen({ message, onBack }: { message: string; onBack: () => void }) {
   return (
     <View style={styles.centered}>
-      <Text style={styles.errorText}>{message}</Text>
-      <TouchableOpacity style={styles.errorBackBtn} onPress={onBack}>
-        <Text style={styles.errorBackBtnText}>Go Back</Text>
-      </TouchableOpacity>
+      <Text size="body" tone={Status.danger} style={{ textAlign: 'center' }}>
+        {message}
+      </Text>
+      <View style={{ width: 160 }}>
+        <Button variant="quiet" label="Go Back" onPress={onBack} />
+      </View>
     </View>
   );
-}
-
-function Divider() {
-  return <View style={styles.divider} />;
 }
 
 function ProgrammingSection({ content }: { content: string }) {
@@ -116,48 +111,30 @@ function ProgrammingSection({ content }: { content: string }) {
   const preview = content.length > 120 ? content.slice(0, 120) + '…' : content;
 
   return (
-    <View style={styles.progSection}>
-      <Text style={styles.sectionLabel}>Programming</Text>
-      <Text style={styles.progContent}>{collapsed ? preview : content}</Text>
+    <View style={styles.card}>
+      <Text size="label" weight="semibold" tone={Ink.muted} upper>
+        Programming
+      </Text>
+      <Text size="body" tone={Ink.muted} style={styles.progContent}>
+        {collapsed ? preview : content}
+      </Text>
       {content.length > 120 && (
-        <TouchableOpacity onPress={() => setCollapsed((c) => !c)} activeOpacity={0.7}>
-          <Text style={styles.progToggle}>{collapsed ? 'Show more' : 'Show less'}</Text>
+        <TouchableOpacity onPress={() => setCollapsed((c) => !c)} activeOpacity={0.7} style={styles.progToggle}>
+          <Text size="meta" weight="semibold" tone={Accent.base}>
+            {collapsed ? 'Show more' : 'Show less'}
+          </Text>
         </TouchableOpacity>
       )}
     </View>
   );
 }
 
-function MetricTypeSelector({
-  selected,
-  onChange,
-}: {
-  selected: MetricType;
-  onChange: (type: MetricType) => void;
-}) {
+// A muted uppercase micro-label for form fields.
+function FieldLabel({ children }: { children: string }) {
   return (
-    <View style={styles.metricTypeRow}>
-      {ALL_METRIC_TYPES.map((type) => (
-        <TouchableOpacity
-          key={type}
-          style={[
-            styles.metricTypeChip,
-            selected === type && styles.metricTypeChipSelected,
-          ]}
-          onPress={() => onChange(type)}
-          activeOpacity={0.75}
-        >
-          <Text
-            style={[
-              styles.metricTypeChipText,
-              selected === type && styles.metricTypeChipTextSelected,
-            ]}
-          >
-            {type.toUpperCase()}
-          </Text>
-        </TouchableOpacity>
-      ))}
-    </View>
+    <Text size="label" weight="semibold" tone={Ink.muted} upper>
+      {children}
+    </Text>
   );
 }
 
@@ -171,37 +148,23 @@ function UnitSelector({
   onChange: (unit: MetricUnit) => void;
 }) {
   const units = METRIC_UNITS[metricType];
+
   if (units.length <= 1) {
     return (
-      <View style={styles.unitWrap}>
-        <Text style={styles.unitText}>{units[0] === 'none' ? '' : units[0]}</Text>
+      <View style={styles.unitStatic}>
+        <Text size="body" weight="semibold" tone={Ink.faint}>
+          {units[0] === 'none' ? '' : units[0]}
+        </Text>
       </View>
     );
   }
 
   return (
-    <View style={styles.unitSelectorRow}>
-      {units.map((unit) => (
-        <TouchableOpacity
-          key={unit}
-          style={[
-            styles.unitChip,
-            selected === unit && styles.unitChipSelected,
-          ]}
-          onPress={() => onChange(unit)}
-          activeOpacity={0.75}
-        >
-          <Text
-            style={[
-              styles.unitChipText,
-              selected === unit && styles.unitChipTextSelected,
-            ]}
-          >
-            {unit}
-          </Text>
-        </TouchableOpacity>
-      ))}
-    </View>
+    <SegmentedToggle<MetricUnit>
+      options={units.map((u) => ({ value: u, label: u }))}
+      value={selected}
+      onChange={onChange}
+    />
   );
 }
 
@@ -228,6 +191,7 @@ export default function LogResultsScreen() {
   const [metricValue, setMetricValue] = useState('');
   const [unit, setUnit] = useState<MetricUnit>('seconds');
   const [notes, setNotes] = useState('');
+  const [focusedField, setFocusedField] = useState<'value' | 'notes' | null>(null);
 
   // Submit state
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -356,55 +320,64 @@ export default function LogResultsScreen() {
   const formContent = (
     <>
       {/* Programming section */}
-      {hasProgramming && (
-        <>
-          <ProgrammingSection content={programming!.content as string} />
-          <Divider />
-        </>
-      )}
+      {hasProgramming && <ProgrammingSection content={programming!.content as string} />}
 
       {/* Not loggable warning */}
       {!isLoggable && (
         <View style={styles.warningCard}>
-          <Ionicons name="information-circle-outline" size={16} color={COLORS.fontSecondary} />
-          <Text style={styles.warningText}>
+          <Icon name="info" size={16} tone={Ink.muted} />
+          <Text size="meta" tone={Ink.muted} style={styles.warningText}>
             Result logging is not enabled for this class.
           </Text>
         </View>
       )}
 
       {/* Form section */}
-      <View style={styles.formSection}>
-        <Text style={styles.formTitle}>Your Result</Text>
+      <View style={styles.card}>
+        <Text size="title" weight="semibold" tracking="snug">
+          Your Result
+        </Text>
 
         {/* Edit mode indicator */}
         {isEditMode && (
           <View style={styles.editStateRow}>
-            <Ionicons name="pencil-outline" size={14} color={COLORS.fontTertiary} />
-            <Text style={styles.editStateLabel}>Edit state — result already logged</Text>
+            <Icon name="edit" size={14} tone={Ink.faint} />
+            <Text size="meta" weight="medium" tone={Ink.faint}>
+              Edit state — result already logged
+            </Text>
           </View>
         )}
 
         {/* Metric type selector (only in new result mode) */}
         {!isEditMode && (
           <View style={styles.fieldGroup}>
-            <Text style={styles.fieldLabel}>METRIC TYPE</Text>
-            <MetricTypeSelector selected={metricType} onChange={setMetricType} />
+            <FieldLabel>METRIC TYPE</FieldLabel>
+            <FilterChips
+              options={METRIC_TYPE_OPTIONS}
+              active={METRIC_LABELS[metricType]}
+              onChange={(label) => setMetricType(METRIC_TYPE_BY_LABEL[label])}
+            />
           </View>
         )}
 
         {/* Metric value input row */}
         <View style={styles.metricRow}>
           <View style={styles.metricInputWrap}>
-            <Text style={styles.fieldLabel}>{metricLabel}</Text>
+            <FieldLabel>{metricLabel}</FieldLabel>
             {isNoteType ? (
               <TextInput
                 testID="log-results-value-input"
-                style={[styles.metricInput, isEditMode && styles.metricInputActive]}
+                style={[
+                  styles.input,
+                  styles.inputMultiline,
+                  focusedField === 'value' && styles.inputFocused,
+                ]}
                 value={metricValue}
                 onChangeText={setMetricValue}
+                onFocus={() => setFocusedField('value')}
+                onBlur={() => setFocusedField(null)}
                 placeholder="Add a note…"
-                placeholderTextColor={COLORS.fontTertiary}
+                placeholderTextColor={Ink.faint}
                 multiline
                 numberOfLines={2}
                 autoCapitalize="sentences"
@@ -412,34 +385,40 @@ export default function LogResultsScreen() {
             ) : (
               <TextInput
                 testID="log-results-value-input"
-                style={[styles.metricInput, isEditMode && styles.metricInputActive]}
+                style={[styles.input, focusedField === 'value' && styles.inputFocused]}
                 value={metricValue}
                 onChangeText={setMetricValue}
+                onFocus={() => setFocusedField('value')}
+                onBlur={() => setFocusedField(null)}
                 keyboardType="numeric"
                 placeholder="0"
-                placeholderTextColor={COLORS.fontTertiary}
+                placeholderTextColor={Ink.faint}
               />
             )}
           </View>
 
           {!isNoteType && (
-            <UnitSelector
-              metricType={metricType}
-              selected={unit}
-              onChange={setUnit}
-            />
+            <View style={styles.unitColumn}>
+              <UnitSelector metricType={metricType} selected={unit} onChange={setUnit} />
+            </View>
           )}
         </View>
 
         {/* Notes field */}
         <View style={styles.notesWrap}>
-          <Text style={styles.fieldLabel}>NOTES (optional)</Text>
+          <FieldLabel>NOTES (optional)</FieldLabel>
           <TextInput
-            style={styles.notesInput}
+            style={[
+              styles.input,
+              styles.inputMultiline,
+              focusedField === 'notes' && styles.inputFocused,
+            ]}
             value={notes}
             onChangeText={setNotes}
+            onFocus={() => setFocusedField('notes')}
+            onBlur={() => setFocusedField(null)}
             placeholder="Add a note…"
-            placeholderTextColor={COLORS.fontTertiary}
+            placeholderTextColor={Ink.faint}
             multiline
             numberOfLines={3}
             autoCapitalize="sentences"
@@ -449,7 +428,9 @@ export default function LogResultsScreen() {
         {/* Submit error */}
         {submitError !== null && (
           <View style={styles.errorCard}>
-            <Text style={styles.errorCardText}>{submitError}</Text>
+            <Text size="body" weight="medium" tone={Status.danger}>
+              {submitError}
+            </Text>
           </View>
         )}
       </View>
@@ -457,20 +438,15 @@ export default function LogResultsScreen() {
   );
 
   const saveButton = (
-    <View style={styles.actionSection}>
-      <TouchableOpacity
+    <View style={isDesktop ? desktopStyles.actionSection : styles.actionSection}>
+      <Button
         testID="log-results-save-btn"
-        style={[styles.saveBtn, (!isLoggable || isSubmitting) && styles.saveBtnDisabled]}
+        variant="primary"
+        label={btnLabel}
         onPress={handleSubmit}
+        loading={isSubmitting}
         disabled={!isLoggable || isSubmitting}
-        activeOpacity={0.85}
-      >
-        {isSubmitting ? (
-          <ActivityIndicator color={COLORS.white} size="small" />
-        ) : (
-          <Text style={styles.saveBtnText}>{btnLabel}</Text>
-        )}
-      </TouchableOpacity>
+      />
     </View>
   );
 
@@ -487,15 +463,19 @@ export default function LogResultsScreen() {
           <View style={desktopStyles.innerWrap}>
             {/* Back row */}
             <TouchableOpacity style={desktopStyles.backRow} onPress={() => router.back()} activeOpacity={0.7}>
-              <Ionicons name="chevron-back" size={20} color={AppColors.textPrimary} />
-              <Text style={desktopStyles.backText}>{classTypeName}</Text>
+              <Icon name="back" size={20} tone={Ink.strong} />
+              <Text size="lead" weight="bold" tracking="tight">
+                {classTypeName}
+              </Text>
             </TouchableOpacity>
 
             {/* Subtitle */}
             {scheduledDate !== '' && (
               <View style={styles.subtitleRow}>
-                <Ionicons name="calendar-outline" size={14} color={COLORS.fontSecondary} />
-                <Text style={styles.subtitleText}>{scheduledDate}</Text>
+                <Icon name="calendar" size={14} tone={Ink.muted} />
+                <Text size="meta" tone={Ink.muted}>
+                  {scheduledDate}
+                </Text>
               </View>
             )}
 
@@ -511,21 +491,25 @@ export default function LogResultsScreen() {
   return (
     <View style={styles.screen}>
       {/* Header */}
-      <SafeScreen style={styles.header} extraTopPadding={Spacing.md}>
+      <SafeScreen style={styles.header} extraTopPadding={Space.md}>
         <TouchableOpacity
           onPress={() => router.back()}
           hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
         >
-          <Ionicons name="chevron-back" size={24} color={COLORS.black} />
+          <Icon name="back" size={24} tone={Ink.strong} />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>{classTypeName}</Text>
+        <Text size="screen" weight="bold" tracking="tight">
+          {classTypeName}
+        </Text>
       </SafeScreen>
 
       {/* Subtitle */}
       {scheduledDate !== '' && (
         <View style={styles.subtitleRow}>
-          <Ionicons name="calendar-outline" size={14} color={COLORS.fontSecondary} />
-          <Text style={styles.subtitleText}>{scheduledDate}</Text>
+          <Icon name="calendar" size={14} tone={Ink.muted} />
+          <Text size="meta" tone={Ink.muted}>
+            {scheduledDate}
+          </Text>
         </View>
       )}
 
@@ -542,4 +526,3 @@ export default function LogResultsScreen() {
     </View>
   );
 }
-

@@ -1,19 +1,17 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import {
   View,
-  Text,
   ScrollView,
-  TouchableOpacity,
+  Pressable,
   ActivityIndicator,
 } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '@/hooks/useAuth';
 import { useGym } from '@/hooks/useGym';
 import { createApiClient } from '@/utils/api-client';
 import { showConfirm, showError } from '@/utils/alert';
 import { components } from '@/types/api.gen';
-import { AppColors, Spacing } from '@/constants/theme';
+import { Ink, Accent, Status, Space } from '@/constants/design';
 import { SafeScreen } from '@/components/SafeScreen';
 import { formatShortDate, formatTimeRange } from '@/utils/datetime';
 import { formatResultValue, formatMetricLabel } from '@/utils/result-format';
@@ -21,6 +19,7 @@ import { useResponsiveLayout } from '@/hooks/useResponsiveLayout';
 import { useRefreshOnAppActive } from '@/hooks/useRefreshOnAppActive';
 import { useNotifications } from '@/hooks/useNotifications';
 import { DesktopTopNav } from '@/components/DesktopTopNav';
+import { Text, Icon, IconName, StatusChip, ChipTone, Button } from '@/components/cleanink';
 import { styles, desktopStyles } from './class-details.styles';
 
 // --- Types ---
@@ -39,13 +38,13 @@ function MetaRow({
   iconName,
   text,
 }: {
-  iconName: keyof typeof Ionicons.glyphMap;
+  iconName: IconName;
   text: string;
 }) {
   return (
     <View style={styles.metaRow}>
-      <Ionicons name={iconName} size={16} color={AppColors.textGray600} />
-      <Text style={styles.metaText}>{text}</Text>
+      <Icon name={iconName} size={16} tone={Ink.faint} />
+      <Text size="body" tone={Ink.muted}>{text}</Text>
     </View>
   );
 }
@@ -55,7 +54,11 @@ function Divider() {
 }
 
 function SectionLabel({ text }: { text: string }) {
-  return <Text style={styles.sectionLabel}>{text}</Text>;
+  return (
+    <Text size="label" weight="semibold" tone={Ink.muted} upper tracking="wide">
+      {text}
+    </Text>
+  );
 }
 
 function CapacitySection({
@@ -73,12 +76,13 @@ function CapacitySection({
     <View style={styles.sectionGap8}>
       <SectionLabel text="Capacity" />
       <View style={styles.capacityHeader}>
-        <Text style={styles.capacityCount}>{`${bookedCount} / ${capacity}`}</Text>
+        <Text size="title" weight="semibold">{`${bookedCount} / ${capacity}`}</Text>
       </View>
+      {/* Monochrome fill on a sunken track — capacity reads through weight, not hue. */}
       <View style={styles.capacityBarBg}>
         <View style={[styles.capacityBarFill, { flex: fillRatio }]} />
       </View>
-      <Text style={styles.capacityNote}>
+      <Text size="meta" tone={Ink.muted}>
         {`${pct}% full · ${remaining} spot${remaining !== 1 ? 's' : ''} remaining`}
       </Text>
     </View>
@@ -98,8 +102,14 @@ function BookingStatusSection({
 
   if (!isBooked && !isWaitlisted && !isFull) return null;
 
-  const badgeColor = isBooked ? AppColors.successDefault : AppColors.warningOrange;
-  const badgeBg = isBooked ? AppColors.successBg50 : AppColors.warningBgOrange;
+  // Tone + short label mirror the schedule pilot's CHIP_CONFIG exactly:
+  // booked/waitlisted = accent (the athlete's own held spot), full = danger.
+  const chip: { tone: ChipTone; label: string } = isBooked
+    ? { tone: 'accent', label: 'Booked' }
+    : isWaitlisted
+      ? { tone: 'accent', label: 'Waitlisted' }
+      : { tone: 'danger', label: 'Full' };
+
   const waitlistLabel =
     waitlistPosition != null
       ? `WAITLIST #${waitlistPosition} – You are #${waitlistPosition} in line`
@@ -109,16 +119,16 @@ function BookingStatusSection({
     : isFull
       ? 'Class is full – not booked'
       : waitlistLabel;
-  const iconName: keyof typeof Ionicons.glyphMap = isBooked
-    ? 'checkmark-circle'
-    : 'ban';
+  const detailTone = isFull ? Status.danger : isBooked ? Ink.strong : Ink.muted;
 
   return (
     <View style={styles.sectionGap8}>
       <SectionLabel text="Booking Status" />
-      <View style={[styles.statusBadge, { backgroundColor: badgeBg }]}>
-        <Ionicons name={iconName} size={18} color={badgeColor} />
-        <Text style={[styles.statusBadgeText, { color: badgeColor }]}>{labelText}</Text>
+      <View style={styles.statusRow}>
+        <StatusChip tone={chip.tone} label={chip.label} />
+        <Text size="body" weight="semibold" tone={detailTone} style={styles.statusText}>
+          {labelText}
+        </Text>
       </View>
     </View>
   );
@@ -134,14 +144,14 @@ function ProgrammingSection({
   return (
     <View style={styles.sectionGap10}>
       <SectionLabel text="Programming" />
-      <Text style={styles.wodTitle}>WOD</Text>
+      <Text size="body" weight="semibold" tone={Ink.muted}>WOD</Text>
       <View style={styles.programBlock}>
         {isLoading ? (
-          <ActivityIndicator size="small" color={AppColors.textGray500} />
+          <ActivityIndicator size="small" color={Ink.faint} />
         ) : content && content.trim().length > 0 ? (
-          <Text style={styles.programText}>{content}</Text>
+          <Text size="body" tone={Ink.muted} style={styles.programText}>{content}</Text>
         ) : (
-          <Text style={styles.programText}>
+          <Text size="body" tone={Ink.muted} style={styles.programText}>
             No programming has been posted for this class yet.
           </Text>
         )}
@@ -161,14 +171,14 @@ function ResultsSection({
     <View style={styles.sectionGap10}>
       <SectionLabel text="Recent Results" />
       {isLoading ? (
-        <ActivityIndicator size="small" color={AppColors.textGray500} />
+        <ActivityIndicator size="small" color={Ink.faint} />
       ) : result ? (
         <View style={styles.resultRow}>
-          <Text style={styles.resultMetric}>{formatMetricLabel(result.metricType)}</Text>
-          <Text style={styles.resultValue}>{formatResultValue(result)}</Text>
+          <Text size="body" tone={Ink.muted}>{formatMetricLabel(result.metricType)}</Text>
+          <Text size="body" weight="semibold">{formatResultValue(result)}</Text>
         </View>
       ) : (
-        <Text style={styles.programText}>You haven&apos;t logged a result for this class.</Text>
+        <Text size="body" tone={Ink.muted} style={styles.programText}>You haven&apos;t logged a result for this class.</Text>
       )}
     </View>
   );
@@ -179,7 +189,7 @@ function ResultsSection({
 function LoadingScreen() {
   return (
     <View style={styles.centered}>
-      <ActivityIndicator size="large" color={AppColors.textDark3} />
+      <ActivityIndicator size="large" color={Accent.base} />
     </View>
   );
 }
@@ -187,10 +197,8 @@ function LoadingScreen() {
 function ErrorScreen({ message, onBack }: { message: string; onBack: () => void }) {
   return (
     <View style={styles.centered}>
-      <Text style={styles.errorText}>{message}</Text>
-      <TouchableOpacity style={styles.errorBackBtn} onPress={onBack}>
-        <Text style={styles.errorBackBtnText}>Go Back</Text>
-      </TouchableOpacity>
+      <Text size="body" tone={Status.danger} style={{ textAlign: 'center' }}>{message}</Text>
+      <Button variant="quiet" label="Go Back" onPress={onBack} />
     </View>
   );
 }
@@ -394,58 +402,52 @@ export default function ClassDetailsScreen() {
   const canJoinWaitlist = isClassPublished && bookingStatus === 'full';
   const canCancel = bookingStatus === 'booked' || bookingStatus === 'waitlisted';
 
-  const bookBtnLabel =
-    bookingStatus === 'full' ? 'JOIN WAITLIST' : 'BOOK CLASS';
-
   const formattedDate = `${formatShortDate(classData.scheduledDate)} · ${formatTimeRange(classData.scheduledTime, classData.duration)}`;
   const coachLabel = `Coach: ${classData.coachName}`;
 
   // ── Action buttons (shared) ────────────────────────────────────────────────
+  // Variants mirror the schedule pilot's CardActionButton: primary book,
+  // danger cancel, quiet waitlist. Labels/testIDs are preserved verbatim.
   const actionButtons = (
     <View style={isDesktop ? desktopStyles.actionContainer : styles.actionContainer}>
       {bookingStatus === 'waitlisted' && (
-        <TouchableOpacity
+        <Button
           testID="leave-waitlist-btn"
-          style={styles.leaveWaitlistBtn}
+          variant="quiet"
+          label="LEAVE WAITLIST"
+          loading={isSubmitting}
           onPress={handleCancel}
-          disabled={isSubmitting}
-          activeOpacity={0.85}>
-          {isSubmitting ? (
-            <ActivityIndicator color={AppColors.errorDefault} size="small" />
-          ) : (
-            <Text style={styles.leaveWaitlistBtnText}>LEAVE WAITLIST</Text>
-          )}
-        </TouchableOpacity>
+        />
       )}
 
       {bookingStatus === 'booked' && (
-        <TouchableOpacity
+        <Button
           testID="cancel-booking-btn"
-          style={styles.cancelBtn}
+          variant="danger"
+          label="CANCEL BOOKING"
+          loading={isSubmitting}
           onPress={handleCancel}
-          disabled={isSubmitting}
-          activeOpacity={0.85}>
-          {isSubmitting ? (
-            <ActivityIndicator color={AppColors.backgroundWhite} size="small" />
-          ) : (
-            <Text style={styles.cancelBtnText}>CANCEL BOOKING</Text>
-          )}
-        </TouchableOpacity>
+        />
       )}
 
-      {(canBook || canJoinWaitlist) && (
-        <TouchableOpacity
+      {canBook && (
+        <Button
           testID="book-btn"
-          style={styles.bookBtn}
+          variant="primary"
+          label="BOOK CLASS"
+          loading={isSubmitting}
           onPress={handleBook}
-          disabled={isSubmitting}
-          activeOpacity={0.85}>
-          {isSubmitting ? (
-            <ActivityIndicator color={AppColors.backgroundWhite} size="small" />
-          ) : (
-            <Text style={styles.bookBtnText}>{bookBtnLabel}</Text>
-          )}
-        </TouchableOpacity>
+        />
+      )}
+
+      {canJoinWaitlist && (
+        <Button
+          testID="book-btn"
+          variant="quiet"
+          label="JOIN WAITLIST"
+          loading={isSubmitting}
+          onPress={handleBook}
+        />
       )}
     </View>
   );
@@ -459,20 +461,20 @@ export default function ClassDetailsScreen() {
           {/* Left column — class info + booking */}
           <View style={desktopStyles.leftCol}>
             {/* Back row */}
-            <TouchableOpacity style={desktopStyles.backRow} onPress={() => router.back()} activeOpacity={0.7}>
-              <Ionicons name="chevron-back" size={20} color={AppColors.textPrimary} />
-              <Text style={desktopStyles.backText}>Back to Schedule</Text>
-            </TouchableOpacity>
+            <Pressable style={desktopStyles.backRow} onPress={() => router.back()}>
+              <Icon name="back" size={20} tone={Ink.strong} />
+              <Text size="body" weight="medium" tone={Ink.muted}>Back to Schedule</Text>
+            </Pressable>
 
             {/* Class name */}
-            <Text style={desktopStyles.className}>{classData.classTypeName}</Text>
+            <Text size="display" weight="bold" tracking="tight">{classData.classTypeName}</Text>
 
             {/* Meta info */}
             <View style={styles.metaGroup}>
-              <MetaRow iconName="calendar-outline" text={formattedDate} />
-              <MetaRow iconName="person-outline" text={coachLabel} />
+              <MetaRow iconName="calendar" text={formattedDate} />
+              <MetaRow iconName="coach" text={coachLabel} />
               {classData.spaceName ? (
-                <MetaRow iconName="location-outline" text={classData.spaceName} />
+                <MetaRow iconName="place" text={classData.spaceName} />
               ) : null}
             </View>
 
@@ -492,7 +494,7 @@ export default function ClassDetailsScreen() {
             {/* Mutation error inline */}
             {mutationError !== null && (
               <View style={styles.mutationErrorCard}>
-                <Text style={styles.mutationErrorText}>{mutationError}</Text>
+                <Text size="body" weight="medium" tone={Status.danger}>{mutationError}</Text>
               </View>
             )}
           </View>
@@ -515,11 +517,11 @@ export default function ClassDetailsScreen() {
   return (
     <View style={styles.screen}>
       {/* Header */}
-      <SafeScreen style={styles.header} extraTopPadding={Spacing.md}>
-        <TouchableOpacity onPress={() => router.back()} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
-          <Ionicons name="chevron-back" size={24} color={AppColors.black} />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>Class Details</Text>
+      <SafeScreen style={styles.header} extraTopPadding={Space.md}>
+        <Pressable onPress={() => router.back()} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+          <Icon name="back" size={24} tone={Ink.strong} />
+        </Pressable>
+        <Text size="title" weight="semibold">Class Details</Text>
       </SafeScreen>
 
       {/* Scrollable content */}
@@ -529,14 +531,14 @@ export default function ClassDetailsScreen() {
         showsVerticalScrollIndicator={false}>
 
         {/* Class name */}
-        <Text style={styles.className}>{classData.classTypeName}</Text>
+        <Text size="screen" weight="bold" tracking="tight">{classData.classTypeName}</Text>
 
         {/* Meta info */}
         <View style={styles.metaGroup}>
-          <MetaRow iconName="calendar-outline" text={formattedDate} />
-          <MetaRow iconName="person-outline" text={coachLabel} />
+          <MetaRow iconName="calendar" text={formattedDate} />
+          <MetaRow iconName="coach" text={coachLabel} />
           {classData.spaceName ? (
-            <MetaRow iconName="location-outline" text={classData.spaceName} />
+            <MetaRow iconName="place" text={classData.spaceName} />
           ) : null}
         </View>
 
@@ -563,7 +565,7 @@ export default function ClassDetailsScreen() {
         {/* Mutation error inline */}
         {mutationError !== null && (
           <View style={styles.mutationErrorCard}>
-            <Text style={styles.mutationErrorText}>{mutationError}</Text>
+            <Text size="body" weight="medium" tone={Status.danger}>{mutationError}</Text>
           </View>
         )}
       </ScrollView>

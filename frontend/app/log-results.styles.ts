@@ -1,75 +1,76 @@
 import { StyleSheet } from 'react-native';
-import { AppColors, BorderRadius, FontSizes, FontWeights, Spacing } from '@/constants/theme';
+import {
+  Ground,
+  Line,
+  Accent,
+  Status,
+  Ink,
+  Space,
+  Radius,
+  Elevation,
+  Type,
+} from '@/constants/design';
 
+// ── Desktop layout ────────────────────────────────────────────────────────────
 export const desktopStyles = StyleSheet.create({
   screen: {
     flex: 1,
-    backgroundColor: '#F8F8F8',
+    backgroundColor: Ground.base,
   },
   contentArea: {
     alignItems: 'center',
-    paddingVertical: 32,
-    paddingHorizontal: 40,
+    paddingVertical: Space.xxl,
+    paddingHorizontal: Space.jumbo,
   },
   innerWrap: {
-    width: 560,
+    width: 640,
     maxWidth: '100%',
-    gap: 24,
+    gap: Space.lg,
   },
   backRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
+    gap: Space.sm,
   },
-  backText: {
-    fontFamily: 'Inter',
-    fontSize: FontSizes.body,
-    fontWeight: FontWeights.medium,
-    color: AppColors.textGray600,
-  },
+  // Action wrapper on desktop: no docked-bar chrome — the crimson button sits on
+  // Ground.base flush to the 640 card column (the mobile white band would orphan here).
+  actionSection: {},
 });
 
+// ── Shared / mobile ─────────────────────────────────────────────────────────
 export const styles = StyleSheet.create({
   screen: {
     flex: 1,
-    backgroundColor: AppColors.backgroundWhite,
+    backgroundColor: Ground.base,
   },
   centered: {
     flex: 1,
-    backgroundColor: AppColors.backgroundWhite,
+    backgroundColor: Ground.base,
     justifyContent: 'center',
     alignItems: 'center',
-    paddingHorizontal: Spacing.lg,
+    paddingHorizontal: Space.lg,
+    gap: Space.base,
   },
 
-  // Header
+  // Header (mobile) — white surface, hairline bottom rule
   header: {
+    backgroundColor: Ground.surface,
     flexDirection: 'row',
     alignItems: 'center',
-    gap: Spacing.md,
-    paddingHorizontal: Spacing.base,
-    paddingVertical: Spacing.md,
-  },
-  headerTitle: {
-    fontFamily: 'Inter',
-    fontSize: FontSizes.lg,
-    fontWeight: FontWeights.semibold,
-    color: AppColors.black,
+    gap: Space.md,
+    paddingHorizontal: Space.lg,
+    paddingVertical: Space.md,
+    borderBottomWidth: 1,
+    borderBottomColor: Line.hairline,
   },
 
-  // Subtitle row
+  // Subtitle row (date)
   subtitleRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: Spacing.compact,
-    paddingHorizontal: Spacing.base,
-    paddingBottom: Spacing.sm,
-  },
-  subtitleText: {
-    fontFamily: 'Inter',
-    fontSize: FontSizes.smMd,
-    fontWeight: FontWeights.regular,
-    color: AppColors.textGray600,
+    gap: Space.sm,
+    paddingHorizontal: Space.lg,
+    paddingTop: Space.md,
   },
 
   // Scroll
@@ -77,268 +78,121 @@ export const styles = StyleSheet.create({
     flex: 1,
   },
   scrollContent: {
-    paddingBottom: Spacing.xl,
+    padding: Space.lg,
+    gap: Space.base,
+    paddingBottom: Space.xl,
   },
 
-  // Divider
-  divider: {
-    height: 1,
-    backgroundColor: AppColors.borderDim,
+  // Card container (programming / form)
+  card: {
+    backgroundColor: Ground.surface,
+    borderRadius: Radius.card,
+    padding: Space.base,
+    borderWidth: 1,
+    borderColor: Line.hairline,
+    gap: Space.md,
+    ...Elevation.card,
   },
 
   // Programming
-  progSection: {
-    gap: Spacing.sm,
-    paddingHorizontal: Spacing.lg,
-    paddingVertical: Spacing.md,
-  },
-  sectionLabel: {
-    fontFamily: 'Inter',
-    fontSize: FontSizes.body,
-    fontWeight: FontWeights.semibold,
-    color: AppColors.textPrimary,
-  },
   progContent: {
-    fontFamily: 'Inter',
-    fontSize: FontSizes.mdSm,
-    fontWeight: FontWeights.regular,
-    color: AppColors.textDark2,
-    lineHeight: FontSizes.mdSm * 1.4,
+    lineHeight: Type.lineHeight.body,
   },
   progToggle: {
-    fontFamily: 'Inter',
-    fontSize: FontSizes.smMd,
-    fontWeight: FontWeights.semibold,
-    color: AppColors.textDark3,
-    marginTop: Spacing.tight,
+    marginTop: Space.xs,
   },
 
-  // Warning
+  // Not-loggable warning — quiet neutral wash row
   warningCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: Spacing.sm,
-    marginHorizontal: Spacing.lg,
-    marginTop: Spacing.md,
-    padding: Spacing.md,
-    backgroundColor: AppColors.backgroundSurface,
-    borderRadius: BorderRadius.md,
+    gap: Space.sm,
+    padding: Space.md,
+    backgroundColor: Ground.sunken,
+    borderRadius: Radius.control,
   },
   warningText: {
-    fontFamily: 'Inter',
-    fontSize: FontSizes.smMd,
-    fontWeight: FontWeights.regular,
-    color: AppColors.textGray600,
     flex: 1,
   },
 
-  // Form section
-  formSection: {
-    gap: Spacing.base,
-    paddingHorizontal: Spacing.lg,
-    paddingVertical: Spacing.base,
-  },
-  formTitle: {
-    fontFamily: 'Inter',
-    fontSize: FontSizes.md,
-    fontWeight: FontWeights.bold,
-    color: AppColors.textPrimary,
-  },
-
-  // Edit state indicator
+  // Form
   editStateRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: Spacing.sm,
-  },
-  editStateLabel: {
-    fontFamily: 'Inter',
-    fontSize: FontSizes.smMd,
-    fontWeight: FontWeights.medium,
-    color: AppColors.textGray500,
+    gap: Space.sm,
   },
 
   // Field group
   fieldGroup: {
-    gap: Spacing.compact,
-  },
-  fieldLabel: {
-    fontFamily: 'Inter',
-    fontSize: FontSizes.smMd,
-    fontWeight: FontWeights.semibold,
-    color: AppColors.textGray600,
-    letterSpacing: 0.5,
+    gap: Space.sm,
   },
 
-  // Metric type selector chips
-  metricTypeRow: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: Spacing.sm,
-  },
-  metricTypeChip: {
-    paddingVertical: Spacing.sm,
-    paddingHorizontal: Spacing.md,
-    borderRadius: BorderRadius.md,
-    backgroundColor: AppColors.backgroundSurface,
-  },
-  metricTypeChipSelected: {
-    backgroundColor: AppColors.textDark3,
-  },
-  metricTypeChipText: {
-    fontFamily: 'Inter',
-    fontSize: FontSizes.smMd,
-    fontWeight: FontWeights.semibold,
-    color: AppColors.textGray600,
-  },
-  metricTypeChipTextSelected: {
-    color: AppColors.backgroundWhite,
-  },
-
-  // Metric row (input + unit)
+  // Metric row (value input + unit control side by side)
   metricRow: {
     flexDirection: 'row',
     alignItems: 'flex-end',
-    gap: Spacing.md,
+    gap: Space.md,
   },
   metricInputWrap: {
     flex: 1,
-    gap: Spacing.compact,
+    gap: Space.sm,
   },
-  metricInput: {
-    height: 48,
-    borderRadius: BorderRadius.md,
-    backgroundColor: AppColors.backgroundWhite,
-    borderWidth: 1,
-    borderColor: AppColors.borderDefault,
-    paddingHorizontal: Spacing.base,
-    fontFamily: 'Inter',
-    fontSize: FontSizes.md,
-    fontWeight: FontWeights.semibold,
-    color: AppColors.textPrimary,
-  },
-  metricInputActive: {
-    borderWidth: 2,
-    borderColor: AppColors.textPrimary,
+  unitColumn: {
+    width: 140,
   },
 
-  // Unit selector
-  unitWrap: {
-    height: 48,
-    borderRadius: BorderRadius.md,
-    backgroundColor: AppColors.backgroundSurface,
-    paddingHorizontal: Spacing.md,
+  // Text inputs — hairline field, accent border on focus
+  input: {
+    height: 46,
+    borderRadius: Radius.control,
+    backgroundColor: Ground.surface,
+    borderWidth: 1,
+    borderColor: Line.divider,
+    paddingHorizontal: Space.base,
+    fontFamily: Type.family.semibold,
+    fontSize: Type.size.body,
+    color: Ink.strong,
+  },
+  inputMultiline: {
+    height: undefined,
+    minHeight: 72,
+    paddingTop: Space.md,
+    paddingBottom: Space.md,
+    fontFamily: Type.family.regular,
+    textAlignVertical: 'top',
+  },
+  inputFocused: {
+    borderColor: Accent.base,
+  },
+
+  // Single fixed unit — quiet pill
+  unitStatic: {
+    height: 46,
+    borderRadius: Radius.control,
+    backgroundColor: Ground.sunken,
     alignItems: 'center',
     justifyContent: 'center',
-  },
-  unitText: {
-    fontFamily: 'Inter',
-    fontSize: FontSizes.body,
-    fontWeight: FontWeights.semibold,
-    color: AppColors.textDark3,
-  },
-  unitSelectorRow: {
-    flexDirection: 'column',
-    gap: Spacing.tight,
-  },
-  unitChip: {
-    height: 22,
-    borderRadius: BorderRadius.mdSm,
-    backgroundColor: AppColors.backgroundSurface,
-    paddingHorizontal: Spacing.smMd,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  unitChipSelected: {
-    backgroundColor: AppColors.textDark3,
-  },
-  unitChipText: {
-    fontFamily: 'Inter',
-    fontSize: FontSizes.smMd,
-    fontWeight: FontWeights.semibold,
-    color: AppColors.textGray600,
-  },
-  unitChipTextSelected: {
-    color: AppColors.backgroundWhite,
   },
 
   // Notes
   notesWrap: {
-    gap: Spacing.compact,
-  },
-  notesInput: {
-    minHeight: 72,
-    borderRadius: BorderRadius.md,
-    backgroundColor: AppColors.backgroundWhite,
-    borderWidth: 1,
-    borderColor: AppColors.borderDefault,
-    paddingHorizontal: Spacing.base,
-    paddingTop: Spacing.md,
-    paddingBottom: Spacing.md,
-    fontFamily: 'Inter',
-    fontSize: FontSizes.body,
-    fontWeight: FontWeights.regular,
-    color: AppColors.textPrimary,
-    textAlignVertical: 'top',
+    gap: Space.sm,
   },
 
-  // Error card
+  // Submit error — danger wash card, danger text
   errorCard: {
-    backgroundColor: AppColors.errorBg,
-    borderLeftWidth: 4,
-    borderLeftColor: AppColors.errorMaterial,
-    borderRadius: BorderRadius.mdSm,
-    padding: Spacing.md,
-  },
-  errorCardText: {
-    fontFamily: 'Inter',
-    fontSize: FontSizes.body,
-    fontWeight: FontWeights.medium,
-    color: AppColors.errorDark,
+    backgroundColor: Status.dangerWash,
+    borderRadius: Radius.control,
+    padding: Space.md,
   },
 
-  // Action section
+  // Docked action bar (mobile) — white surface, hairline top rule
   actionSection: {
-    paddingTop: Spacing.md,
-    paddingHorizontal: Spacing.lg,
-    paddingBottom: Spacing.xxxl,
-  },
-  saveBtn: {
-    height: 50,
-    borderRadius: BorderRadius.lg,
-    backgroundColor: AppColors.textDark3,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  saveBtnDisabled: {
-    opacity: 0.5,
-  },
-  saveBtnText: {
-    fontFamily: 'Inter',
-    fontSize: FontSizes.bodyMd,
-    fontWeight: FontWeights.bold,
-    color: AppColors.backgroundWhite,
-    letterSpacing: 0.5,
-  },
-
-  // Error screen
-  errorText: {
-    fontFamily: 'Inter',
-    fontSize: FontSizes.md,
-    color: AppColors.errorDark,
-    textAlign: 'center',
-    marginBottom: Spacing.base,
-  },
-  errorBackBtn: {
-    paddingVertical: Spacing.md,
-    paddingHorizontal: Spacing.xl,
-    borderRadius: BorderRadius.md,
-    backgroundColor: AppColors.borderDim,
-  },
-  errorBackBtnText: {
-    fontFamily: 'Inter',
-    fontSize: FontSizes.body,
-    fontWeight: FontWeights.semibold,
-    color: AppColors.black,
+    backgroundColor: Ground.surface,
+    borderTopWidth: 1,
+    borderTopColor: Line.hairline,
+    paddingTop: Space.md,
+    paddingHorizontal: Space.lg,
+    paddingBottom: Space.xl,
   },
 });

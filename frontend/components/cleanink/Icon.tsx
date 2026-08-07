@@ -17,10 +17,14 @@ export type IconName =
   | 'calendar'
   | 'time'
   | 'chevronDown'
+  | 'back'
   | 'bell'
   | 'logout'
   | 'check'
-  | 'close';
+  | 'close'
+  | 'info'
+  | 'edit'
+  | 'gym';
 
 const GLYPH: Record<IconName, keyof typeof Ionicons.glyphMap> = {
   people: 'people-outline',
@@ -29,10 +33,14 @@ const GLYPH: Record<IconName, keyof typeof Ionicons.glyphMap> = {
   calendar: 'calendar-outline',
   time: 'time-outline',
   chevronDown: 'chevron-down',
+  back: 'chevron-back',
   bell: 'notifications-outline',
   logout: 'log-out-outline',
   check: 'checkmark',
   close: 'close',
+  info: 'information-circle-outline',
+  edit: 'pencil-outline',
+  gym: 'business-outline',
 };
 
 export interface IconProps {
