@@ -17,7 +17,10 @@ export type IconName =
   | 'calendar'
   | 'time'
   | 'chevronDown'
+  | 'chevronForward'
   | 'back'
+  | 'menu'
+  | 'add'
   | 'bell'
   | 'logout'
   | 'check'
@@ -25,7 +28,15 @@ export type IconName =
   | 'info'
   | 'edit'
   | 'gym'
-  | 'mail';
+  | 'mail'
+  // Owner/coach nav glyphs
+  | 'dashboard'
+  | 'schedule'
+  | 'classes'
+  | 'members'
+  | 'plans'
+  | 'invites'
+  | 'settings';
 
 const GLYPH: Record<IconName, keyof typeof Ionicons.glyphMap> = {
   people: 'people-outline',
@@ -34,7 +45,10 @@ const GLYPH: Record<IconName, keyof typeof Ionicons.glyphMap> = {
   calendar: 'calendar-outline',
   time: 'time-outline',
   chevronDown: 'chevron-down',
+  chevronForward: 'chevron-forward',
   back: 'chevron-back',
+  menu: 'menu',
+  add: 'add',
   bell: 'notifications-outline',
   logout: 'log-out-outline',
   check: 'checkmark',
@@ -43,6 +57,14 @@ const GLYPH: Record<IconName, keyof typeof Ionicons.glyphMap> = {
   edit: 'pencil-outline',
   gym: 'business-outline',
   mail: 'mail-outline',
+  // Owner/coach nav glyphs
+  dashboard: 'grid-outline',
+  schedule: 'calendar-outline',
+  classes: 'barbell-outline',
+  members: 'people-outline',
+  plans: 'card-outline',
+  invites: 'paper-plane-outline',
+  settings: 'settings-outline',
 };
 
 export interface IconProps {

@@ -9,3 +9,5 @@ export { Button, ButtonRow } from './Button';
 export type { ButtonVariant } from './Button';
 export { SegmentedToggle } from './SegmentedToggle';
 export { FilterChips } from './FilterChips';
+export { SelectField } from './SelectField';
+export type { SelectItem, SelectFetchState, SelectFieldProps } from './SelectField';
