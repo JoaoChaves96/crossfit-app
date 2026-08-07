@@ -1,6 +1,6 @@
 # EPIC: Impeccable Full-App Restyle — "Clean Ink"
 
-**Status:** 🟢 Phase 0 BUILT — awaiting live-review gate (2026-08-07)
+**Status:** 🟢 Phase 1 (athlete rollout) BUILT & verified — 7 screens done (2026-08-07)
 **Start Date:** 2026-08-07 (Phase 0 pilot built)
 **Owner:** Frontend + Impeccable design system
 **Depends on:** none (visual layer only; no API/contract changes)
@@ -142,10 +142,20 @@ checkpoint you asked for.
 Roll the committed system across the rest of the **athlete** flow, reusing the
 Phase-0 primitives (no new world decisions):
 
-- `(tabs)/my-bookings`, `(tabs)/training-history`, `(tabs)/profile`
-- `class-details`, `log-results`
-- `notifications`, `no-gym`, empty/error/loading states
-- shared: `(tabs)/_layout` tab bar, `SafeScreen`, `NotificationBell`, `GymMenu`
+**Done (2026-08-07):**
+- ✅ Core batch (committed `dbea8d3`): `(tabs)/my-bookings`, `class-details`,
+  `log-results` — off theme.ts, pilot-matching chip tones + Button variants,
+  finish-review fixes applied (class-details booked line → ink; log-results
+  desktop action bar → flush, no orphaned band). 16/16 class-details tests pass.
+- ✅ Lighter four (UNCOMMITTED, verified): `(tabs)/profile`, `(tabs)/training-history`,
+  `notifications`, `no-gym` — off theme.ts, emoji killed, pilot empty-state/card
+  language. Finish-review fixes applied (profile Switch teal→crimson track+white
+  thumb via activeThumbColor; no-gym Log Out accent→danger for Two Reds + parity
+  with profile). 25/25 tests pass (notifications), full tsc clean.
+
+**Remaining in Phase 1:**
+- shared: `(tabs)/_layout` tab bar (active label still legacy blue),
+  `SafeScreen`, `NotificationBell`, `GymMenu` (carried theme.ts debt)
 - auth surfaces used by athletes: `login`, `register`, `invite/*`
 
 **Gate:** athlete flow verified live end-to-end before starting another role.

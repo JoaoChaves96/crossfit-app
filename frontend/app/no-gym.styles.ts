@@ -1,63 +1,45 @@
 import { StyleSheet } from 'react-native';
-import { AppColors, BorderRadius, FontSizes, FontWeights, LineHeights, Spacing } from '@/constants/theme';
+import { Ground, Space, Type } from '@/constants/design';
 
+/*
+ * ─── Clean Ink · No-Gym zero-state (restyle) ─────────────────────────────────
+ * The onboarding empty state shown to an athlete with no gym membership.
+ * Mirrors the athlete pilot's empty-state treatment (centered icon-circle on a
+ * sunken tonal ground + Text + a single primary Button). Only the visual world
+ * changes — behavior, navigation, and copy are preserved exactly.
+ */
 export const styles = StyleSheet.create({
-  container: {
+  screen: {
     flex: 1,
-    backgroundColor: AppColors.backgroundSubtle,
+    backgroundColor: Ground.base,
   },
-  content: {
+  // Centered empty-state column (mirrors the pilot's emptyContainer)
+  emptyContainer: {
     flex: 1,
     justifyContent: 'center',
-    paddingTop: 0,
-    paddingRight: Spacing.xl,
-    paddingBottom: Spacing.jumboLg,
-    paddingLeft: Spacing.xl,
-  },
-  emptyState: {
     alignItems: 'center',
-    paddingHorizontal: Spacing.base,
-    gap: Spacing.base,
+    paddingHorizontal: Space.jumbo,
+    gap: Space.md,
   },
-  iconWrap: {
-    width: 80,
-    height: 80,
-    borderRadius: BorderRadius.round,
-    backgroundColor: AppColors.borderSubtle,
-    alignItems: 'center',
+  emptyIconCircle: {
+    width: 76,
+    height: 76,
+    borderRadius: 38,
+    backgroundColor: Ground.sunken,
     justifyContent: 'center',
-  },
-  iconPlaceholder: {
-    fontSize: FontSizes.hero,
+    alignItems: 'center',
+    marginBottom: Space.xs,
   },
   title: {
-    fontSize: FontSizes.xl,
-    fontWeight: FontWeights.bold,
-    color: AppColors.textPrimary,
     textAlign: 'center',
   },
-  description: {
-    fontSize: FontSizes.body,
-    color: AppColors.textGray600,
+  emptyDesc: {
     textAlign: 'center',
-    lineHeight: LineHeights.medium,
-    width: '100%',
+    maxWidth: 300,
+    lineHeight: Type.lineHeight.relaxed,
   },
-  spacer: {
-    height: 40,
-  },
-  logoutBtn: {
-    height: 50,
-    borderRadius: BorderRadius.lg,
-    backgroundColor: AppColors.backgroundWhite,
-    borderWidth: 1,
-    borderColor: AppColors.textPrimary,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  logoutLabel: {
-    fontSize: FontSizes.bodyMd,
-    fontWeight: FontWeights.semibold,
-    color: AppColors.textPrimary,
+  emptyButton: {
+    marginTop: Space.sm,
+    alignSelf: 'stretch',
   },
 });

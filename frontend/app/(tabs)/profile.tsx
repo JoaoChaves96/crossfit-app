@@ -1,23 +1,30 @@
+/*
+ * ─── Clean Ink · Athlete Profile (restyle) ───────────────────────────────────
+ * Sibling of the schedule / my-bookings pilots: white-surface hairline header,
+ * hairline cards with a whisper of elevation, drawn Ionicons behind semantic
+ * names (no emoji), one crimson primary action (Save Changes) and a distinct
+ * deeper-red danger action (Log Out). Data, handlers, copy, testIDs and logout
+ * logic are preserved exactly — only the visual world changes.
+ */
 import React, { useCallback, useEffect, useState } from 'react';
 import {
   ActivityIndicator,
   ScrollView,
   Switch,
-  Text,
   TextInput,
   TouchableOpacity,
   View,
 } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { useAuth } from '@/hooks/useAuth';
 import { createApiClient } from '@/utils/api-client';
 import type { components } from '@/types/api.gen';
-import { AppColors } from '@/constants/theme';
+import { Accent, Ground, Ink, Line, Space, Status } from '@/constants/design';
 import { useResponsiveLayout } from '@/hooks/useResponsiveLayout';
 import { useSafeAreaTop } from '@/components/SafeScreen';
 import { DesktopTopNav } from '@/components/DesktopTopNav';
 import { NotificationBell } from '@/components/NotificationBell';
+import { Text, Icon, Button } from '@/components/cleanink';
 import { styles, desktopStyles } from './profile.styles';
 
 type UserProfileDto = components['schemas']['UserProfileDto'];
@@ -52,6 +59,23 @@ type ScreenState =
   | { status: 'loading' }
   | { status: 'error'; message: string }
   | { status: 'success'; profile: UserProfileDto };
+
+// ─── Log Out (danger — distinct deeper red, never the accent) ─────────────────
+// The Button primitive is label-only; this action pairs a drawn logout glyph
+// with its label, so it composes the danger visual from tokens directly.
+function LogoutButton({ onPress }: { onPress: () => void }) {
+  return (
+    <TouchableOpacity
+      testID="profile-logout-btn"
+      style={styles.logoutButton}
+      onPress={onPress}
+      activeOpacity={0.8}
+    >
+      <Icon name="logout" size={18} tone={Status.danger} />
+      <Text size="body" weight="semibold" tone={Status.danger}>Log Out</Text>
+    </TouchableOpacity>
+  );
+}
 
 export default function ProfileScreen() {
   const { token, logout } = useAuth();
@@ -130,10 +154,10 @@ export default function ProfileScreen() {
 
   if (screenState.status === 'loading') {
     return (
-      <View style={isDesktop ? desktopStyles.screen : styles.centered}>
+      <View style={isDesktop ? desktopStyles.screen : styles.screen}>
         {isDesktop && <DesktopTopNav />}
-        <View style={styles.centered}>
-          <ActivityIndicator size="large" color={AppColors.textDark3} />
+        <View style={styles.centeredState}>
+          <ActivityIndicator size="large" color={Accent.base} />
         </View>
       </View>
     );
@@ -141,13 +165,15 @@ export default function ProfileScreen() {
 
   if (screenState.status === 'error') {
     return (
-      <View style={isDesktop ? desktopStyles.screen : styles.centered}>
+      <View style={isDesktop ? desktopStyles.screen : styles.screen}>
         {isDesktop && <DesktopTopNav />}
-        <View style={styles.centered}>
-          <Text style={styles.errorText}>{screenState.message}</Text>
-          <TouchableOpacity style={styles.retryButton} onPress={fetchProfile}>
-            <Text style={styles.retryButtonLabel}>Retry</Text>
-          </TouchableOpacity>
+        <View style={styles.centeredState}>
+          <Text size="body" tone={Status.danger} style={{ textAlign: 'center' }}>
+            {screenState.message}
+          </Text>
+          <View style={styles.retryButton}>
+            <Button variant="quiet" label="Retry" onPress={fetchProfile} />
+          </View>
         </View>
       </View>
     );
@@ -156,169 +182,27 @@ export default function ProfileScreen() {
   const { profile } = screenState;
   const initials = getInitials(profile.name);
 
-  // ── Desktop layout ──────────────────────────────────────────────────────
-  if (isDesktop) {
-    return (
-      <View style={desktopStyles.screen}>
-        <DesktopTopNav />
-        <ScrollView contentContainerStyle={desktopStyles.contentArea}>
-          <View style={desktopStyles.innerWrap}>
-            {/* Avatar section */}
-            <View style={styles.avatarSection}>
-              <View style={styles.avatarBg}>
-                <Text style={styles.initialsText}>{initials}</Text>
-              </View>
-              <View style={styles.nameRow}>
-                <Text style={styles.nameText}>{isEditing ? editedName : profile.name}</Text>
-                {!isEditing && (
-                  <TouchableOpacity onPress={handleEditPress} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
-                    <Text style={styles.editIconText}>{'✏'}</Text>
-                  </TouchableOpacity>
-                )}
-              </View>
-              <Text style={styles.emailText}>{profile.email}</Text>
-              <View style={styles.memberSinceRow}>
-                <Text style={styles.memberSince}>
-                  Member since {formatMemberSince(profile.createdAt)}
-                </Text>
-              </View>
-            </View>
-
-            {/* Divider */}
-            <View style={styles.dividerWrap}>
-              <View style={styles.divider} />
-            </View>
-
-            {/* Info card */}
-            <View style={styles.infoCard}>
-              <View style={styles.nameFieldRow}>
-                <Text style={styles.fieldLabel}>NAME</Text>
-                <View style={[styles.fieldInputWrap, isEditing && styles.fieldInputWrapActive]}>
-                  {isEditing ? (
-                    <TextInput
-                      style={styles.fieldInputText}
-                      value={editedName}
-                      onChangeText={setEditedName}
-                      autoFocus
-                      returnKeyType="done"
-                      onSubmitEditing={handleSave}
-                    />
-                  ) : (
-                    <Text style={styles.fieldInputText}>{profile.name}</Text>
-                  )}
-                </View>
-              </View>
-              <View style={styles.cardDivider} />
-              <View style={styles.emailFieldRow}>
-                <Text style={styles.fieldLabel}>EMAIL</Text>
-                <View style={styles.emailValueRow}>
-                  <Text style={styles.fieldInputText}>{profile.email}</Text>
-                </View>
-              </View>
-            </View>
-
-            {/* Notification Preferences */}
-            <View style={styles.notificationSection}>
-              <Text style={styles.fieldLabel}>NOTIFICATIONS</Text>
-              <Text style={styles.notificationDescription}>Choose which notifications you'd like to receive.</Text>
-              <View style={styles.notificationCard}>
-                {NOTIFICATION_ITEMS.map((item, index) => (
-                  <React.Fragment key={item.key}>
-                    {index > 0 && <View style={styles.notificationDivider} />}
-                    <View style={styles.notificationRow}>
-                      <View style={styles.notificationTextWrap}>
-                        <Text style={styles.notificationLabel}>{item.label}</Text>
-                        <Text style={styles.notificationSubtitle}>{item.subtitle}</Text>
-                      </View>
-                      <Switch
-                        testID={`notification-toggle-${item.key}`}
-                        value={notificationPrefs[item.key]}
-                        onValueChange={(val) => handleToggle(item.key, val)}
-                      />
-                    </View>
-                  </React.Fragment>
-                ))}
-              </View>
-            </View>
-
-            {/* Save button */}
-            {isEditing && (
-              <View style={styles.saveButtonWrap}>
-                <TouchableOpacity
-                  testID="profile-save-btn"
-                  style={styles.saveButton}
-                  onPress={handleSave}
-                  disabled={isSaving || editedName.trim().length === 0}
-                  activeOpacity={0.8}
-                >
-                  {isSaving ? (
-                    <ActivityIndicator size="small" color={AppColors.backgroundWhite} />
-                  ) : (
-                    <Text style={styles.saveButtonLabel}>Save Changes</Text>
-                  )}
-                </TouchableOpacity>
-              </View>
-            )}
-
-            {saveError !== null && (
-              <Text style={styles.saveErrorText}>{saveError}</Text>
-            )}
-
-            <View style={styles.noteRow}>
-              <Text style={styles.noteText}>Email cannot be changed</Text>
-            </View>
-
-            {/* Log out */}
-            <View style={styles.logoutButtonWrap}>
-              <TouchableOpacity
-                testID="profile-logout-btn"
-                style={styles.logoutButton}
-                onPress={handleLogout}
-                activeOpacity={0.8}
-              >
-                <Ionicons size={18} name="log-out-outline" color={AppColors.errorMaterial} />
-                <Text style={styles.logoutButtonLabel}>Log Out</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        </ScrollView>
-      </View>
-    );
-  }
-
-  // ── Mobile layout ─────────────────────────────────────────────────────────
-  return (
-    <ScrollView style={styles.screen} contentContainerStyle={styles.contentWrap}>
-      {/* Status bar / notch spacer — real top inset on device, 0 on web */}
-      <View style={{ height: safeTop }} />
-
-      {/* Page header */}
-      <View style={styles.pageHeader}>
-        <Text style={styles.headerTitle}>Profile</Text>
-        <View style={styles.pageHeaderBell}>
-          <NotificationBell />
-        </View>
-      </View>
-
+  // ── Shared content (avatar / info card / notifications / actions) ──────────
+  const content = (
+    <>
       {/* Avatar section */}
       <View style={styles.avatarSection}>
         <View style={styles.avatarBg}>
-          <Text style={styles.initialsText}>{initials}</Text>
+          <Text size="display" weight="bold" tone={Ink.muted}>{initials}</Text>
         </View>
-
         <View style={styles.nameRow}>
-          <Text style={styles.nameText}>{isEditing ? editedName : profile.name}</Text>
+          <Text size="lead" weight="bold" tracking="tight">
+            {isEditing ? editedName : profile.name}
+          </Text>
           {!isEditing && (
             <TouchableOpacity onPress={handleEditPress} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
-              <Text style={styles.editIconText}>✏</Text>
+              <Icon name="edit" size={16} tone={Ink.faint} />
             </TouchableOpacity>
           )}
         </View>
-
-        <Text style={styles.emailText}>{profile.email}</Text>
-
+        <Text size="body" tone={Ink.muted}>{profile.email}</Text>
         <View style={styles.memberSinceRow}>
-          <Text style={styles.memberSince}>
+          <Text size="meta" tone={Ink.faint}>
             Member since {formatMemberSince(profile.createdAt)}
           </Text>
         </View>
@@ -331,13 +215,12 @@ export default function ProfileScreen() {
 
       {/* Info card */}
       <View style={styles.infoCard}>
-        {/* Name field */}
-        <View style={styles.nameFieldRow}>
-          <Text style={styles.fieldLabel}>NAME</Text>
+        <View style={styles.fieldRow}>
+          <Text size="label" weight="semibold" tone={Ink.faint} upper>NAME</Text>
           <View style={[styles.fieldInputWrap, isEditing && styles.fieldInputWrapActive]}>
             {isEditing ? (
               <TextInput
-                style={styles.fieldInputText}
+                style={styles.fieldInput}
                 value={editedName}
                 onChangeText={setEditedName}
                 autoFocus
@@ -345,39 +228,49 @@ export default function ProfileScreen() {
                 onSubmitEditing={handleSave}
               />
             ) : (
-              <Text style={styles.fieldInputText}>{profile.name}</Text>
+              <Text size="body">{profile.name}</Text>
             )}
           </View>
         </View>
 
         <View style={styles.cardDivider} />
 
-        {/* Email field */}
-        <View style={styles.emailFieldRow}>
-          <Text style={styles.fieldLabel}>EMAIL</Text>
+        <View style={styles.fieldRow}>
+          <Text size="label" weight="semibold" tone={Ink.faint} upper>EMAIL</Text>
           <View style={styles.emailValueRow}>
-            <Text style={styles.fieldInputText}>{profile.email}</Text>
+            <Text size="body">{profile.email}</Text>
           </View>
         </View>
       </View>
 
       {/* Notification Preferences */}
       <View style={styles.notificationSection}>
-        <Text style={styles.fieldLabel}>NOTIFICATIONS</Text>
-        <Text style={styles.notificationDescription}>Choose which notifications you'd like to receive.</Text>
+        <Text size="label" weight="semibold" tone={Ink.faint} upper>NOTIFICATIONS</Text>
+        <Text size="body" tone={Ink.muted} style={styles.notificationDescription}>
+          Choose which notifications you'd like to receive.
+        </Text>
         <View style={styles.notificationCard}>
           {NOTIFICATION_ITEMS.map((item, index) => (
             <React.Fragment key={item.key}>
               {index > 0 && <View style={styles.notificationDivider} />}
               <View style={styles.notificationRow}>
                 <View style={styles.notificationTextWrap}>
-                  <Text style={styles.notificationLabel}>{item.label}</Text>
-                  <Text style={styles.notificationSubtitle}>{item.subtitle}</Text>
+                  <Text size="body" weight="semibold">{item.label}</Text>
+                  <Text size="meta" tone={Ink.faint} style={styles.notificationSubtitle}>
+                    {item.subtitle}
+                  </Text>
                 </View>
                 <Switch
                   testID={`notification-toggle-${item.key}`}
                   value={notificationPrefs[item.key]}
                   onValueChange={(val) => handleToggle(item.key, val)}
+                  trackColor={{ false: Line.divider, true: Accent.base }}
+                  thumbColor={Ground.surface}
+                  ios_backgroundColor={Line.divider}
+                  // activeThumbColor is a react-native-web-only prop (absent from
+                  // core RN Switch types) — keep the thumb white in the on-state
+                  // instead of the web default green.
+                  {...{ activeThumbColor: Ground.surface }}
                 />
               </View>
             </React.Fragment>
@@ -388,45 +281,58 @@ export default function ProfileScreen() {
       {/* Save button */}
       {isEditing && (
         <View style={styles.saveButtonWrap}>
-          <TouchableOpacity
+          <Button
             testID="profile-save-btn"
-            style={styles.saveButton}
+            variant="primary"
+            label="Save Changes"
+            loading={isSaving}
+            disabled={editedName.trim().length === 0}
             onPress={handleSave}
-            disabled={isSaving || editedName.trim().length === 0}
-            activeOpacity={0.8}
-          >
-            {isSaving ? (
-              <ActivityIndicator size="small" color={AppColors.backgroundWhite} />
-            ) : (
-              <Text style={styles.saveButtonLabel}>Save Changes</Text>
-            )}
-          </TouchableOpacity>
+          />
         </View>
       )}
 
       {/* Save error */}
       {saveError !== null && (
-        <Text style={styles.saveErrorText}>{saveError}</Text>
+        <Text size="meta" tone={Status.danger} style={styles.saveError}>{saveError}</Text>
       )}
 
       {/* Email cannot be changed note */}
       <View style={styles.noteRow}>
-        <Text style={styles.noteText}>Email cannot be changed</Text>
+        <Text size="meta" tone={Ink.faint}>Email cannot be changed</Text>
       </View>
 
       {/* Log out */}
       <View style={styles.logoutButtonWrap}>
-        <TouchableOpacity
-          testID="profile-logout-btn"
-          style={styles.logoutButton}
-          onPress={handleLogout}
-          activeOpacity={0.8}
-        >
-          <Ionicons size={18} name="log-out-outline" color={AppColors.errorMaterial} />
-          <Text style={styles.logoutButtonLabel}>Log Out</Text>
-        </TouchableOpacity>
+        <LogoutButton onPress={handleLogout} />
       </View>
-    </ScrollView>
+    </>
+  );
+
+  // ── Desktop layout ──────────────────────────────────────────────────────────
+  if (isDesktop) {
+    return (
+      <View style={desktopStyles.screen}>
+        <DesktopTopNav />
+        <ScrollView contentContainerStyle={desktopStyles.contentArea}>
+          <View style={desktopStyles.innerWrap}>{content}</View>
+        </ScrollView>
+      </View>
+    );
+  }
+
+  // ── Mobile layout ─────────────────────────────────────────────────────────
+  return (
+    <View style={styles.screen}>
+      {/* Header — white surface bar with a hairline bottom rule */}
+      <View style={[styles.header, { paddingTop: safeTop + Space.md }]}>
+        <Text size="screen" weight="bold" tracking="tight">Profile</Text>
+        <NotificationBell />
+      </View>
+
+      <ScrollView style={styles.screen} contentContainerStyle={styles.contentWrap}>
+        {content}
+      </ScrollView>
+    </View>
   );
 }
-

@@ -1,157 +1,133 @@
 import { StyleSheet } from 'react-native';
-import { AppColors, BorderRadius, FontSizes, FontWeights, LineHeights, Spacing } from '@/constants/theme';
+import { Ground, Line, Space, Radius, Elevation, Type } from '@/constants/design';
 
+// ── Desktop layout ────────────────────────────────────────────────────────────
 export const desktopStyles = StyleSheet.create({
   screen: {
     flex: 1,
-    backgroundColor: '#F8F8F8',
+    backgroundColor: Ground.base,
   },
   contentArea: {
     flex: 1,
     alignItems: 'center',
-    paddingVertical: 32,
-    paddingHorizontal: 40,
+    paddingVertical: Space.xxl,
+    paddingHorizontal: Space.jumbo,
   },
   innerWrap: {
-    width: 960,
+    width: 1000,
     maxWidth: '100%',
     flex: 1,
-    gap: 20,
+    gap: Space.xl,
+  },
+  headerRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    width: '100%',
+  },
+  cardGrid: {
+    flexDirection: 'row',
+    gap: Space.base,
+  },
+  gridCol: {
+    flex: 1,
+    gap: Space.base,
   },
 });
 
+// ── Shared / mobile ─────────────────────────────────────────────────────────
 export const styles = StyleSheet.create({
-  container: {
+  screen: {
     flex: 1,
-    backgroundColor: AppColors.backgroundWhite,
+    backgroundColor: Ground.base,
   },
-  centerContent: {
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingHorizontal: Spacing.lg,
-  },
-  contentWrap: {
-    flex: 1,
-    paddingHorizontal: Spacing.lg,
-    paddingTop: Spacing.sm,
-    paddingBottom: Spacing.lg,
-    gap: Spacing.lg,
-  },
+  // Header — white surface bar with a hairline bottom rule (mirrors the pilot)
   header: {
+    backgroundColor: Ground.surface,
     flexDirection: 'row',
-    alignItems: 'center',
     justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: Space.lg,
+    paddingVertical: Space.md,
+    borderBottomWidth: 1,
+    borderBottomColor: Line.hairline,
   },
-  headerTitle: {
-    fontSize: FontSizes.titleLg,
-    fontWeight: FontWeights.bold,
-    color: AppColors.textPrimary,
+  // Body below the header
+  body: {
+    flex: 1,
+    paddingHorizontal: Space.lg,
+    paddingTop: Space.base,
   },
+  // List
   listContent: {
-    gap: Spacing.md,
+    paddingTop: Space.xs,
+    paddingBottom: Space.xl,
+    gap: Space.md,
   },
+  // Card
   card: {
-    backgroundColor: AppColors.backgroundWhite,
-    borderRadius: BorderRadius.lg,
-    padding: Spacing.base,
-    gap: Spacing.md,
+    backgroundColor: Ground.surface,
+    borderRadius: Radius.card,
+    padding: Space.base,
+    gap: Space.md,
     borderWidth: 1,
-    borderColor: AppColors.borderDefault,
+    borderColor: Line.hairline,
+    ...Elevation.card,
   },
   cardTop: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'flex-start',
-    width: '100%',
   },
-  cardTitleGroup: {
+  cardTitleWrap: {
     flex: 1,
-    gap: Spacing.hairline,
-    marginRight: Spacing.sm,
+    marginRight: Space.sm,
+    gap: Space.xs,
   },
-  cardTitle: {
-    fontSize: FontSizes.md,
-    fontWeight: FontWeights.semibold,
-    color: AppColors.textPrimary,
-  },
-  cardDate: {
-    fontSize: FontSizes.mdSm,
-    color: AppColors.textGray600,
-  },
-  badge: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderRadius: BorderRadius.lg,
-    paddingHorizontal: Spacing.smMd,
-    paddingVertical: Spacing.tight,
-  },
-  badgeText: {
-    fontSize: FontSizes.smMd,
-    fontWeight: FontWeights.semibold,
-  },
-  coachRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.tight,
-    marginTop: Spacing.hairline,
-  },
-  coachIcon: {
-    fontSize: FontSizes.smMd,
-  },
-  coachText: {
-    fontSize: FontSizes.mdSm,
-    color: AppColors.textGray600,
-  },
+  // Result value + metric chip, right-aligned in the card top row
   resultDisplay: {
     alignItems: 'flex-end',
-    justifyContent: 'center',
+    gap: Space.xs,
   },
-  resultValue: {
-    fontSize: FontSizes.md,
-    fontWeight: FontWeights.semibold,
-    color: AppColors.textPrimary,
+  // Metadata block (date / coach)
+  cardMeta: {
+    gap: Space.sm,
   },
-  resultMetric: {
-    fontSize: FontSizes.smMd,
-    color: AppColors.textGray500,
-    marginTop: Spacing.hairline,
-  },
-  cardBottom: {
+  detailRow: {
     flexDirection: 'row',
-    justifyContent: 'flex-end',
     alignItems: 'center',
-    width: '100%',
+    gap: Space.sm,
   },
-  cardChevron: {
-    fontSize: FontSizes.xl,
-    color: AppColors.textGray500,
-    lineHeight: LineHeights.comfortable,
+  detailText: {
+    flex: 1,
   },
+  // Empty state
   emptyContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    paddingHorizontal: Spacing.lg,
-    gap: Spacing.base,
+    paddingHorizontal: Space.jumbo,
+    gap: Space.md,
   },
-  emptyIcon: {
-    fontSize: FontSizes.jumbo,
-  },
-  emptyTitle: {
-    fontSize: FontSizes.lg,
-    fontWeight: FontWeights.semibold,
-    color: AppColors.textPrimary,
-    textAlign: 'center',
+  emptyIconCircle: {
+    width: 76,
+    height: 76,
+    borderRadius: 38,
+    backgroundColor: Ground.sunken,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: Space.xs,
   },
   emptyDesc: {
-    fontSize: FontSizes.body,
-    color: AppColors.textGray600,
     textAlign: 'center',
-    maxWidth: 220,
+    maxWidth: 260,
+    lineHeight: Type.lineHeight.relaxed,
   },
-  errorText: {
-    fontSize: FontSizes.md,
-    color: AppColors.errorMaterial,
-    textAlign: 'center',
+  // States
+  centeredState: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: Space.jumbo,
   },
 });

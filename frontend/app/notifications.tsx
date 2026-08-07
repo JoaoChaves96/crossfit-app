@@ -1,20 +1,28 @@
+/*
+ * ─── Clean Ink · Athlete Notifications (restyle) ─────────────────────────────
+ * Sibling of the shipped athlete screens: white-surface hairline header, quiet
+ * list, tokens + primitives only. UNREAD vs READ reads through tone + weight +
+ * a tonal recess — unread rows sit on the white surface with strong ink and a
+ * single crimson dot (the one accent per row); read rows recede onto the base
+ * ground with muted ink and a quiet check. Data, handlers, and copy unchanged.
+ */
 import React, { useCallback } from 'react';
-import { View, Text, FlatList, TouchableOpacity, ActivityIndicator, Alert } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import { View, FlatList, TouchableOpacity, ActivityIndicator, Alert } from 'react-native';
 import { useRouter, useFocusEffect } from 'expo-router';
 import { useNotifications, type Notification, type NotificationType } from '@/hooks/useNotifications';
-import { AppColors, Spacing } from '@/constants/theme';
+import { Accent, Ink, Space } from '@/constants/design';
 import { SafeScreen } from '@/components/SafeScreen';
+import { Text, Icon, type IconName } from '@/components/cleanink';
 import { styles } from './notifications.styles';
 
-type IoniconName = React.ComponentProps<typeof Ionicons>['name'];
-
-const NOTIFICATION_ICONS: Record<NotificationType, { name: IoniconName; bgColor: string }> = {
-  booking_confirmed: { name: 'checkmark-circle', bgColor: AppColors.successBgFaint },
-  waitlist_promoted: { name: 'arrow-up-circle', bgColor: AppColors.warningBgOrange },
-  class_changed: { name: 'create', bgColor: AppColors.surfaceBlueLight },
-  class_cancelled: { name: 'close-circle', bgColor: AppColors.errorBg },
-  class_reminder: { name: 'time', bgColor: AppColors.surfaceBlueLight },
+// Type → drawn glyph. The glyph carries what the notification is; the circle is
+// a neutral tonal recess (no color splash) so the crimson stays rationed.
+const NOTIFICATION_ICONS: Record<NotificationType, IconName> = {
+  booking_confirmed: 'check',
+  waitlist_promoted: 'people',
+  class_changed: 'edit',
+  class_cancelled: 'close',
+  class_reminder: 'time',
 };
 
 function getTimeAgo(dateString: string): string {
@@ -42,46 +50,39 @@ function NotificationItem({
   notification: Notification;
   onPress: () => void;
 }) {
-  const iconConfig = NOTIFICATION_ICONS[notification.type] ?? {
-    name: 'notifications' as IoniconName,
-    bgColor: AppColors.backgroundLight,
-  };
+  const glyph: IconName = NOTIFICATION_ICONS[notification.type] ?? 'bell';
+  const isRead = notification.read;
 
   return (
     <TouchableOpacity
-      style={[
-        styles.notificationItem,
-        !notification.read && styles.notificationItemUnread,
-      ]}
+      style={[styles.notificationItem, isRead && styles.notificationItemRead]}
       onPress={onPress}
       testID={`notification-item-${notification.id}`}
     >
-      <View style={[styles.iconContainer, { backgroundColor: iconConfig.bgColor }]}>
-        <Ionicons size={18} name={iconConfig.name} color={AppColors.textGray600} />
+      <View style={styles.iconContainer}>
+        <Icon name={glyph} size={18} tone={isRead ? Ink.faint : Ink.muted} />
       </View>
       <View style={styles.contentContainer}>
         <Text
-          style={[
-            styles.titleText,
-            !notification.read && styles.titleTextUnread,
-          ]}
+          size="body"
+          weight={isRead ? 'regular' : 'semibold'}
+          tone={isRead ? Ink.muted : Ink.strong}
         >
           {notification.title}
         </Text>
-        <Text style={styles.bodyText}>{notification.body}</Text>
-        <Text style={styles.timeText}>{getTimeAgo(notification.createdAt)}</Text>
+        <Text size="meta" tone={Ink.muted} style={styles.bodyText}>
+          {notification.body}
+        </Text>
+        <Text size="meta" tone={Ink.faint}>{getTimeAgo(notification.createdAt)}</Text>
       </View>
-      {/* Read-status indicator: a filled dot for unread, a check for read.
-          This is the single source of truth for read state — the left icon is
-          type-based (what the notification is), not read state. */}
+      {/* Read-status indicator: a filled crimson dot for unread, a quiet check
+          for read. This is the single source of truth for read state — the left
+          glyph is type-based (what the notification is), not read state. */}
       <View style={styles.statusIndicator}>
-        {notification.read ? (
-          <Ionicons
-            name="checkmark"
-            size={16}
-            color={AppColors.textGray500}
-            testID={`notification-read-${notification.id}`}
-          />
+        {isRead ? (
+          <View testID={`notification-read-${notification.id}`}>
+            <Icon name="check" size={16} tone={Ink.faint} />
+          </View>
         ) : (
           <View
             style={styles.unreadDot}
@@ -128,23 +129,23 @@ export default function NotificationsScreen() {
   if (loading && notifications.length === 0) {
     return (
       <View style={styles.centeredState} testID="notifications-loading">
-        <ActivityIndicator size="large" color={AppColors.brandPrimary} />
+        <ActivityIndicator size="large" color={Accent.base} />
       </View>
     );
   }
 
   return (
     <View style={styles.screen} testID="notifications-screen">
-      <SafeScreen style={styles.headerRow} extraTopPadding={Spacing.md}>
+      <SafeScreen style={styles.headerRow} extraTopPadding={Space.md}>
         <View style={styles.headerLeft}>
           <TouchableOpacity
             onPress={() => router.back()}
             hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
             testID="notifications-back-button"
           >
-            <Ionicons name="chevron-back" size={24} color={AppColors.textPrimary} />
+            <Icon name="back" size={24} tone={Ink.strong} />
           </TouchableOpacity>
-          <Text style={styles.headerTitle}>Notifications</Text>
+          <Text size="screen" weight="bold" tracking="tight">Notifications</Text>
         </View>
         <View style={styles.headerActions}>
           {unreadCount > 0 && (
@@ -153,7 +154,7 @@ export default function NotificationsScreen() {
               onPress={markAllAsRead}
               testID="mark-all-read-button"
             >
-              <Text style={styles.markAllText}>Mark all as read</Text>
+              <Text size="meta" weight="semibold" tone={Ink.strong}>Mark all as read</Text>
             </TouchableOpacity>
           )}
           {readCount > 0 && (
@@ -162,7 +163,7 @@ export default function NotificationsScreen() {
               onPress={handleClearRead}
               testID="clear-read-button"
             >
-              <Text style={styles.clearReadText}>Clear read</Text>
+              <Text size="meta" weight="semibold" tone={Ink.muted}>Clear read</Text>
             </TouchableOpacity>
           )}
         </View>
@@ -186,9 +187,14 @@ export default function NotificationsScreen() {
           notifications.length === 0 && styles.centeredState,
         ]}
         ListEmptyComponent={
-          <Text style={styles.emptyText} testID="notifications-empty">
-            No notifications yet
-          </Text>
+          <View style={styles.emptyContainer}>
+            <View style={styles.emptyIconCircle}>
+              <Icon name="bell" size={30} tone={Ink.faint} />
+            </View>
+            <Text size="body" tone={Ink.muted} testID="notifications-empty">
+              No notifications yet
+            </Text>
+          </View>
         }
         refreshing={loading}
         onRefresh={refresh}

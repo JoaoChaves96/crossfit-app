@@ -1,115 +1,111 @@
+/*
+ * ─── Clean Ink · Athlete Notifications (restyle) ─────────────────────────────
+ * Same white-surface hairline header and quiet list language as the shipped
+ * athlete screens. UNREAD vs READ reads through tone + weight + a tonal recess:
+ * unread rows sit on the white surface with strong ink and a single crimson
+ * dot; read rows recede onto the base ground with muted ink and a quiet check.
+ * The accent appears once per unread row (the dot) — nowhere else. Only the
+ * visual world changes; data, handlers, and copy are preserved exactly.
+ */
 import { StyleSheet } from 'react-native';
-import { AppColors, BorderRadius, FontSizes, FontWeights, LineHeights, Spacing } from '@/constants/theme';
+import { Ground, Ink, Line, Space, Radius, Type, Accent } from '@/constants/design';
 
 export const styles = StyleSheet.create({
   screen: {
     flex: 1,
-    backgroundColor: AppColors.backgroundScreen,
+    backgroundColor: Ground.base,
   },
+  // Header — white surface bar with a hairline bottom rule (mirrors the pilot)
   headerRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: Spacing.lg,
-    paddingVertical: Spacing.md,
-    backgroundColor: AppColors.backgroundWhite,
+    paddingHorizontal: Space.lg,
+    paddingVertical: Space.md,
+    backgroundColor: Ground.surface,
     borderBottomWidth: 1,
-    borderBottomColor: AppColors.borderSubtle,
+    borderBottomColor: Line.hairline,
   },
   headerLeft: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: Spacing.sm,
-  },
-  headerTitle: {
-    fontSize: FontSizes.lg,
-    fontWeight: FontWeights.bold,
-    color: AppColors.textPrimary,
+    gap: Space.sm,
   },
   headerActions: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: Spacing.sm,
+    gap: Space.sm,
   },
   markAllButton: {
-    paddingVertical: Spacing.tight,
-    paddingHorizontal: Spacing.sm,
+    paddingVertical: Space.xs,
+    paddingHorizontal: Space.sm,
   },
-  markAllText: {
-    fontSize: FontSizes.mdSm,
-    fontWeight: FontWeights.semibold,
-    color: AppColors.textDark3,
-  },
-  clearReadText: {
-    fontSize: FontSizes.mdSm,
-    fontWeight: FontWeights.semibold,
-    color: AppColors.textGray500,
-  },
+  // List
   listContent: {
-    paddingVertical: Spacing.sm,
+    paddingVertical: Space.sm,
   },
+  // Row — unread sits on the white surface; read recedes onto the base ground
   notificationItem: {
     flexDirection: 'row',
-    paddingHorizontal: Spacing.lg,
-    paddingVertical: Spacing.md,
-    gap: Spacing.md,
-    backgroundColor: AppColors.backgroundWhite,
+    paddingHorizontal: Space.lg,
+    paddingVertical: Space.md,
+    gap: Space.md,
+    backgroundColor: Ground.surface,
     borderBottomWidth: 1,
-    borderBottomColor: AppColors.borderDefault,
+    borderBottomColor: Line.hairline,
   },
-  notificationItemUnread: {
-    backgroundColor: AppColors.backgroundSurface,
+  notificationItemRead: {
+    backgroundColor: Ground.base,
   },
+  // Neutral type-indicator circle (glyph carries the type, not a color splash)
   iconContainer: {
     width: 36,
     height: 36,
     borderRadius: 18,
     alignItems: 'center',
     justifyContent: 'center',
+    backgroundColor: Ground.sunken,
   },
   contentContainer: {
     flex: 1,
-    gap: Spacing.tight,
+    gap: Space.hair,
+  },
+  bodyText: {
+    lineHeight: Type.lineHeight.body,
   },
   statusIndicator: {
     width: 20,
     alignItems: 'center',
     justifyContent: 'flex-start',
-    paddingTop: Spacing.tight,
+    paddingTop: Space.hair,
   },
   unreadDot: {
     width: 10,
     height: 10,
     borderRadius: 5,
-    backgroundColor: AppColors.brandPrimary,
-  },
-  titleText: {
-    fontSize: FontSizes.body,
-    fontWeight: FontWeights.regular,
-    color: AppColors.textPrimary,
-  },
-  titleTextUnread: {
-    fontWeight: FontWeights.bold,
-  },
-  bodyText: {
-    fontSize: FontSizes.mdSm,
-    color: AppColors.textGray600,
-    lineHeight: LineHeights.bodyRelaxed,
-  },
-  timeText: {
-    fontSize: FontSizes.smMd,
-    color: AppColors.textGray500,
+    backgroundColor: Accent.base,
   },
   // States
   centeredState: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    paddingHorizontal: Spacing.jumbo,
+    paddingHorizontal: Space.jumbo,
+    backgroundColor: Ground.base,
   },
-  emptyText: {
-    fontSize: FontSizes.md,
-    color: AppColors.textMuted,
-    textAlign: 'center',
+  emptyContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: Space.jumbo,
+    gap: Space.md,
+  },
+  emptyIconCircle: {
+    width: 76,
+    height: 76,
+    borderRadius: 38,
+    backgroundColor: Ground.sunken,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
 });
