@@ -31,4 +31,17 @@ export class ClassBookingItemDto {
     description: 'Current status of the booking',
   })
   status: 'booked' | 'waitlisted';
+
+  @ApiProperty({
+    example: 2,
+    description:
+      'Position in the waitlist queue, 1-based. This is the authoritative ' +
+      'promotion order: the athlete with position 1 is promoted next when a ' +
+      'spot frees up. Null when status is "booked" (the athlete holds a spot ' +
+      'and is not queued). May also be null for a "waitlisted" athlete whose ' +
+      'position has not been assigned yet, in which case they sort last.',
+    nullable: true,
+    type: Number,
+  })
+  waitlistPosition: number | null;
 }

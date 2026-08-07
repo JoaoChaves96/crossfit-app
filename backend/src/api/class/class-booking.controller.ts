@@ -43,7 +43,7 @@ export class ClassBookingController {
   @ApiOperation({
     summary: 'Get booked athletes for a class',
     description:
-      'Retrieve the list of athletes with active bookings (booked or waitlisted) for a class. Accessible by the assigned coach or the gym owner. gymId is validated against the class.',
+      'Retrieve the list of athletes with active bookings (booked or waitlisted) for a class. Booked athletes are listed first, followed by waitlisted athletes in promotion order (waitlistPosition ascending), so the list can be rendered as returned. Accessible by the assigned coach or the gym owner. gymId is validated against the class.',
   })
   @ApiParam({ name: 'gymId', description: 'Gym ID' })
   @ApiParam({ name: 'classId', description: 'Class ID' })
