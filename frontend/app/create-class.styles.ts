@@ -1,5 +1,5 @@
 import { StyleSheet } from 'react-native';
-import { AppColors, BorderRadius, FontSizes, FontWeights, LineHeights, Spacing } from '@/constants/theme';
+import { Ground, Ink, Line, Accent, Status, Radius, Space, Elevation, Type } from '@/constants/design';
 
 /**
  * Inline style for the raw HTML <input type="date|time"> rendered on web.
@@ -11,9 +11,9 @@ export const webDateTimeInputStyle = {
   border: 'none',
   outline: 'none',
   background: 'transparent',
-  color: AppColors.textHeading,
-  fontFamily: 'Inter',
-  fontSize: FontSizes.body,
+  color: Ink.strong,
+  fontFamily: Type.family.regular,
+  fontSize: Type.size.body,
   padding: 0,
 } as const;
 
@@ -21,273 +21,192 @@ export const styles = StyleSheet.create({
   root: {
     flex: 1,
     flexDirection: 'row',
-    backgroundColor: AppColors.backgroundWhite,
+    backgroundColor: Ground.base,
   },
   screen: {
     flex: 1,
-    backgroundColor: AppColors.backgroundWhite,
+    backgroundColor: Ground.base,
   },
   scrollContent: {
-    padding: Spacing.xl,
-    paddingBottom: Spacing.jumboLg,
+    padding: Space.xl,
+    paddingBottom: Space.jumbo,
   },
   header: {
-    marginBottom: Spacing.xl,
+    marginBottom: Space.xl,
+  },
+  backBtn: {
+    width: 40,
+    height: 40,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginLeft: -10,
+    marginBottom: Space.sm,
+  },
+  headerSubtitle: {
+    marginTop: Space.hair,
   },
   formCard: {
-    backgroundColor: AppColors.backgroundWhite,
-    borderRadius: BorderRadius.lg,
+    backgroundColor: Ground.surface,
+    borderRadius: Radius.card,
     borderWidth: 1,
-    borderColor: AppColors.backgroundDivider,
-    padding: Spacing.xxl,
-    gap: Spacing.lg,
+    borderColor: Line.hairline,
+    padding: Space.xxl,
+    gap: Space.lg,
+    ...Elevation.card,
   },
   row: {
     flexDirection: 'row',
-    gap: Spacing.base,
+    gap: Space.base,
+  },
+  // Picker rows stack above the rows below them so a downward-opening floating
+  // dropdown overlays later fields instead of being painted over (native/iOS).
+  rowPickerTop: {
+    zIndex: 10,
+    ...{ elevation: 10 },
+  },
+  rowPickerBottom: {
+    zIndex: 5,
+    ...{ elevation: 5 },
   },
   rowItem: {
     flex: 1,
   },
   fieldContainer: {
-    gap: Spacing.compact,
-  },
-  fieldLabel: {
-    fontFamily: 'Inter',
-    fontSize: FontSizes.mdSm,
-    fontWeight: FontWeights.medium,
-    color: AppColors.textSecondary,
+    gap: Space.xs,
   },
   inputBox: {
     flexDirection: 'row',
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: AppColors.separatorDefault,
-    borderRadius: BorderRadius.md,
-    paddingHorizontal: Spacing.md,
-    paddingVertical: Spacing.smMd,
-    backgroundColor: AppColors.backgroundWhite,
-    minHeight: 42,
+    borderColor: Line.divider,
+    borderRadius: Radius.control,
+    paddingHorizontal: Space.md,
+    paddingVertical: Space.sm,
+    backgroundColor: Ground.surface,
+    minHeight: 46,
   },
+  // Applied to the TextInput itself; the face must be named explicitly since
+  // a TextInput can't route through the Text primitive.
   inputBoxText: {
     flexDirection: 'column',
     alignItems: undefined,
-    color: AppColors.textHeading,
-    fontFamily: 'Inter',
-    fontSize: FontSizes.body,
-    fontWeight: FontWeights.regular,
-  },
-  inputBoxDisabled: {
-    backgroundColor: AppColors.backgroundLight,
+    color: Ink.strong,
+    fontFamily: Type.family.regular,
+    fontSize: Type.size.body,
   },
   pickerValueText: {
     flex: 1,
-    color: AppColors.textHeading,
-    fontFamily: 'Inter',
-    fontSize: FontSizes.body,
-    fontWeight: FontWeights.regular,
-  },
-  pickerPlaceholderText: {
-    color: AppColors.textDisabled,
+    color: Ink.strong,
+    fontFamily: Type.family.regular,
+    fontSize: Type.size.body,
   },
   trailingIcon: {
-    fontSize: FontSizes.body,
-    color: AppColors.textDisabled,
-    marginLeft: Spacing.sm,
-  },
-  inputBoxError: {
-    borderColor: AppColors.errorBgRose,
-    backgroundColor: AppColors.errorBgLight,
+    marginLeft: Space.sm,
   },
   inputBoxValidationError: {
-    borderColor: AppColors.errorBgRose,
+    borderColor: Status.danger,
   },
   validationErrorText: {
-    fontSize: FontSizes.smMd,
-    color: AppColors.errorDefault,
-    marginTop: Spacing.tight,
-  },
-  dropdownList: {
-    borderWidth: 1,
-    borderColor: AppColors.separatorDefault,
-    borderRadius: BorderRadius.md,
-    backgroundColor: AppColors.backgroundWhite,
-    overflow: 'hidden',
-    marginTop: Spacing.tight,
-  },
-  dropdownItem: {
-    paddingHorizontal: Spacing.md,
-    paddingVertical: Spacing.smMd,
-    borderBottomWidth: 1,
-    borderBottomColor: AppColors.backgroundDivider,
-  },
-  dropdownItemSelected: {
-    backgroundColor: AppColors.backgroundLight,
+    marginTop: Space.xs,
   },
   divider: {
     height: 1,
-    backgroundColor: AppColors.backgroundDivider,
+    backgroundColor: Line.hairline,
   },
   submitErrorBanner: {
-    borderRadius: BorderRadius.md,
+    borderRadius: Radius.control,
     borderWidth: 1,
-    borderColor: AppColors.errorBgRose,
-    backgroundColor: AppColors.errorBgLight,
-    padding: Spacing.md,
+    borderColor: Status.danger,
+    backgroundColor: Status.dangerWash,
+    padding: Space.md,
   },
   submitErrorText: {
-    fontSize: FontSizes.mdSm,
-    color: AppColors.errorDefault,
-    lineHeight: LineHeights.body,
+    lineHeight: Type.lineHeight.body,
   },
   noticeBanner: {
-    borderRadius: BorderRadius.md,
+    borderRadius: Radius.control,
     borderWidth: 1,
-    borderColor: AppColors.surfaceBlueDim,
-    backgroundColor: AppColors.surfaceBlue,
-    padding: Spacing.md,
+    borderColor: Line.divider,
+    backgroundColor: Ground.sunken,
+    padding: Space.md,
   },
   noticeText: {
-    fontSize: FontSizes.mdSm,
-    color: AppColors.actionBlueDark,
-    lineHeight: LineHeights.body,
+    lineHeight: Type.lineHeight.body,
   },
 
-  // Segmented mode toggle (Single / Recurring)
+  // Segmented mode toggle (Single / Recurring) — quiet sunken track, white
+  // lifted active pill. Selection reads through elevation + weight, not color.
   segmented: {
     flexDirection: 'row',
     alignSelf: 'flex-start',
-    borderWidth: 1,
-    borderColor: AppColors.separatorDefault,
-    borderRadius: BorderRadius.md,
-    backgroundColor: AppColors.backgroundLight,
-    padding: Spacing.micro,
-    gap: Spacing.micro,
+    borderRadius: Radius.control,
+    backgroundColor: Ground.sunken,
+    padding: Space.xs - 1,
+    gap: Space.xs - 1,
   },
   segmentedItem: {
-    paddingHorizontal: Spacing.lg,
-    paddingVertical: Spacing.sm,
-    borderRadius: BorderRadius.mdSm,
+    paddingHorizontal: Space.lg,
+    paddingVertical: Space.sm,
+    borderRadius: Radius.control - 3,
     alignItems: 'center',
     justifyContent: 'center',
   },
   segmentedItemActive: {
-    backgroundColor: AppColors.backgroundWhite,
-  },
-  segmentedText: {
-    fontFamily: 'Inter',
-    fontSize: FontSizes.mdSm,
-    fontWeight: FontWeights.medium,
-    color: AppColors.textMuted,
-  },
-  segmentedTextActive: {
-    color: AppColors.textHeading,
-    fontWeight: FontWeights.semibold,
+    backgroundColor: Ground.surface,
+    ...Elevation.card,
   },
 
   // Weekday selector chips
   weekdayRow: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: Spacing.sm,
+    gap: Space.sm,
   },
   weekdayChip: {
     minWidth: 42,
-    paddingHorizontal: Spacing.md,
-    paddingVertical: Spacing.sm,
+    paddingHorizontal: Space.md,
+    paddingVertical: Space.sm,
     borderWidth: 1,
-    borderColor: AppColors.separatorDefault,
-    borderRadius: BorderRadius.md,
-    backgroundColor: AppColors.backgroundWhite,
+    borderColor: Line.divider,
+    borderRadius: Radius.control,
+    backgroundColor: Ground.surface,
     alignItems: 'center',
     justifyContent: 'center',
   },
   weekdayChipSelected: {
-    backgroundColor: AppColors.textHeading,
-    borderColor: AppColors.textHeading,
+    backgroundColor: Accent.base,
+    borderColor: Accent.base,
   },
-  weekdayChipText: {
-    fontFamily: 'Inter',
-    fontSize: FontSizes.mdSm,
-    fontWeight: FontWeights.medium,
-    color: AppColors.textSecondary,
-  },
-  weekdayChipTextSelected: {
-    color: AppColors.backgroundWhite,
-    fontWeight: FontWeights.semibold,
-  },
+
+  // Buttons
   btnRow: {
     flexDirection: 'row',
     justifyContent: 'flex-end',
-    gap: Spacing.md,
+    gap: Space.md,
   },
-  cancelBtn: {
-    borderWidth: 1,
-    borderColor: AppColors.separatorDefault,
-    borderRadius: BorderRadius.md,
-    paddingHorizontal: Spacing.lg,
-    paddingVertical: Spacing.smMd,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  saveBtn: {
-    backgroundColor: AppColors.textHeading,
-    borderRadius: BorderRadius.md,
-    paddingHorizontal: Spacing.xl,
-    paddingVertical: Spacing.smMd,
-    alignItems: 'center',
-    justifyContent: 'center',
-    minHeight: 42,
-  },
-  saveBtnDisabled: {
-    opacity: 0.6,
-  },
-  headerTitle: {
-    fontFamily: 'Inter',
-    fontSize: FontSizes.title,
-    fontWeight: FontWeights.bold,
-    color: AppColors.textHeading,
-  },
-  headerSubtitle: {
-    fontFamily: 'Inter',
-    fontSize: FontSizes.mdSm,
-    fontWeight: FontWeights.regular,
-    color: AppColors.textMuted,
-    marginTop: Spacing.tight,
-  },
-  cancelBtnText: {
-    fontFamily: 'Inter',
-    fontSize: FontSizes.body,
-    fontWeight: FontWeights.medium,
-    color: AppColors.textSecondary,
-  },
-  saveBtnText: {
-    fontFamily: 'Inter',
-    fontSize: FontSizes.body,
-    fontWeight: FontWeights.medium,
-    color: AppColors.backgroundWhite,
+  btnWrap: {
+    minWidth: 130,
   },
 
   // Mobile responsive styles
   scrollContentMobile: {
-    padding: Spacing.base,
-    paddingBottom: Spacing.jumbo,
+    padding: Space.base,
+    paddingBottom: Space.jumbo,
   },
   formCardMobile: {
-    padding: Spacing.base,
+    padding: Space.base,
     borderWidth: 0,
   },
   rowMobile: {
     flexDirection: 'column',
-    gap: Spacing.md,
+    gap: Space.md,
   },
   btnRowMobile: {
     flexDirection: 'column-reverse',
-    gap: Spacing.sm,
+    gap: Space.sm,
   },
-  btnMobile: {
-    minHeight: 48,
-    alignItems: 'center',
-    justifyContent: 'center',
+  btnWrapMobile: {
+    width: '100%',
+    minWidth: 0,
   },
 });

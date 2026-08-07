@@ -4,7 +4,6 @@ import {
   KeyboardAvoidingView,
   Platform,
   ScrollView,
-  Text,
   TextInput,
   TouchableOpacity,
   View,
@@ -14,9 +13,10 @@ import { useAuth } from '@/hooks/useAuth';
 import { useGym } from '@/hooks/useGym';
 import { useResponsiveLayout } from '@/hooks/useResponsiveLayout';
 import { useSafeAreaTop } from '@/components/SafeScreen';
+import { Text, Icon, Button, SelectField } from '@/components/cleanink';
+import { Ink, Accent, Space, Status } from '@/constants/design';
 import { createApiClient } from '@/utils/api-client';
 import { components } from '@/types/api.gen';
-import { AppColors, Spacing } from '@/constants/theme';
 import { OwnerSidebar } from '@/components/OwnerSidebar';
 import { formatShortDate, formatTime12h } from '@/utils/datetime';
 import { styles, webDateTimeInputStyle } from './create-class.styles';
@@ -68,90 +68,6 @@ type FetchState<T> =
   | { status: 'error'; message: string }
   | { status: 'success'; data: T };
 
-// ─── Picker Field ──────────────────────────────────────────────────────────────
-
-interface PickerFieldProps {
-  label: string;
-  items: PickerItem[];
-  selectedId: string;
-  onSelect: (id: string) => void;
-  fetchState: FetchState<unknown>;
-  testID?: string;
-}
-
-function PickerField({ label, items, selectedId, onSelect, fetchState, testID }: PickerFieldProps) {
-  const [open, setOpen] = useState(false);
-  const selectedLabel = items.find((i) => i.id === selectedId)?.label ?? '';
-
-  return (
-    <View style={styles.fieldContainer}>
-      <Text style={styles.fieldLabel}>{label}</Text>
-      {fetchState.status === 'loading' && (
-        <View style={[styles.inputBox, styles.inputBoxDisabled]}>
-          <ActivityIndicator size="small" color={AppColors.textDisabled} />
-          <Text style={[styles.inputBoxText, { color: AppColors.textDisabled, marginLeft: 8 }]}>
-            Loading…
-          </Text>
-        </View>
-      )}
-      {fetchState.status === 'error' && (
-        <View style={[styles.inputBox, styles.inputBoxError]}>
-          <Text style={[styles.inputBoxText, { color: AppColors.errorDefault, flex: 1 }]} numberOfLines={1}>
-            {fetchState.message}
-          </Text>
-        </View>
-      )}
-      {fetchState.status === 'success' && (
-        <>
-          <TouchableOpacity
-            testID={testID}
-            style={styles.inputBox}
-            onPress={() => setOpen((prev) => !prev)}
-            activeOpacity={0.7}>
-            <Text
-              style={[
-                styles.inputBoxText,
-                { flex: 1, color: selectedLabel ? AppColors.textHeading : AppColors.textDisabled },
-              ]}
-              numberOfLines={1}>
-              {selectedLabel || `Select ${label}`}
-            </Text>
-            <Text style={[styles.inputBoxText, { color: AppColors.textDisabled }]}>v</Text>
-          </TouchableOpacity>
-          {open && (
-            <View style={styles.dropdownList}>
-              {items.length === 0 ? (
-                <View style={styles.dropdownItem}>
-                  <Text style={[styles.inputBoxText, { color: AppColors.textDisabled }]}>
-                    No options available
-                  </Text>
-                </View>
-              ) : (
-                items.map((item) => (
-                  <TouchableOpacity
-                    key={item.id}
-                    style={[
-                      styles.dropdownItem,
-                      item.id === selectedId && styles.dropdownItemSelected,
-                    ]}
-                    onPress={() => {
-                      onSelect(item.id);
-                      setOpen(false);
-                    }}>
-                    <Text style={[styles.inputBoxText, { color: AppColors.textHeading }]}>
-                      {item.label}
-                    </Text>
-                  </TouchableOpacity>
-                ))
-              )}
-            </View>
-          )}
-        </>
-      )}
-    </View>
-  );
-}
-
 // ─── Text Input Field ──────────────────────────────────────────────────────────
 
 interface TextFieldProps {
@@ -167,17 +83,17 @@ interface TextFieldProps {
 function TextField({ label, value, onChangeText, placeholder, keyboardType, error, testID }: TextFieldProps) {
   return (
     <View style={styles.fieldContainer}>
-      <Text style={styles.fieldLabel}>{label}</Text>
+      <Text size="label" weight="semibold" tone="faint" upper>{label}</Text>
       <TextInput
         testID={testID}
         style={[styles.inputBox, styles.inputBoxText, error ? styles.inputBoxValidationError : null]}
         value={value}
         onChangeText={onChangeText}
         placeholder={placeholder}
-        placeholderTextColor={AppColors.textDisabled}
+        placeholderTextColor={Ink.faint}
         keyboardType={keyboardType ?? 'default'}
       />
-      {error ? <Text style={styles.validationErrorText}>{error}</Text> : null}
+      {error ? <Text size="meta" tone={Status.danger} style={styles.validationErrorText}>{error}</Text> : null}
     </View>
   );
 }
@@ -202,7 +118,7 @@ interface DateTimeFieldProps {
 
 function DateTimeField({ label, mode, value, onChange, error, testID }: DateTimeFieldProps) {
   const [editing, setEditing] = useState(false);
-  const icon = mode === 'date' ? '📅' : '🕐';
+  const iconName = mode === 'date' ? 'calendar' : 'time';
   const placeholder = mode === 'date' ? 'YYYY-MM-DD' : 'HH:mm';
   const formatted =
     value && mode === 'date' ? formatShortDate(value) : value ? formatTime12h(value) : '';
@@ -220,7 +136,7 @@ function DateTimeField({ label, mode, value, onChange, error, testID }: DateTime
             onChange: (e: { target: { value: string } }) => onChange(e.target.value),
             style: webDateTimeInputStyle,
           })}
-          <Text style={styles.trailingIcon}>{icon}</Text>
+          <Icon name={iconName} size={18} tone="faint" style={styles.trailingIcon} />
         </View>
       );
     }
@@ -236,11 +152,11 @@ function DateTimeField({ label, mode, value, onChange, error, testID }: DateTime
             onChangeText={onChange}
             onBlur={() => setEditing(false)}
             placeholder={placeholder}
-            placeholderTextColor={AppColors.textDisabled}
+            placeholderTextColor={Ink.faint}
             keyboardType={mode === 'time' ? 'numbers-and-punctuation' : 'default'}
             autoFocus
           />
-          <Text style={styles.trailingIcon}>{icon}</Text>
+          <Icon name={iconName} size={18} tone="faint" style={styles.trailingIcon} />
         </View>
       );
     }
@@ -252,20 +168,22 @@ function DateTimeField({ label, mode, value, onChange, error, testID }: DateTime
         onPress={() => setEditing(true)}
         activeOpacity={0.7}>
         <Text
-          style={[styles.pickerValueText, !displayValue && styles.pickerPlaceholderText]}
+          size="body"
+          tone={displayValue ? 'strong' : 'faint'}
+          style={{ flex: 1 }}
           numberOfLines={1}>
           {displayValue || `Select ${label}`}
         </Text>
-        <Text style={styles.trailingIcon}>{icon}</Text>
+        <Icon name={iconName} size={18} tone="faint" style={styles.trailingIcon} />
       </TouchableOpacity>
     );
   };
 
   return (
     <View style={styles.fieldContainer}>
-      <Text style={styles.fieldLabel}>{label}</Text>
+      <Text size="label" weight="semibold" tone="faint" upper>{label}</Text>
       {renderControl()}
-      {error ? <Text style={styles.validationErrorText}>{error}</Text> : null}
+      {error ? <Text size="meta" tone={Status.danger} style={styles.validationErrorText}>{error}</Text> : null}
     </View>
   );
 }
@@ -287,7 +205,7 @@ interface WeekdaySelectorProps {
 function WeekdaySelector({ label, selected, onToggle, error, testID }: WeekdaySelectorProps) {
   return (
     <View style={styles.fieldContainer}>
-      <Text style={styles.fieldLabel}>{label}</Text>
+      <Text size="label" weight="semibold" tone="faint" upper>{label}</Text>
       <View style={styles.weekdayRow} testID={testID}>
         {WEEKDAYS.map((day) => {
           const isSelected = selected.includes(day.value);
@@ -301,14 +219,16 @@ function WeekdaySelector({ label, selected, onToggle, error, testID }: WeekdaySe
               onPress={() => onToggle(day.value)}
               activeOpacity={0.7}>
               <Text
-                style={[styles.weekdayChipText, isSelected && styles.weekdayChipTextSelected]}>
+                size="meta"
+                weight={isSelected ? 'semibold' : 'medium'}
+                tone={isSelected ? Accent.on : 'muted'}>
                 {day.label}
               </Text>
             </TouchableOpacity>
           );
         })}
       </View>
-      {error ? <Text style={styles.validationErrorText}>{error}</Text> : null}
+      {error ? <Text size="meta" tone={Status.danger} style={styles.validationErrorText}>{error}</Text> : null}
     </View>
   );
 }
@@ -581,12 +501,21 @@ export default function CreateClassScreen() {
     <KeyboardAvoidingView
       style={styles.screen}
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-      <ScrollView contentContainerStyle={[styles.scrollContent, isMobile && styles.scrollContentMobile, isMobile && { paddingTop: safeTop + Spacing.base }]} keyboardShouldPersistTaps="handled">
+      <ScrollView contentContainerStyle={[styles.scrollContent, isMobile && styles.scrollContentMobile, isMobile && { paddingTop: safeTop + Space.base }]} keyboardShouldPersistTaps="handled">
 
         {/* Header */}
         <View style={styles.header}>
-          <Text style={styles.headerTitle}>Create New Class</Text>
-          <Text style={styles.headerSubtitle}>
+          {isMobile && (
+            <TouchableOpacity
+              testID="create-class-back-btn"
+              style={styles.backBtn}
+              onPress={() => router.back()}
+              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+              <Icon name="back" size={24} tone={Ink.strong} />
+            </TouchableOpacity>
+          )}
+          <Text size="screen" weight="bold">Create New Class</Text>
+          <Text size="meta" tone="muted" style={styles.headerSubtitle}>
             Schedule a new class session
           </Text>
         </View>
@@ -604,10 +533,9 @@ export default function CreateClassScreen() {
               onPress={() => switchMode('single')}
               activeOpacity={0.7}>
               <Text
-                style={[
-                  styles.segmentedText,
-                  mode === 'single' && styles.segmentedTextActive,
-                ]}>
+                size="meta"
+                weight={mode === 'single' ? 'semibold' : 'medium'}
+                tone={mode === 'single' ? Ink.strong : Ink.faint}>
                 Single
               </Text>
             </TouchableOpacity>
@@ -619,10 +547,9 @@ export default function CreateClassScreen() {
               onPress={() => switchMode('recurring')}
               activeOpacity={0.7}>
               <Text
-                style={[
-                  styles.segmentedText,
-                  mode === 'recurring' && styles.segmentedTextActive,
-                ]}>
+                size="meta"
+                weight={mode === 'recurring' ? 'semibold' : 'medium'}
+                tone={mode === 'recurring' ? Ink.strong : Ink.faint}>
                 Recurring
               </Text>
             </TouchableOpacity>
@@ -704,9 +631,9 @@ export default function CreateClassScreen() {
           )}
 
           {/* Row 2 — Class Type */}
-          <View style={[styles.row, isMobile && styles.rowMobile]}>
+          <View style={[styles.row, isMobile && styles.rowMobile, styles.rowPickerTop]}>
             <View style={styles.rowItem}>
-              <PickerField
+              <SelectField
                 testID="create-class-class-type-picker"
                 label="Class Type"
                 items={classTypeItems}
@@ -715,11 +642,11 @@ export default function CreateClassScreen() {
                 fetchState={classTypesFetch}
               />
               {formErrors.classTypeId ? (
-                <Text style={styles.validationErrorText}>{formErrors.classTypeId}</Text>
+                <Text size="meta" tone={Status.danger} style={styles.validationErrorText}>{formErrors.classTypeId}</Text>
               ) : null}
             </View>
             <View style={styles.rowItem}>
-              <PickerField
+              <SelectField
                 testID="create-class-coach-picker"
                 label="Coach"
                 items={coachItems}
@@ -728,15 +655,15 @@ export default function CreateClassScreen() {
                 fetchState={coachesFetch}
               />
               {formErrors.coachUserId ? (
-                <Text style={styles.validationErrorText}>{formErrors.coachUserId}</Text>
+                <Text size="meta" tone={Status.danger} style={styles.validationErrorText}>{formErrors.coachUserId}</Text>
               ) : null}
             </View>
           </View>
 
           {/* Row 3 — Space */}
-          <View style={[styles.row, isMobile && styles.rowMobile]}>
+          <View style={[styles.row, isMobile && styles.rowMobile, styles.rowPickerBottom]}>
             <View style={styles.rowItem}>
-              <PickerField
+              <SelectField
                 testID="create-class-space-picker"
                 label="Space"
                 items={spaceItems}
@@ -745,7 +672,7 @@ export default function CreateClassScreen() {
                 fetchState={spacesFetch}
               />
               {formErrors.spaceId ? (
-                <Text style={styles.validationErrorText}>{formErrors.spaceId}</Text>
+                <Text size="meta" tone={Status.danger} style={styles.validationErrorText}>{formErrors.spaceId}</Text>
               ) : null}
             </View>
             <View style={styles.rowItem}>
@@ -783,39 +710,37 @@ export default function CreateClassScreen() {
           {/* Submit error */}
           {submitError ? (
             <View style={styles.submitErrorBanner}>
-              <Text style={styles.submitErrorText}>{submitError}</Text>
+              <Text size="meta" tone={Status.danger} style={styles.submitErrorText}>{submitError}</Text>
             </View>
           ) : null}
 
           {/* Recurring result — informational (no classes created) */}
           {recurringNotice ? (
             <View style={styles.noticeBanner} testID="create-class-recurring-notice">
-              <Text style={styles.noticeText}>{recurringNotice}</Text>
+              <Text size="meta" tone="muted" style={styles.noticeText}>{recurringNotice}</Text>
             </View>
           ) : null}
 
           {/* Buttons */}
           <View style={[styles.btnRow, isMobile && styles.btnRowMobile]}>
-            <TouchableOpacity
-              testID="create-class-cancel-btn"
-              style={[styles.cancelBtn, isMobile && styles.btnMobile]}
-              onPress={() => router.back()}
-              disabled={isSubmitting}>
-              <Text style={styles.cancelBtnText}>Cancel</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              testID="create-class-save-btn"
-              style={[styles.saveBtn, isMobile && styles.btnMobile, isSubmitting && styles.saveBtnDisabled]}
-              onPress={handleSubmit}
-              disabled={isSubmitting}>
-              {isSubmitting ? (
-                <ActivityIndicator size="small" color={AppColors.backgroundWhite} />
-              ) : (
-                <Text style={styles.saveBtnText}>
-                  {mode === 'recurring' ? 'Create Series' : 'Save Class'}
-                </Text>
-              )}
-            </TouchableOpacity>
+            <View style={[styles.btnWrap, isMobile && styles.btnWrapMobile]}>
+              <Button
+                testID="create-class-cancel-btn"
+                label="Cancel"
+                variant="quiet"
+                onPress={() => router.back()}
+                disabled={isSubmitting}
+              />
+            </View>
+            <View style={[styles.btnWrap, isMobile && styles.btnWrapMobile]}>
+              <Button
+                testID="create-class-save-btn"
+                label={mode === 'recurring' ? 'Create Series' : 'Save Class'}
+                variant="primary"
+                onPress={handleSubmit}
+                loading={isSubmitting}
+              />
+            </View>
           </View>
         </View>
       </ScrollView>

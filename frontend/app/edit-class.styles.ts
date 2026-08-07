@@ -1,17 +1,27 @@
 import { StyleSheet } from 'react-native';
-import { AppColors, BorderRadius, FontSizes, FontWeights, LineHeights, Spacing } from '@/constants/theme';
+import { Ground, Ink, Line, Status, Radius, Space, Elevation, Type } from '@/constants/design';
 
 export const styles = StyleSheet.create({
   screen: {
     flex: 1,
-    backgroundColor: AppColors.backgroundWhite,
+    backgroundColor: Ground.base,
   },
   scrollContent: {
-    padding: Spacing.xl,
-    paddingBottom: Spacing.jumboLg,
+    padding: Space.xl,
+    paddingBottom: Space.jumbo,
   },
   header: {
-    marginBottom: Spacing.xl,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Space.sm,
+    marginBottom: Space.xl,
+  },
+  backBtn: {
+    width: 40,
+    height: 40,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginLeft: -10,
   },
 
   // Loading / error full-screen states
@@ -19,38 +29,44 @@ export const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    padding: Spacing.jumbo,
-    gap: Spacing.md,
+    padding: Space.jumbo,
+    gap: Space.md,
+    backgroundColor: Ground.base,
   },
   errorText: {
-    fontSize: FontSizes.body,
-    color: AppColors.errorDefault,
     textAlign: 'center',
   },
   retryBtn: {
-    paddingHorizontal: Spacing.lg,
-    paddingVertical: Spacing.sm,
-    borderRadius: BorderRadius.mdSm,
+    paddingHorizontal: Space.lg,
+    paddingVertical: Space.sm,
+    borderRadius: Radius.control,
     borderWidth: 1,
-    borderColor: AppColors.separatorDefault,
-  },
-  retryBtnText: {
-    fontSize: FontSizes.body,
-    color: AppColors.textHeading,
+    borderColor: Line.divider,
   },
 
   // Form card
   formCard: {
-    backgroundColor: AppColors.backgroundWhite,
-    borderRadius: BorderRadius.lg,
+    backgroundColor: Ground.surface,
+    borderRadius: Radius.card,
     borderWidth: 1,
-    borderColor: AppColors.backgroundDivider,
-    padding: Spacing.xxl,
-    gap: Spacing.lg,
+    borderColor: Line.hairline,
+    padding: Space.xxl,
+    gap: Space.lg,
+    ...Elevation.card,
   },
   row: {
     flexDirection: 'row',
-    gap: Spacing.base,
+    gap: Space.base,
+  },
+  // Picker rows stack above the rows below them so a downward-opening floating
+  // dropdown overlays later fields instead of being painted over (native/iOS).
+  rowPickerTop: {
+    zIndex: 10,
+    ...{ elevation: 10 },
+  },
+  rowPickerBottom: {
+    zIndex: 5,
+    ...{ elevation: 5 },
   },
   rowItem: {
     flex: 1,
@@ -58,13 +74,7 @@ export const styles = StyleSheet.create({
 
   // Field
   fieldContainer: {
-    gap: Spacing.compact,
-  },
-  fieldLabel: {
-    fontFamily: 'Inter',
-    fontSize: FontSizes.mdSm,
-    fontWeight: FontWeights.medium,
-    color: AppColors.textSecondary,
+    gap: Space.xs,
   },
 
   // Input box
@@ -72,74 +82,45 @@ export const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: AppColors.separatorDefault,
-    borderRadius: BorderRadius.md,
-    paddingHorizontal: Spacing.md,
-    paddingVertical: Spacing.smMd,
-    backgroundColor: AppColors.backgroundWhite,
-    minHeight: 42,
+    borderColor: Line.divider,
+    borderRadius: Radius.control,
+    paddingHorizontal: Space.md,
+    paddingVertical: Space.sm,
+    backgroundColor: Ground.surface,
+    minHeight: 46,
   },
+  // Applied to the TextInput itself; the face must be named explicitly since
+  // a TextInput can't route through the Text primitive.
   inputBoxText: {
     flexDirection: 'column',
     alignItems: undefined,
-    color: AppColors.textHeading,
-    fontFamily: 'Inter',
-    fontSize: FontSizes.body,
-    fontWeight: FontWeights.regular,
-  },
-  inputBoxDisabled: {
-    backgroundColor: AppColors.backgroundLight,
-  },
-  inputBoxError: {
-    borderColor: AppColors.errorBgRose,
-    backgroundColor: AppColors.errorBgLight,
+    color: Ink.strong,
+    fontFamily: Type.family.regular,
+    fontSize: Type.size.body,
   },
   inputBoxValidationError: {
-    borderColor: AppColors.errorBgRose,
+    borderColor: Status.danger,
   },
   validationErrorText: {
-    fontSize: FontSizes.smMd,
-    color: AppColors.errorDefault,
-    marginTop: Spacing.tight,
-  },
-
-  // Dropdown
-  dropdownList: {
-    borderWidth: 1,
-    borderColor: AppColors.separatorDefault,
-    borderRadius: BorderRadius.md,
-    backgroundColor: AppColors.backgroundWhite,
-    overflow: 'hidden',
-    marginTop: Spacing.tight,
-  },
-  dropdownItem: {
-    paddingHorizontal: Spacing.md,
-    paddingVertical: Spacing.smMd,
-    borderBottomWidth: 1,
-    borderBottomColor: AppColors.backgroundDivider,
-  },
-  dropdownItemSelected: {
-    backgroundColor: AppColors.backgroundLight,
+    marginTop: Space.xs,
   },
 
   // Divider
   divider: {
     height: 1,
-    backgroundColor: AppColors.backgroundDivider,
+    backgroundColor: Line.hairline,
   },
 
   // Submit error
   submitErrorBanner: {
-    borderRadius: BorderRadius.md,
+    borderRadius: Radius.control,
     borderWidth: 1,
-    borderColor: AppColors.errorBgRose,
-    backgroundColor: AppColors.errorBgLight,
-    padding: Spacing.md,
+    borderColor: Status.danger,
+    backgroundColor: Status.dangerWash,
+    padding: Space.md,
   },
   submitErrorText: {
-    fontSize: FontSizes.mdSm,
-    color: AppColors.errorDefault,
-    lineHeight: LineHeights.body,
+    lineHeight: Type.lineHeight.body,
   },
 
   // Button row
@@ -150,70 +131,42 @@ export const styles = StyleSheet.create({
   },
   leftBtns: {
     flexDirection: 'row',
-    gap: Spacing.md,
+    gap: Space.md,
   },
-  cancelBtn: {
-    borderWidth: 1,
-    borderColor: AppColors.separatorDefault,
-    borderRadius: BorderRadius.md,
-    paddingHorizontal: Spacing.lg,
-    paddingVertical: Spacing.smMd,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  saveBtn: {
-    backgroundColor: AppColors.textHeading,
-    borderRadius: BorderRadius.md,
-    paddingHorizontal: Spacing.xl,
-    paddingVertical: Spacing.smMd,
-    alignItems: 'center',
-    justifyContent: 'center',
-    minHeight: 42,
-  },
-  saveBtnDisabled: {
-    opacity: 0.6,
+  btnWrap: {
+    minWidth: 130,
   },
   rightGroup: {
     alignItems: 'flex-end',
-    gap: Spacing.tight,
-  },
-  deleteBtn: {
-    borderWidth: 1,
-    borderColor: AppColors.errorVivid,
-    borderRadius: BorderRadius.md,
-    paddingHorizontal: Spacing.lg,
-    paddingVertical: Spacing.smMd,
-    alignItems: 'center',
-    justifyContent: 'center',
+    gap: Space.hair,
   },
 
   // Mobile responsive styles
   scrollContentMobile: {
-    padding: Spacing.base,
-    paddingBottom: Spacing.jumbo,
+    padding: Space.base,
+    paddingBottom: Space.jumbo,
   },
   formCardMobile: {
-    padding: Spacing.base,
+    padding: Space.base,
     borderWidth: 0,
   },
   rowMobile: {
     flexDirection: 'column',
-    gap: Spacing.md,
+    gap: Space.md,
   },
   btnRowMobile: {
     flexDirection: 'column',
-    gap: Spacing.md,
+    gap: Space.md,
   },
   leftBtnsMobile: {
     flexDirection: 'column',
-    gap: Spacing.sm,
+    gap: Space.sm,
   },
   rightGroupMobile: {
     alignItems: 'stretch',
   },
-  btnMobile: {
-    minHeight: 48,
-    alignItems: 'center',
-    justifyContent: 'center',
+  btnWrapMobile: {
+    width: '100%',
+    minWidth: 0,
   },
 });

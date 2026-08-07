@@ -5,7 +5,6 @@ import {
   KeyboardAvoidingView,
   Platform,
   ScrollView,
-  Text,
   TextInput,
   TouchableOpacity,
   View,
@@ -16,7 +15,8 @@ import { useAuth } from '@/hooks/useAuth';
 import { useGym } from '@/hooks/useGym';
 import { useResponsiveLayout } from '@/hooks/useResponsiveLayout';
 import { useSafeAreaTop } from '@/components/SafeScreen';
-import { Spacing } from '@/constants/theme';
+import { Text, Icon, Button, SelectField } from '@/components/cleanink';
+import { Ink, Space, Status } from '@/constants/design';
 import { createApiClient } from '@/utils/api-client';
 import { trimTime } from '@/utils/datetime';
 import { components } from '@/types/api.gen';
@@ -42,123 +42,6 @@ type FetchState<T> =
   | { status: 'error'; message: string }
   | { status: 'success'; data: T };
 
-// ─── Design Tokens ────────────────────────────────────────────────────────────
-
-const COLOR = {
-  white: '#FFFFFF',
-  bodyText: '#111827',
-  labelText: '#374151',
-  subText: '#6B7280',
-  mutedText: '#9CA3AF',
-  borderLight: '#E5E7EB',
-  borderMid: '#D1D5DB',
-  sidebarBg: '#F3F4F6',
-  saveBtnBg: '#111827',
-  saveBtnText: '#FFFFFF',
-  cancelBtnText: '#374151',
-  deleteBtnText: '#EF4444',
-  deleteBtnBorder: '#EF4444',
-  errorText: '#DC2626',
-  errorBg: '#FEF2F2',
-  errorBorder: '#FCA5A5',
-};
-
-const FONT = {
-  title: { fontFamily: 'Inter', fontSize: 22, fontWeight: '700' as const },
-  label: { fontFamily: 'Inter', fontSize: 13, fontWeight: '500' as const },
-  inputValue: { fontFamily: 'Inter', fontSize: 14, fontWeight: '400' as const },
-  btnText: { fontFamily: 'Inter', fontSize: 14, fontWeight: '500' as const },
-  deleteNote: { fontFamily: 'Inter', fontSize: 11, fontWeight: '400' as const },
-};
-
-// ─── Picker Field ─────────────────────────────────────────────────────────────
-
-interface PickerFieldProps {
-  label: string;
-  items: PickerItem[];
-  selectedId: string;
-  onSelect: (id: string) => void;
-  fetchState: FetchState<unknown>;
-  testID?: string;
-}
-
-function PickerField({ label, items, selectedId, onSelect, fetchState, testID }: PickerFieldProps) {
-  const [open, setOpen] = useState(false);
-  const selectedLabel = items.find((i) => i.id === selectedId)?.label ?? '';
-
-  return (
-    <View style={styles.fieldContainer}>
-      <Text style={styles.fieldLabel}>{label}</Text>
-      {fetchState.status === 'loading' && (
-        <View style={[styles.inputBox, styles.inputBoxDisabled]}>
-          <ActivityIndicator size="small" color={COLOR.mutedText} />
-          <Text style={[FONT.inputValue, { color: COLOR.mutedText, marginLeft: 8 }]}>
-            Loading…
-          </Text>
-        </View>
-      )}
-      {fetchState.status === 'error' && (
-        <View style={[styles.inputBox, styles.inputBoxError]}>
-          <Text style={[FONT.inputValue, { color: COLOR.errorText, flex: 1 }]} numberOfLines={1}>
-            {fetchState.message}
-          </Text>
-        </View>
-      )}
-      {fetchState.status === 'success' && (
-        <>
-          <TouchableOpacity
-            testID={testID}
-            style={styles.inputBox}
-            onPress={() => setOpen((prev) => !prev)}
-            activeOpacity={0.7}>
-            <Text
-              style={[
-                FONT.inputValue,
-                { flex: 1, color: selectedLabel ? COLOR.bodyText : COLOR.mutedText },
-              ]}
-              numberOfLines={1}>
-              {selectedLabel || `Select ${label}`}
-            </Text>
-            <Text style={[FONT.inputValue, { color: COLOR.mutedText }]}>v</Text>
-          </TouchableOpacity>
-          {open && (
-            <View style={styles.dropdownList}>
-              {items.length === 0 ? (
-                <View style={styles.dropdownItem}>
-                  <Text style={[FONT.inputValue, { color: COLOR.mutedText }]}>
-                    No options available
-                  </Text>
-                </View>
-              ) : (
-                items.map((item) => (
-                  <TouchableOpacity
-                    key={item.id}
-                    style={[
-                      styles.dropdownItem,
-                      item.id === selectedId && styles.dropdownItemSelected,
-                    ]}
-                    onPress={() => {
-                      onSelect(item.id);
-                      setOpen(false);
-                    }}>
-                    <Text
-                      style={[
-                        FONT.inputValue,
-                        { color: item.id === selectedId ? COLOR.saveBtnBg : COLOR.bodyText },
-                      ]}>
-                      {item.label}
-                    </Text>
-                  </TouchableOpacity>
-                ))
-              )}
-            </View>
-          )}
-        </>
-      )}
-    </View>
-  );
-}
-
 // ─── Text Input Field ─────────────────────────────────────────────────────────
 
 interface TextFieldProps {
@@ -182,7 +65,7 @@ function TextField({
 }: TextFieldProps) {
   return (
     <View style={styles.fieldContainer}>
-      <Text style={styles.fieldLabel}>{label}</Text>
+      <Text size="label" weight="semibold" tone="faint" upper>{label}</Text>
       <TextInput
         testID={testID}
         style={[
@@ -193,10 +76,10 @@ function TextField({
         value={value}
         onChangeText={onChangeText}
         placeholder={placeholder}
-        placeholderTextColor={COLOR.mutedText}
+        placeholderTextColor={Ink.faint}
         keyboardType={keyboardType ?? 'default'}
       />
-      {error ? <Text style={styles.validationErrorText}>{error}</Text> : null}
+      {error ? <Text size="meta" tone={Status.danger} style={styles.validationErrorText}>{error}</Text> : null}
     </View>
   );
 }
@@ -423,7 +306,7 @@ export default function EditClassScreen() {
   if (isInitialLoading) {
     return (
       <View style={styles.centeredFeedback}>
-        <ActivityIndicator size="large" color={COLOR.bodyText} />
+        <ActivityIndicator size="large" color={Ink.strong} />
       </View>
     );
   }
@@ -431,9 +314,9 @@ export default function EditClassScreen() {
   if (hasInitialError) {
     return (
       <View style={styles.centeredFeedback}>
-        <Text style={styles.errorText}>{classLoadState.message}</Text>
+        <Text size="body" tone={Status.danger} style={styles.errorText}>{classLoadState.message}</Text>
         <TouchableOpacity style={styles.retryBtn} onPress={fetchAllData}>
-          <Text style={styles.retryBtnText}>Retry</Text>
+          <Text size="body" weight="medium">Retry</Text>
         </TouchableOpacity>
       </View>
     );
@@ -443,18 +326,25 @@ export default function EditClassScreen() {
     <KeyboardAvoidingView
       style={styles.screen}
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-      <ScrollView contentContainerStyle={[styles.scrollContent, isMobile && styles.scrollContentMobile, isMobile && { paddingTop: safeTop + Spacing.base }]} keyboardShouldPersistTaps="handled">
+      <ScrollView contentContainerStyle={[styles.scrollContent, isMobile && styles.scrollContentMobile, isMobile && { paddingTop: safeTop + Space.base }]} keyboardShouldPersistTaps="handled">
         {/* Header */}
         <View style={styles.header}>
-          <Text style={[FONT.title, { color: COLOR.bodyText }]}>Edit Class</Text>
+          <TouchableOpacity
+            testID="edit-class-back-btn"
+            style={styles.backBtn}
+            onPress={() => router.back()}
+            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+            <Icon name="back" size={24} tone={Ink.strong} />
+          </TouchableOpacity>
+          <Text size="screen" weight="bold">Edit Class</Text>
         </View>
 
         {/* Form card */}
         <View style={[styles.formCard, isMobile && styles.formCardMobile]}>
           {/* Row 1 — Class Type + Coach */}
-          <View style={[styles.row, isMobile && styles.rowMobile]}>
+          <View style={[styles.row, isMobile && styles.rowMobile, styles.rowPickerTop]}>
             <View style={styles.rowItem}>
-              <PickerField
+              <SelectField
                 testID="edit-class-class-type-picker"
                 label="Class Type"
                 items={classTypeItems}
@@ -464,7 +354,7 @@ export default function EditClassScreen() {
               />
             </View>
             <View style={styles.rowItem}>
-              <PickerField
+              <SelectField
                 testID="edit-class-coach-picker"
                 label="Coach"
                 items={coachItems}
@@ -476,9 +366,9 @@ export default function EditClassScreen() {
           </View>
 
           {/* Row 2 — Space + Date */}
-          <View style={[styles.row, isMobile && styles.rowMobile]}>
+          <View style={[styles.row, isMobile && styles.rowMobile, styles.rowPickerBottom]}>
             <View style={styles.rowItem}>
-              <PickerField
+              <SelectField
                 testID="edit-class-space-picker"
                 label="Space"
                 items={spaceItems}
@@ -546,7 +436,7 @@ export default function EditClassScreen() {
           {/* Submit error */}
           {submitError ? (
             <View style={styles.submitErrorBanner}>
-              <Text style={styles.submitErrorText}>{submitError}</Text>
+              <Text size="meta" tone={Status.danger} style={styles.submitErrorText}>{submitError}</Text>
             </View>
           ) : null}
 
@@ -554,40 +444,40 @@ export default function EditClassScreen() {
           <View style={[styles.btnRow, isMobile && styles.btnRowMobile]}>
             {/* Left: Cancel + Save */}
             <View style={[styles.leftBtns, isMobile && styles.leftBtnsMobile]}>
-              <TouchableOpacity
-                testID="edit-class-cancel-btn"
-                style={[styles.cancelBtn, isMobile && styles.btnMobile]}
-                onPress={() => router.back()}
-                disabled={isSubmitting || isDeleting}>
-                <Text style={[FONT.btnText, { color: COLOR.cancelBtnText }]}>Cancel</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                testID="edit-class-save-btn"
-                style={[styles.saveBtn, isMobile && styles.btnMobile, (isSubmitting || isDeleting) && styles.saveBtnDisabled]}
-                onPress={handleSave}
-                disabled={isSubmitting || isDeleting}>
-                {isSubmitting ? (
-                  <ActivityIndicator size="small" color={COLOR.saveBtnText} />
-                ) : (
-                  <Text style={[FONT.btnText, { color: COLOR.saveBtnText }]}>Save Changes</Text>
-                )}
-              </TouchableOpacity>
+              <View style={[styles.btnWrap, isMobile && styles.btnWrapMobile]}>
+                <Button
+                  testID="edit-class-cancel-btn"
+                  label="Cancel"
+                  variant="quiet"
+                  onPress={() => router.back()}
+                  disabled={isSubmitting || isDeleting}
+                />
+              </View>
+              <View style={[styles.btnWrap, isMobile && styles.btnWrapMobile]}>
+                <Button
+                  testID="edit-class-save-btn"
+                  label="Save Changes"
+                  variant="primary"
+                  onPress={handleSave}
+                  loading={isSubmitting}
+                  disabled={isSubmitting || isDeleting}
+                />
+              </View>
             </View>
 
             {/* Right: Delete */}
             <View style={[styles.rightGroup, isMobile && styles.rightGroupMobile]}>
-              <TouchableOpacity
-                testID="edit-class-delete-btn"
-                style={[styles.deleteBtn, isMobile && styles.btnMobile, isDeleting && styles.saveBtnDisabled]}
-                onPress={handleDelete}
-                disabled={isSubmitting || isDeleting}>
-                {isDeleting ? (
-                  <ActivityIndicator size="small" color={COLOR.deleteBtnText} />
-                ) : (
-                  <Text style={[FONT.btnText, { color: COLOR.deleteBtnText }]}>Delete Class</Text>
-                )}
-              </TouchableOpacity>
-              <Text style={[FONT.deleteNote, { color: COLOR.mutedText }]}>
+              <View style={[styles.btnWrap, isMobile && styles.btnWrapMobile]}>
+                <Button
+                  testID="edit-class-delete-btn"
+                  label="Delete Class"
+                  variant="danger"
+                  onPress={handleDelete}
+                  loading={isDeleting}
+                  disabled={isSubmitting || isDeleting}
+                />
+              </View>
+              <Text size="label" tone="faint">
                 Only available for published classes
               </Text>
             </View>
