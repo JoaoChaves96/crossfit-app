@@ -1,11 +1,9 @@
 import React, { useState } from 'react';
 import {
   View,
-  Text,
   TextInput,
   TouchableOpacity,
   ScrollView,
-  ActivityIndicator,
   KeyboardAvoidingView,
   Platform,
 } from 'react-native';
@@ -13,6 +11,8 @@ import { styles } from './gym-setup.styles';
 import { useRouter } from 'expo-router';
 import { useAuth } from '@/hooks/useAuth';
 import { createApiClient } from '@/utils/api-client';
+import { Text, Button } from '@/components/cleanink';
+import { Ink, Status } from '@/constants/design';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -50,6 +50,7 @@ function StepIndicator({ currentStep }: { currentStep: Step }) {
         const stepNumber = (index + 1) as Step;
         const isActive = stepNumber === currentStep;
         const isCompleted = stepNumber < currentStep;
+        const filled = isActive || isCompleted;
         return (
           <View key={stepNumber} style={styles.stepItem}>
             <View
@@ -58,21 +59,15 @@ function StepIndicator({ currentStep }: { currentStep: Step }) {
                 isActive && styles.stepCircleActive,
                 isCompleted && styles.stepCircleCompleted,
               ]}>
-              <Text
-                style={[
-                  styles.stepCircleText,
-                  (isActive || isCompleted) && styles.stepCircleTextActive,
-                ]}>
+              <Text size="meta" weight="semibold" tone={filled ? Ink.inverse : 'faint'}>
                 {stepNumber}
               </Text>
             </View>
-            <Text
-              style={[
-                styles.stepLabel,
-                isActive && styles.stepLabelActive,
-              ]}>
-              {label}
-            </Text>
+            <View style={styles.stepLabelWrap}>
+              <Text size="meta" weight={isActive ? 'semibold' : 'regular'} tone={isActive ? 'strong' : 'faint'}>
+                {label}
+              </Text>
+            </View>
             {index < steps.length - 1 && (
               <View
                 style={[
@@ -114,43 +109,43 @@ function Step1Basics({ basics, onChange, onNext, onCancel }: Step1Props) {
 
   return (
     <View style={styles.stepContent}>
-      <Text style={styles.stepTitle}>Create Your Gym — Step 1: Basics</Text>
-      <Text style={styles.stepSubtitle}>
+      <Text size="screen" weight="bold" tone="strong" style={styles.stepTitle}>Create Your Gym — Step 1: Basics</Text>
+      <Text size="body" tone="muted" style={styles.stepSubtitle}>
         Fill in the basic information about your gym to get started.
       </Text>
 
       <View style={styles.field}>
-        <Text style={styles.fieldLabel}>Gym Name</Text>
+        <Text size="label" weight="semibold" tone="faint" upper>Gym Name</Text>
         <TextInput
           style={[styles.input, errors.name ? styles.inputError : null]}
           placeholder="e.g. CrossFit Downtown"
-          placeholderTextColor="#999"
+          placeholderTextColor={Ink.faint}
           value={basics.name}
           onChangeText={(val) => onChange({ ...basics, name: val })}
         />
-        {errors.name ? <Text style={styles.errorText}>{errors.name}</Text> : null}
+        {errors.name ? <Text size="meta" tone={Status.danger} style={styles.errorText}>{errors.name}</Text> : null}
       </View>
 
       <View style={styles.field}>
-        <Text style={styles.fieldLabel}>Location</Text>
+        <Text size="label" weight="semibold" tone="faint" upper>Location</Text>
         <TextInput
           style={[styles.input, errors.location ? styles.inputError : null]}
           placeholder="e.g. 123 Main St, City"
-          placeholderTextColor="#999"
+          placeholderTextColor={Ink.faint}
           value={basics.location}
           onChangeText={(val) => onChange({ ...basics, location: val })}
         />
         {errors.location ? (
-          <Text style={styles.errorText}>{errors.location}</Text>
+          <Text size="meta" tone={Status.danger} style={styles.errorText}>{errors.location}</Text>
         ) : null}
       </View>
 
       <View style={styles.field}>
-        <Text style={styles.fieldLabel}>Description</Text>
+        <Text size="label" weight="semibold" tone="faint" upper>Description</Text>
         <TextInput
           style={[styles.input, styles.textArea]}
           placeholder="Describe your gym, services, and what makes it unique..."
-          placeholderTextColor="#999"
+          placeholderTextColor={Ink.faint}
           value={basics.description}
           onChangeText={(val) => onChange({ ...basics, description: val })}
           multiline
@@ -160,12 +155,12 @@ function Step1Basics({ basics, onChange, onNext, onCancel }: Step1Props) {
       </View>
 
       <View style={styles.buttonRow}>
-        <TouchableOpacity style={styles.cancelButton} onPress={onCancel}>
-          <Text style={styles.cancelButtonText}>Cancel</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.primaryButton} onPress={handleNext}>
-          <Text style={styles.primaryButtonText}>Next</Text>
-        </TouchableOpacity>
+        <View style={styles.buttonWrap}>
+          <Button label="Cancel" variant="quiet" onPress={onCancel} />
+        </View>
+        <View style={styles.buttonWrap}>
+          <Button label="Next" variant="primary" onPress={handleNext} />
+        </View>
       </View>
     </View>
   );
@@ -226,15 +221,15 @@ function Step2Spaces({ spaces, onChange, onNext, onBack }: Step2Props) {
 
   return (
     <View style={styles.stepContent}>
-      <Text style={styles.stepTitle}>Step 2: Training Spaces</Text>
-      <Text style={styles.stepSubtitle}>
+      <Text size="screen" weight="bold" tone="strong" style={styles.stepTitle}>Step 2: Training Spaces</Text>
+      <Text size="body" tone="muted" style={styles.stepSubtitle}>
         Add the training spaces available at your gym. You can add more later.
       </Text>
 
       {spaces.length === 0 ? (
         <View style={styles.emptyState}>
-          <Text style={styles.emptyStateText}>No spaces configured yet</Text>
-          <Text style={styles.emptyStateSubText}>
+          <Text size="body" weight="semibold" tone="muted">No spaces configured yet</Text>
+          <Text size="meta" tone="faint" style={styles.emptyStateSubText}>
             Add your first training space to start organizing classes.
           </Text>
         </View>
@@ -242,61 +237,61 @@ function Step2Spaces({ spaces, onChange, onNext, onBack }: Step2Props) {
         spaces.map((space, index) => (
           <View key={index} style={styles.entryCard}>
             <View style={styles.entryCardHeader}>
-              <Text style={styles.entryCardTitle}>Space {index + 1}</Text>
-              <TouchableOpacity onPress={() => removeSpace(index)}>
-                <Text style={styles.removeText}>Remove</Text>
+              <Text size="body" weight="semibold" tone="strong">Space {index + 1}</Text>
+              <TouchableOpacity style={styles.removeBtn} onPress={() => removeSpace(index)}>
+                <Text size="meta" weight="medium" tone={Status.danger}>Remove</Text>
               </TouchableOpacity>
             </View>
 
             <View style={styles.field}>
-              <Text style={styles.fieldLabel}>Name</Text>
+              <Text size="label" weight="semibold" tone="faint" upper>Name</Text>
               <TextInput
                 style={[
                   styles.input,
                   spaceErrors[index]?.name ? styles.inputError : null,
                 ]}
                 placeholder="e.g. Main Floor"
-                placeholderTextColor="#999"
+                placeholderTextColor={Ink.faint}
                 value={space.name}
                 onChangeText={(val) => updateSpace(index, 'name', val)}
               />
               {spaceErrors[index]?.name ? (
-                <Text style={styles.errorText}>{spaceErrors[index].name}</Text>
+                <Text size="meta" tone={Status.danger} style={styles.errorText}>{spaceErrors[index].name}</Text>
               ) : null}
             </View>
 
             <View style={styles.field}>
-              <Text style={styles.fieldLabel}>Capacity</Text>
+              <Text size="label" weight="semibold" tone="faint" upper>Capacity</Text>
               <TextInput
                 style={[
                   styles.input,
                   spaceErrors[index]?.capacity ? styles.inputError : null,
                 ]}
                 placeholder="e.g. 20"
-                placeholderTextColor="#999"
+                placeholderTextColor={Ink.faint}
                 value={space.capacity}
                 onChangeText={(val) => updateSpace(index, 'capacity', val)}
                 keyboardType="numeric"
               />
               {spaceErrors[index]?.capacity ? (
-                <Text style={styles.errorText}>{spaceErrors[index].capacity}</Text>
+                <Text size="meta" tone={Status.danger} style={styles.errorText}>{spaceErrors[index].capacity}</Text>
               ) : null}
             </View>
           </View>
         ))
       )}
 
-      <TouchableOpacity style={styles.addButton} onPress={addSpace}>
-        <Text style={styles.addButtonText}>+ Add Space</Text>
-      </TouchableOpacity>
+      <View style={styles.addBtnWrap}>
+        <Button label="+ Add Space" variant="quiet" onPress={addSpace} />
+      </View>
 
       <View style={styles.buttonRow}>
-        <TouchableOpacity style={styles.cancelButton} onPress={onBack}>
-          <Text style={styles.cancelButtonText}>Back</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.primaryButton} onPress={handleNext}>
-          <Text style={styles.primaryButtonText}>Next</Text>
-        </TouchableOpacity>
+        <View style={styles.buttonWrap}>
+          <Button label="Back" variant="quiet" onPress={onBack} />
+        </View>
+        <View style={styles.buttonWrap}>
+          <Button label="Next" variant="primary" onPress={handleNext} />
+        </View>
       </View>
     </View>
   );
@@ -354,15 +349,15 @@ function Step3ClassTypes({ classTypes, onChange, onNext, onBack }: Step3Props) {
 
   return (
     <View style={styles.stepContent}>
-      <Text style={styles.stepTitle}>Step 3: Class Types</Text>
-      <Text style={styles.stepSubtitle}>
+      <Text size="screen" weight="bold" tone="strong" style={styles.stepTitle}>Step 3: Class Types</Text>
+      <Text size="body" tone="muted" style={styles.stepSubtitle}>
         Define the types of fitness classes your gym offers. You can add more later.
       </Text>
 
       {classTypes.length === 0 ? (
         <View style={styles.emptyState}>
-          <Text style={styles.emptyStateText}>No class types defined yet</Text>
-          <Text style={styles.emptyStateSubText}>
+          <Text size="body" weight="semibold" tone="muted">No class types defined yet</Text>
+          <Text size="meta" tone="faint" style={styles.emptyStateSubText}>
             Add the types of classes you offer (e.g. WOD, Open Gym, Barbell Club).
           </Text>
         </View>
@@ -370,35 +365,35 @@ function Step3ClassTypes({ classTypes, onChange, onNext, onBack }: Step3Props) {
         classTypes.map((ct, index) => (
           <View key={index} style={styles.entryCard}>
             <View style={styles.entryCardHeader}>
-              <Text style={styles.entryCardTitle}>Class Type {index + 1}</Text>
-              <TouchableOpacity onPress={() => removeClassType(index)}>
-                <Text style={styles.removeText}>Remove</Text>
+              <Text size="body" weight="semibold" tone="strong">Class Type {index + 1}</Text>
+              <TouchableOpacity style={styles.removeBtn} onPress={() => removeClassType(index)}>
+                <Text size="meta" weight="medium" tone={Status.danger}>Remove</Text>
               </TouchableOpacity>
             </View>
 
             <View style={styles.field}>
-              <Text style={styles.fieldLabel}>Name</Text>
+              <Text size="label" weight="semibold" tone="faint" upper>Name</Text>
               <TextInput
                 style={[
                   styles.input,
                   classTypeErrors[index] ? styles.inputError : null,
                 ]}
                 placeholder="e.g. WOD, Open Gym, Barbell Club"
-                placeholderTextColor="#999"
+                placeholderTextColor={Ink.faint}
                 value={ct.name}
                 onChangeText={(val) => updateClassType(index, 'name', val)}
               />
               {classTypeErrors[index] ? (
-                <Text style={styles.errorText}>{classTypeErrors[index]}</Text>
+                <Text size="meta" tone={Status.danger} style={styles.errorText}>{classTypeErrors[index]}</Text>
               ) : null}
             </View>
 
             <View style={styles.field}>
-              <Text style={styles.fieldLabel}>Description (optional)</Text>
+              <Text size="label" weight="semibold" tone="faint" upper>Description (optional)</Text>
               <TextInput
                 style={[styles.input, styles.textArea]}
                 placeholder="Describe this class type..."
-                placeholderTextColor="#999"
+                placeholderTextColor={Ink.faint}
                 value={ct.description}
                 onChangeText={(val) => updateClassType(index, 'description', val)}
                 multiline
@@ -410,17 +405,17 @@ function Step3ClassTypes({ classTypes, onChange, onNext, onBack }: Step3Props) {
         ))
       )}
 
-      <TouchableOpacity style={styles.addButton} onPress={addClassType}>
-        <Text style={styles.addButtonText}>+ Add Class Type</Text>
-      </TouchableOpacity>
+      <View style={styles.addBtnWrap}>
+        <Button label="+ Add Class Type" variant="quiet" onPress={addClassType} />
+      </View>
 
       <View style={styles.buttonRow}>
-        <TouchableOpacity style={styles.cancelButton} onPress={onBack}>
-          <Text style={styles.cancelButtonText}>Back</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.primaryButton} onPress={handleNext}>
-          <Text style={styles.primaryButtonText}>Next</Text>
-        </TouchableOpacity>
+        <View style={styles.buttonWrap}>
+          <Button label="Back" variant="quiet" onPress={onBack} />
+        </View>
+        <View style={styles.buttonWrap}>
+          <Button label="Next" variant="primary" onPress={handleNext} />
+        </View>
       </View>
     </View>
   );
@@ -439,53 +434,53 @@ interface Step4Props {
 function Step4Review({ state, onBack, onSubmit, isSubmitting, submitError }: Step4Props) {
   return (
     <View style={styles.stepContent}>
-      <Text style={styles.stepTitle}>Step 4: Review & Submit</Text>
-      <Text style={styles.stepSubtitle}>
+      <Text size="screen" weight="bold" tone="strong" style={styles.stepTitle}>Step 4: Review & Submit</Text>
+      <Text size="body" tone="muted" style={styles.stepSubtitle}>
         Review your gym configuration before submitting.
       </Text>
 
       <View style={styles.reviewSection}>
-        <Text style={styles.reviewSectionTitle}>Gym Basics</Text>
-        <Text style={styles.reviewLabel}>Name</Text>
-        <Text style={styles.reviewValue}>{state.basics.name}</Text>
-        <Text style={styles.reviewLabel}>Location</Text>
-        <Text style={styles.reviewValue}>{state.basics.location}</Text>
+        <Text size="title" weight="semibold" tone="strong" style={styles.reviewSectionTitle}>Gym Basics</Text>
+        <Text size="label" weight="semibold" tone="faint" upper>Name</Text>
+        <Text size="body" tone="strong">{state.basics.name}</Text>
+        <Text size="label" weight="semibold" tone="faint" upper>Location</Text>
+        <Text size="body" tone="strong">{state.basics.location}</Text>
         {state.basics.description ? (
           <>
-            <Text style={styles.reviewLabel}>Description</Text>
-            <Text style={styles.reviewValue}>{state.basics.description}</Text>
+            <Text size="label" weight="semibold" tone="faint" upper>Description</Text>
+            <Text size="body" tone="strong">{state.basics.description}</Text>
           </>
         ) : null}
       </View>
 
       <View style={styles.reviewSection}>
-        <Text style={styles.reviewSectionTitle}>
+        <Text size="title" weight="semibold" tone="strong" style={styles.reviewSectionTitle}>
           Spaces ({state.spaces.length})
         </Text>
         {state.spaces.length === 0 ? (
-          <Text style={styles.reviewEmptyNote}>No spaces added</Text>
+          <Text size="meta" tone="faint">No spaces added</Text>
         ) : (
           state.spaces.map((space, index) => (
             <View key={index} style={styles.reviewItem}>
-              <Text style={styles.reviewItemName}>{space.name}</Text>
-              <Text style={styles.reviewItemDetail}>Capacity: {space.capacity}</Text>
+              <Text size="body" weight="semibold" tone="strong">{space.name}</Text>
+              <Text size="meta" tone="muted">Capacity: {space.capacity}</Text>
             </View>
           ))
         )}
       </View>
 
       <View style={styles.reviewSection}>
-        <Text style={styles.reviewSectionTitle}>
+        <Text size="title" weight="semibold" tone="strong" style={styles.reviewSectionTitle}>
           Class Types ({state.classTypes.length})
         </Text>
         {state.classTypes.length === 0 ? (
-          <Text style={styles.reviewEmptyNote}>No class types added</Text>
+          <Text size="meta" tone="faint">No class types added</Text>
         ) : (
           state.classTypes.map((ct, index) => (
             <View key={index} style={styles.reviewItem}>
-              <Text style={styles.reviewItemName}>{ct.name}</Text>
+              <Text size="body" weight="semibold" tone="strong">{ct.name}</Text>
               {ct.description ? (
-                <Text style={styles.reviewItemDetail}>{ct.description}</Text>
+                <Text size="meta" tone="muted">{ct.description}</Text>
               ) : null}
             </View>
           ))
@@ -494,27 +489,17 @@ function Step4Review({ state, onBack, onSubmit, isSubmitting, submitError }: Ste
 
       {submitError ? (
         <View style={styles.errorBanner}>
-          <Text style={styles.errorBannerText}>{submitError}</Text>
+          <Text size="meta" tone={Status.danger}>{submitError}</Text>
         </View>
       ) : null}
 
       <View style={styles.buttonRow}>
-        <TouchableOpacity
-          style={styles.cancelButton}
-          onPress={onBack}
-          disabled={isSubmitting}>
-          <Text style={styles.cancelButtonText}>Back</Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={[styles.primaryButton, isSubmitting && styles.primaryButtonDisabled]}
-          onPress={onSubmit}
-          disabled={isSubmitting}>
-          {isSubmitting ? (
-            <ActivityIndicator size="small" color="#fff" />
-          ) : (
-            <Text style={styles.primaryButtonText}>Create Gym</Text>
-          )}
-        </TouchableOpacity>
+        <View style={styles.buttonWrap}>
+          <Button label="Back" variant="quiet" onPress={onBack} disabled={isSubmitting} />
+        </View>
+        <View style={styles.buttonWrap}>
+          <Button label="Create Gym" variant="primary" onPress={onSubmit} loading={isSubmitting} />
+        </View>
       </View>
     </View>
   );
@@ -530,16 +515,16 @@ interface SuccessScreenProps {
 function SuccessScreen({ gymName, onCreateFirstClass }: SuccessScreenProps) {
   return (
     <View style={styles.successContainer}>
-      <Text style={styles.successTitle}>Gym Created!</Text>
-      <Text style={styles.successSubtitle}>
+      <Text size="display" weight="bold" tone="strong">Gym Created!</Text>
+      <Text size="title" weight="semibold" tone="strong">
         {`"${gymName}" has been successfully set up.`}
       </Text>
-      <Text style={styles.successBody}>
+      <Text size="body" tone="muted" style={styles.successBody}>
         {'Your spaces and class types have been configured. You\'re ready to start scheduling classes.'}
       </Text>
-      <TouchableOpacity style={styles.primaryButton} onPress={onCreateFirstClass}>
-        <Text style={styles.primaryButtonText}>Create your first class</Text>
-      </TouchableOpacity>
+      <View style={styles.successBtnWrap}>
+        <Button label="Create your first class" variant="primary" onPress={onCreateFirstClass} />
+      </View>
     </View>
   );
 }
@@ -673,4 +658,3 @@ export default function GymSetupScreen() {
     </KeyboardAvoidingView>
   );
 }
-

@@ -1,7 +1,9 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import { ActivityIndicator, Alert, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, Alert, TextInput, TouchableOpacity, View } from 'react-native';
 import { createApiClient } from '@/utils/api-client';
 import { components } from '@/types/api.gen';
+import { Text, Icon, Button, StatusChip } from '@/components/cleanink';
+import { Ink, Accent, Status } from '@/constants/design';
 import { styles } from './gym-settings.styles';
 
 type ClassTypeItem = components['schemas']['ClassTypeItemDto'];
@@ -22,10 +24,6 @@ const RESULT_METRIC_LABELS: Record<ResultMetric, string> = {
   none: 'None',
 };
 
-const INPUT_PLACEHOLDER_COLOR = '#9CA3AF';
-const PRIMARY_BTN_TEXT_COLOR = '#FFFFFF';
-const BODY_TEXT_COLOR = '#111827';
-
 // ─── Empty State ─────────────────────────────────────────────────────────────
 
 interface EmptyClassTypesProps {
@@ -36,16 +34,15 @@ function EmptyClassTypes({ onAddPress }: EmptyClassTypesProps) {
   return (
     <View style={styles.emptyContainer}>
       <View style={styles.emptyIcon}>
-        <Text style={styles.emptyIconText}>⬡</Text>
+        <Icon name="classes" size={28} tone="faint" />
       </View>
-      <Text style={styles.emptyTitle}>No class types configured yet</Text>
-      <Text style={styles.emptyDesc}>
+      <Text size="title" weight="semibold" tone="strong">No class types configured yet</Text>
+      <Text size="meta" tone="muted" style={styles.emptyDesc}>
         Add your first class type to start organizing your gym's programming.
       </Text>
-      <TouchableOpacity testID="add-class-type-btn" style={styles.addBtn} onPress={onAddPress} activeOpacity={0.8}>
-        <Text style={styles.addBtnPlus}>+</Text>
-        <Text style={styles.addBtnText}>Add Class Type</Text>
-      </TouchableOpacity>
+      <View style={styles.emptyBtnWrap}>
+        <Button testID="add-class-type-btn" label="Add Class Type" variant="primary" onPress={onAddPress} />
+      </View>
     </View>
   );
 }
@@ -63,65 +60,62 @@ function ClassTypesTable({ classTypes, onEdit, onDelete, onAddPress }: ClassType
   return (
     <View style={styles.content}>
       <View style={styles.sectionRow}>
-        <Text style={styles.sectionTitle}>Class Types</Text>
-        <TouchableOpacity testID="add-class-type-btn" style={styles.addBtn} onPress={onAddPress} activeOpacity={0.8}>
-          <Text style={styles.addBtnPlus}>+</Text>
-          <Text style={styles.addBtnText}>Add Class Type</Text>
-        </TouchableOpacity>
+        <Text size="title" weight="semibold" tone="strong">Class Types</Text>
+        <View style={styles.addBtnWrap}>
+          <Button testID="add-class-type-btn" label="Add Class Type" variant="primary" onPress={onAddPress} />
+        </View>
       </View>
 
       <View style={styles.table}>
         <View style={styles.tableHeader}>
           <View style={styles.colName}>
-            <Text style={styles.tableHeaderText}>Name</Text>
+            <Text size="label" weight="semibold" tone="faint" upper>Name</Text>
           </View>
           <View style={styles.colLoggable}>
-            <Text style={styles.tableHeaderText}>Loggable</Text>
+            <Text size="label" weight="semibold" tone="faint" upper>Loggable</Text>
           </View>
           <View style={styles.colMetric}>
-            <Text style={styles.tableHeaderText}>Result Metric</Text>
+            <Text size="label" weight="semibold" tone="faint" upper>Result Metric</Text>
           </View>
           <View style={styles.colClassTypeActions}>
-            <Text style={styles.tableHeaderText}>Actions</Text>
+            <Text size="label" weight="semibold" tone="faint" upper>Actions</Text>
           </View>
         </View>
 
         {classTypes.map((classType) => (
           <View key={classType.id} style={styles.tableRow}>
             <View style={styles.colName}>
-              <Text style={styles.rowText}>{classType.name}</Text>
+              <Text size="body" tone="strong">{classType.name}</Text>
             </View>
             <View style={styles.colLoggable}>
               {classType.loggable ? (
-                <View style={styles.badgeYes}>
-                  <Text style={styles.badgeYesText}>Yes</Text>
-                </View>
+                <StatusChip tone="open" label="Yes" />
               ) : (
-                <View style={styles.badgeNo}>
-                  <Text style={styles.badgeNoText}>No</Text>
-                </View>
+                <StatusChip tone="neutral" label="No" />
               )}
             </View>
             <View style={styles.colMetric}>
-              <Text style={styles.rowText}>
+              <Text size="body" tone="strong">
                 {RESULT_METRIC_LABELS[classType.resultMetrics]}
               </Text>
             </View>
             <View style={styles.colClassTypeActionsRow}>
-              <TouchableOpacity
-                testID={`class-type-edit-btn-${classType.id}`}
-                style={styles.editBtn}
-                onPress={() => onEdit(classType)}
-                activeOpacity={0.7}>
-                <Text style={styles.editBtnText}>Edit</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                testID={`class-type-delete-btn-${classType.id}`}
-                style={styles.deleteBtn}
-                onPress={() => onDelete(classType)}
-                activeOpacity={0.7}>
-                <Text style={styles.deleteBtnText}>Delete</Text>
-              </TouchableOpacity>
+              <View style={styles.entityCardActionBtn}>
+                <Button
+                  testID={`class-type-edit-btn-${classType.id}`}
+                  label="Edit"
+                  variant="quiet"
+                  onPress={() => onEdit(classType)}
+                />
+              </View>
+              <View style={styles.entityCardActionBtn}>
+                <Button
+                  testID={`class-type-delete-btn-${classType.id}`}
+                  label="Delete"
+                  variant="danger"
+                  onPress={() => onDelete(classType)}
+                />
+              </View>
             </View>
           </View>
         ))}
@@ -142,25 +136,29 @@ function ClassTypeCard({ classType, onEdit, onDelete }: ClassTypeCardProps) {
   return (
     <View style={styles.entityCard}>
       <View style={styles.entityCardTop}>
-        <Text style={styles.entityCardTitle} numberOfLines={1}>{classType.name}</Text>
+        <View style={styles.entityCardTitleWrap}>
+          <Text size="body" weight="semibold" tone="strong" numberOfLines={1}>{classType.name}</Text>
+        </View>
         <View style={styles.entityCardActions}>
-          <TouchableOpacity
-            testID={`class-type-edit-btn-${classType.id}`}
-            style={styles.editBtn}
-            onPress={() => onEdit(classType)}
-            activeOpacity={0.7}>
-            <Text style={styles.editBtnText}>Edit</Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            testID={`class-type-delete-btn-${classType.id}`}
-            style={styles.deleteBtn}
-            onPress={() => onDelete(classType)}
-            activeOpacity={0.7}>
-            <Text style={styles.deleteBtnText}>Delete</Text>
-          </TouchableOpacity>
+          <View style={styles.entityCardActionBtn}>
+            <Button
+              testID={`class-type-edit-btn-${classType.id}`}
+              label="Edit"
+              variant="quiet"
+              onPress={() => onEdit(classType)}
+            />
+          </View>
+          <View style={styles.entityCardActionBtn}>
+            <Button
+              testID={`class-type-delete-btn-${classType.id}`}
+              label="Delete"
+              variant="danger"
+              onPress={() => onDelete(classType)}
+            />
+          </View>
         </View>
       </View>
-      <Text style={styles.entityCardSub}>
+      <Text size="meta" tone="muted">
         {classType.loggable ? 'Loggable' : 'Not loggable'} · Metric: {RESULT_METRIC_LABELS[classType.resultMetrics]}
       </Text>
     </View>
@@ -180,11 +178,10 @@ function ClassTypesCardList({ classTypes, onEdit, onDelete, onAddPress }: ClassT
   return (
     <View style={styles.content}>
       <View style={styles.sectionRow}>
-        <Text style={styles.sectionTitle}>Class Types</Text>
-        <TouchableOpacity testID="add-class-type-btn" style={styles.addBtn} onPress={onAddPress} activeOpacity={0.8}>
-          <Text style={styles.addBtnPlus}>+</Text>
-          <Text style={styles.addBtnText}>Add Class Type</Text>
-        </TouchableOpacity>
+        <Text size="title" weight="semibold" tone="strong">Class Types</Text>
+        <View style={styles.addBtnWrap}>
+          <Button testID="add-class-type-btn" label="Add Class Type" variant="primary" onPress={onAddPress} />
+        </View>
       </View>
       <View style={styles.spaceCardList}>
         {classTypes.map((classType) => (
@@ -231,23 +228,25 @@ function ClassTypeForm({
 
   return (
     <View style={styles.content}>
-      <Text style={styles.formTitle}>
+      <Text size="title" weight="semibold" tone="strong">
         {mode === 'add' ? 'Add Class Type' : 'Edit Class Type'}
       </Text>
       <View style={styles.classTypeFormCard}>
-        <Text style={styles.inputLabel}>Name</Text>
-        <TextInput
-          testID="class-type-name-input"
-          style={styles.input}
-          placeholder="e.g. CrossFit WOD"
-          placeholderTextColor={INPUT_PLACEHOLDER_COLOR}
-          value={name}
-          onChangeText={setName}
-          editable={!isSaving}
-        />
+        <View style={styles.fieldGroup}>
+          <Text size="label" weight="semibold" tone="faint" upper>Name</Text>
+          <TextInput
+            testID="class-type-name-input"
+            style={styles.input}
+            placeholder="e.g. CrossFit WOD"
+            placeholderTextColor={Ink.faint}
+            value={name}
+            onChangeText={setName}
+            editable={!isSaving}
+          />
+        </View>
 
         <View style={styles.toggleRow}>
-          <Text style={styles.inputLabel}>Loggable</Text>
+          <Text size="label" weight="semibold" tone="faint" upper>Loggable</Text>
           <TouchableOpacity
             style={[styles.toggleTrack, loggable && styles.toggleTrackActive]}
             onPress={() => !isSaving && setLoggable(!loggable)}
@@ -256,49 +255,48 @@ function ClassTypeForm({
           </TouchableOpacity>
         </View>
 
-        <Text style={styles.inputLabel}>Result Metric</Text>
-        <View style={styles.metricRow}>
-          {RESULT_METRICS.map((metric) => {
-            const isSelected = selectedMetric === metric;
-            return (
-              <TouchableOpacity
-                key={metric}
-                style={[styles.metricPill, isSelected && styles.metricPillSelected]}
-                onPress={() => !isSaving && setSelectedMetric(metric)}
-                activeOpacity={0.7}>
-                <Text
-                  style={[
-                    styles.metricPillText,
-                    isSelected && styles.metricPillTextSelected,
-                  ]}>
-                  {RESULT_METRIC_LABELS[metric]}
-                </Text>
-              </TouchableOpacity>
-            );
-          })}
+        <View style={styles.fieldGroup}>
+          <Text size="label" weight="semibold" tone="faint" upper>Result Metric</Text>
+          <View style={styles.metricRow}>
+            {RESULT_METRICS.map((metric) => {
+              const isSelected = selectedMetric === metric;
+              return (
+                <TouchableOpacity
+                  key={metric}
+                  style={[styles.metricPill, isSelected && styles.metricPillSelected]}
+                  onPress={() => !isSaving && setSelectedMetric(metric)}
+                  activeOpacity={0.7}>
+                  <Text
+                    size="meta"
+                    weight={isSelected ? 'semibold' : 'medium'}
+                    tone={isSelected ? Ink.inverse : Ink.muted}>
+                    {RESULT_METRIC_LABELS[metric]}
+                  </Text>
+                </TouchableOpacity>
+              );
+            })}
+          </View>
         </View>
 
         <View style={styles.formBtnRow}>
-          <TouchableOpacity
-            testID="class-type-form-save-btn"
-            style={[styles.saveBtn, isSaving && styles.saveBtnDisabled]}
-            onPress={handleSave}
-            disabled={isSaving}
-            activeOpacity={0.8}>
-            {isSaving ? (
-              <ActivityIndicator size="small" color={PRIMARY_BTN_TEXT_COLOR} />
-            ) : (
-              <Text style={styles.saveBtnText}>Save</Text>
-            )}
-          </TouchableOpacity>
-          <TouchableOpacity
-            testID="class-type-form-cancel-btn"
-            style={styles.cancelBtn}
-            onPress={onCancel}
-            disabled={isSaving}
-            activeOpacity={0.7}>
-            <Text style={styles.cancelBtnText}>Cancel</Text>
-          </TouchableOpacity>
+          <View style={styles.formBtnWrap}>
+            <Button
+              testID="class-type-form-save-btn"
+              label="Save"
+              variant="primary"
+              onPress={handleSave}
+              loading={isSaving}
+            />
+          </View>
+          <View style={styles.formBtnWrap}>
+            <Button
+              testID="class-type-form-cancel-btn"
+              label="Cancel"
+              variant="quiet"
+              onPress={onCancel}
+              disabled={isSaving}
+            />
+          </View>
         </View>
       </View>
     </View>
@@ -428,7 +426,7 @@ export function ClassTypesTab({ gymId, token, isMobile }: ClassTypesTabProps) {
   if (isLoading) {
     return (
       <View style={styles.feedbackContainer}>
-        <ActivityIndicator size="large" color={BODY_TEXT_COLOR} />
+        <ActivityIndicator size="large" color={Ink.strong} />
       </View>
     );
   }
@@ -436,9 +434,9 @@ export function ClassTypesTab({ gymId, token, isMobile }: ClassTypesTabProps) {
   if (error) {
     return (
       <View style={styles.feedbackContainer}>
-        <Text style={styles.errorText}>{error}</Text>
+        <Text size="body" tone={Status.danger} style={styles.errorText}>{error}</Text>
         <TouchableOpacity style={styles.retryBtn} onPress={fetchClassTypes}>
-          <Text style={styles.retryBtnText}>Retry</Text>
+          <Text size="body" tone="strong">Retry</Text>
         </TouchableOpacity>
       </View>
     );

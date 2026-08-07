@@ -1,23 +1,23 @@
 import { StyleSheet } from 'react-native';
-import { AppColors, BorderRadius, FontSizes, FontWeights, LineHeights, Spacing } from '@/constants/theme';
+import { Ground, Ink, Line, Status, Radius, Space, Type, Elevation } from '@/constants/design';
 
 export const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: AppColors.backgroundWhite,
+    backgroundColor: Ground.base,
   },
   scrollContent: {
-    padding: Spacing.lg,
-    paddingBottom: Spacing.jumbo,
+    padding: Space.lg,
+    paddingBottom: Space.jumbo,
   },
 
-  // Step indicator
+  // Step indicator — selection reads through ink + weight, not the accent.
   stepIndicator: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: Spacing.xl,
-    paddingTop: Spacing.md,
+    marginBottom: Space.xl,
+    paddingTop: Space.md,
   },
   stepItem: {
     flexDirection: 'row',
@@ -26,43 +26,29 @@ export const styles = StyleSheet.create({
   stepCircle: {
     width: 28,
     height: 28,
-    borderRadius: 14,
-    backgroundColor: AppColors.borderDefault,
+    borderRadius: Radius.chip,
+    backgroundColor: Ground.sunken,
     alignItems: 'center',
     justifyContent: 'center',
   },
   stepCircleActive: {
-    backgroundColor: AppColors.brandPrimary,
+    backgroundColor: Ink.strong,
   },
   stepCircleCompleted: {
-    backgroundColor: AppColors.successLight,
-  },
-  stepCircleText: {
-    fontSize: FontSizes.mdSm,
-    fontWeight: FontWeights.semibold,
-    color: AppColors.textGray500,
-  },
-  stepCircleTextActive: {
-    color: AppColors.backgroundWhite,
-  },
-  stepLabel: {
-    fontSize: FontSizes.sm,
-    color: AppColors.textGray500,
-    marginLeft: Spacing.tight,
-    marginRight: Spacing.tight,
-  },
-  stepLabelActive: {
-    color: AppColors.brandPrimary,
-    fontWeight: FontWeights.semibold,
+    backgroundColor: Status.open,
   },
   stepConnector: {
     width: 20,
     height: 2,
-    backgroundColor: AppColors.borderDefault,
-    marginHorizontal: Spacing.hairline,
+    backgroundColor: Line.divider,
+    marginHorizontal: Space.hair,
   },
   stepConnectorCompleted: {
-    backgroundColor: AppColors.successLight,
+    backgroundColor: Status.open,
+  },
+  stepLabelWrap: {
+    marginLeft: Space.hair,
+    marginRight: Space.hair,
   },
 
   // Step content
@@ -70,212 +56,118 @@ export const styles = StyleSheet.create({
     flex: 1,
   },
   stepTitle: {
-    fontSize: FontSizes.xl,
-    fontWeight: FontWeights.bold,
-    color: AppColors.black,
-    marginBottom: Spacing.compact,
+    marginBottom: Space.sm,
   },
   stepSubtitle: {
-    fontSize: FontSizes.body,
-    color: AppColors.textGray600,
-    marginBottom: Spacing.xl,
-    lineHeight: LineHeights.bodyRelaxed,
+    marginBottom: Space.xl,
   },
 
   // Fields
   field: {
-    marginBottom: Spacing.base,
-  },
-  fieldLabel: {
-    fontSize: FontSizes.body,
-    fontWeight: FontWeights.semibold,
-    color: AppColors.black,
-    marginBottom: Spacing.compact,
+    marginBottom: Space.base,
+    gap: Space.xs,
   },
   input: {
     borderWidth: 1,
-    borderColor: AppColors.borderDefault,
-    borderRadius: BorderRadius.mdSm,
-    paddingHorizontal: Spacing.md,
-    paddingVertical: Spacing.smMd,
-    fontSize: FontSizes.body,
-    color: AppColors.black,
-    backgroundColor: AppColors.backgroundFaint,
-    minHeight: 44,
+    borderColor: Line.divider,
+    borderRadius: Radius.control,
+    paddingHorizontal: Space.md,
+    paddingVertical: Space.sm,
+    fontFamily: Type.family.regular,
+    fontSize: Type.size.body,
+    color: Ink.strong,
+    backgroundColor: Ground.surface,
+    minHeight: 46,
   },
   inputError: {
-    borderColor: AppColors.errorMaterial,
+    borderColor: Status.danger,
   },
   textArea: {
     minHeight: 88,
-    paddingTop: Spacing.smMd,
+    paddingTop: Space.sm,
   },
   errorText: {
-    fontSize: FontSizes.smMd,
-    color: AppColors.errorMaterial,
-    marginTop: Spacing.tight,
+    marginTop: Space.xs,
   },
 
   // Entry cards (spaces, class types)
   entryCard: {
     borderWidth: 1,
-    borderColor: AppColors.borderDefault,
-    borderRadius: BorderRadius.md,
-    padding: Spacing.md,
-    marginBottom: Spacing.md,
-    backgroundColor: AppColors.backgroundFaint,
+    borderColor: Line.hairline,
+    borderRadius: Radius.card,
+    padding: Space.base,
+    marginBottom: Space.md,
+    backgroundColor: Ground.surface,
+    gap: Space.md,
+    ...Elevation.card,
   },
   entryCardHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: Spacing.md,
   },
-  entryCardTitle: {
-    fontSize: FontSizes.body,
-    fontWeight: FontWeights.semibold,
-    color: AppColors.textDark3,
-  },
-  removeText: {
-    fontSize: FontSizes.mdSm,
-    color: AppColors.errorMaterial,
-    fontWeight: FontWeights.medium,
+  removeBtn: {
+    paddingVertical: Space.xs,
+    paddingHorizontal: Space.sm,
   },
 
-  // Add button
-  addButton: {
-    borderWidth: 1,
-    borderColor: AppColors.brandPrimary,
-    borderRadius: BorderRadius.mdSm,
-    paddingVertical: Spacing.smMd,
-    alignItems: 'center',
-    marginBottom: Spacing.xl,
-  },
-  addButtonText: {
-    fontSize: FontSizes.body,
-    fontWeight: FontWeights.semibold,
-    color: AppColors.brandPrimary,
+  // Add button (secondary add-more action)
+  addBtnWrap: {
+    marginBottom: Space.xl,
   },
 
   // Empty state
   emptyState: {
     alignItems: 'center',
-    paddingVertical: Spacing.xxxl,
-    marginBottom: Spacing.base,
-  },
-  emptyStateText: {
-    fontSize: FontSizes.bodyMd,
-    fontWeight: FontWeights.semibold,
-    color: AppColors.textGray600,
-    marginBottom: Spacing.compact,
+    paddingVertical: Space.xxl,
+    marginBottom: Space.base,
+    gap: Space.xs,
   },
   emptyStateSubText: {
-    fontSize: FontSizes.mdSm,
-    color: AppColors.textGray500,
     textAlign: 'center',
-    lineHeight: LineHeights.body,
+    maxWidth: 360,
   },
 
   // Button row
   buttonRow: {
     flexDirection: 'row',
     justifyContent: 'flex-end',
-    gap: Spacing.md,
-    marginTop: Spacing.sm,
+    gap: Space.md,
+    marginTop: Space.sm,
   },
-  cancelButton: {
-    borderWidth: 1,
-    borderColor: AppColors.borderDefault,
-    borderRadius: BorderRadius.mdSm,
-    paddingHorizontal: Spacing.lg,
-    paddingVertical: Spacing.smMd,
-    minWidth: 80,
-    alignItems: 'center',
-  },
-  cancelButtonText: {
-    fontSize: FontSizes.body,
-    fontWeight: FontWeights.medium,
-    color: AppColors.textDark3,
-  },
-  primaryButton: {
-    backgroundColor: AppColors.brandPrimary,
-    borderRadius: BorderRadius.mdSm,
-    paddingHorizontal: Spacing.lg,
-    paddingVertical: Spacing.smMd,
+  buttonWrap: {
     minWidth: 100,
-    alignItems: 'center',
-    justifyContent: 'center',
-    minHeight: 40,
-  },
-  primaryButtonDisabled: {
-    opacity: 0.6,
-  },
-  primaryButtonText: {
-    fontSize: FontSizes.body,
-    fontWeight: FontWeights.semibold,
-    color: AppColors.backgroundWhite,
   },
 
   // Review step
   reviewSection: {
-    marginBottom: Spacing.lg,
-    paddingBottom: Spacing.base,
+    marginBottom: Space.lg,
+    paddingBottom: Space.base,
     borderBottomWidth: 1,
-    borderBottomColor: AppColors.backgroundSurface,
+    borderBottomColor: Line.hairline,
+    gap: Space.xs,
   },
   reviewSectionTitle: {
-    fontSize: FontSizes.bodyMd,
-    fontWeight: FontWeights.bold,
-    color: AppColors.black,
-    marginBottom: Spacing.smMd,
-  },
-  reviewLabel: {
-    fontSize: FontSizes.smMd,
-    color: AppColors.textGray400,
-    marginBottom: Spacing.hairline,
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
-  },
-  reviewValue: {
-    fontSize: FontSizes.body,
-    color: AppColors.black,
-    marginBottom: Spacing.sm,
+    marginBottom: Space.xs,
   },
   reviewItem: {
-    backgroundColor: AppColors.backgroundSubtle,
-    borderRadius: BorderRadius.mdSm,
-    padding: Spacing.smMd,
-    marginBottom: Spacing.sm,
-  },
-  reviewItemName: {
-    fontSize: FontSizes.body,
-    fontWeight: FontWeights.semibold,
-    color: AppColors.black,
-  },
-  reviewItemDetail: {
-    fontSize: FontSizes.mdSm,
-    color: AppColors.textGray600,
-    marginTop: Spacing.hairline,
-  },
-  reviewEmptyNote: {
-    fontSize: FontSizes.mdSm,
-    color: AppColors.textGray500,
-    fontStyle: 'italic',
+    backgroundColor: Ground.surface,
+    borderWidth: 1,
+    borderColor: Line.hairline,
+    borderRadius: Radius.control,
+    padding: Space.sm,
+    marginBottom: Space.sm,
+    gap: Space.hair,
   },
 
   // Error banner
   errorBanner: {
-    backgroundColor: AppColors.errorBgFaint,
-    borderRadius: BorderRadius.mdSm,
+    backgroundColor: Status.dangerWash,
+    borderRadius: Radius.control,
     borderLeftWidth: 4,
-    borderLeftColor: AppColors.errorMaterial,
-    padding: Spacing.md,
-    marginBottom: Spacing.base,
-  },
-  errorBannerText: {
-    fontSize: FontSizes.mdSm,
-    color: AppColors.errorDark,
-    lineHeight: LineHeights.body,
+    borderLeftColor: Status.danger,
+    padding: Space.md,
+    marginBottom: Space.base,
   },
 
   // Success
@@ -283,28 +175,16 @@ export const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    paddingTop: Spacing.super,
-    paddingHorizontal: Spacing.lg,
-  },
-  successTitle: {
-    fontSize: FontSizes.display,
-    fontWeight: FontWeights.bold,
-    color: AppColors.black,
-    marginBottom: Spacing.md,
-    textAlign: 'center',
-  },
-  successSubtitle: {
-    fontSize: FontSizes.md,
-    fontWeight: FontWeights.semibold,
-    color: AppColors.brandPrimary,
-    marginBottom: Spacing.base,
-    textAlign: 'center',
+    paddingTop: Space.jumbo,
+    paddingHorizontal: Space.lg,
+    gap: Space.base,
   },
   successBody: {
-    fontSize: FontSizes.body,
-    color: AppColors.textGray600,
     textAlign: 'center',
-    lineHeight: LineHeights.comfortable,
-    marginBottom: Spacing.xxxl,
+    marginBottom: Space.lg,
+    maxWidth: 400,
+  },
+  successBtnWrap: {
+    minWidth: 220,
   },
 });

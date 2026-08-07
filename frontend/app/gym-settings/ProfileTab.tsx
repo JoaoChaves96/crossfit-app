@@ -1,15 +1,13 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import { ActivityIndicator, Alert, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, Alert, TextInput, TouchableOpacity, View } from 'react-native';
 import { createApiClient } from '@/utils/api-client';
 import { components } from '@/types/api.gen';
+import { Text, Button, StatusChip } from '@/components/cleanink';
+import { Ink, Status } from '@/constants/design';
 import { styles } from './gym-settings.styles';
 
 type GymProfileDto = components['schemas']['GymProfileDto'];
 type UpdateGymProfileDto = components['schemas']['UpdateGymProfileDto'];
-
-const INPUT_PLACEHOLDER_COLOR = '#9CA3AF';
-const PRIMARY_BTN_TEXT_COLOR = '#FFFFFF';
-const BODY_TEXT_COLOR = '#111827';
 
 function formatCreatedDate(isoDate: string): string {
   const date = new Date(isoDate);
@@ -89,7 +87,7 @@ export function ProfileTab({ gymId, token }: ProfileTabProps) {
   if (isLoading) {
     return (
       <View style={styles.feedbackContainer}>
-        <ActivityIndicator size="large" color={BODY_TEXT_COLOR} />
+        <ActivityIndicator size="large" color={Ink.strong} />
       </View>
     );
   }
@@ -97,9 +95,9 @@ export function ProfileTab({ gymId, token }: ProfileTabProps) {
   if (error) {
     return (
       <View style={styles.feedbackContainer}>
-        <Text style={styles.errorText}>{error}</Text>
+        <Text size="body" tone={Status.danger} style={styles.errorText}>{error}</Text>
         <TouchableOpacity style={styles.retryBtn} onPress={fetchProfile}>
-          <Text style={styles.retryBtnText}>Retry</Text>
+          <Text size="body" tone="strong">Retry</Text>
         </TouchableOpacity>
       </View>
     );
@@ -108,68 +106,70 @@ export function ProfileTab({ gymId, token }: ProfileTabProps) {
   return (
     <View style={styles.content}>
       <View style={styles.sectionRow}>
-        <Text style={styles.sectionTitle}>Gym Profile</Text>
-        <TouchableOpacity
-          style={[styles.profileSaveBtn, (!isDirty || isSaving) && styles.profileSaveBtnDisabled]}
-          onPress={handleSave}
-          disabled={!isDirty || isSaving}
-          activeOpacity={0.8}>
-          {isSaving ? (
-            <ActivityIndicator size="small" color={PRIMARY_BTN_TEXT_COLOR} />
-          ) : (
-            <Text style={styles.profileSaveBtnText}>Save Changes</Text>
-          )}
-        </TouchableOpacity>
+        <Text size="title" weight="semibold" tone="strong">Gym Profile</Text>
+        <View style={styles.profileSaveBtnWrap}>
+          <Button
+            label="Save Changes"
+            variant="primary"
+            onPress={handleSave}
+            disabled={!isDirty}
+            loading={isSaving}
+          />
+        </View>
       </View>
 
       <View style={styles.profileFormCard}>
-        <Text style={styles.inputLabel}>Gym Name</Text>
-        <TextInput
-          style={styles.input}
-          placeholder="e.g. CrossFit Downtown"
-          placeholderTextColor={INPUT_PLACEHOLDER_COLOR}
-          value={name}
-          onChangeText={setName}
-          editable={!isSaving}
-        />
+        <View style={styles.fieldGroup}>
+          <Text size="label" weight="semibold" tone="faint" upper>Gym Name</Text>
+          <TextInput
+            style={styles.input}
+            placeholder="e.g. CrossFit Downtown"
+            placeholderTextColor={Ink.faint}
+            value={name}
+            onChangeText={setName}
+            editable={!isSaving}
+          />
+        </View>
 
-        <Text style={styles.inputLabel}>Description</Text>
-        <TextInput
-          style={styles.profileDescInput}
-          placeholder="A community-driven CrossFit box..."
-          placeholderTextColor={INPUT_PLACEHOLDER_COLOR}
-          value={description}
-          onChangeText={setDescription}
-          multiline
-          editable={!isSaving}
-          textAlignVertical="top"
-        />
+        <View style={styles.fieldGroup}>
+          <Text size="label" weight="semibold" tone="faint" upper>Description</Text>
+          <TextInput
+            style={styles.profileDescInput}
+            placeholder="A community-driven CrossFit box..."
+            placeholderTextColor={Ink.faint}
+            value={description}
+            onChangeText={setDescription}
+            multiline
+            editable={!isSaving}
+            textAlignVertical="top"
+          />
+        </View>
 
-        <Text style={styles.inputLabel}>Location</Text>
-        <TextInput
-          style={styles.input}
-          placeholder="e.g. 123 Main St, New York, NY"
-          placeholderTextColor={INPUT_PLACEHOLDER_COLOR}
-          value={location}
-          onChangeText={setLocation}
-          editable={!isSaving}
-        />
+        <View style={styles.fieldGroup}>
+          <Text size="label" weight="semibold" tone="faint" upper>Location</Text>
+          <TextInput
+            style={styles.input}
+            placeholder="e.g. 123 Main St, New York, NY"
+            placeholderTextColor={Ink.faint}
+            value={location}
+            onChangeText={setLocation}
+            editable={!isSaving}
+          />
+        </View>
 
         <View style={styles.profileInfoRow}>
-          <View style={styles.profileActiveBadge}>
-            <Text style={styles.profileActiveBadgeText}>Active</Text>
-          </View>
+          <StatusChip tone="open" label="Active" />
           {profile && (
-            <Text style={styles.profileCreatedLabel}>
+            <Text size="meta" tone="faint">
               Created {formatCreatedDate(profile.createdAt)}
             </Text>
           )}
         </View>
 
         <View style={styles.profileLogoSection}>
-          <Text style={styles.inputLabel}>Logo</Text>
+          <Text size="label" weight="semibold" tone="faint" upper>Logo</Text>
           <View style={styles.profileLogoPlaceholder}>
-            <Text style={styles.profileLogoPlaceholderText}>{'Logo upload\ncoming soon'}</Text>
+            <Text size="meta" tone="faint" style={styles.errorText}>{'Logo upload\ncoming soon'}</Text>
           </View>
         </View>
       </View>

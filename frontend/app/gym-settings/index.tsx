@@ -1,11 +1,13 @@
 import React, { useCallback, useState } from 'react';
-import { ActivityIndicator, Modal, ScrollView, Text, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, ScrollView, TouchableOpacity, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useAuth } from '@/hooks/useAuth';
 import { useGym } from '@/hooks/useGym';
 import { useResponsiveLayout } from '@/hooks/useResponsiveLayout';
 import { SafeScreen } from '@/components/SafeScreen';
-import { Spacing } from '@/constants/theme';
+import { OwnerNavDrawer } from '@/components/OwnerNavDrawer';
+import { Text, Icon } from '@/components/cleanink';
+import { Ink, Space } from '@/constants/design';
 import { styles } from './gym-settings.styles';
 import { SettingsSidebar } from './SettingsSidebar';
 import { SettingsTabBar, ActiveTab } from './SettingsTabBar';
@@ -13,12 +15,10 @@ import { SpacesTab } from './SpacesTab';
 import { ClassTypesTab } from './ClassTypesTab';
 import { ProfileTab } from './ProfileTab';
 
-const BODY_TEXT_COLOR = '#111827';
-
 function PlaceholderTab({ label }: { label: string }) {
   return (
     <View style={styles.feedbackContainer}>
-      <Text style={styles.placeholderText}>{label} — Coming soon</Text>
+      <Text size="body" tone="faint">{label} — Coming soon</Text>
     </View>
   );
 }
@@ -47,26 +47,22 @@ export default function GymSettings() {
 
       {/* Mobile drawer */}
       {isMobile && (
-        <Modal visible={drawerOpen} transparent animationType="fade" onRequestClose={() => setDrawerOpen(false)}>
-          <TouchableOpacity style={styles.drawerOverlay} activeOpacity={1} onPress={() => setDrawerOpen(false)}>
-            <View style={styles.drawerContainer}>
-              <SettingsSidebar onNavigate={handleNavigate} />
-            </View>
-          </TouchableOpacity>
-        </Modal>
+        <OwnerNavDrawer visible={drawerOpen} onClose={() => setDrawerOpen(false)}>
+          <SettingsSidebar onNavigate={handleNavigate} />
+        </OwnerNavDrawer>
       )}
 
       <View style={[styles.main, isMobile && styles.mainMobile]}>
-        <SafeScreen style={styles.pageTitleRow} applyTopInset={isMobile} extraTopPadding={Spacing.base}>
+        <SafeScreen style={styles.pageTitleRow} applyTopInset={isMobile} extraTopPadding={Space.base}>
           {isMobile && (
             <TouchableOpacity
               testID="hamburger-btn"
               style={styles.hamburgerBtn}
               onPress={() => setDrawerOpen(true)}>
-              <Text style={styles.hamburgerText}>☰</Text>
+              <Icon name="menu" size={24} tone="strong" />
             </TouchableOpacity>
           )}
-          <Text style={styles.pageTitle}>Gym Settings</Text>
+          <Text size="screen" weight="bold" tone="strong">Gym Settings</Text>
         </SafeScreen>
 
         <SettingsTabBar activeTab={activeTab} onTabChange={setActiveTab} />
@@ -76,19 +72,19 @@ export default function GymSettings() {
             <SpacesTab gymId={currentGymId} token={token} isMobile={isMobile} />
           ) : activeTab === 'spaces' ? (
             <View style={styles.feedbackContainer}>
-              <ActivityIndicator size="large" color={BODY_TEXT_COLOR} />
+              <ActivityIndicator size="large" color={Ink.strong} />
             </View>
           ) : activeTab === 'class-types' && token && currentGymId ? (
             <ClassTypesTab gymId={currentGymId} token={token} isMobile={isMobile} />
           ) : activeTab === 'class-types' ? (
             <View style={styles.feedbackContainer}>
-              <ActivityIndicator size="large" color={BODY_TEXT_COLOR} />
+              <ActivityIndicator size="large" color={Ink.strong} />
             </View>
           ) : activeTab === 'profile' && token && currentGymId ? (
             <ProfileTab gymId={currentGymId} token={token} />
           ) : activeTab === 'profile' ? (
             <View style={styles.feedbackContainer}>
-              <ActivityIndicator size="large" color={BODY_TEXT_COLOR} />
+              <ActivityIndicator size="large" color={Ink.strong} />
             </View>
           ) : (
             <PlaceholderTab label="Booking Rules" />

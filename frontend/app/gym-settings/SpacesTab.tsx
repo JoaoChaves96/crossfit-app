@@ -1,7 +1,9 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import { ActivityIndicator, Alert, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, Alert, TextInput, TouchableOpacity, View } from 'react-native';
 import { createApiClient } from '@/utils/api-client';
 import { components } from '@/types/api.gen';
+import { Text, Icon, Button } from '@/components/cleanink';
+import { Ink, Status } from '@/constants/design';
 import { styles } from './gym-settings.styles';
 
 type SpaceItem = components['schemas']['SpaceItemDto'];
@@ -14,10 +16,6 @@ type DeleteSpaceResponse = components['schemas']['DeleteSpaceResponseDto'];
 
 type FormMode = 'add' | 'edit' | null;
 
-const INPUT_PLACEHOLDER_COLOR = '#9CA3AF';
-const PRIMARY_BTN_TEXT_COLOR = '#FFFFFF';
-const BODY_TEXT_COLOR = '#111827';
-
 // ─── Empty State ─────────────────────────────────────────────────────────────
 
 interface EmptySpacesProps {
@@ -28,16 +26,15 @@ function EmptySpaces({ onAddPress }: EmptySpacesProps) {
   return (
     <View style={styles.emptyContainer}>
       <View style={styles.emptyIcon}>
-        <Text style={styles.emptyIconText}>⬡</Text>
+        <Icon name="place" size={28} tone="faint" />
       </View>
-      <Text style={styles.emptyTitle}>No spaces configured yet</Text>
-      <Text style={styles.emptyDesc}>
+      <Text size="title" weight="semibold" tone="strong">No spaces configured yet</Text>
+      <Text size="meta" tone="muted" style={styles.emptyDesc}>
         Add your first training space to start organizing classes.
       </Text>
-      <TouchableOpacity testID="add-space-btn" style={styles.addBtn} onPress={onAddPress} activeOpacity={0.8}>
-        <Text style={styles.addBtnPlus}>+</Text>
-        <Text style={styles.addBtnText}>Add Space</Text>
-      </TouchableOpacity>
+      <View style={styles.emptyBtnWrap}>
+        <Button testID="add-space-btn" label="Add Space" variant="primary" onPress={onAddPress} />
+      </View>
     </View>
   );
 }
@@ -55,49 +52,50 @@ function SpacesTable({ spaces, onEdit, onDelete, onAddPress }: SpacesTableProps)
   return (
     <View style={styles.content}>
       <View style={styles.sectionRow}>
-        <Text style={styles.sectionTitle}>Spaces</Text>
-        <TouchableOpacity testID="add-space-btn" style={styles.addBtn} onPress={onAddPress} activeOpacity={0.8}>
-          <Text style={styles.addBtnPlus}>+</Text>
-          <Text style={styles.addBtnText}>Add Space</Text>
-        </TouchableOpacity>
+        <Text size="title" weight="semibold" tone="strong">Spaces</Text>
+        <View style={styles.addBtnWrap}>
+          <Button testID="add-space-btn" label="Add Space" variant="primary" onPress={onAddPress} />
+        </View>
       </View>
 
       <View style={styles.table}>
         <View style={styles.tableHeader}>
           <View style={styles.colName}>
-            <Text style={styles.tableHeaderText}>Name</Text>
+            <Text size="label" weight="semibold" tone="faint" upper>Name</Text>
           </View>
           <View style={styles.colCapacity}>
-            <Text style={styles.tableHeaderText}>Base Capacity</Text>
+            <Text size="label" weight="semibold" tone="faint" upper>Base Capacity</Text>
           </View>
           <View style={styles.colActions}>
-            <Text style={styles.tableHeaderText}>Actions</Text>
+            <Text size="label" weight="semibold" tone="faint" upper>Actions</Text>
           </View>
         </View>
 
         {spaces.map((space) => (
           <View key={space.id} style={styles.tableRow}>
             <View style={styles.colName}>
-              <Text style={styles.rowText}>{space.name}</Text>
+              <Text size="body" tone="strong">{space.name}</Text>
             </View>
             <View style={styles.colCapacity}>
-              <Text style={styles.rowText}>{space.baseCapacity}</Text>
+              <Text size="body" tone="strong">{space.baseCapacity}</Text>
             </View>
             <View style={styles.colActionsRow}>
-              <TouchableOpacity
-                testID={`space-edit-btn-${space.id}`}
-                style={styles.editBtn}
-                onPress={() => onEdit(space)}
-                activeOpacity={0.7}>
-                <Text style={styles.editBtnText}>Edit</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                testID={`space-delete-btn-${space.id}`}
-                style={styles.deleteBtn}
-                onPress={() => onDelete(space)}
-                activeOpacity={0.7}>
-                <Text style={styles.deleteBtnText}>Delete</Text>
-              </TouchableOpacity>
+              <View style={styles.entityCardActionBtn}>
+                <Button
+                  testID={`space-edit-btn-${space.id}`}
+                  label="Edit"
+                  variant="quiet"
+                  onPress={() => onEdit(space)}
+                />
+              </View>
+              <View style={styles.entityCardActionBtn}>
+                <Button
+                  testID={`space-delete-btn-${space.id}`}
+                  label="Delete"
+                  variant="danger"
+                  onPress={() => onDelete(space)}
+                />
+              </View>
             </View>
           </View>
         ))}
@@ -118,25 +116,29 @@ function SpaceCard({ space, onEdit, onDelete }: SpaceCardProps) {
   return (
     <View style={styles.entityCard}>
       <View style={styles.entityCardTop}>
-        <Text style={styles.entityCardTitle} numberOfLines={1}>{space.name}</Text>
+        <View style={styles.entityCardTitleWrap}>
+          <Text size="body" weight="semibold" tone="strong" numberOfLines={1}>{space.name}</Text>
+        </View>
         <View style={styles.entityCardActions}>
-          <TouchableOpacity
-            testID={`space-edit-btn-${space.id}`}
-            style={styles.editBtn}
-            onPress={() => onEdit(space)}
-            activeOpacity={0.7}>
-            <Text style={styles.editBtnText}>Edit</Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            testID={`space-delete-btn-${space.id}`}
-            style={styles.deleteBtn}
-            onPress={() => onDelete(space)}
-            activeOpacity={0.7}>
-            <Text style={styles.deleteBtnText}>Delete</Text>
-          </TouchableOpacity>
+          <View style={styles.entityCardActionBtn}>
+            <Button
+              testID={`space-edit-btn-${space.id}`}
+              label="Edit"
+              variant="quiet"
+              onPress={() => onEdit(space)}
+            />
+          </View>
+          <View style={styles.entityCardActionBtn}>
+            <Button
+              testID={`space-delete-btn-${space.id}`}
+              label="Delete"
+              variant="danger"
+              onPress={() => onDelete(space)}
+            />
+          </View>
         </View>
       </View>
-      <Text style={styles.entityCardSub}>Base capacity: {space.baseCapacity}</Text>
+      <Text size="meta" tone="muted">Base capacity: {space.baseCapacity}</Text>
     </View>
   );
 }
@@ -154,11 +156,10 @@ function SpacesCardList({ spaces, onEdit, onDelete, onAddPress }: SpacesCardList
   return (
     <View style={styles.content}>
       <View style={styles.sectionRow}>
-        <Text style={styles.sectionTitle}>Spaces</Text>
-        <TouchableOpacity testID="add-space-btn" style={styles.addBtn} onPress={onAddPress} activeOpacity={0.8}>
-          <Text style={styles.addBtnPlus}>+</Text>
-          <Text style={styles.addBtnText}>Add Space</Text>
-        </TouchableOpacity>
+        <Text size="title" weight="semibold" tone="strong">Spaces</Text>
+        <View style={styles.addBtnWrap}>
+          <Button testID="add-space-btn" label="Add Space" variant="primary" onPress={onAddPress} />
+        </View>
       </View>
       <View style={styles.spaceCardList}>
         {spaces.map((space) => (
@@ -200,54 +201,56 @@ function SpaceForm({ mode, initialName, initialCapacity, isSaving, onSave, onCan
 
   return (
     <View style={styles.content}>
-      <Text style={styles.formTitle}>{mode === 'add' ? 'Add Space' : 'Edit Space'}</Text>
+      <Text size="title" weight="semibold" tone="strong">{mode === 'add' ? 'Add Space' : 'Edit Space'}</Text>
       <View style={styles.formCard}>
-        <Text style={styles.formCardTitle}>Space Name &amp; Capacity</Text>
+        <Text size="body" weight="semibold" tone="strong">Space Name &amp; Capacity</Text>
 
-        <Text style={styles.inputLabel}>Space Name</Text>
-        <TextInput
-          testID="space-name-input"
-          style={styles.input}
-          placeholder="e.g. Main Floor"
-          placeholderTextColor={INPUT_PLACEHOLDER_COLOR}
-          value={name}
-          onChangeText={setName}
-          editable={!isSaving}
-        />
+        <View style={styles.fieldGroup}>
+          <Text size="label" weight="semibold" tone="faint" upper>Space Name</Text>
+          <TextInput
+            testID="space-name-input"
+            style={styles.input}
+            placeholder="e.g. Main Floor"
+            placeholderTextColor={Ink.faint}
+            value={name}
+            onChangeText={setName}
+            editable={!isSaving}
+          />
+        </View>
 
-        <Text style={styles.inputLabel}>Base Capacity</Text>
-        <TextInput
-          testID="space-capacity-input"
-          style={styles.input}
-          placeholder="e.g. 20"
-          placeholderTextColor={INPUT_PLACEHOLDER_COLOR}
-          value={capacity}
-          onChangeText={setCapacity}
-          keyboardType="numeric"
-          editable={!isSaving}
-        />
+        <View style={styles.fieldGroup}>
+          <Text size="label" weight="semibold" tone="faint" upper>Base Capacity</Text>
+          <TextInput
+            testID="space-capacity-input"
+            style={styles.input}
+            placeholder="e.g. 20"
+            placeholderTextColor={Ink.faint}
+            value={capacity}
+            onChangeText={setCapacity}
+            keyboardType="numeric"
+            editable={!isSaving}
+          />
+        </View>
 
         <View style={styles.formBtnRow}>
-          <TouchableOpacity
-            testID="space-form-save-btn"
-            style={[styles.saveBtn, isSaving && styles.saveBtnDisabled]}
-            onPress={handleSave}
-            disabled={isSaving}
-            activeOpacity={0.8}>
-            {isSaving ? (
-              <ActivityIndicator size="small" color={PRIMARY_BTN_TEXT_COLOR} />
-            ) : (
-              <Text style={styles.saveBtnText}>Save</Text>
-            )}
-          </TouchableOpacity>
-          <TouchableOpacity
-            testID="space-form-cancel-btn"
-            style={styles.cancelBtn}
-            onPress={onCancel}
-            disabled={isSaving}
-            activeOpacity={0.7}>
-            <Text style={styles.cancelBtnText}>Cancel</Text>
-          </TouchableOpacity>
+          <View style={styles.formBtnWrap}>
+            <Button
+              testID="space-form-save-btn"
+              label="Save"
+              variant="primary"
+              onPress={handleSave}
+              loading={isSaving}
+            />
+          </View>
+          <View style={styles.formBtnWrap}>
+            <Button
+              testID="space-form-cancel-btn"
+              label="Cancel"
+              variant="quiet"
+              onPress={onCancel}
+              disabled={isSaving}
+            />
+          </View>
         </View>
       </View>
     </View>
@@ -363,7 +366,7 @@ export function SpacesTab({ gymId, token, isMobile }: SpacesTabProps) {
   if (isLoading) {
     return (
       <View style={styles.feedbackContainer}>
-        <ActivityIndicator size="large" color={BODY_TEXT_COLOR} />
+        <ActivityIndicator size="large" color={Ink.strong} />
       </View>
     );
   }
@@ -371,9 +374,9 @@ export function SpacesTab({ gymId, token, isMobile }: SpacesTabProps) {
   if (error) {
     return (
       <View style={styles.feedbackContainer}>
-        <Text style={styles.errorText}>{error}</Text>
+        <Text size="body" tone={Status.danger} style={styles.errorText}>{error}</Text>
         <TouchableOpacity style={styles.retryBtn} onPress={fetchSpaces}>
-          <Text style={styles.retryBtnText}>Retry</Text>
+          <Text size="body" tone="strong">Retry</Text>
         </TouchableOpacity>
       </View>
     );

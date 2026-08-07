@@ -1,103 +1,54 @@
 import { StyleSheet } from 'react-native';
-import { AppColors, BorderRadius, FontSizes, FontWeights, Spacing } from '@/constants/theme';
+import { Ground, Ink, Line, Accent, Radius, Space, Elevation, Type } from '@/constants/design';
 
 export const styles = StyleSheet.create({
   root: {
     flex: 1,
     flexDirection: 'row',
-    backgroundColor: AppColors.backgroundWhite,
+    backgroundColor: Ground.base,
   },
 
   // Sidebar
   sidebar: {
     width: 220,
-    backgroundColor: AppColors.backgroundLight,
-    paddingHorizontal: Spacing.base,
-    paddingVertical: Spacing.xl,
-    gap: Spacing.tight,
+    backgroundColor: Ground.surface,
+    borderRightWidth: 1,
+    borderRightColor: Line.hairline,
+    paddingHorizontal: Space.base,
+    paddingVertical: Space.xl,
+    gap: Space.hair,
   },
   sidebarLogo: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: Spacing.sm,
-    paddingBottom: Spacing.lg,
-  },
-  sidebarLogoIcon: {
-    width: 28,
-    height: 28,
-    borderRadius: BorderRadius.mdSm,
-    backgroundColor: AppColors.textMuted,
-  },
-  sidebarLogoText: {
-    fontSize: FontSizes.md,
-    fontWeight: FontWeights.bold,
-    color: AppColors.textHeading,
+    gap: Space.sm,
+    paddingBottom: Space.lg,
   },
   navGroup: {
-    gap: Spacing.hairline,
+    gap: Space.hair,
   },
   navItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: Spacing.smMd,
-    paddingHorizontal: Spacing.md,
-    paddingVertical: Spacing.smMd,
-    borderRadius: BorderRadius.mdSm,
+    gap: Space.sm,
+    paddingHorizontal: Space.md,
+    paddingVertical: Space.sm,
+    borderRadius: Radius.control,
   },
   navItemActive: {
-    backgroundColor: AppColors.backgroundDivider,
+    backgroundColor: Ground.sunken,
   },
   navItemDisabled: {
     opacity: 0.4,
   },
-  navIcon: {
-    width: 16,
-    height: 16,
-    borderRadius: BorderRadius.hairline,
-  },
-  navIconActive: {
-    backgroundColor: AppColors.textSecondary,
-  },
-  navIconInactive: {
-    backgroundColor: AppColors.textDisabled,
-  },
-  navIconMuted: {
-    backgroundColor: AppColors.textDisabled,
-  },
-  navLabel: {
-    fontSize: FontSizes.body,
-  },
-  navLabelActive: {
-    fontWeight: FontWeights.medium,
-    color: AppColors.textHeading,
-  },
-  navLabelInactive: {
-    fontWeight: FontWeights.regular,
-    color: AppColors.textMuted,
-  },
-  navLabelMuted: {
-    color: AppColors.textDisabled,
-  },
 
-  // Mobile drawer
-  drawerOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.4)',
-    flexDirection: 'row',
-  },
-  drawerContainer: {
-    width: 220,
-    height: '100%',
-  },
+  // Header / title
   hamburgerBtn: {
     width: 44,
     height: 44,
     alignItems: 'center',
     justifyContent: 'center',
-  },
-  hamburgerText: {
-    fontSize: FontSizes.xl,
-    color: AppColors.textHeading,
+    marginRight: Space.sm,
   },
   pageTitleRow: {
     flexDirection: 'row',
@@ -107,211 +58,134 @@ export const styles = StyleSheet.create({
   // Main area
   main: {
     flex: 1,
-    paddingHorizontal: Spacing.jumboLg,
-    paddingVertical: Spacing.jumbo,
-    gap: Spacing.xl,
+    paddingHorizontal: Space.xxl,
+    paddingVertical: Space.xl,
+    gap: Space.xl,
   },
   mainMobile: {
-    paddingHorizontal: Spacing.base,
-    paddingVertical: Spacing.base,
-    gap: Spacing.base,
-  },
-  pageTitle: {
-    fontSize: FontSizes.title,
-    fontWeight: FontWeights.bold,
-    color: AppColors.textPrimary,
-    fontFamily: 'Inter',
+    paddingHorizontal: Space.base,
+    paddingVertical: Space.base,
+    gap: Space.base,
   },
   tabContent: {
     flex: 1,
   },
 
-  // Tab bar
-  tabBar: {
-    flexDirection: 'row',
-    alignItems: 'flex-end',
-  },
-  tab: {
-    paddingHorizontal: Spacing.lg,
-    paddingVertical: Spacing.smMd,
-  },
-  tabActive: {
-    borderBottomWidth: 2,
-    borderBottomColor: AppColors.textPrimary,
-  },
-  tabInactive: {
-    borderBottomWidth: 1,
-    borderBottomColor: AppColors.separatorFaint,
-  },
-  tabText: {
-    fontFamily: 'Inter',
-    fontSize: FontSizes.body,
-  },
-  tabTextActive: {
-    fontWeight: FontWeights.semibold,
-    color: AppColors.textPrimary,
-  },
-  tabTextInactive: {
-    fontWeight: FontWeights.regular,
-    color: AppColors.textGray400,
-  },
-  tabFill: {
-    flex: 1,
-    borderBottomWidth: 1,
-    borderBottomColor: AppColors.separatorFaint,
-    height: 38,
+  // Tab bar (segmented toggle wrapper)
+  segmentedWrap: {
+    maxWidth: 520,
   },
 
   // Content area
   content: {
-    gap: Spacing.base,
-    paddingVertical: Spacing.sm,
+    gap: Space.base,
+    paddingVertical: Space.sm,
   },
   sectionRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
+    gap: Space.md,
   },
-  sectionTitle: {
-    fontSize: FontSizes.md,
-    fontWeight: FontWeights.semibold,
-    color: AppColors.textHeading,
-    fontFamily: 'Inter',
-  },
-
-  // Add button
-  addBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.compact,
-    backgroundColor: AppColors.textPrimary,
-    paddingHorizontal: Spacing.lg,
-    paddingVertical: Spacing.smMd,
-    borderRadius: BorderRadius.mdSm,
-  },
-  addBtnPlus: {
-    fontSize: FontSizes.body,
-    fontWeight: FontWeights.semibold,
-    color: AppColors.backgroundWhite,
-    fontFamily: 'Inter',
-  },
-  addBtnText: {
-    fontSize: FontSizes.body,
-    fontWeight: FontWeights.medium,
-    color: AppColors.backgroundWhite,
-    fontFamily: 'Inter',
+  addBtnWrap: {
+    minWidth: 160,
   },
 
   // Table
   table: {
-    borderRadius: BorderRadius.md,
+    backgroundColor: Ground.surface,
+    borderRadius: Radius.card,
     borderWidth: 1,
-    borderColor: AppColors.backgroundDivider,
+    borderColor: Line.hairline,
     overflow: 'hidden',
+    ...Elevation.card,
   },
   tableHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: AppColors.backgroundScreen,
+    backgroundColor: Ground.base,
     height: 48,
-    paddingHorizontal: Spacing.base,
-  },
-  tableHeaderText: {
-    fontSize: FontSizes.smMd,
-    fontWeight: FontWeights.semibold,
-    color: AppColors.textMuted,
-    fontFamily: 'Inter',
+    paddingHorizontal: Space.base,
+    borderBottomWidth: 1,
+    borderBottomColor: Line.hairline,
   },
   tableRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    height: 56,
-    paddingHorizontal: Spacing.base,
+    minHeight: 56,
+    paddingVertical: Space.sm,
+    paddingHorizontal: Space.base,
     borderTopWidth: 1,
-    borderTopColor: AppColors.backgroundDivider,
+    borderTopColor: Line.hairline,
   },
   colName: {
     flex: 1,
+    justifyContent: 'center',
   },
   colCapacity: {
     width: 160,
+    justifyContent: 'center',
   },
   colActions: {
-    width: 160,
+    width: 200,
     alignItems: 'flex-end',
   },
   colActionsRow: {
-    width: 160,
+    width: 200,
     flexDirection: 'row',
     justifyContent: 'flex-end',
-    gap: Spacing.sm,
+    gap: Space.sm,
   },
-  rowText: {
-    fontSize: FontSizes.body,
-    color: AppColors.textHeading,
-    fontFamily: 'Inter',
+
+  // Class Types table columns
+  colLoggable: {
+    width: 100,
+    justifyContent: 'center',
   },
-  editBtn: {
-    paddingHorizontal: Spacing.mdPlus,
-    paddingVertical: Spacing.compact,
-    borderRadius: BorderRadius.mdSm,
-    borderWidth: 1,
-    borderColor: AppColors.separatorDefault,
+  colMetric: {
+    width: 120,
+    justifyContent: 'center',
   },
-  editBtnText: {
-    fontSize: FontSizes.mdSm,
-    fontWeight: FontWeights.medium,
-    color: AppColors.textSecondary,
-    fontFamily: 'Inter',
+  colClassTypeActions: {
+    width: 200,
+    alignItems: 'flex-end',
   },
-  deleteBtn: {
-    paddingHorizontal: Spacing.mdPlus,
-    paddingVertical: Spacing.compact,
-    borderRadius: BorderRadius.mdSm,
-    borderWidth: 1,
-    borderColor: AppColors.errorBgPale,
-  },
-  deleteBtnText: {
-    fontSize: FontSizes.mdSm,
-    fontWeight: FontWeights.medium,
-    color: AppColors.errorDefault,
-    fontFamily: 'Inter',
+  colClassTypeActionsRow: {
+    width: 200,
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    gap: Space.sm,
   },
 
   // Entity card list (mobile)
   spaceCardList: {
-    paddingHorizontal: Spacing.base,
-    paddingBottom: Spacing.xl,
-    gap: Spacing.md,
+    gap: Space.md,
+    paddingBottom: Space.xl,
   },
   entityCard: {
-    backgroundColor: AppColors.backgroundWhite,
+    backgroundColor: Ground.surface,
     borderWidth: 1,
-    borderColor: AppColors.backgroundDivider,
-    borderRadius: BorderRadius.lg,
-    padding: Spacing.base,
-    gap: Spacing.md,
+    borderColor: Line.hairline,
+    borderRadius: Radius.card,
+    padding: Space.base,
+    gap: Space.md,
+    ...Elevation.card,
   },
   entityCardTop: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    gap: Spacing.md,
+    gap: Space.md,
   },
-  entityCardTitle: {
-    fontSize: FontSizes.md,
-    fontWeight: FontWeights.semibold,
-    color: AppColors.textHeading,
+  entityCardTitleWrap: {
     flexShrink: 1,
-  },
-  entityCardSub: {
-    fontSize: FontSizes.mdSm,
-    color: AppColors.textMuted,
-    marginTop: Spacing.hairline,
   },
   entityCardActions: {
     flexDirection: 'row',
-    gap: Spacing.sm,
+    gap: Space.sm,
+  },
+  entityCardActionBtn: {
+    minWidth: 96,
   },
 
   // Empty state
@@ -319,169 +193,71 @@ export const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    gap: Spacing.base,
-    paddingVertical: Spacing.ultra,
+    gap: Space.md,
+    paddingVertical: Space.jumbo,
   },
   emptyIcon: {
     width: 64,
     height: 64,
-    borderRadius: BorderRadius.round,
-    backgroundColor: AppColors.backgroundSurface,
+    borderRadius: Radius.chip,
+    backgroundColor: Ground.sunken,
     alignItems: 'center',
     justifyContent: 'center',
-  },
-  emptyIconText: {
-    fontSize: FontSizes.titleLg,
-    color: AppColors.textLight,
-    fontFamily: 'Inter',
-  },
-  emptyTitle: {
-    fontSize: FontSizes.md,
-    fontWeight: FontWeights.semibold,
-    color: AppColors.textDark3,
-    fontFamily: 'Inter',
+    marginBottom: Space.xs,
   },
   emptyDesc: {
-    fontSize: FontSizes.body,
-    color: AppColors.textGray400,
-    fontFamily: 'Inter',
     textAlign: 'center',
     maxWidth: 360,
   },
+  emptyBtnWrap: {
+    marginTop: Space.sm,
+    minWidth: 180,
+  },
 
   // Form
-  formTitle: {
-    fontSize: FontSizes.md,
-    fontWeight: FontWeights.semibold,
-    color: AppColors.textHeading,
-    fontFamily: 'Inter',
-  },
   formCard: {
-    backgroundColor: AppColors.backgroundWhite,
-    borderRadius: BorderRadius.lg,
+    backgroundColor: Ground.surface,
+    borderRadius: Radius.card,
     borderWidth: 1,
-    borderColor: AppColors.backgroundDivider,
-    padding: Spacing.xxl,
-    gap: Spacing.lg,
+    borderColor: Line.hairline,
+    padding: Space.xxl,
+    gap: Space.lg,
     width: '100%',
     maxWidth: 480,
+    ...Elevation.card,
   },
-  formCardTitle: {
-    fontSize: FontSizes.body,
-    fontWeight: FontWeights.semibold,
-    color: AppColors.textSecondary,
-    fontFamily: 'Inter',
-  },
-  inputLabel: {
-    fontSize: FontSizes.mdSm,
-    fontWeight: FontWeights.semibold,
-    color: AppColors.textHeading,
-    fontFamily: 'Inter',
-  },
-  input: {
-    height: 42,
+  classTypeFormCard: {
+    backgroundColor: Ground.surface,
+    borderRadius: Radius.card,
     borderWidth: 1,
-    borderColor: AppColors.separatorDefault,
-    borderRadius: BorderRadius.md,
-    paddingHorizontal: Spacing.mdPlus,
-    fontSize: FontSizes.body,
-    color: AppColors.textHeading,
-    fontFamily: 'Inter',
+    borderColor: Line.hairline,
+    padding: Space.xxl,
+    gap: Space.lg,
+    width: '100%',
+    maxWidth: 520,
+    ...Elevation.card,
+  },
+  fieldGroup: {
+    gap: Space.xs,
+  },
+  // TextInput can't route through the Text primitive; name the face explicitly.
+  input: {
+    height: 46,
+    borderWidth: 1,
+    borderColor: Line.divider,
+    borderRadius: Radius.control,
+    paddingHorizontal: Space.md,
+    fontFamily: Type.family.regular,
+    fontSize: Type.size.body,
+    color: Ink.strong,
   },
   formBtnRow: {
     flexDirection: 'row',
-    gap: Spacing.md,
+    gap: Space.md,
+    marginTop: Space.xs,
   },
-  saveBtn: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: AppColors.textPrimary,
-    paddingHorizontal: Spacing.lg,
-    paddingVertical: Spacing.smMd,
-    borderRadius: BorderRadius.mdSm,
-    minWidth: 80,
-  },
-  saveBtnDisabled: {
-    opacity: 0.6,
-  },
-  saveBtnText: {
-    fontSize: FontSizes.body,
-    fontWeight: FontWeights.semibold,
-    color: AppColors.backgroundWhite,
-    fontFamily: 'Inter',
-  },
-  cancelBtn: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: Spacing.lg,
-    paddingVertical: Spacing.smMd,
-    borderRadius: BorderRadius.mdSm,
-    borderWidth: 1,
-    borderColor: AppColors.separatorDefault,
-  },
-  cancelBtnText: {
-    fontSize: FontSizes.body,
-    fontWeight: FontWeights.medium,
-    color: AppColors.textSecondary,
-    fontFamily: 'Inter',
-  },
-
-  // Class Types table columns
-  colLoggable: {
-    width: 100,
-  },
-  colMetric: {
-    width: 120,
-  },
-  colClassTypeActions: {
-    width: 140,
-    alignItems: 'flex-end',
-  },
-  colClassTypeActionsRow: {
-    width: 140,
-    flexDirection: 'row',
-    justifyContent: 'flex-end',
-    gap: Spacing.sm,
-  },
-
-  // Loggable badges
-  badgeYes: {
-    alignSelf: 'flex-start',
-    backgroundColor: AppColors.successBg,
-    borderRadius: BorderRadius.sm,
-    paddingHorizontal: Spacing.sm,
-    paddingVertical: Spacing.micro,
-  },
-  badgeYesText: {
-    fontSize: FontSizes.smMd,
-    fontWeight: FontWeights.semibold,
-    color: AppColors.successDark,
-    fontFamily: 'Inter',
-  },
-  badgeNo: {
-    alignSelf: 'flex-start',
-    backgroundColor: AppColors.backgroundLight,
-    borderRadius: BorderRadius.sm,
-    paddingHorizontal: Spacing.sm,
-    paddingVertical: Spacing.micro,
-  },
-  badgeNoText: {
-    fontSize: FontSizes.smMd,
-    fontWeight: FontWeights.semibold,
-    color: AppColors.textMuted,
-    fontFamily: 'Inter',
-  },
-
-  // Class type form card
-  classTypeFormCard: {
-    backgroundColor: AppColors.backgroundWhite,
-    borderRadius: BorderRadius.lg,
-    borderWidth: 1,
-    borderColor: AppColors.backgroundDivider,
-    padding: Spacing.xxl,
-    gap: Spacing.lg,
-    width: '100%',
-    maxWidth: 520,
+  formBtnWrap: {
+    minWidth: 110,
   },
 
   // Toggle row
@@ -494,164 +270,104 @@ export const styles = StyleSheet.create({
   toggleTrack: {
     width: 44,
     height: 24,
-    borderRadius: BorderRadius.lg,
-    backgroundColor: AppColors.separatorDefault,
-    padding: Spacing.hairline,
+    borderRadius: Radius.chip,
+    backgroundColor: Line.divider,
+    padding: Space.hair,
     justifyContent: 'center',
   },
   toggleTrackActive: {
-    backgroundColor: AppColors.textPrimary,
+    backgroundColor: Ink.strong,
   },
   toggleThumb: {
     width: 20,
     height: 20,
-    borderRadius: BorderRadius.mdLg,
-    backgroundColor: AppColors.backgroundWhite,
+    borderRadius: Radius.chip,
+    backgroundColor: Ground.surface,
     alignSelf: 'flex-start',
   },
   toggleThumbRight: {
     alignSelf: 'flex-end',
   },
 
-  // Result metric pill selector
+  // Result metric pill selector (monochrome selection — accent stays on the primary action)
   metricRow: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: Spacing.sm,
+    gap: Space.sm,
   },
   metricPill: {
-    borderRadius: BorderRadius.mdSm,
+    borderRadius: Radius.control,
     borderWidth: 1,
-    borderColor: AppColors.separatorDefault,
-    paddingHorizontal: Spacing.base,
-    paddingVertical: Spacing.sm,
+    borderColor: Line.divider,
+    paddingHorizontal: Space.base,
+    paddingVertical: Space.sm,
+    backgroundColor: Ground.surface,
   },
   metricPillSelected: {
-    backgroundColor: AppColors.textPrimary,
-    borderColor: AppColors.textPrimary,
-  },
-  metricPillText: {
-    fontSize: FontSizes.mdSm,
-    fontWeight: FontWeights.medium,
-    color: AppColors.textSecondary,
-    fontFamily: 'Inter',
-  },
-  metricPillTextSelected: {
-    fontWeight: FontWeights.semibold,
-    color: AppColors.backgroundWhite,
+    backgroundColor: Ink.strong,
+    borderColor: Ink.strong,
   },
 
   // Feedback (loading / error / placeholder)
   feedbackContainer: {
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: Spacing.super,
-    gap: Spacing.md,
+    paddingVertical: Space.jumbo,
+    gap: Space.md,
   },
   errorText: {
-    fontSize: FontSizes.body,
-    color: AppColors.errorDefault,
     textAlign: 'center',
-    fontFamily: 'Inter',
   },
   retryBtn: {
-    paddingHorizontal: Spacing.lg,
-    paddingVertical: Spacing.sm,
-    borderRadius: BorderRadius.mdSm,
+    paddingHorizontal: Space.lg,
+    paddingVertical: Space.sm,
+    borderRadius: Radius.control,
     borderWidth: 1,
-    borderColor: AppColors.separatorDefault,
-  },
-  retryBtnText: {
-    fontSize: FontSizes.body,
-    color: AppColors.textHeading,
-    fontFamily: 'Inter',
-  },
-  placeholderText: {
-    fontSize: FontSizes.body,
-    color: AppColors.textDisabled,
-    fontFamily: 'Inter',
+    borderColor: Line.divider,
   },
 
   // Profile tab
   profileFormCard: {
-    backgroundColor: AppColors.backgroundWhite,
-    borderRadius: BorderRadius.lg,
+    backgroundColor: Ground.surface,
+    borderRadius: Radius.card,
     borderWidth: 1,
-    borderColor: AppColors.backgroundDivider,
-    padding: Spacing.xxl,
-    gap: Spacing.lg,
+    borderColor: Line.hairline,
+    padding: Space.xxl,
+    gap: Space.lg,
     width: '100%',
     maxWidth: 480,
+    ...Elevation.card,
   },
   profileDescInput: {
     height: 96,
     borderWidth: 1,
-    borderColor: AppColors.separatorDefault,
-    borderRadius: BorderRadius.md,
-    paddingHorizontal: Spacing.mdPlus,
-    paddingVertical: Spacing.md,
-    fontSize: FontSizes.body,
-    color: AppColors.textHeading,
-    fontFamily: 'Inter',
+    borderColor: Line.divider,
+    borderRadius: Radius.control,
+    paddingHorizontal: Space.md,
+    paddingVertical: Space.md,
+    fontFamily: Type.family.regular,
+    fontSize: Type.size.body,
+    color: Ink.strong,
   },
   profileInfoRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: Spacing.md,
-    height: 24,
-  },
-  profileActiveBadge: {
-    backgroundColor: AppColors.successBg,
-    borderRadius: BorderRadius.mdLg,
-    paddingHorizontal: Spacing.smMd,
-    paddingVertical: Spacing.micro,
-  },
-  profileActiveBadgeText: {
-    fontSize: FontSizes.sm,
-    fontWeight: FontWeights.semibold,
-    color: AppColors.successDark,
-    fontFamily: 'Inter',
-  },
-  profileCreatedLabel: {
-    fontSize: FontSizes.smMd,
-    color: AppColors.textDisabled,
-    fontFamily: 'Inter',
+    gap: Space.md,
   },
   profileLogoSection: {
-    gap: Spacing.sm,
+    gap: Space.sm,
   },
   profileLogoPlaceholder: {
     width: 120,
     height: 80,
-    backgroundColor: AppColors.backgroundLight,
-    borderRadius: BorderRadius.mdSm,
+    backgroundColor: Ground.sunken,
+    borderRadius: Radius.control,
     borderWidth: 1,
-    borderColor: AppColors.separatorDefault,
+    borderColor: Line.divider,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  profileLogoPlaceholderText: {
-    fontSize: FontSizes.sm,
-    color: AppColors.textDisabled,
-    fontFamily: 'Inter',
-    textAlign: 'center',
-  },
-  profileSaveBtn: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: AppColors.textPrimary,
-    paddingHorizontal: Spacing.lg,
-    paddingVertical: Spacing.smMd,
-    borderRadius: BorderRadius.mdSm,
-    minWidth: 120,
-  },
-  profileSaveBtnDisabled: {
-    opacity: 0.4,
-  },
-  profileSaveBtnText: {
-    fontSize: FontSizes.body,
-    fontWeight: FontWeights.semibold,
-    color: AppColors.backgroundWhite,
-    fontFamily: 'Inter',
+  profileSaveBtnWrap: {
+    minWidth: 140,
   },
 });
