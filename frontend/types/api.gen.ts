@@ -85,7 +85,7 @@ export interface paths {
         };
         /**
          * Get booked athletes for a class
-         * @description Retrieve the list of athletes with active bookings (booked or waitlisted) for a class. Accessible by the assigned coach or the gym owner. gymId is validated against the class.
+         * @description Retrieve the list of athletes with active bookings (booked or waitlisted) for a class. Booked athletes are listed first, followed by waitlisted athletes in promotion order (waitlistPosition ascending), so the list can be rendered as returned. Accessible by the assigned coach or the gym owner. gymId is validated against the class.
          */
         get: operations["ClassBookingController_getClassBookings"];
         put?: never;
@@ -135,7 +135,7 @@ export interface paths {
         put?: never;
         /**
          * Add or edit class programming
-         * @description Create or update workout content and loggable status for a class. Coaches only. Programming can be edited while class is published or booking closed.
+         * @description Create or update workout content and loggable status for a class. The gym owner may edit programming for any class in their gym; a coach may edit only a class they are assigned to. Programming can be edited while the class is published or booking closed.
          */
         post: operations["ClassProgrammingController_addOrEditProgramming"];
         delete?: never;
@@ -155,7 +155,7 @@ export interface paths {
         put?: never;
         /**
          * Toggle class loggable status
-         * @description Toggle whether athletes can log results for this class. Coaches only.
+         * @description Toggle whether athletes can log results for this class. The gym owner may toggle any class in their gym; a coach may toggle only a class they are assigned to. Editable while the class is published or booking closed.
          */
         post: operations["ClassProgrammingController_toggleLoggableStatus"];
         delete?: never;
@@ -1204,6 +1204,11 @@ export interface components {
              * @enum {string}
              */
             status: "booked" | "waitlisted";
+            /**
+             * @description Position in the waitlist queue, 1-based. This is the authoritative promotion order: the athlete with position 1 is promoted next when a spot frees up. Null when status is "booked" (the athlete holds a spot and is not queued). May also be null for a "waitlisted" athlete whose position has not been assigned yet, in which case they sort last.
+             * @example 2
+             */
+            waitlistPosition: number | null;
         };
         GetClassBookingsResponseDto: {
             /** @description List of athletes with active bookings (booked or waitlisted) for the class */
@@ -1515,7 +1520,7 @@ export interface components {
              * @description Optional notes from the athlete
              * @example Felt strong today
              */
-            notes: Record<string, never> | null;
+            notes: string | null;
             /**
              * Format: date-time
              * @description Timestamp when the result was logged
@@ -1523,10 +1528,11 @@ export interface components {
              */
             loggedAt: string;
             /**
+             * Format: date-time
              * @description Timestamp when the result was last edited, or null if never edited
              * @example 2024-06-15T09:05:00.000Z
              */
-            editedAt: Record<string, never> | null;
+            editedAt: string | null;
         };
         GetMyClassResultResponseDto: {
             /** @description The caller's own result for this class, or null if none has been logged yet */
@@ -3090,6 +3096,13 @@ export interface operations {
                     "application/json": components["schemas"]["AddOrEditProgrammingResponseDto"];
                 };
             };
+            /** @description Class is not in published or booking_closed state, or request body is invalid */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
             /** @description Unauthorized */
             401: {
                 headers: {
@@ -3097,8 +3110,15 @@ export interface operations {
                 };
                 content?: never;
             };
-            /** @description Forbidden - Coach role required */
+            /** @description Forbidden - gymId mismatch, or caller is neither the gym owner nor the coach assigned to this class */
             403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Class not found in gym */
+            404: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -3133,6 +3153,13 @@ export interface operations {
                     "application/json": components["schemas"]["ToggleLoggableStatusResponseDto"];
                 };
             };
+            /** @description Class is not in published or booking_closed state, or request body is invalid */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
             /** @description Unauthorized */
             401: {
                 headers: {
@@ -3140,8 +3167,15 @@ export interface operations {
                 };
                 content?: never;
             };
-            /** @description Forbidden - Coach role required */
+            /** @description Forbidden - gymId mismatch, or caller is neither the gym owner nor the coach assigned to this class */
             403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Class not found in gym */
+            404: {
                 headers: {
                     [name: string]: unknown;
                 };

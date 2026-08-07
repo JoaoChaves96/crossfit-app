@@ -43,6 +43,7 @@ export class ClassResultItemDto {
   unit: 'seconds' | 'minutes' | 'reps' | 'kg' | 'lb' | 'rounds' | 'none';
 
   @ApiProperty({
+    type: String,
     example: 'Felt strong today',
     description: 'Optional notes from the athlete',
     nullable: true,
@@ -56,6 +57,7 @@ export class ClassResultItemDto {
   loggedAt: Date;
 
   @ApiProperty({
+    type: Date,
     example: '2024-06-15T09:05:00.000Z',
     description:
       'Timestamp when the result was last edited, or null if never edited',
