@@ -30,7 +30,12 @@ function NavigationGuard() {
   const auth = useContext(AuthContext);
 
   const isDevBootstrap = __DEV__ && pathname === DEV_BOOTSTRAP_ROUTE;
-  const isPublicRoute = pathname.startsWith('/invite/');
+  // Public (signed-out) routes the guard must never bounce to /login: the invite
+  // deep-link plus the auth screens themselves. Without /register here the guard
+  // redirects any unauthenticated visitor off the sign-up screen straight back to
+  // login, making registration (and the invite → register hand-off) unreachable.
+  const isPublicRoute =
+    pathname.startsWith('/invite/') || pathname === '/login' || pathname === '/register';
 
   useEffect(() => {
     if (isDevBootstrap) return;
