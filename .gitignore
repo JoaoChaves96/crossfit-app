@@ -3,3 +3,16 @@
 **/.claude/worktrees/*
 
 /.DS_Store
+
+.agents/
+
+.claude/
+
+skills-lock.json
+
+# Impeccable local review artifacts (screenshots + detector cache).
+# The DESIGN sidecar (frontend/.impeccable/design.json) IS tracked.
+.design-review/
+/.impeccable/
+**/.impeccable/shots/
+**/.impeccable/hook.cache.json

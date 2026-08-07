@@ -1,0 +1,126 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-08-07T00:00:00Z",
+  "title": "Design System: Clean Ink",
+  "extensions": {
+    "colorMeta": {
+      "accent": { "role": "primary", "displayName": "Clean Ink Crimson", "canonical": "#E23B4E", "tonalRamp": ["#2A0A0E", "#54141C", "#7E1E2A", "#A82838", "#E23B4E", "#EC6E7C", "#F4A0A9", "#FBD5D9"] },
+      "status-open": { "role": "secondary", "displayName": "Open Green", "canonical": "#2F7D5B", "tonalRamp": ["#0A1D15", "#14372A", "#1E523E", "#286854", "#2F7D5B", "#54A47F", "#8AC3A9", "#C9E4D6"] },
+      "status-danger": { "role": "tertiary", "displayName": "Deeper Danger Red", "canonical": "#B3261E", "tonalRamp": ["#2A0908", "#54120F", "#7E1B16", "#A8241D", "#B3261E", "#D5564F", "#E68F8A", "#F6D2D0"] },
+      "ink-strong": { "role": "neutral", "displayName": "Ink Strong", "canonical": "#1A1A1A", "tonalRamp": ["#000000", "#1A1A1A", "#333333", "#5C5C5C", "#8A8A8A", "#B0B0B0", "#D8D8D8", "#F5F5F5"] }
+    },
+    "typographyMeta": {
+      "display": { "displayName": "Display", "purpose": "Empty-state display headline only (30px bold)." },
+      "screen": { "displayName": "Screen", "purpose": "Screen titles (24px)." },
+      "lead": { "displayName": "Lead", "purpose": "The prominent number — class time on a card (20px bold, tight tracking)." },
+      "title": { "displayName": "Title", "purpose": "Card titles / class type (18px semibold, snug tracking)." },
+      "body": { "displayName": "Body", "purpose": "Body copy and control labels (15px)." },
+      "meta": { "displayName": "Meta", "purpose": "Metadata — spots/coach/space, toggle labels (13px)." },
+      "label": { "displayName": "Label", "purpose": "Uppercase micro-labels — status chips, day separators (12px semibold, wide tracking)." }
+    },
+    "shadows": [
+      { "name": "card", "value": "0px 1px 3px rgba(26,26,26,0.05)", "purpose": "Resting elevation of class cards and the active toggle pill — a whisper of lift confirming the hairline border." },
+      { "name": "raised", "value": "0px 6px 16px rgba(26,26,26,0.10)", "purpose": "Genuinely floating surfaces (sheets/menus); not used at rest on the schedule." }
+    ],
+    "tracking": [
+      { "name": "tight", "value": "-0.4px", "purpose": "Display / lead / screen." },
+      { "name": "snug", "value": "-0.2px", "purpose": "Titles." },
+      { "name": "normal", "value": "0", "purpose": "Body / meta." },
+      { "name": "wide", "value": "0.6px", "purpose": "Uppercase micro-labels (applied automatically)." }
+    ]
+  },
+  "components": [
+    {
+      "name": "Primary Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "The one confident crimson action per view (e.g. Book Class).",
+      "html": "<button class=\"ds-btn-primary\">Book Class</button>",
+      "css": ".ds-btn-primary { height: 46px; padding: 0 16px; border: none; border-radius: 10px; background: #E23B4E; color: #FFFFFF; font-family: 'HankenGrotesk_600SemiBold', sans-serif; font-size: 15px; font-weight: 600; cursor: pointer; transition: background 0.15s; } .ds-btn-primary:hover, .ds-btn-primary:active { background: #C82F41; } .ds-btn-primary:disabled { opacity: 0.45; }"
+    },
+    {
+      "name": "Danger Button",
+      "kind": "button",
+      "refersTo": "button-danger",
+      "description": "Destructive/blocking action (Cancel Booking) — outlined deeper red, distinct from the accent.",
+      "html": "<button class=\"ds-btn-danger\">Cancel Booking</button>",
+      "css": ".ds-btn-danger { height: 46px; padding: 0 16px; border: 1px solid #B3261E; border-radius: 10px; background: #FFFFFF; color: #B3261E; font-family: 'HankenGrotesk_600SemiBold', sans-serif; font-size: 15px; font-weight: 600; cursor: pointer; transition: background 0.15s; } .ds-btn-danger:hover, .ds-btn-danger:active { background: #FBEAE8; }"
+    },
+    {
+      "name": "Quiet Button",
+      "kind": "button",
+      "refersTo": "button-quiet",
+      "description": "Secondary neutral action (Join Waitlist) — hairline-outlined ink on white.",
+      "html": "<button class=\"ds-btn-quiet\">Join Waitlist</button>",
+      "css": ".ds-btn-quiet { height: 46px; padding: 0 16px; border: 1px solid #DCDCDC; border-radius: 10px; background: #FFFFFF; color: #1A1A1A; font-family: 'HankenGrotesk_600SemiBold', sans-serif; font-size: 15px; font-weight: 600; cursor: pointer; transition: background 0.15s; } .ds-btn-quiet:hover, .ds-btn-quiet:active { background: #F0F0F0; }"
+    },
+    {
+      "name": "Filter Chip",
+      "kind": "chip",
+      "refersTo": "chip-filter-active",
+      "description": "Selection chip rail. Active = filled crimson pill (the one place selection earns the accent); idle = hairline-outlined on white.",
+      "html": "<div class=\"ds-chip-row\"><button class=\"ds-chip ds-chip-active\">CrossFit</button><button class=\"ds-chip ds-chip-idle\">Gymnastics</button></div>",
+      "css": ".ds-chip-row { display: flex; gap: 8px; } .ds-chip { padding: 7px 14px; border-radius: 999px; font-family: 'HankenGrotesk_600SemiBold', sans-serif; font-size: 13px; font-weight: 600; border: 1px solid transparent; cursor: pointer; } .ds-chip-active { background: #E23B4E; border-color: #E23B4E; color: #FFFFFF; } .ds-chip-idle { background: #FFFFFF; border-color: #DCDCDC; color: #5C5C5C; }"
+    },
+    {
+      "name": "Status Chip",
+      "kind": "chip",
+      "refersTo": "status-chip-open",
+      "description": "Quiet filled-wash state pill; text tints from the fill's hue. Tones: open (green), accent/booked (crimson), full (danger), lifecycle (neutral).",
+      "html": "<span class=\"ds-status ds-status-open\">OPEN</span>",
+      "css": ".ds-status { display: inline-block; padding: 4px 10px; border-radius: 999px; font-family: 'HankenGrotesk_600SemiBold', sans-serif; font-size: 12px; font-weight: 600; letter-spacing: 0.6px; text-transform: uppercase; } .ds-status-open { background: #EAF3EE; color: #2F7D5B; } .ds-status-accent { background: #FDECEE; color: #C82F41; } .ds-status-danger { background: #FBEAE8; color: #B3261E; } .ds-status-neutral { background: #F0F0F0; color: #5C5C5C; }"
+    },
+    {
+      "name": "Segmented Toggle",
+      "kind": "custom",
+      "refersTo": "segment-active",
+      "description": "Week/Day toggle. Active segment is a white lifted pill on a sunken track — selection reads through elevation + weight, not the accent.",
+      "html": "<div class=\"ds-seg\"><button class=\"ds-seg-item ds-seg-active\">Week</button><button class=\"ds-seg-item ds-seg-idle\">Day</button></div>",
+      "css": ".ds-seg { display: inline-flex; gap: 3px; padding: 3px; background: #F0F0F0; border-radius: 10px; } .ds-seg-item { flex: 1; height: 34px; padding: 0 16px; border: none; border-radius: 7px; background: transparent; font-family: 'HankenGrotesk_500Medium', sans-serif; font-size: 13px; color: #8A8A8A; cursor: pointer; } .ds-seg-active { background: #FFFFFF; color: #1A1A1A; font-family: 'HankenGrotesk_600SemiBold', sans-serif; box-shadow: 0px 1px 3px rgba(26,26,26,0.05); }"
+    },
+    {
+      "name": "Class Card",
+      "kind": "card",
+      "refersTo": "card",
+      "description": "The signature schedule card: lead time + class type, quiet metadata rows with drawn icons, a status chip, and one action.",
+      "html": "<div class=\"ds-card\"><div class=\"ds-card-top\"><div><div class=\"ds-card-time\">6:00 – 7:00 AM</div><div class=\"ds-card-type\">CrossFit</div></div><span class=\"ds-status ds-status-open\">OPEN</span></div><div class=\"ds-card-meta\">8 / 12 spots</div><button class=\"ds-btn-primary\">Book Class</button></div>",
+      "css": ".ds-card { background: #FFFFFF; border: 1px solid #E8E8E8; border-radius: 16px; padding: 16px; display: flex; flex-direction: column; gap: 12px; box-shadow: 0px 1px 3px rgba(26,26,26,0.05); } .ds-card-top { display: flex; justify-content: space-between; align-items: flex-start; } .ds-card-time { font-family: 'HankenGrotesk_700Bold', sans-serif; font-size: 20px; letter-spacing: -0.4px; color: #1A1A1A; } .ds-card-type { font-family: 'HankenGrotesk_600SemiBold', sans-serif; font-size: 18px; letter-spacing: -0.2px; color: #1A1A1A; } .ds-card-meta { font-family: 'HankenGrotesk_400Regular', sans-serif; font-size: 13px; color: #5C5C5C; }"
+    }
+  ],
+  "narrative": {
+    "northStar": "Clean Ink",
+    "overview": "A booking app that feels calm and effortless, not a proof-of-concept. The whole system rests on monochrome discipline plus one confident accent: near-black ink on a white and near-white ground does about 95% of the work, and a single muted crimson does the rest. Neutrals carry structure and hierarchy; the accent is rationed so hard that when it appears — on the one primary action, the active filter, a held spot — it means something. This is an Operate-mode system: scanability, consistency, and native task affordances outrank expression. Brand does not live in decoration; it lives in precise details — the single accent, the type ramp, the 4pt spacing rhythm, the hairline structure, and the drawn icon set. The system is a role layer (constants/design.ts), not a palette dump: every token has exactly one job.",
+    "keyCharacteristics": [
+      "Monochrome base carried by neutrals; one rationed crimson accent.",
+      "Destructive/urgent uses a distinct deeper red, never the accent.",
+      "Selection reads through elevation + weight, not color.",
+      "One self-hosted grotesk (Hanken Grotesk); no serif/system clash.",
+      "Drawn Ionicons behind semantic names; zero emoji as UI.",
+      "Smooth rounded cards, hairline structure, restrained real-offset elevation."
+    ],
+    "rules": [
+      { "name": "The One Accent Rule", "body": "Crimson (#E23B4E) appears in exactly three places: the primary CTA, the active filter chip, and selection. If a fourth use appears on a screen, it is wrong. The accent is a signal; its rarity is the point.", "section": "colors" },
+      { "name": "The Two Reds Rule", "body": "The accent and destructive red are never the same value. Confident/positive actions use crimson (#E23B4E); destructive/blocking states use the deeper danger red (#B3261E). They must not blur into each other.", "section": "colors" },
+      { "name": "The Same-Hue Chip Rule", "body": "Status-chip text tints from the same hue as its fill (green-on-green, crimson-on-crimson wash), never a flat gray on a colored wash.", "section": "colors" },
+      { "name": "The Named-Face Rule", "body": "Never style weight with fontWeight alone. Always route text through the Text primitive with a semantic weight; the family is what actually selects the face on native.", "section": "typography" },
+      { "name": "The Hairline-First Rule", "body": "Structure and separation come from hairline borders and tonal grounds first; a card shadow only confirms the lift. If a border and a shadow both fight to separate the same edge, keep the hairline.", "section": "elevation" }
+    ],
+    "dos": [
+      "Do import every value from constants/design.ts roles (Ink, Ground, Line, Accent, Status, Type, Radius, Space, Elevation). Use the role, not the hex.",
+      "Do route all text through the Text primitive with a semantic size, weight, and tone; let it pick the correct Hanken Grotesk family.",
+      "Do keep crimson to the primary CTA, the active filter chip, and selection (The One Accent Rule).",
+      "Do use the deeper danger red (#B3261E) for destructive/blocking states and keep it visually distinct from the accent (The Two Reds Rule).",
+      "Do convey toggle selection through elevation + weight (white lifted pill), not color.",
+      "Do separate surfaces with hairlines and tonal grounds first; let the card shadow only confirm the lift (The Hairline-First Rule).",
+      "Do add new icons to the Icon name map (Ionicons outline) rather than reaching for a glyph inline."
+    ],
+    "donts": [
+      "Don't write raw hex in a component — always reference a design-token role.",
+      "Don't let the accent spread into a fourth use or become a fill/large surface.",
+      "Don't style weight with fontWeight alone; on native it will silently render the regular face.",
+      "Don't use emoji (👥 📍 👤 📅 🕐) or gray-square placeholders as UI icons.",
+      "Don't put a flat, blurry drop-shadow halo on surfaces; elevation is a real offset with a soft ink-tinted blur.",
+      "Don't reintroduce the legacy constants/theme.ts grays/blues/greens on a restyled screen (it survives only for not-yet-migrated surfaces)."
+    ]
+  }
+}

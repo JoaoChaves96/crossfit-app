@@ -3,7 +3,8 @@ import { View, Text, Pressable, StyleSheet, Modal, TouchableOpacity } from 'reac
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { useAuth } from '@/hooks/useAuth';
-import { AppColors, BorderRadius, FontSizes, FontWeights, Spacing } from '@/constants/theme';
+import { AppColors, BorderRadius, FontSizes, Spacing } from '@/constants/theme';
+import { Type } from '@/constants/design';
 
 interface GymMenuProps {
   gymName: string;
@@ -76,9 +77,9 @@ const menuStyles = StyleSheet.create({
     gap: Spacing.sm,
   },
   gymName: {
-    fontFamily: 'Inter',
+    fontFamily: Type.family.bold,
     fontSize: FontSizes.lg,
-    fontWeight: FontWeights.bold,
+    letterSpacing: -0.3,
     color: AppColors.textPrimary,
   },
   backdrop: {
@@ -106,13 +107,12 @@ const menuStyles = StyleSheet.create({
     paddingVertical: Spacing.sm,
   },
   gymRowName: {
-    fontFamily: 'Inter',
+    fontFamily: Type.family.semibold,
     fontSize: FontSizes.md,
-    fontWeight: FontWeights.semibold,
     color: AppColors.textPrimary,
   },
   gymRowSub: {
-    fontFamily: 'Inter',
+    fontFamily: Type.family.regular,
     fontSize: FontSizes.xs,
     color: AppColors.textGray500,
     marginTop: 2,
@@ -130,9 +130,8 @@ const menuStyles = StyleSheet.create({
     paddingVertical: Spacing.smMd,
   },
   logoutLabel: {
-    fontFamily: 'Inter',
+    fontFamily: Type.family.medium,
     fontSize: FontSizes.md,
-    fontWeight: FontWeights.medium,
     color: AppColors.errorMaterial,
   },
 });

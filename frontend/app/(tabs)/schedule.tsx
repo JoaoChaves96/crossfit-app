@@ -1,9 +1,25 @@
+/*
+ * ─── Clean Ink · Athlete Schedule (restyle pilot) ────────────────────────────
+ * THESIS: a booking app that feels calm and effortless, not a POC. Monochrome
+ *   discipline + one confident accent; it refuses the flat gray-on-white,
+ *   emoji-as-icon POC look this screen inherited.
+ * OWN-WORLD: white surface on a #F5F5F5 ground, near-black ink (#1A1A1A) with a
+ *   disciplined neutral ramp and #E8E8E8 hairlines; ONE muted-crimson accent
+ *   (#E23B4E) on the primary action + active chips only; deeper red (#B3261E)
+ *   for destructive/urgent. Hanken Grotesk throughout. Drawn Ionicons, no emoji.
+ * STORY: athlete opens to a clean schedule, scans classes by time + a quiet
+ *   spots indicator, and books with one confident crimson action.
+ * FIRST VIEWPORT: compact header, Week/Day segmented toggle + class-type chips
+ *   (active = crimson), quiet day separators, a vertical list of smooth class
+ *   cards (time + type, coach/space/spots metadata, status chip, one action).
+ * FORM: mobile list / desktop 3-col grid; ranked #1 of the surface's structures.
+ * FINISH: unreviewed and undocumented is unfinished; this build ends with the
+ *   finish review, the verdict, and DESIGN.md.
+ */
 import React, { useCallback, useMemo, useRef, useState } from 'react';
 import {
   View,
-  Text,
   FlatList,
-  TouchableOpacity,
   Pressable,
   ActivityIndicator,
   ScrollView,
@@ -15,7 +31,7 @@ import { useGym } from '@/hooks/useGym';
 import { createApiClient } from '@/utils/api-client';
 import { showConfirm, showError } from '@/utils/alert';
 import { components } from '@/types/api.gen';
-import { AppColors, Spacing } from '@/constants/theme';
+import { Space, Accent, Ink, Status } from '@/constants/design';
 import { formatTimeRange } from '@/utils/datetime';
 import { useResponsiveLayout } from '@/hooks/useResponsiveLayout';
 import { useRefreshOnAppActive } from '@/hooks/useRefreshOnAppActive';
@@ -23,6 +39,15 @@ import { DesktopTopNav } from '@/components/DesktopTopNav';
 import { NotificationBell } from '@/components/NotificationBell';
 import { GymMenu } from '@/components/GymMenu';
 import { SafeScreen } from '@/components/SafeScreen';
+import {
+  Text,
+  Icon,
+  StatusChip,
+  ChipTone,
+  Button,
+  SegmentedToggle,
+  FilterChips,
+} from '@/components/cleanink';
 import { styles, desktopStyles } from './schedule.styles';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -45,22 +70,23 @@ interface EnrichedClass extends ClassScheduleItem {
   userBookingId?: string;
 }
 
-// ─── Badge config ─────────────────────────────────────────────────────────────
-const BADGE_CONFIG: Record<CardStatus, { bg: string; text: string; label: string }> = {
-  open: { bg: AppColors.successBgFaint, text: AppColors.successMaterial, label: 'Open' },
-  booked: { bg: AppColors.surfaceBlueLight, text: AppColors.actionBlueDark, label: 'Booked' },
-  waitlisted: { bg: AppColors.warningBgOrange, text: AppColors.warningOrange, label: 'Waitlisted' },
-  full: { bg: AppColors.backgroundSubtle, text: AppColors.textGray500, label: 'Full' },
-  closed: { bg: AppColors.backgroundSubtle, text: AppColors.textGray500, label: 'Closed' },
-  in_progress: { bg: AppColors.surfaceBlueLight, text: AppColors.actionBlueDark, label: 'In Progress' },
-  completed: { bg: AppColors.backgroundSubtle, text: AppColors.textGray500, label: 'Completed' },
+// ─── Status → chip config ───────────────────────────────────────────────────
+// Chip labels are unchanged from the incumbent screen (tests assert on them);
+// only the visual world changes. Tone maps into the Clean Ink status roles:
+// open = muted green; booked/waitlisted = crimson wash (both are the athlete's
+// own held spot, a positive personal state); full = deeper danger red (a
+// blocking, unavailable state); lifecycle states = neutral.
+const CHIP_CONFIG: Record<CardStatus, { tone: ChipTone; label: string }> = {
+  open: { tone: 'open', label: 'Open' },
+  booked: { tone: 'accent', label: 'Booked' },
+  waitlisted: { tone: 'accent', label: 'Waitlisted' },
+  full: { tone: 'danger', label: 'Full' },
+  closed: { tone: 'neutral', label: 'Closed' },
+  in_progress: { tone: 'neutral', label: 'In Progress' },
+  completed: { tone: 'neutral', label: 'Completed' },
 };
 
 // ─── Controls config ──────────────────────────────────────────────────────────
-// Canonical class-type chips from the design (frame wUe5e / Controls NzxqW).
-// "All" is always present; the remaining canonical chips are merged with any
-// additional class types present in the loaded data so the control reflects
-// real gym data while still honoring the design's baseline set.
 const ALL_FILTER = 'All';
 const CANONICAL_CLASS_TYPES = ['CrossFit', 'Gymnastics', 'Hyrox'] as const;
 
@@ -92,13 +118,6 @@ function groupByDate(items: EnrichedClass[]): { date: string; items: EnrichedCla
     }
   }
   return groups;
-}
-
-function getCapacityDetailText(bookedCount: number, capacity: number, status: CardStatus): { text: string; isFullWaitlist: boolean } {
-  if (status === 'full') {
-    return { text: 'Full · Waitlist Open', isFullWaitlist: true };
-  }
-  return { text: getSpotsText(bookedCount, capacity), isFullWaitlist: false };
 }
 
 // Maps a non-published lifecycle state to its display-only status.
@@ -136,20 +155,7 @@ function deriveBookingStatus(
   return { status: 'open' };
 }
 
-// ─── Sub-components ───────────────────────────────────────────────────────────
-interface StatusBadgeProps {
-  status: CardStatus;
-}
-
-function StatusBadge({ status }: StatusBadgeProps) {
-  const config = BADGE_CONFIG[status];
-  return (
-    <View style={[styles.badge, { backgroundColor: config.bg }]}>
-      <Text style={[styles.badgeText, { color: config.text }]}>{config.label}</Text>
-    </View>
-  );
-}
-
+// ─── Card action button ─────────────────────────────────────────────────────
 interface CardActionButtonProps {
   status: CardStatus;
   onBook: () => void;
@@ -176,51 +182,36 @@ function CardActionButton({
   }
 
   if (status === 'booked') {
-    if (isCancelling) {
-      return (
-        <View style={[styles.actionBtn, styles.actionBtnCancel]}>
-          <ActivityIndicator size="small" color={AppColors.errorBootstrap} />
-        </View>
-      );
-    }
     return (
-      <Pressable style={[styles.actionBtn, styles.actionBtnCancel]} onPress={stopAndCall(onCancel)}>
-        <Text style={[styles.actionBtnText, { color: AppColors.errorBootstrap }]}>Cancel Booking</Text>
-      </Pressable>
+      <Button
+        variant="danger"
+        label="Cancel Booking"
+        loading={isCancelling}
+        onPress={stopAndCall(onCancel)}
+      />
     );
   }
 
   if (status === 'waitlisted') {
-    if (isCancelling) {
-      return (
-        <View style={[styles.actionBtn, styles.actionBtnWaitlist]}>
-          <ActivityIndicator size="small" color={AppColors.textPrimary} />
-        </View>
-      );
-    }
     return (
-      <Pressable style={[styles.actionBtn, styles.actionBtnWaitlist]} onPress={stopAndCall(onCancel)}>
-        <Text style={[styles.actionBtnText, { color: AppColors.textPrimary }]}>Leave Waitlist</Text>
-      </Pressable>
+      <Button
+        variant="quiet"
+        label="Leave Waitlist"
+        loading={isCancelling}
+        onPress={stopAndCall(onCancel)}
+      />
     );
   }
 
   if (status === 'full') {
-    return (
-      <Pressable style={[styles.actionBtn, styles.actionBtnWaitlist]} onPress={stopAndCall(onWaitlist)}>
-        <Text style={[styles.actionBtnText, { color: AppColors.textPrimary }]}>Join Waitlist</Text>
-      </Pressable>
-    );
+    return <Button variant="quiet" label="Join Waitlist" onPress={stopAndCall(onWaitlist)} />;
   }
 
   // open
-  return (
-    <Pressable style={[styles.actionBtn, styles.actionBtnPrimary]} onPress={stopAndCall(onBook)}>
-      <Text style={[styles.actionBtnText, { color: AppColors.backgroundWhite }]}>Book Class</Text>
-    </Pressable>
-  );
+  return <Button variant="primary" label="Book Class" onPress={stopAndCall(onBook)} />;
 }
 
+// ─── Class card ───────────────────────────────────────────────────────────────
 interface ClassCardProps {
   item: EnrichedClass;
   onPress: () => void;
@@ -229,41 +220,45 @@ interface ClassCardProps {
 }
 
 function ClassCard({ item, onPress, onCancel, isCancelling }: ClassCardProps) {
+  const isFull = item.userBookingStatus === 'full';
+  const spotsText = isFull ? 'Full · Waitlist open' : getSpotsText(item.bookedCount, item.capacity);
+
   return (
     <Pressable style={styles.card} onPress={onPress}>
-      {/* Top row: time + badge */}
+      {/* Top row: time + class type on the left, status chip on the right */}
       <View style={styles.cardTop}>
-        <Text style={styles.cardTime}>{formatTimeRange(item.scheduledTime, item.duration)}</Text>
-        <StatusBadge status={item.userBookingStatus} />
+        <View style={{ gap: Space.hair, flex: 1 }}>
+          <Text size="lead" weight="bold" tracking="tight">
+            {formatTimeRange(item.scheduledTime, item.duration)}
+          </Text>
+          <Text size="title" weight="semibold" tracking="snug">
+            {item.classTypeName}
+          </Text>
+        </View>
+        <StatusChip {...CHIP_CONFIG[item.userBookingStatus]} />
       </View>
 
-      {/* Class type name */}
-      <Text style={styles.cardTitle}>{item.classTypeName}</Text>
-
-      {/* Detail rows */}
-      <View style={styles.cardDetails}>
+      {/* Quiet metadata: spots, space, coach */}
+      <View style={styles.cardMeta}>
         <View style={styles.detailRow}>
-          <Text style={styles.detailIcon}>👥</Text>
-          {(() => {
-            const { text, isFullWaitlist } = getCapacityDetailText(item.bookedCount, item.capacity, item.userBookingStatus);
-            return (
-              <Text style={[styles.detailText, isFullWaitlist && styles.detailTextFull]}>{text}</Text>
-            );
-          })()}
+          <Icon name="people" size={15} tone={isFull ? Status.danger : Ink.faint} />
+          <Text size="meta" weight={isFull ? 'semibold' : 'regular'} tone={isFull ? Status.danger : Ink.muted}>
+            {spotsText}
+          </Text>
         </View>
         {item.spaceName ? (
           <View style={styles.detailRow}>
-            <Text style={styles.detailIcon}>📍</Text>
-            <Text style={styles.detailText}>{item.spaceName}</Text>
+            <Icon name="place" size={15} tone={Ink.faint} />
+            <Text size="meta" tone={Ink.muted}>{item.spaceName}</Text>
           </View>
         ) : null}
         <View style={styles.detailRow}>
-          <Text style={styles.detailIcon}>👤</Text>
-          <Text style={styles.detailText}>Coach: {item.coachName}</Text>
+          <Icon name="coach" size={15} tone={Ink.faint} />
+          <Text size="meta" tone={Ink.muted}>{item.coachName}</Text>
         </View>
       </View>
 
-      {/* Action button */}
+      {/* Action */}
       <CardActionButton
         status={item.userBookingStatus}
         onBook={onPress}
@@ -332,45 +327,21 @@ function ScheduleControls({
 }: ScheduleControlsProps) {
   return (
     <View style={[styles.controls, containerStyle]}>
-      {/* Week / Day segmented toggle */}
-      <View style={styles.segmented}>
-        {(['week', 'day'] as const).map((view) => {
-          const isActive = timeView === view;
-          return (
-            <Pressable
-              key={view}
-              testID={`schedule-toggle-${view}`}
-              style={[styles.segment, isActive && styles.segmentActive]}
-              onPress={() => onTimeViewChange(view)}
-            >
-              <Text style={[styles.segmentText, isActive && styles.segmentTextActive]}>
-                {view === 'week' ? 'Week' : 'Day'}
-              </Text>
-            </Pressable>
-          );
-        })}
-      </View>
-
-      {/* Class-type filter chips */}
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        contentContainerStyle={styles.chipRow}
-      >
-        {typeFilters.map((filter) => {
-          const isActive = activeFilter === filter;
-          return (
-            <Pressable
-              key={filter}
-              testID={`schedule-chip-${filter}`}
-              style={[styles.chip, isActive && styles.chipActive]}
-              onPress={() => onFilterChange(filter)}
-            >
-              <Text style={[styles.chipText, isActive && styles.chipTextActive]}>{filter}</Text>
-            </Pressable>
-          );
-        })}
-      </ScrollView>
+      <SegmentedToggle<TimeView>
+        options={[
+          { value: 'week', label: 'Week' },
+          { value: 'day', label: 'Day' },
+        ]}
+        value={timeView}
+        onChange={onTimeViewChange}
+        testIDPrefix="schedule-toggle"
+      />
+      <FilterChips
+        options={typeFilters}
+        active={activeFilter}
+        onChange={onFilterChange}
+        testIDPrefix="schedule-chip"
+      />
     </View>
   );
 }
@@ -524,7 +495,9 @@ export default function ScheduleScreen() {
       <View style={isDesktop ? desktopStyles.screen : styles.screen}>
         {isDesktop && <DesktopTopNav />}
         <View style={styles.centeredState}>
-          <Text style={styles.errorText}>Please select a gym and log in to view classes.</Text>
+          <Text size="body" tone={Ink.muted} style={{ textAlign: 'center' }}>
+            Please select a gym and log in to view classes.
+          </Text>
         </View>
       </View>
     );
@@ -535,7 +508,7 @@ export default function ScheduleScreen() {
       <View style={isDesktop ? desktopStyles.screen : styles.screen}>
         {isDesktop && <DesktopTopNav />}
         <View style={styles.centeredState}>
-          <ActivityIndicator size="large" color={AppColors.textPrimary} />
+          <ActivityIndicator size="large" color={Accent.base} />
         </View>
       </View>
     );
@@ -546,7 +519,7 @@ export default function ScheduleScreen() {
       <View style={isDesktop ? desktopStyles.screen : styles.screen}>
         {isDesktop && <DesktopTopNav />}
         <View style={styles.centeredState}>
-          <Text style={styles.errorText}>{error}</Text>
+          <Text size="body" tone={Status.danger} style={{ textAlign: 'center' }}>{error}</Text>
         </View>
       </View>
     );
@@ -555,7 +528,9 @@ export default function ScheduleScreen() {
   // ── Date separator ─────────────────────────────────────────────────────────
   const renderDateSeparator = (iso: string) => (
     <View style={styles.dateSep}>
-      <Text style={styles.dateLabel}>{formatDateLabel(iso)}</Text>
+      <Text size="meta" weight="semibold" tone={Ink.strong} upper tracking="wide">
+        {formatDateLabel(iso)}
+      </Text>
       <View style={styles.dateLine} />
     </View>
   );
@@ -565,19 +540,18 @@ export default function ScheduleScreen() {
     return (
       <View style={isDesktop ? desktopStyles.screen : styles.screen}>
         {isDesktop ? <DesktopTopNav gymName={gymName} /> : (
-          <SafeScreen style={styles.header} extraTopPadding={Spacing.md}>
+          <SafeScreen style={styles.header} extraTopPadding={Space.md}>
             <GymMenu gymName={gymName} />
             <NotificationBell />
           </SafeScreen>
         )}
         <View style={styles.emptyContainer}>
           <View style={styles.emptyIconCircle}>
-            <Text style={styles.emptyIconText}>📅</Text>
+            <Icon name="calendar" size={30} tone={Ink.faint} />
           </View>
-          <Text style={styles.emptyTitle}>No Classes Scheduled</Text>
-          <Text style={styles.emptyDesc}>
-            There are no classes available for this period. Try changing the date or adjusting your
-            filters.
+          <Text size="title" weight="bold" tracking="snug">No classes scheduled</Text>
+          <Text size="body" tone={Ink.muted} style={styles.emptyDesc}>
+            There are no classes for this period. Try changing the day or adjusting your filters.
           </Text>
         </View>
       </View>
@@ -602,7 +576,7 @@ export default function ScheduleScreen() {
             <ScrollView showsVerticalScrollIndicator={false} style={{ flex: 1 }}>
               {dateGroups.length === 0 ? (
                 <View style={styles.filteredEmpty}>
-                  <Text style={styles.filteredEmptyText}>
+                  <Text size="body" tone={Ink.faint} style={{ textAlign: 'center' }}>
                     No classes match the selected filters.
                   </Text>
                 </View>
@@ -628,7 +602,7 @@ export default function ScheduleScreen() {
 
   // ── Mobile list ────────────────────────────────────────────────────────────
   const header = (
-    <SafeScreen style={styles.header} extraTopPadding={Spacing.md}>
+    <SafeScreen style={styles.header} extraTopPadding={Space.md}>
       <GymMenu gymName={gymName} />
       <NotificationBell />
     </SafeScreen>
@@ -667,7 +641,9 @@ export default function ScheduleScreen() {
         ListHeaderComponent={controls}
         ListEmptyComponent={
           <View style={styles.filteredEmpty}>
-            <Text style={styles.filteredEmptyText}>No classes match the selected filters.</Text>
+            <Text size="body" tone={Ink.faint} style={{ textAlign: 'center' }}>
+              No classes match the selected filters.
+            </Text>
           </View>
         }
         renderItem={({ item: row }) =>

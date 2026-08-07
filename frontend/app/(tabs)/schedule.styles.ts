@@ -1,292 +1,134 @@
 import { StyleSheet } from 'react-native';
-import { AppColors, BorderRadius, FontSizes, FontWeights, LineHeights, Spacing } from '@/constants/theme';
+import { Ground, Ink, Line, Space, Radius, Elevation, Type } from '@/constants/design';
 
+// ── Desktop layout ────────────────────────────────────────────────────────────
 export const desktopStyles = StyleSheet.create({
   screen: {
     flex: 1,
-    backgroundColor: '#F8F8F8',
+    backgroundColor: Ground.base,
   },
   contentArea: {
     flex: 1,
     alignItems: 'center',
-    paddingVertical: 32,
-    paddingHorizontal: 40,
+    paddingVertical: Space.xxl,
+    paddingHorizontal: Space.jumbo,
   },
   innerWrap: {
-    width: 960,
+    width: 1000,
     maxWidth: '100%',
     flex: 1,
-    gap: 20,
+    gap: Space.xl,
   },
   cardGrid: {
     flexDirection: 'row',
-    gap: 16,
+    gap: Space.base,
   },
   gridCol: {
     flex: 1,
-    gap: 16,
+    gap: Space.base,
   },
-  // Controls (desktop): rely on innerWrap gap/padding — transparent, no extra chrome
   controls: {
-    gap: Spacing.md,
+    gap: Space.base,
   },
 });
 
+// ── Shared / mobile ─────────────────────────────────────────────────────────
 export const styles = StyleSheet.create({
   screen: {
     flex: 1,
-    backgroundColor: AppColors.backgroundSubtle,
+    backgroundColor: Ground.base,
   },
   // Header
   header: {
-    backgroundColor: AppColors.backgroundWhite,
+    backgroundColor: Ground.surface,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: Spacing.lg,
-    paddingVertical: Spacing.md,
+    paddingHorizontal: Space.lg,
+    paddingVertical: Space.md,
+    borderBottomWidth: 1,
+    borderBottomColor: Line.hairline,
   },
-  gymSelector: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.sm,
-  },
-  gymName: {
-    fontFamily: 'Inter',
-    fontSize: FontSizes.lg,
-    fontWeight: FontWeights.bold,
-    color: AppColors.textPrimary,
-  },
-  gymDropdownCaret: {
-    fontFamily: 'Inter',
-    fontSize: FontSizes.xs,
-    color: AppColors.textGray600,
-  },
-  // Controls (Week/Day toggle + class-type filter chips).
-  // Mobile: rendered inside the FlatList header, which already applies
-  // horizontal + top padding via listContent — so no extra padding here.
+  // Controls (Week/Day toggle + class-type chips)
   controls: {
-    gap: Spacing.md,
-    marginBottom: Spacing.sm,
-  },
-  // Segmented Week/Day toggle
-  segmented: {
-    flexDirection: 'row',
-    backgroundColor: AppColors.backgroundSubtle,
-    borderRadius: BorderRadius.mdLg,
-    padding: Spacing.tight,
-    gap: Spacing.tight,
-  },
-  segment: {
-    flex: 1,
-    height: 36,
-    borderRadius: BorderRadius.md,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  segmentActive: {
-    backgroundColor: AppColors.backgroundWhite,
-  },
-  segmentText: {
-    fontFamily: 'Inter',
-    fontSize: FontSizes.mdSm,
-    fontWeight: FontWeights.semibold,
-    color: AppColors.textGray500,
-  },
-  segmentTextActive: {
-    color: AppColors.textPrimary,
-  },
-  // Class-type filter chips
-  chipRow: {
-    flexDirection: 'row',
-    gap: Spacing.sm,
-    paddingRight: Spacing.lg,
-  },
-  chip: {
-    paddingHorizontal: Spacing.base,
-    paddingVertical: Spacing.sm,
-    borderRadius: BorderRadius.pill,
-    borderWidth: 1,
-    borderColor: AppColors.borderDefault,
-    backgroundColor: AppColors.backgroundWhite,
-  },
-  chipActive: {
-    backgroundColor: AppColors.textPrimary,
-    borderColor: AppColors.textPrimary,
-  },
-  chipText: {
-    fontFamily: 'Inter',
-    fontSize: FontSizes.mdSm,
-    fontWeight: FontWeights.semibold,
-    color: AppColors.textGray600,
-  },
-  chipTextActive: {
-    color: AppColors.backgroundWhite,
+    gap: Space.md,
+    marginBottom: Space.xs,
   },
   // List
   listContent: {
-    paddingHorizontal: Spacing.lg,
-    paddingTop: Spacing.md,
-    paddingBottom: Spacing.lg,
-    gap: Spacing.md,
+    paddingHorizontal: Space.lg,
+    paddingTop: Space.base,
+    paddingBottom: Space.xl,
+    gap: Space.md,
   },
-  // Date separator
+  // Date separator — a quiet day label with a trailing hairline
   dateSep: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: Spacing.sm,
-    paddingTop: Spacing.tight,
-    marginBottom: Spacing.tight,
-  },
-  dateLabel: {
-    fontFamily: 'Inter',
-    fontSize: FontSizes.mdSm,
-    fontWeight: FontWeights.semibold,
-    color: AppColors.textPrimary,
+    gap: Space.md,
+    paddingTop: Space.sm,
+    marginBottom: Space.xs,
   },
   dateLine: {
     flex: 1,
     height: 1,
-    backgroundColor: AppColors.borderDefault,
+    backgroundColor: Line.hairline,
   },
   // Card
   card: {
-    backgroundColor: AppColors.backgroundWhite,
-    borderRadius: BorderRadius.lg,
-    padding: Spacing.base,
-    gap: Spacing.md,
+    backgroundColor: Ground.surface,
+    borderRadius: Radius.card,
+    padding: Space.base,
+    gap: Space.md,
     borderWidth: 1,
-    borderColor: AppColors.borderSubtle,
+    borderColor: Line.hairline,
+    ...Elevation.card,
   },
   cardTop: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'center',
+    alignItems: 'flex-start',
   },
-  cardTime: {
-    fontFamily: 'Inter',
-    fontSize: FontSizes.body,
-    fontWeight: FontWeights.semibold,
-    color: AppColors.textPrimary,
-  },
-  cardTitle: {
-    fontFamily: 'Inter',
-    fontSize: FontSizes.md,
-    fontWeight: FontWeights.bold,
-    color: AppColors.textPrimary,
-  },
-  cardDetails: {
-    gap: Spacing.compact,
+  cardMeta: {
+    gap: Space.sm,
   },
   detailRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: Spacing.compact,
-  },
-  detailIcon: {
-    fontSize: FontSizes.mdSm,
-    width: 14,
-    textAlign: 'center',
-  },
-  detailText: {
-    fontFamily: 'Inter',
-    fontSize: FontSizes.mdSm,
-    color: AppColors.textGray600,
-  },
-  detailTextFull: {
-    color: AppColors.warningOrange,
-    fontWeight: FontWeights.semibold,
-  },
-  // Badge
-  badge: {
-    borderRadius: BorderRadius.mdLg,
-    paddingHorizontal: Spacing.smMd,
-    paddingVertical: Spacing.tight,
-  },
-  badgeText: {
-    fontFamily: 'Inter',
-    fontSize: FontSizes.sm,
-    fontWeight: FontWeights.semibold,
-  },
-  // Action buttons
-  actionBtn: {
-    height: 40,
-    borderRadius: BorderRadius.md,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  actionBtnPrimary: {
-    backgroundColor: AppColors.textPrimary,
-  },
-  actionBtnCancel: {
-    backgroundColor: AppColors.backgroundWhite,
-    borderWidth: 1,
-    borderColor: AppColors.errorBootstrap,
-  },
-  actionBtnWaitlist: {
-    backgroundColor: AppColors.backgroundWhite,
-    borderWidth: 1,
-    borderColor: AppColors.textPrimary,
-  },
-  actionBtnText: {
-    fontFamily: 'Inter',
-    fontSize: FontSizes.body,
-    fontWeight: FontWeights.semibold,
+    gap: Space.sm,
   },
   // Filtered-empty (controls active but nothing matches)
   filteredEmpty: {
-    paddingVertical: Spacing.jumbo,
+    paddingVertical: Space.jumbo,
     alignItems: 'center',
-  },
-  filteredEmptyText: {
-    fontFamily: 'Inter',
-    fontSize: FontSizes.body,
-    color: AppColors.textGray500,
-    textAlign: 'center',
   },
   // States
   centeredState: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    paddingHorizontal: Spacing.jumbo,
-  },
-  errorText: {
-    fontFamily: 'Inter',
-    fontSize: FontSizes.md,
-    color: AppColors.errorMaterial,
-    textAlign: 'center',
+    paddingHorizontal: Space.jumbo,
   },
   emptyContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    paddingHorizontal: Spacing.jumbo,
-    gap: Spacing.base,
+    paddingHorizontal: Space.jumbo,
+    gap: Space.md,
   },
   emptyIconCircle: {
-    width: 80,
-    height: 80,
-    borderRadius: BorderRadius.round,
-    backgroundColor: AppColors.borderSubtle,
+    width: 76,
+    height: 76,
+    borderRadius: 38,
+    backgroundColor: Ground.sunken,
     justifyContent: 'center',
     alignItems: 'center',
-  },
-  emptyIconText: {
-    fontSize: FontSizes.hero,
-  },
-  emptyTitle: {
-    fontFamily: 'Inter',
-    fontSize: FontSizes.lg,
-    fontWeight: FontWeights.bold,
-    color: AppColors.textPrimary,
-    textAlign: 'center',
+    marginBottom: Space.xs,
   },
   emptyDesc: {
-    fontFamily: 'Inter',
-    fontSize: FontSizes.body,
-    color: AppColors.textGray500,
     textAlign: 'center',
-    lineHeight: LineHeights.medium,
+    maxWidth: 320,
+    lineHeight: Type.lineHeight.relaxed,
+    marginTop: Space.xs,
   },
 });
