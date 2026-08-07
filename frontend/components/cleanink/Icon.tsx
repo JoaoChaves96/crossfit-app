@@ -24,7 +24,8 @@ export type IconName =
   | 'close'
   | 'info'
   | 'edit'
-  | 'gym';
+  | 'gym'
+  | 'mail';
 
 const GLYPH: Record<IconName, keyof typeof Ionicons.glyphMap> = {
   people: 'people-outline',
@@ -41,6 +42,7 @@ const GLYPH: Record<IconName, keyof typeof Ionicons.glyphMap> = {
   info: 'information-circle-outline',
   edit: 'pencil-outline',
   gym: 'business-outline',
+  mail: 'mail-outline',
 };
 
 export interface IconProps {

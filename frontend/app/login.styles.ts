@@ -1,94 +1,76 @@
 import { StyleSheet } from 'react-native';
-import { AppColors, BorderRadius, FontSizes, FontWeights, Spacing } from '@/constants/theme';
+import { Ground, Ink, Line, Radius, Space, Type } from '@/constants/design';
 
+/*
+ * ─── Clean Ink · Login (restyle) ─────────────────────────────────────────────
+ * Monochrome sign-in on a recessed ground: an ink brand mark, a single hairline
+ * form card, and one confident crimson action (the Button primitive). Field
+ * labels/links/errors are drawn by the Text primitive; the crimson accent is
+ * carried by the CTA alone. Only the visual world changes — behavior preserved.
+ */
 export const styles = StyleSheet.create({
   root: {
     flex: 1,
-    backgroundColor: AppColors.backgroundSubtle,
+    backgroundColor: Ground.base,
   },
   scroll: {
     flexGrow: 1,
-    paddingHorizontal: Spacing.xl,
-    paddingBottom: Spacing.xxxl,
+    paddingHorizontal: Space.xl,
+    paddingBottom: Space.jumbo,
   },
 
   // Brand
   brand: {
     alignItems: 'center',
-    paddingTop: Spacing.xxxl,
-    paddingBottom: Spacing.jumbo,
-    gap: Spacing.sm,
+    paddingTop: Space.jumbo,
+    paddingBottom: Space.jumbo,
+    gap: Space.sm,
   },
   appIcon: {
-    width: 40,
-    height: 40,
-    borderRadius: BorderRadius.md,
-    backgroundColor: AppColors.textPrimary,
+    width: 56,
+    height: 56,
+    borderRadius: Radius.card,
+    backgroundColor: Ink.strong,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: Space.xs,
   },
   appName: {
-    fontSize: FontSizes.titleLg,
-    fontWeight: FontWeights.bold,
-    color: AppColors.textPrimary,
+    textAlign: 'center',
   },
   tagline: {
-    fontSize: FontSizes.bodyMd,
-    fontWeight: FontWeights.regular,
-    color: AppColors.textGray600,
+    textAlign: 'center',
   },
 
   // Card
   card: {
-    backgroundColor: AppColors.backgroundWhite,
-    borderRadius: BorderRadius.lg,
+    backgroundColor: Ground.surface,
+    borderRadius: Radius.card,
     borderWidth: 1,
-    borderColor: AppColors.borderSubtle,
-    padding: Spacing.lg,
-    gap: Spacing.base,
+    borderColor: Line.hairline,
+    padding: Space.lg,
+    gap: Space.base,
   },
 
   // Field
   field: {
-    gap: Spacing.compact,
-  },
-  label: {
-    fontSize: FontSizes.mdSm,
-    fontWeight: FontWeights.semibold,
-    color: AppColors.textPrimary,
+    gap: Space.sm,
   },
   input: {
     height: 48,
-    borderRadius: BorderRadius.mdLg,
+    borderRadius: Radius.control,
     borderWidth: 1,
-    borderColor: AppColors.borderDefault,
-    backgroundColor: AppColors.backgroundWhite,
-    paddingHorizontal: Spacing.mdPlus,
-    fontSize: FontSizes.bodyMd,
-    color: AppColors.textPrimary,
+    borderColor: Line.divider,
+    backgroundColor: Ground.surface,
+    paddingHorizontal: Space.base,
+    fontFamily: Type.family.regular,
+    fontSize: Type.size.body,
+    color: Ink.strong,
   },
 
   // Error
   errorText: {
-    fontSize: FontSizes.mdSm,
-    color: AppColors.errorDefault,
-    marginTop: -Spacing.tight,
-  },
-
-  // Button
-  loginBtn: {
-    height: 50,
-    borderRadius: BorderRadius.lg,
-    backgroundColor: AppColors.textPrimary,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  loginBtnDisabled: {
-    opacity: 0.6,
-  },
-  loginBtnLabel: {
-    fontSize: FontSizes.bodyMd,
-    fontWeight: FontWeights.bold,
-    color: AppColors.backgroundWhite,
-    letterSpacing: 0.5,
+    marginTop: -Space.xs,
   },
 
   // Footer
@@ -96,17 +78,7 @@ export const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    paddingTop: Spacing.lg,
-    gap: Spacing.tight,
-  },
-  footerText: {
-    fontSize: FontSizes.body,
-    fontWeight: FontWeights.regular,
-    color: AppColors.textGray600,
-  },
-  signupLink: {
-    fontSize: FontSizes.body,
-    fontWeight: FontWeights.semibold,
-    color: AppColors.textPrimary,
+    paddingTop: Space.lg,
+    gap: Space.xs,
   },
 });

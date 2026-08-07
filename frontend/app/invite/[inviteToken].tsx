@@ -3,7 +3,6 @@ import {
   ActivityIndicator,
   SafeAreaView,
   ScrollView,
-  Text,
   TouchableOpacity,
   View,
 } from 'react-native';
@@ -11,31 +10,13 @@ import { styles } from './[inviteToken].styles';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { AuthContext } from '@/context/AuthContext';
 import { createApiClient, ApiError } from '@/utils/api-client';
+import { Ink, Status } from '@/constants/design';
+import { Text, Icon, Button } from '@/components/cleanink';
 import type { components } from '@/types/api.gen';
 
 // ─── Generated API types ──────────────────────────────────────────────────────
 
 type ValidateInviteResponse = components['schemas']['ValidateInviteResponseDto'];
-
-// ─── Design tokens ────────────────────────────────────────────────────────────
-
-const COLOR = {
-  bg: '#FFFFFF',
-  fontPrimary: '#1A1A1A',
-  fontSecondary: '#666666',
-  border: '#E0E0E0',
-  cardBg: '#F5F5F5',
-  joinBtn: '#1A1A1A',
-  joinBtnText: '#FFFFFF',
-  declineBtnText: '#666666',
-  errorBg: '#FFF5F5',
-  errorBorder: '#FECACA',
-  errorTitle: '#D32F2F',
-  errorDesc: '#B91C1C',
-  heroIconBg: '#1A1A1A',
-  heroIconFg: '#FFFFFF',
-  divider: '#E0E0E0',
-};
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -169,7 +150,7 @@ export default function InviteAcceptanceScreen() {
     return (
       <SafeAreaView style={styles.root}>
         <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color={COLOR.fontPrimary} />
+          <ActivityIndicator size="large" color={Ink.strong} />
         </View>
       </SafeAreaView>
     );
@@ -182,7 +163,7 @@ export default function InviteAcceptanceScreen() {
       <SafeAreaView style={styles.root}>
         <ScrollView contentContainerStyle={styles.scroll}>
           <View style={styles.contentWrap}>
-            <HeroSection subtitle="We couldn't load this invite." />
+            <HeroSection title="Invite unavailable" subtitle="We couldn't load this invite." />
           </View>
           <View style={styles.ctaSection}>
             <ErrorBanner title="Invite not found" desc={state.message} />
@@ -222,7 +203,7 @@ export default function InviteAcceptanceScreen() {
       <SafeAreaView style={styles.root}>
         <ScrollView contentContainerStyle={styles.scroll}>
           <View style={styles.contentWrap}>
-            <HeroSection subtitle={`Join ${invite.gymName} on CrossFit Box`} />
+            <HeroSection title="Invite unavailable" subtitle={`This invite to ${invite.gymName} can no longer be used.`} />
             <GymCard invite={invite} />
           </View>
           <View style={styles.ctaSection}>
@@ -240,8 +221,8 @@ export default function InviteAcceptanceScreen() {
     return (
       <SafeAreaView style={styles.root}>
         <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color={COLOR.fontPrimary} />
-          <Text style={styles.acceptingText}>Joining gym...</Text>
+          <ActivityIndicator size="large" color={Ink.strong} />
+          <Text size="body" tone={Ink.muted} style={styles.acceptingText}>Joining gym...</Text>
         </View>
       </SafeAreaView>
     );
@@ -269,14 +250,24 @@ export default function InviteAcceptanceScreen() {
 
 // ─── Sub-components ───────────────────────────────────────────────────────────
 
-function HeroSection({ subtitle }: { subtitle: string }) {
+function HeroSection({
+  subtitle,
+  title = "You've been invited!",
+}: {
+  subtitle: string;
+  title?: string;
+}) {
   return (
     <View style={styles.heroSection}>
       <View style={styles.heroIcon}>
-        <Text style={styles.heroIconGlyph}>✉</Text>
+        <Icon name="mail" size={30} tone={Ink.faint} />
       </View>
-      <Text style={styles.heroTitle}>{"You've been invited!"}</Text>
-      <Text style={styles.heroSubtitle}>{subtitle}</Text>
+      <Text size="screen" weight="bold" tracking="snug" style={styles.heroTitle}>
+        {title}
+      </Text>
+      <Text size="body" tone={Ink.muted} style={styles.heroSubtitle}>
+        {subtitle}
+      </Text>
     </View>
   );
 }
@@ -293,11 +284,11 @@ function GymCard({ invite }: { invite: ValidateInviteResponse }) {
     <View style={styles.gymCard}>
       <View style={styles.gymCardHeader}>
         <View style={styles.gymAvatar}>
-          <Text style={styles.gymAvatarText}>{initials}</Text>
+          <Text size="body" weight="bold">{initials}</Text>
         </View>
         <View style={styles.gymTextGroup}>
-          <Text style={styles.gymName}>{invite.gymName}</Text>
-          <Text style={styles.gymSubtext}>
+          <Text size="title" weight="semibold" tracking="snug">{invite.gymName}</Text>
+          <Text size="meta" tone={Ink.muted}>
             {invite.gymLocation || 'Welcome to our community!'}
           </Text>
         </View>
@@ -307,18 +298,18 @@ function GymCard({ invite }: { invite: ValidateInviteResponse }) {
 
       <View style={styles.inviteMeta}>
         <View style={styles.metaRow}>
-          <Text style={styles.metaLabel}>Invited by</Text>
-          <Text style={styles.metaValue}>
+          <Text size="meta" tone={Ink.muted}>Invited by</Text>
+          <Text size="meta" weight="medium" style={styles.metaValue}>
             {`${invite.inviterName} (${formatRole(invite.inviterRole)})`}
           </Text>
         </View>
         <View style={styles.metaRow}>
-          <Text style={styles.metaLabel}>Invited to</Text>
-          <Text style={styles.metaValue}>{invite.inviteeEmail}</Text>
+          <Text size="meta" tone={Ink.muted}>Invited to</Text>
+          <Text size="meta" weight="medium" style={styles.metaValue}>{invite.inviteeEmail}</Text>
         </View>
         <View style={styles.metaRow}>
-          <Text style={styles.metaLabel}>Expires</Text>
-          <Text style={styles.metaValue}>{formatExpiry(invite.expiresAt)}</Text>
+          <Text size="meta" tone={Ink.muted}>Expires</Text>
+          <Text size="meta" weight="medium" style={styles.metaValue}>{formatExpiry(invite.expiresAt)}</Text>
         </View>
       </View>
     </View>
@@ -326,26 +317,18 @@ function GymCard({ invite }: { invite: ValidateInviteResponse }) {
 }
 
 function JoinButton({ onPress, label }: { onPress: () => void; label: string }) {
-  return (
-    <TouchableOpacity style={styles.joinBtn} onPress={onPress} activeOpacity={0.85}>
-      <Text style={styles.joinBtnText}>{label}</Text>
-    </TouchableOpacity>
-  );
+  return <Button variant="primary" label={label} onPress={onPress} />;
 }
 
 function DeclineButton({ onPress }: { onPress: () => void }) {
-  return (
-    <TouchableOpacity style={styles.declineBtn} onPress={onPress} activeOpacity={0.85}>
-      <Text style={styles.declineBtnText}>Decline</Text>
-    </TouchableOpacity>
-  );
+  return <Button variant="quiet" label="Decline" onPress={onPress} />;
 }
 
 function ErrorBanner({ title, desc }: { title: string; desc: string }) {
   return (
     <View style={styles.errorBanner}>
-      <Text style={styles.errorTitle}>{title}</Text>
-      <Text style={styles.errorDesc}>{desc}</Text>
+      <Text size="body" weight="semibold" tone={Status.danger}>{title}</Text>
+      <Text size="meta" tone={Status.danger} style={styles.errorDesc}>{desc}</Text>
     </View>
   );
 }
@@ -353,7 +336,7 @@ function ErrorBanner({ title, desc }: { title: string; desc: string }) {
 function BackToLoginLink({ onPress }: { onPress: () => void }) {
   return (
     <TouchableOpacity style={styles.backToLoginLink} onPress={onPress} activeOpacity={0.7}>
-      <Text style={styles.backToLoginText}>Back to Login</Text>
+      <Text size="body" weight="medium" tone={Ink.muted}>Back to Login</Text>
     </TouchableOpacity>
   );
 }

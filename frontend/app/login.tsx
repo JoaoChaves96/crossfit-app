@@ -1,10 +1,8 @@
 import React, { useContext, useEffect, useState } from 'react';
 import {
-  ActivityIndicator,
   KeyboardAvoidingView,
   Platform,
   ScrollView,
-  Text,
   TextInput,
   TouchableOpacity,
   View,
@@ -13,7 +11,8 @@ import { useRouter } from 'expo-router';
 import { AuthContext } from '@/context/AuthContext';
 import { GymContext } from '@/context/GymContext';
 import { createApiClient, ApiError } from '@/utils/api-client';
-import { AppColors } from '@/constants/theme';
+import { Ink, Status } from '@/constants/design';
+import { Text, Icon, Button } from '@/components/cleanink';
 import { styles } from './login.styles';
 
 // ─── Local type for login response (not in Swagger schema) ────────────────────
@@ -92,9 +91,15 @@ export default function LoginScreen() {
 
         {/* Brand */}
         <View style={styles.brand}>
-          <View style={styles.appIcon} />
-          <Text style={styles.appName}>CrossFit Box</Text>
-          <Text style={styles.tagline}>Sign in to your account</Text>
+          <View style={styles.appIcon}>
+            <Icon name="gym" size={26} tone={Ink.inverse} />
+          </View>
+          <Text size="screen" weight="bold" tracking="snug" style={styles.appName}>
+            CrossFit Box
+          </Text>
+          <Text size="body" tone={Ink.muted} style={styles.tagline}>
+            Sign in to your account
+          </Text>
         </View>
 
         {/* Form Card */}
@@ -102,12 +107,12 @@ export default function LoginScreen() {
 
           {/* Email field */}
           <View style={styles.field}>
-            <Text style={styles.label}>Email</Text>
+            <Text size="meta" weight="semibold">Email</Text>
             <TextInput
               testID="login-email-input"
               style={styles.input}
               placeholder="your@email.com"
-              placeholderTextColor={AppColors.textGray500}
+              placeholderTextColor={Ink.faint}
               value={email}
               onChangeText={(text) => {
                 setEmail(text);
@@ -122,12 +127,12 @@ export default function LoginScreen() {
 
           {/* Password field */}
           <View style={styles.field}>
-            <Text style={styles.label}>Password</Text>
+            <Text size="meta" weight="semibold">Password</Text>
             <TextInput
               testID="login-password-input"
               style={styles.input}
               placeholder="••••••••"
-              placeholderTextColor={AppColors.textGray500}
+              placeholderTextColor={Ink.faint}
               value={password}
               onChangeText={(text) => {
                 setPassword(text);
@@ -142,29 +147,24 @@ export default function LoginScreen() {
 
           {/* Inline error */}
           {error !== null ? (
-            <Text style={styles.errorText}>{error}</Text>
+            <Text size="meta" tone={Status.danger} style={styles.errorText}>{error}</Text>
           ) : null}
 
           {/* Submit button */}
-          <TouchableOpacity
+          <Button
             testID="login-submit-btn"
-            style={[styles.loginBtn, isLoading && styles.loginBtnDisabled]}
+            label="Log In"
+            variant="primary"
             onPress={handleSubmit}
-            disabled={isLoading}
-            activeOpacity={0.8}>
-            {isLoading ? (
-              <ActivityIndicator size="small" color={AppColors.backgroundWhite} />
-            ) : (
-              <Text style={styles.loginBtnLabel}>Log In</Text>
-            )}
-          </TouchableOpacity>
+            loading={isLoading}
+          />
         </View>
 
         {/* Footer */}
         <View style={styles.footer}>
-          <Text style={styles.footerText}>{"Don't have an account?"}</Text>
+          <Text size="body" tone={Ink.muted}>{"Don't have an account?"}</Text>
           <TouchableOpacity testID="login-register-link" onPress={() => router.push('/register' as never)}>
-            <Text style={styles.signupLink}>Sign up</Text>
+            <Text size="body" weight="semibold">Sign up</Text>
           </TouchableOpacity>
         </View>
 

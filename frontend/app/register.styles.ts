@@ -1,10 +1,17 @@
 import { StyleSheet } from 'react-native';
-import { AppColors, BorderRadius, FontSizes, FontWeights, LineHeights, Spacing } from '@/constants/theme';
+import { Ground, Ink, Line, Radius, Space, Type } from '@/constants/design';
 
+/*
+ * ─── Clean Ink · Register (restyle) ──────────────────────────────────────────
+ * Sign-up mirror of the login surface: ink brand mark, one hairline form card,
+ * a single crimson action (Button primitive). Read-only invite email reads on a
+ * sunken tonal fill. All text via the Text primitive; the crimson accent is
+ * carried by the CTA alone. Only the visual world changes — behavior preserved.
+ */
 export const styles = StyleSheet.create({
   screen: {
     flex: 1,
-    backgroundColor: AppColors.backgroundSubtle,
+    backgroundColor: Ground.base,
   },
   scrollContent: {
     flexGrow: 1,
@@ -14,94 +21,68 @@ export const styles = StyleSheet.create({
   },
   content: {
     flex: 1,
-    paddingHorizontal: Spacing.xl,
-    paddingBottom: Spacing.xxxl,
+    paddingHorizontal: Space.xl,
+    paddingBottom: Space.jumbo,
   },
 
   // Brand
   brand: {
     alignItems: 'center',
-    paddingTop: Spacing.xxxl,
-    paddingBottom: Spacing.jumbo,
-    gap: Spacing.sm,
+    paddingTop: Space.xl,
+    paddingBottom: Space.jumbo,
+    gap: Space.sm,
   },
-  brandIcon: {
-    fontSize: FontSizes.displayLg,
+  appIcon: {
+    width: 56,
+    height: 56,
+    borderRadius: Radius.card,
+    backgroundColor: Ink.strong,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: Space.xs,
   },
   brandName: {
-    fontFamily: 'Inter',
-    fontSize: FontSizes.titleLg,
-    fontWeight: FontWeights.bold,
-    color: AppColors.textPrimary,
+    textAlign: 'center',
   },
   brandTagline: {
-    fontFamily: 'Inter',
-    fontSize: FontSizes.bodyMd,
-    fontWeight: FontWeights.regular,
-    color: AppColors.textGray600,
+    textAlign: 'center',
   },
 
   // Form Card
   formCard: {
-    backgroundColor: AppColors.backgroundWhite,
-    borderRadius: BorderRadius.lg,
+    backgroundColor: Ground.surface,
+    borderRadius: Radius.card,
     borderWidth: 1,
-    borderColor: AppColors.borderSubtle,
-    padding: Spacing.lg,
-    gap: Spacing.base,
+    borderColor: Line.hairline,
+    padding: Space.lg,
+    gap: Space.base,
   },
 
   // Fields
   field: {
-    gap: Spacing.compact,
-  },
-  fieldLabel: {
-    fontFamily: 'Inter',
-    fontSize: FontSizes.mdSm,
-    fontWeight: FontWeights.semibold,
-    color: AppColors.textPrimary,
+    gap: Space.sm,
   },
   input: {
     height: 48,
-    backgroundColor: AppColors.backgroundWhite,
-    borderRadius: BorderRadius.mdLg,
+    backgroundColor: Ground.surface,
+    borderRadius: Radius.control,
     borderWidth: 1,
-    borderColor: AppColors.borderDefault,
-    paddingHorizontal: Spacing.mdPlus,
-    fontFamily: 'Inter',
-    fontSize: FontSizes.bodyMd,
-    color: AppColors.textPrimary,
+    borderColor: Line.divider,
+    paddingHorizontal: Space.base,
+    fontFamily: Type.family.regular,
+    fontSize: Type.size.body,
+    color: Ink.strong,
   },
   inputReadOnly: {
-    backgroundColor: AppColors.backgroundSubtle,
-    color: AppColors.textGray600,
+    backgroundColor: Ground.sunken,
+    color: Ink.muted,
+    borderColor: Line.hairline,
   },
 
   // Error
   errorText: {
-    fontFamily: 'Inter',
-    fontSize: FontSizes.mdSm,
-    color: AppColors.errorMaterial,
-    lineHeight: LineHeights.body,
-  },
-
-  // Register Button
-  registerBtn: {
-    height: 50,
-    backgroundColor: AppColors.textPrimary,
-    borderRadius: BorderRadius.lg,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  registerBtnDisabled: {
-    opacity: 0.6,
-  },
-  registerBtnLabel: {
-    fontFamily: 'Inter',
-    fontSize: FontSizes.bodyMd,
-    fontWeight: FontWeights.bold,
-    color: AppColors.backgroundWhite,
-    letterSpacing: 0.5,
+    marginTop: -Space.xs,
+    lineHeight: Type.lineHeight.body,
   },
 
   // Footer
@@ -109,19 +90,7 @@ export const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    paddingTop: Spacing.lg,
-    gap: Spacing.tight,
-  },
-  footerText: {
-    fontFamily: 'Inter',
-    fontSize: FontSizes.body,
-    fontWeight: FontWeights.regular,
-    color: AppColors.textGray600,
-  },
-  loginLink: {
-    fontFamily: 'Inter',
-    fontSize: FontSizes.body,
-    fontWeight: FontWeights.semibold,
-    color: AppColors.textPrimary,
+    paddingTop: Space.lg,
+    gap: Space.xs,
   },
 });

@@ -1,10 +1,8 @@
 import React, { useContext, useState } from 'react';
 import {
-  ActivityIndicator,
   KeyboardAvoidingView,
   Platform,
   ScrollView,
-  Text,
   TextInput,
   TouchableOpacity,
   View,
@@ -12,7 +10,8 @@ import {
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { AuthContext } from '@/context/AuthContext';
 import { ApiError, createApiClient } from '@/utils/api-client';
-import { AppColors } from '@/constants/theme';
+import { Ink, Status } from '@/constants/design';
+import { Text, Icon, Button } from '@/components/cleanink';
 import { styles } from './register.styles';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -87,21 +86,27 @@ export default function RegisterScreen() {
         <View style={styles.content}>
           {/* Brand */}
           <View style={styles.brand}>
-            <Text style={styles.brandIcon}>⚡</Text>
-            <Text style={styles.brandName}>CrossFit Box</Text>
-            <Text style={styles.brandTagline}>Create your account</Text>
+            <View style={styles.appIcon}>
+              <Icon name="gym" size={26} tone={Ink.inverse} />
+            </View>
+            <Text size="screen" weight="bold" tracking="snug" style={styles.brandName}>
+              CrossFit Box
+            </Text>
+            <Text size="body" tone={Ink.muted} style={styles.brandTagline}>
+              Create your account
+            </Text>
           </View>
 
           {/* Form Card */}
           <View style={styles.formCard}>
             {/* Name Field */}
             <View style={styles.field}>
-              <Text style={styles.fieldLabel}>Name</Text>
+              <Text size="meta" weight="semibold">Name</Text>
               <TextInput
                 testID="register-name-input"
                 style={styles.input}
                 placeholder="Your full name"
-                placeholderTextColor={AppColors.textGray500}
+                placeholderTextColor={Ink.faint}
                 value={name}
                 onChangeText={setName}
                 autoCapitalize="words"
@@ -112,12 +117,12 @@ export default function RegisterScreen() {
 
             {/* Email Field */}
             <View style={styles.field}>
-              <Text style={styles.fieldLabel}>Email</Text>
+              <Text size="meta" weight="semibold">Email</Text>
               <TextInput
                 testID="register-email-input"
                 style={[styles.input, fromInvite && styles.inputReadOnly]}
                 placeholder="your@email.com"
-                placeholderTextColor={AppColors.textGray500}
+                placeholderTextColor={Ink.faint}
                 value={email}
                 onChangeText={fromInvite ? undefined : setEmail}
                 editable={!fromInvite}
@@ -130,12 +135,12 @@ export default function RegisterScreen() {
 
             {/* Password Field */}
             <View style={styles.field}>
-              <Text style={styles.fieldLabel}>Password</Text>
+              <Text size="meta" weight="semibold">Password</Text>
               <TextInput
                 testID="register-password-input"
                 style={styles.input}
                 placeholder="••••••••"
-                placeholderTextColor={AppColors.textGray500}
+                placeholderTextColor={Ink.faint}
                 value={password}
                 onChangeText={setPassword}
                 secureTextEntry
@@ -148,29 +153,24 @@ export default function RegisterScreen() {
 
             {/* Inline error */}
             {error !== null ? (
-              <Text style={styles.errorText}>{error}</Text>
+              <Text size="meta" tone={Status.danger} style={styles.errorText}>{error}</Text>
             ) : null}
 
             {/* Submit Button */}
-            <TouchableOpacity
+            <Button
               testID="register-submit-btn"
-              style={[styles.registerBtn, isLoading && styles.registerBtnDisabled]}
+              label="Create Account"
+              variant="primary"
               onPress={handleRegister}
-              disabled={isLoading}
-              activeOpacity={0.85}>
-              {isLoading ? (
-                <ActivityIndicator size="small" color={AppColors.backgroundWhite} />
-              ) : (
-                <Text style={styles.registerBtnLabel}>Create Account</Text>
-              )}
-            </TouchableOpacity>
+              loading={isLoading}
+            />
           </View>
 
           {/* Footer */}
           <View style={styles.footer}>
-            <Text style={styles.footerText}>Already have an account?</Text>
+            <Text size="body" tone={Ink.muted}>Already have an account?</Text>
             <TouchableOpacity onPress={() => router.replace('/login' as never)}>
-              <Text style={styles.loginLink}>Log in</Text>
+              <Text size="body" weight="semibold">Log in</Text>
             </TouchableOpacity>
           </View>
         </View>
