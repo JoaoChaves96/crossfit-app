@@ -282,7 +282,7 @@ function Step2Spaces({ spaces, onChange, onNext, onBack }: Step2Props) {
       )}
 
       <View style={styles.addBtnWrap}>
-        <Button label="+ Add Space" variant="quiet" onPress={addSpace} />
+        <Button label="Add Space" icon="add" variant="quiet" onPress={addSpace} />
       </View>
 
       <View style={styles.buttonRow}>
@@ -406,7 +406,7 @@ function Step3ClassTypes({ classTypes, onChange, onNext, onBack }: Step3Props) {
       )}
 
       <View style={styles.addBtnWrap}>
-        <Button label="+ Add Class Type" variant="quiet" onPress={addClassType} />
+        <Button label="Add Class Type" icon="add" variant="quiet" onPress={addClassType} />
       </View>
 
       <View style={styles.buttonRow}>
@@ -523,7 +523,7 @@ function SuccessScreen({ gymName, onCreateFirstClass }: SuccessScreenProps) {
         {'Your spaces and class types have been configured. You\'re ready to start scheduling classes.'}
       </Text>
       <View style={styles.successBtnWrap}>
-        <Button label="Create your first class" variant="primary" onPress={onCreateFirstClass} />
+        <Button label="Create Your First Class" variant="primary" onPress={onCreateFirstClass} />
       </View>
     </View>
   );

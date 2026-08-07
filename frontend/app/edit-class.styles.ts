@@ -154,19 +154,20 @@ export const styles = StyleSheet.create({
     flexDirection: 'column',
     gap: Space.md,
   },
-  btnRowMobile: {
-    flexDirection: 'column',
+  // Mobile footer: primary action on its own full-width row, then Cancel +
+  // Delete paired 50/50, then the Delete caption beneath the whole row.
+  footerMobile: {
     gap: Space.md,
   },
-  leftBtnsMobile: {
-    flexDirection: 'column',
-    gap: Space.sm,
+  pairedRowMobile: {
+    flexDirection: 'row',
+    gap: Space.md,
   },
-  rightGroupMobile: {
-    alignItems: 'stretch',
+  pairedItemMobile: {
+    flex: 1,
   },
-  btnWrapMobile: {
-    width: '100%',
-    minWidth: 0,
+  deleteCaptionMobile: {
+    marginTop: -Space.sm,
+    textAlign: 'right',
   },
 });

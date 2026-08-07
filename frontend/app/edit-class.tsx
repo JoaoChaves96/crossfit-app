@@ -32,6 +32,8 @@ type GetCoachesResponse = components['schemas']['GetCoachesResponseDto'];
 type GetClassTypesResponse = components['schemas']['GetClassTypesResponseDto'];
 type GetSpacesResponse = components['schemas']['GetSpacesResponseDto'];
 
+const DELETE_CAPTION = 'Only available for published classes';
+
 interface PickerItem {
   id: string;
   label: string;
@@ -440,48 +442,88 @@ export default function EditClassScreen() {
             </View>
           ) : null}
 
-          {/* Button row */}
-          <View style={[styles.btnRow, isMobile && styles.btnRowMobile]}>
-            {/* Left: Cancel + Save */}
-            <View style={[styles.leftBtns, isMobile && styles.leftBtnsMobile]}>
-              <View style={[styles.btnWrap, isMobile && styles.btnWrapMobile]}>
-                <Button
-                  testID="edit-class-cancel-btn"
-                  label="Cancel"
-                  variant="quiet"
-                  onPress={() => router.back()}
-                  disabled={isSubmitting || isDeleting}
-                />
+          {/* Footer actions */}
+          {isMobile ? (
+            <View style={styles.footerMobile}>
+              {/* Primary action leads, full width */}
+              <Button
+                testID="edit-class-save-btn"
+                label="Save Changes"
+                variant="primary"
+                onPress={handleSave}
+                loading={isSubmitting}
+                disabled={isSubmitting || isDeleting}
+              />
+              {/* Cancel + Delete share the row 50/50 */}
+              <View style={styles.pairedRowMobile}>
+                <View style={styles.pairedItemMobile}>
+                  <Button
+                    testID="edit-class-cancel-btn"
+                    label="Cancel"
+                    variant="quiet"
+                    onPress={() => router.back()}
+                    disabled={isSubmitting || isDeleting}
+                  />
+                </View>
+                <View style={styles.pairedItemMobile}>
+                  <Button
+                    testID="edit-class-delete-btn"
+                    label="Delete Class"
+                    variant="danger"
+                    onPress={handleDelete}
+                    loading={isDeleting}
+                    disabled={isSubmitting || isDeleting}
+                  />
+                </View>
               </View>
-              <View style={[styles.btnWrap, isMobile && styles.btnWrapMobile]}>
-                <Button
-                  testID="edit-class-save-btn"
-                  label="Save Changes"
-                  variant="primary"
-                  onPress={handleSave}
-                  loading={isSubmitting}
-                  disabled={isSubmitting || isDeleting}
-                />
-              </View>
-            </View>
-
-            {/* Right: Delete */}
-            <View style={[styles.rightGroup, isMobile && styles.rightGroupMobile]}>
-              <View style={[styles.btnWrap, isMobile && styles.btnWrapMobile]}>
-                <Button
-                  testID="edit-class-delete-btn"
-                  label="Delete Class"
-                  variant="danger"
-                  onPress={handleDelete}
-                  loading={isDeleting}
-                  disabled={isSubmitting || isDeleting}
-                />
-              </View>
-              <Text size="label" tone="faint">
-                Only available for published classes
+              {/* Caption sits under the full row, aligned to the Delete half */}
+              <Text size="label" tone="faint" style={styles.deleteCaptionMobile}>
+                {DELETE_CAPTION}
               </Text>
             </View>
-          </View>
+          ) : (
+            <View style={styles.btnRow}>
+              {/* Left: Cancel + Save */}
+              <View style={styles.leftBtns}>
+                <View style={styles.btnWrap}>
+                  <Button
+                    testID="edit-class-cancel-btn"
+                    label="Cancel"
+                    variant="quiet"
+                    onPress={() => router.back()}
+                    disabled={isSubmitting || isDeleting}
+                  />
+                </View>
+                <View style={styles.btnWrap}>
+                  <Button
+                    testID="edit-class-save-btn"
+                    label="Save Changes"
+                    variant="primary"
+                    onPress={handleSave}
+                    loading={isSubmitting}
+                    disabled={isSubmitting || isDeleting}
+                  />
+                </View>
+              </View>
+
+              {/* Right: Delete */}
+              <View style={styles.rightGroup}>
+                <View style={styles.btnWrap}>
+                  <Button
+                    testID="edit-class-delete-btn"
+                    label="Delete Class"
+                    variant="danger"
+                    onPress={handleDelete}
+                    loading={isDeleting}
+                    disabled={isSubmitting || isDeleting}
+                  />
+                </View>
+                <Text size="label" tone="faint">
+                  {DELETE_CAPTION}
+                </Text>
+              </View>
+            </View>
+          )}
         </View>
       </ScrollView>
     </KeyboardAvoidingView>

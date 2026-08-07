@@ -22,7 +22,6 @@ import { useResponsiveLayout } from '@/hooks/useResponsiveLayout';
 import { SafeScreen } from '@/components/SafeScreen';
 import { OwnerSidebar, OWNER_NAV_ITEMS } from '@/components/OwnerSidebar';
 import { OwnerNavDrawer } from '@/components/OwnerNavDrawer';
-import { NotificationBell } from '@/components/NotificationBell';
 import { styles } from './invites.styles';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -458,7 +457,6 @@ export default function InvitesScreen() {
               <Icon name="add" size={18} tone={Accent.on} />
               <Text size="body" weight="semibold" tone={Accent.on}>Create Invite</Text>
             </TouchableOpacity>
-            {isMobile && <NotificationBell />}
           </View>
         </SafeScreen>
 

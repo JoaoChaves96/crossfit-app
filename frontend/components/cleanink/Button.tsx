@@ -1,6 +1,7 @@
 import React from 'react';
 import { Pressable, ActivityIndicator, StyleSheet, GestureResponderEvent, View } from 'react-native';
 import { Text } from './Text';
+import { Icon, IconName } from './Icon';
 import { Accent, Ink, Ground, Status, Radius, Space, Line } from '@/constants/design';
 
 /**
@@ -16,6 +17,8 @@ export type ButtonVariant = 'primary' | 'danger' | 'quiet';
 interface ButtonProps {
   label: string;
   variant?: ButtonVariant;
+  /** Optional leading glyph — use this instead of prefixing the label with "+". */
+  icon?: IconName;
   onPress?: (e: GestureResponderEvent) => void;
   loading?: boolean;
   disabled?: boolean;
@@ -25,14 +28,16 @@ interface ButtonProps {
 export function Button({
   label,
   variant = 'primary',
+  icon,
   onPress,
   loading,
   disabled,
   testID,
 }: ButtonProps) {
   const isDisabled = disabled || loading;
-  const spinnerColor =
+  const contentColor =
     variant === 'primary' ? Accent.on : variant === 'danger' ? Status.danger : Ink.strong;
+  const spinnerColor = contentColor;
 
   return (
     <Pressable
@@ -53,13 +58,16 @@ export function Button({
       {loading ? (
         <ActivityIndicator size="small" color={spinnerColor} />
       ) : (
-        <Text
-          size="body"
-          weight="semibold"
-          tone={variant === 'primary' ? Accent.on : variant === 'danger' ? Status.danger : Ink.strong}
-        >
-          {label}
-        </Text>
+        <>
+          {icon ? (
+            <View style={styles.icon}>
+              <Icon name={icon} size={18} tone={contentColor} />
+            </View>
+          ) : null}
+          <Text size="body" weight="semibold" tone={contentColor}>
+            {label}
+          </Text>
+        </>
       )}
     </Pressable>
   );
@@ -73,6 +81,9 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     paddingHorizontal: Space.base,
     flexDirection: 'row',
+  },
+  icon: {
+    marginRight: Space.xs,
   },
   primary: {
     backgroundColor: Accent.base,
