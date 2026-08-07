@@ -267,20 +267,8 @@ export const styles = StyleSheet.create({
     color: AppColors.darkSurface,
     marginTop: Spacing.base,
   },
+  // Height is applied inline from measured content (auto-grow).
   textInputLarge: {
-    height: 80,
-    backgroundColor: AppColors.backgroundWhite,
-    borderRadius: BorderRadius.md,
-    borderWidth: 1,
-    borderColor: AppColors.borderLight,
-    paddingHorizontal: Spacing.mdPlus,
-    paddingVertical: Spacing.md,
-    fontSize: FontSizes.mdSm,
-    color: AppColors.darkCard,
-    marginTop: Spacing.sm,
-  },
-  textInputSmall: {
-    height: 56,
     backgroundColor: AppColors.backgroundWhite,
     borderRadius: BorderRadius.md,
     borderWidth: 1,
@@ -319,6 +307,10 @@ export const mobileStyles = StyleSheet.create({
     flex: 1,
     flexDirection: 'column',
     backgroundColor: AppColors.backgroundWarm,
+  },
+
+  keyboardAvoider: {
+    flex: 1,
   },
 
   // Main area — no sidebar
@@ -562,20 +554,8 @@ export const mobileStyles = StyleSheet.create({
     color: AppColors.darkSurface,
     marginTop: Spacing.base,
   },
+  // Height is applied inline from measured content (auto-grow).
   textInputLarge: {
-    height: 100,
-    backgroundColor: AppColors.backgroundWhite,
-    borderRadius: BorderRadius.md,
-    borderWidth: 1,
-    borderColor: AppColors.borderLight,
-    paddingHorizontal: Spacing.mdPlus,
-    paddingVertical: Spacing.md,
-    fontSize: FontSizes.body,
-    color: AppColors.darkCard,
-    marginTop: Spacing.sm,
-  },
-  textInputSmall: {
-    height: 72,
     backgroundColor: AppColors.backgroundWhite,
     borderRadius: BorderRadius.md,
     borderWidth: 1,

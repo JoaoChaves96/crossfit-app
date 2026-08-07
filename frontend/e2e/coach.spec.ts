@@ -25,8 +25,7 @@
  *   coach-class-row-{id}        — each ClassRow view
  *   coach-class-view-btn-{id}   — View button inside each ClassRow
  *   coach-class-details-screen  — root view of CoachClassDetailsScreen
- *   programming-wod-input       — TextInput for WOD content
- *   programming-notes-input     — TextInput for notes
+ *   programming-wod-input       — TextInput for the single programming content
  *   programming-save-btn        — Save Programming TouchableOpacity
  *   programming-success-banner  — success banner View
  *   programming-wod-content     — displayed WOD text View after save
@@ -126,12 +125,10 @@ test.describe('Coach: Open a class → add programming → programming saved', (
     await expect(page.getByText('WOD Programming')).toBeVisible({ timeout: 15_000 });
 
     // Act
-    // MISSING TESTID: programming-wod-input
-    // The TextInput for WOD content in coach-class-details.tsx has no testID.
-    // Falling back to placeholder text. Add testID="programming-wod-input" to
-    // that TextInput to use page.getByTestId() here.
-    const wodInput = page.getByPlaceholder('Describe the workout…');
-    await wodInput.fill('3 rounds: 10 pull-ups, 20 push-ups, 30 air squats');
+    // Programming is a single content field (DECISIONS.md → "Programming
+    // Content Shape"); there is no separate notes input.
+    const programmingInput = page.getByTestId('programming-wod-input');
+    await programmingInput.fill('3 rounds: 10 pull-ups, 20 push-ups, 30 air squats');
 
     // MISSING TESTID: programming-save-btn
     // The Save Programming TouchableOpacity has no testID.

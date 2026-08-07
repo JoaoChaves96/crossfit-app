@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import {
   ActivityIndicator,
+  KeyboardAvoidingView,
+  Platform,
   ScrollView,
   Text,
   TextInput,
@@ -11,9 +13,10 @@ import {
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useAuth } from '@/hooks/useAuth';
 import { useGym } from '@/hooks/useGym';
+import { SafeScreen } from '@/components/SafeScreen';
 import { createApiClient } from '@/utils/api-client';
 import { components } from '@/types/api.gen';
-import { AppColors } from '@/constants/theme';
+import { AppColors, Spacing } from '@/constants/theme';
 import { formatDayMonth, formatTimeRange } from '@/utils/datetime';
 import { styles, mobileStyles } from './coach-class-details.styles';
 
@@ -24,6 +27,9 @@ type AddOrEditProgrammingResponse = components['schemas']['AddOrEditProgrammingR
 type GetClassProgrammingResponse = components['schemas']['GetClassProgrammingResponseDto'];
 
 const MOBILE_BREAKPOINT = 768;
+
+/** Minimum visible height of the auto-growing programming input, in px. */
+const PROGRAMMING_INPUT_MIN_HEIGHT = 140;
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -140,10 +146,11 @@ export default function CoachClassDetailsScreen() {
   const bookedCountNum = bookedCount ? parseInt(bookedCount, 10) : 0;
   const classState: CoachClassItem['state'] = state ?? 'published';
 
-  // Programming form state
-  const [wodContent, setWodContent] = useState('');
-  const [notesContent, setNotesContent] = useState('');
+  // Programming form state — a single `content` string, held verbatim
+  // (see DECISIONS.md → "Programming Content Shape").
+  const [content, setContent] = useState('');
   const [loggable, setLoggable] = useState(false);
+  const [inputHeight, setInputHeight] = useState(PROGRAMMING_INPUT_MIN_HEIGHT);
 
   // Existing programming fetch state
   const [isProgrammingLoading, setIsProgrammingLoading] = useState(true);
@@ -169,14 +176,7 @@ export default function CoachClassDetailsScreen() {
         setExistingProgramming(data);
         if (data.content !== null) {
           setLoggable(data.loggable);
-          const notesMarker = '\n\nNotes:\n';
-          const notesIndex = data.content.indexOf(notesMarker);
-          if (notesIndex !== -1) {
-            setWodContent(data.content.slice(0, notesIndex));
-            setNotesContent(data.content.slice(notesIndex + notesMarker.length));
-          } else {
-            setWodContent(data.content);
-          }
+          setContent(data.content);
         }
       })
       .catch(() => {
@@ -190,15 +190,11 @@ export default function CoachClassDetailsScreen() {
   const handleSaveProgramming = async () => {
     if (!token || !currentGymId || !classId) return;
 
-    const trimmedWod = wodContent.trim();
-    if (!trimmedWod) {
-      setSubmitError('Workout details are required.');
+    const trimmedContent = content.trim();
+    if (!trimmedContent) {
+      setSubmitError('Programming cannot be empty.');
       return;
     }
-
-    const combinedContent = notesContent.trim()
-      ? `${trimmedWod}\n\nNotes:\n${notesContent.trim()}`
-      : trimmedWod;
 
     setIsSubmitting(true);
     setSubmitError(null);
@@ -210,10 +206,11 @@ export default function CoachClassDetailsScreen() {
         `/api/gyms/${currentGymId}/classes/${classId}/programming`,
         {
           classId,
-          content: combinedContent,
+          content: trimmedContent,
           loggable,
         },
       );
+      setContent(result.content);
       setSavedProgramming(result);
       setSuccessMessage('Programming saved successfully.');
     } catch (err) {
@@ -238,184 +235,189 @@ export default function CoachClassDetailsScreen() {
   if (isMobile) {
     const ms = mobileStyles;
     return (
-      <View style={ms.root} testID="coach-class-details-screen">
-        <ScrollView style={ms.main} showsVerticalScrollIndicator={false}>
-          {/* Header */}
-          <View style={ms.header}>
-            <View style={ms.headerTopRow}>
-              <TouchableOpacity style={ms.backBtn} onPress={() => router.back()}>
-                <Text style={ms.backBtnText}>{'← Back'}</Text>
-              </TouchableOpacity>
-              <View style={[ms.statusBadge, { backgroundColor: statusConfig.bg }]}>
-                <Text style={[ms.statusBadgeText, { color: statusConfig.textColor }]}>
-                  {statusConfig.label}
-                </Text>
-              </View>
-            </View>
-            <Text style={ms.headerTitle} numberOfLines={2}>{headerTitle}</Text>
-          </View>
-
-          {/* Content — stacked */}
-          <View style={ms.contentColumn}>
-            {/* Info Panel */}
-            <View style={ms.infoPanel}>
-              <View style={ms.infoGrid}>
-                <View style={ms.infoGridCell}>
-                  <Text style={ms.infoGridCellLabel}>CLASS TYPE</Text>
-                  <Text style={ms.infoGridCellValue}>{classTypeName ?? '—'}</Text>
-                </View>
-                <View style={ms.infoGridCell}>
-                  <Text style={ms.infoGridCellLabel}>DATE &amp; TIME</Text>
-                  <Text style={ms.infoGridCellValue}>{formattedDateTime}</Text>
-                </View>
-                <View style={ms.infoGridCell}>
-                  <Text style={ms.infoGridCellLabel}>SPACE</Text>
-                  <Text style={ms.infoGridCellValue}>{spaceName ?? '—'}</Text>
-                </View>
-                <View style={ms.infoGridCell}>
-                  <Text style={ms.infoGridCellLabel}>CAPACITY</Text>
-                  <Text style={ms.infoGridCellValue}>{bookedCountNum} / {capacityNum} booked</Text>
+      <SafeScreen style={ms.root} testID="coach-class-details-screen">
+        <KeyboardAvoidingView
+          style={ms.keyboardAvoider}
+          behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+          <ScrollView
+            style={ms.main}
+            showsVerticalScrollIndicator={false}
+            keyboardShouldPersistTaps="handled">
+            {/* Header */}
+            <View style={ms.header}>
+              <View style={ms.headerTopRow}>
+                <TouchableOpacity
+                  style={ms.backBtn}
+                  onPress={() => router.back()}
+                  hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+                  <Text style={ms.backBtnText}>{'← Back'}</Text>
+                </TouchableOpacity>
+                <View style={[ms.statusBadge, { backgroundColor: statusConfig.bg }]}>
+                  <Text style={[ms.statusBadgeText, { color: statusConfig.textColor }]}>
+                    {statusConfig.label}
+                  </Text>
                 </View>
               </View>
-
-              <View style={[ms.separator, ms.separatorSpacing]} />
-
-              <Text style={ms.fieldLabel}>BOOKED ATHLETES</Text>
-              <View style={ms.bookedRow}>
-                <Text style={ms.bookedRowText}>
-                  {bookedCountNum} {bookedCountNum === 1 ? 'athlete' : 'athletes'} booked
-                </Text>
-              </View>
-
-              <TouchableOpacity
-                testID="mark-attendance-nav-btn"
-                style={ms.actionBtn}
-                onPress={() => {
-                  router.push({
-                    pathname: '/coach-mark-attendance',
-                    params: {
-                      classId,
-                      gymId: currentGymId ?? '',
-                      classTypeName: classTypeName ?? '',
-                      scheduledDate: scheduledDate ?? '',
-                      scheduledTime: scheduledTime ?? '',
-                      state: classState,
-                      bookedCount: String(bookedCountNum),
-                    },
-                  });
-                }}
-                activeOpacity={0.8}>
-                <Text style={ms.actionBtnText}>Mark Attendance</Text>
-              </TouchableOpacity>
+              <Text style={ms.headerTitle} numberOfLines={2}>{headerTitle}</Text>
             </View>
 
-            {/* Programming Panel */}
-            <View style={ms.progPanel}>
-              {/* Programming header row */}
-              <View style={ms.progHeader}>
-                <Text style={ms.panelTitle}>WOD Programming</Text>
-                <View style={ms.loggableRow}>
-                  <Text style={ms.loggableLabel}>Loggable</Text>
-                  <TouchableOpacity
-                    style={[
-                      ms.toggle,
-                      loggable ? ms.toggleOn : ms.toggleOff,
-                    ]}
-                    onPress={() => setLoggable((prev) => !prev)}
-                    activeOpacity={0.8}>
-                    <View style={[
-                      ms.toggleKnob,
-                      loggable ? ms.toggleKnobRight : ms.toggleKnobLeft,
-                    ]} />
-                  </TouchableOpacity>
+            {/* Content — stacked */}
+            <View style={ms.contentColumn}>
+              {/* Info Panel */}
+              <View style={ms.infoPanel}>
+                <View style={ms.infoGrid}>
+                  <View style={ms.infoGridCell}>
+                    <Text style={ms.infoGridCellLabel}>CLASS TYPE</Text>
+                    <Text style={ms.infoGridCellValue}>{classTypeName ?? '—'}</Text>
+                  </View>
+                  <View style={ms.infoGridCell}>
+                    <Text style={ms.infoGridCellLabel}>DATE &amp; TIME</Text>
+                    <Text style={ms.infoGridCellValue}>{formattedDateTime}</Text>
+                  </View>
+                  <View style={ms.infoGridCell}>
+                    <Text style={ms.infoGridCellLabel}>SPACE</Text>
+                    <Text style={ms.infoGridCellValue}>{spaceName ?? '—'}</Text>
+                  </View>
+                  <View style={ms.infoGridCell}>
+                    <Text style={ms.infoGridCellLabel}>CAPACITY</Text>
+                    <Text style={ms.infoGridCellValue}>{bookedCountNum} / {capacityNum} booked</Text>
+                  </View>
                 </View>
+
+                <View style={[ms.separator, ms.separatorSpacing]} />
+
+                <Text style={ms.fieldLabel}>BOOKED ATHLETES</Text>
+                <View style={ms.bookedRow}>
+                  <Text style={ms.bookedRowText}>
+                    {bookedCountNum} {bookedCountNum === 1 ? 'athlete' : 'athletes'} booked
+                  </Text>
+                </View>
+
+                <TouchableOpacity
+                  testID="mark-attendance-nav-btn"
+                  style={ms.actionBtn}
+                  onPress={() => {
+                    router.push({
+                      pathname: '/coach-mark-attendance',
+                      params: {
+                        classId,
+                        gymId: currentGymId ?? '',
+                        classTypeName: classTypeName ?? '',
+                        scheduledDate: scheduledDate ?? '',
+                        scheduledTime: scheduledTime ?? '',
+                        state: classState,
+                        bookedCount: String(bookedCountNum),
+                      },
+                    });
+                  }}
+                  activeOpacity={0.8}>
+                  <Text style={ms.actionBtnText}>Mark Attendance</Text>
+                </TouchableOpacity>
               </View>
 
-              <View style={ms.separator} />
-
-              {/* Saved programming display */}
-              {isProgrammingLoading ? (
-                <View style={ms.programmingLoadingContainer}>
-                  <ActivityIndicator size="small" color={AppColors.darkTextMuted} />
+              {/* Programming Panel */}
+              <View style={ms.progPanel}>
+                {/* Programming header row */}
+                <View style={ms.progHeader}>
+                  <Text style={ms.panelTitle}>WOD Programming</Text>
+                  <View style={ms.loggableRow}>
+                    <Text style={ms.loggableLabel}>Loggable</Text>
+                    <TouchableOpacity
+                      style={[
+                        ms.toggle,
+                        loggable ? ms.toggleOn : ms.toggleOff,
+                      ]}
+                      onPress={() => setLoggable((prev) => !prev)}
+                      activeOpacity={0.8}>
+                      <View style={[
+                        ms.toggleKnob,
+                        loggable ? ms.toggleKnobRight : ms.toggleKnobLeft,
+                      ]} />
+                    </TouchableOpacity>
+                  </View>
                 </View>
-              ) : savedProgramming !== null ? (
-                <>
-                  <Text style={ms.fieldLabel}>WORKOUT DETAILS</Text>
-                  <View testID="programming-wod-content" style={ms.wodContent}>
-                    <Text style={ms.wodText}>{savedProgramming.content}</Text>
+
+                <View style={ms.separator} />
+
+                {/* Saved programming display */}
+                {isProgrammingLoading ? (
+                  <View style={ms.programmingLoadingContainer}>
+                    <ActivityIndicator size="small" color={AppColors.darkTextMuted} />
                   </View>
-                </>
-              ) : existingProgramming !== null && existingProgramming.content !== null ? (
-                <>
-                  <Text style={ms.fieldLabel}>WORKOUT DETAILS</Text>
-                  <View testID="programming-wod-content" style={ms.wodContent}>
-                    <Text style={ms.wodText}>{existingProgramming.content}</Text>
-                  </View>
-                </>
-              ) : (
-                <>
-                  <Text style={ms.fieldLabel}>WORKOUT DETAILS</Text>
-                  <View style={ms.emptyProgramming}>
-                    <Text style={ms.emptyProgrammingText}>No programming added yet.</Text>
-                  </View>
-                </>
-              )}
-
-              <View style={[ms.separator, ms.separatorSpacing]} />
-
-              {/* Edit Programming Form */}
-              <Text style={ms.formTitle}>Edit Programming</Text>
-
-              <Text style={ms.fieldLabel}>WORKOUT DETAILS</Text>
-              <TextInput
-                testID="programming-wod-input"
-                style={ms.textInputLarge}
-                placeholder="Describe the workout…"
-                placeholderTextColor={AppColors.darkTextMuted}
-                value={wodContent}
-                onChangeText={setWodContent}
-                multiline
-                textAlignVertical="top"
-              />
-
-              <Text style={ms.fieldLabel}>NOTES</Text>
-              <TextInput
-                testID="programming-notes-input"
-                style={ms.textInputSmall}
-                placeholder="Add notes or scaling instructions…"
-                placeholderTextColor={AppColors.darkTextMuted}
-                value={notesContent}
-                onChangeText={setNotesContent}
-                multiline
-                textAlignVertical="top"
-              />
-
-              {successMessage !== null && (
-                <View style={ms.successBanner}>
-                  <Text style={ms.successText}>{successMessage}</Text>
-                </View>
-              )}
-
-              {submitError !== null && (
-                <Text style={ms.errorText}>{submitError}</Text>
-              )}
-
-              <TouchableOpacity
-                testID="programming-save-btn"
-                style={[ms.actionBtn, isSubmitting && ms.actionBtnDisabled]}
-                onPress={handleSaveProgramming}
-                disabled={isSubmitting}
-                activeOpacity={0.8}>
-                {isSubmitting ? (
-                  <ActivityIndicator size="small" color={AppColors.backgroundWhite} />
+                ) : savedProgramming !== null ? (
+                  <>
+                    <Text style={ms.fieldLabel}>PROGRAMMING</Text>
+                    <View testID="programming-wod-content" style={ms.wodContent}>
+                      <Text style={ms.wodText}>{savedProgramming.content}</Text>
+                    </View>
+                  </>
+                ) : existingProgramming !== null && existingProgramming.content !== null ? (
+                  <>
+                    <Text style={ms.fieldLabel}>PROGRAMMING</Text>
+                    <View testID="programming-wod-content" style={ms.wodContent}>
+                      <Text style={ms.wodText}>{existingProgramming.content}</Text>
+                    </View>
+                  </>
                 ) : (
-                  <Text style={ms.actionBtnText}>Save Programming</Text>
+                  <>
+                    <Text style={ms.fieldLabel}>PROGRAMMING</Text>
+                    <View style={ms.emptyProgramming}>
+                      <Text style={ms.emptyProgrammingText}>No programming added yet.</Text>
+                    </View>
+                  </>
                 )}
-              </TouchableOpacity>
+
+                <View style={[ms.separator, ms.separatorSpacing]} />
+
+                {/* Edit Programming Form */}
+                <Text style={ms.formTitle}>Edit Programming</Text>
+
+                <Text style={ms.fieldLabel}>PROGRAMMING</Text>
+                <TextInput
+                  testID="programming-wod-input"
+                  style={[
+                    ms.textInputLarge,
+                    { height: Math.max(PROGRAMMING_INPUT_MIN_HEIGHT, inputHeight) },
+                  ]}
+                  placeholder="Describe the workout, scaling and any notes…"
+                  placeholderTextColor={AppColors.darkTextMuted}
+                  value={content}
+                  onChangeText={setContent}
+                  onContentSizeChange={(e) =>
+                    setInputHeight(e.nativeEvent.contentSize.height + Spacing.base)
+                  }
+                  multiline
+                  textAlignVertical="top"
+                  editable={!isSubmitting}
+                />
+
+                {successMessage !== null && (
+                  <View style={ms.successBanner}>
+                    <Text style={ms.successText}>{successMessage}</Text>
+                  </View>
+                )}
+
+                {submitError !== null && (
+                  <Text style={ms.errorText}>{submitError}</Text>
+                )}
+
+                <TouchableOpacity
+                  testID="programming-save-btn"
+                  style={[ms.actionBtn, isSubmitting && ms.actionBtnDisabled]}
+                  onPress={handleSaveProgramming}
+                  disabled={isSubmitting}
+                  activeOpacity={0.8}>
+                  {isSubmitting ? (
+                    <ActivityIndicator size="small" color={AppColors.backgroundWhite} />
+                  ) : (
+                    <Text style={ms.actionBtnText}>Save Programming</Text>
+                  )}
+                </TouchableOpacity>
+              </View>
             </View>
-          </View>
-        </ScrollView>
-      </View>
+          </ScrollView>
+        </KeyboardAvoidingView>
+      </SafeScreen>
     );
   }
 
@@ -428,7 +430,10 @@ export default function CoachClassDetailsScreen() {
       <View style={styles.main}>
         {/* Header */}
         <View style={styles.header}>
-          <TouchableOpacity style={styles.backBtn} onPress={() => router.back()}>
+          <TouchableOpacity
+            style={styles.backBtn}
+            onPress={() => router.back()}
+            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
             <Text style={styles.backBtnText}>{'← Back to My Classes'}</Text>
           </TouchableOpacity>
           <Text style={styles.headerTitle} numberOfLines={1}>{headerTitle}</Text>
@@ -523,21 +528,21 @@ export default function CoachClassDetailsScreen() {
                 </View>
               ) : savedProgramming !== null ? (
                 <>
-                  <Text style={styles.fieldLabel}>WORKOUT DETAILS</Text>
+                  <Text style={styles.fieldLabel}>PROGRAMMING</Text>
                   <View testID="programming-wod-content" style={styles.wodContent}>
                     <Text style={styles.wodText}>{savedProgramming.content}</Text>
                   </View>
                 </>
               ) : existingProgramming !== null && existingProgramming.content !== null ? (
                 <>
-                  <Text style={styles.fieldLabel}>WORKOUT DETAILS</Text>
+                  <Text style={styles.fieldLabel}>PROGRAMMING</Text>
                   <View testID="programming-wod-content" style={styles.wodContent}>
                     <Text style={styles.wodText}>{existingProgramming.content}</Text>
                   </View>
                 </>
               ) : (
                 <>
-                  <Text style={styles.fieldLabel}>WORKOUT DETAILS</Text>
+                  <Text style={styles.fieldLabel}>PROGRAMMING</Text>
                   <View style={styles.emptyProgramming}>
                     <Text style={styles.emptyProgrammingText}>No programming added yet.</Text>
                   </View>
@@ -549,28 +554,23 @@ export default function CoachClassDetailsScreen() {
               {/* Edit Programming Form */}
               <Text style={styles.formTitle}>Edit Programming</Text>
 
-              <Text style={[styles.fieldLabel, styles.fieldLabelSpacing]}>WORKOUT DETAILS</Text>
+              <Text style={[styles.fieldLabel, styles.fieldLabelSpacing]}>PROGRAMMING</Text>
               <TextInput
                 testID="programming-wod-input"
-                style={styles.textInputLarge}
-                placeholder="Describe the workout…"
+                style={[
+                  styles.textInputLarge,
+                  { height: Math.max(PROGRAMMING_INPUT_MIN_HEIGHT, inputHeight) },
+                ]}
+                placeholder="Describe the workout, scaling and any notes…"
                 placeholderTextColor={AppColors.darkTextMuted}
-                value={wodContent}
-                onChangeText={setWodContent}
+                value={content}
+                onChangeText={setContent}
+                onContentSizeChange={(e) =>
+                  setInputHeight(e.nativeEvent.contentSize.height + Spacing.base)
+                }
                 multiline
                 textAlignVertical="top"
-              />
-
-              <Text style={[styles.fieldLabel, styles.fieldLabelSpacing]}>NOTES</Text>
-              <TextInput
-                testID="programming-notes-input"
-                style={styles.textInputSmall}
-                placeholder="Add notes or scaling instructions…"
-                placeholderTextColor={AppColors.darkTextMuted}
-                value={notesContent}
-                onChangeText={setNotesContent}
-                multiline
-                textAlignVertical="top"
+                editable={!isSubmitting}
               />
 
               {successMessage !== null && (
