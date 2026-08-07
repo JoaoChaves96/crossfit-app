@@ -1,6 +1,7 @@
 # EPIC: Impeccable Full-App Restyle — "Clean Ink"
 
-**Status:** 🟢 Phase 1 (athlete rollout) BUILT & verified — 7 screens done (2026-08-07)
+**Status:** 🟢 Phase 1 (athlete) COMPLETE · Phase 2 (gym owner) **CLOSED** 2026-08-07
+— next up Phase 3 (coach)
 **Start Date:** 2026-08-07 (Phase 0 pilot built)
 **Owner:** Frontend + Impeccable design system
 **Depends on:** none (visual layer only; no API/contract changes)
@@ -160,11 +161,13 @@ Phase-0 primitives (no new world decisions):
 
 **Gate:** athlete flow verified live end-to-end before starting another role.
 
-### Phase 2 — Gym Owner rollout — 🚧 IN PROGRESS (2026-08-07)
+### Phase 2 — Gym Owner rollout — ✅ CLOSED (2026-08-07)
 
-**First pass PUSHED to dev** (`b877713..f7a06a0`, 7 commits). Phase 2 is NOT closed —
-a live device review produced a second round of UX work, tracked at the end of this
-section.
+**Signed off by the user 2026-08-07.** Two passes: the restyle first pass
+(`b877713..f7a06a0`, 7 commits), then a round of follow-ups from a live iPhone review
+(`f7a06a0..1e2e0bc`, 8 commits) plus the final `edit-class` Save-gating item. The
+owner's last outstanding remark was the edit-class button behaviour; with that done
+the phase is closed.
 
 Owner screens are data-dense — the Clean Ink system holds via a quiet table/list
 variant (hairline rows, ink + one accent), no new world decisions.
@@ -259,12 +262,24 @@ restyle, and required backend work + a Tier 1 decision.
   (`bookedPosition`, `cancelledAt`, `lastModifiedByUserId`, `deletedAt`, `expiresAt`,
   `description`, `data`, `acceptedAt`, `AcceptInviteRequestDto`). Not fixed here to
   avoid scope creep — worth a dedicated sweep.
+- ✅ **`edit-class` Save gating + lifecycle lock** — the screen offered Save on a
+  pristine form (a no-op PATCH) and offered Save/Delete on classes the backend
+  refuses to touch. Backend truth: `edit-class.handler` AND `delete-class.handler`
+  both reject anything other than `published`. Now (a) Save is `disabled` until the
+  form differs from the loaded class, re-disabling if the owner reverts by hand —
+  the same `isDirty` shape `ProgrammingPanel` already uses; (b) past `published` the
+  screen renders a read-only summary (title "Class Details", a notice naming the
+  state, the 7 field values as text, one Back action) instead of the form — disabled
+  inputs would imply a temporary lock, but the backend refuses outright. The stale
+  `DELETE_CAPTION` ("Only available for published classes") is gone: it documented a
+  rule the UI never enforced, which the read-only branch now enforces for real.
+  Tests 16 → 28; mutation-verified (Save always enabled → 3 fail, lock removed → 7 fail).
 - ✅ **Coach screen bug fixes** (bugs only, restyle deferred to Phase 3) —
   `coach-class-details` had NO safe-area handling at all (the `← Back` pill collided
   with the notch), no `KeyboardAvoidingView` (keyboard covered the input), and inputs
   pinned at `height: 80` with no auto-grow.
 
-### Phase 3 — Coach rollout (follow-on)
+### Phase 3 — Coach rollout — ⬜ NEXT
 
 `coach-classes`, `coach-class-details`, `coach-mark-attendance`.
 
