@@ -1,19 +1,19 @@
 import { StyleSheet } from 'react-native';
-import { AppColors, BorderRadius, FontSizes, FontWeights, Spacing } from '@/constants/theme';
+import { Ground, Ink, Line, Accent, Status, Radius, Space, Elevation, Type } from '@/constants/design';
 
 export const styles = StyleSheet.create({
   root: {
     flex: 1,
     flexDirection: 'row',
-    backgroundColor: AppColors.backgroundWhite,
+    backgroundColor: Ground.base,
   },
 
   // Main
   main: {
     flex: 1,
-    paddingHorizontal: Spacing.xxxl,
-    paddingVertical: Spacing.xl,
-    gap: Spacing.xl,
+    paddingHorizontal: Space.xxl,
+    paddingVertical: Space.xl,
+    gap: Space.xl,
   },
 
   // Header
@@ -23,27 +23,31 @@ export const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   headerLeft: {
-    gap: Spacing.tight,
+    flexDirection: 'row',
+    alignItems: 'center',
+    flexShrink: 1,
+    gap: Space.md,
   },
-  headerTitle: {
-    fontSize: FontSizes.title,
-    fontWeight: FontWeights.bold,
-    color: AppColors.textHeading,
+  headerTitleWrap: {
+    gap: Space.hair,
+    flexShrink: 1,
   },
-  headerSubtitle: {
-    fontSize: FontSizes.mdSm,
-    color: AppColors.textMuted,
+  createBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Space.sm,
+    backgroundColor: Accent.base,
+    paddingHorizontal: Space.lg,
+    paddingVertical: Space.sm,
+    borderRadius: Radius.control,
   },
-  inviteBtn: {
-    backgroundColor: AppColors.textHeading,
-    paddingHorizontal: Spacing.lg,
-    paddingVertical: Spacing.smMd,
-    borderRadius: BorderRadius.md,
-  },
-  inviteBtnText: {
-    fontSize: FontSizes.body,
-    fontWeight: FontWeights.medium,
-    color: AppColors.backgroundWhite,
+  createIconBtn: {
+    width: 44,
+    height: 44,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: Accent.base,
+    borderRadius: Radius.control,
   },
 
   // Loading / error
@@ -51,23 +55,17 @@ export const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    gap: Spacing.md,
+    gap: Space.md,
   },
   errorText: {
-    fontSize: FontSizes.body,
-    color: AppColors.errorDefault,
     textAlign: 'center',
   },
   retryBtn: {
-    paddingHorizontal: Spacing.lg,
-    paddingVertical: Spacing.sm,
-    borderRadius: BorderRadius.mdSm,
+    paddingHorizontal: Space.lg,
+    paddingVertical: Space.sm,
+    borderRadius: Radius.control,
     borderWidth: 1,
-    borderColor: AppColors.separatorDefault,
-  },
-  retryBtnText: {
-    fontSize: FontSizes.body,
-    color: AppColors.textHeading,
+    borderColor: Line.divider,
   },
 
   // Empty state
@@ -75,56 +73,54 @@ export const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    gap: Spacing.md,
+    gap: Space.md,
   },
-  emptyTitle: {
-    fontSize: FontSizes.lg,
-    fontWeight: FontWeights.semibold,
-    color: AppColors.textHeading,
+  emptyIconCircle: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    backgroundColor: Ground.sunken,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: Space.xs,
   },
-  emptySubtitle: {
-    fontSize: FontSizes.body,
-    color: AppColors.textMuted,
-    marginBottom: Spacing.tight,
+  emptyBtnWrap: {
+    marginTop: Space.sm,
+    minWidth: 180,
   },
 
   // Content row (table + detail panel)
   contentRow: {
     flex: 1,
     flexDirection: 'row',
-    gap: Spacing.lg,
+    gap: Space.lg,
   },
 
   // List card
   listCard: {
     flex: 1,
+    backgroundColor: Ground.surface,
     borderWidth: 1,
-    borderColor: AppColors.backgroundDivider,
-    borderRadius: BorderRadius.mdLg,
+    borderColor: Line.hairline,
+    borderRadius: Radius.card,
     overflow: 'hidden',
+    ...Elevation.card,
   },
 
   // Table header
   tableHeader: {
     flexDirection: 'row',
-    paddingHorizontal: Spacing.lg,
-    paddingVertical: Spacing.md,
-    backgroundColor: AppColors.backgroundLight,
+    paddingHorizontal: Space.lg,
+    paddingVertical: Space.md,
+    backgroundColor: Ground.base,
     borderBottomWidth: 1,
-    borderBottomColor: AppColors.backgroundDivider,
-  },
-  tableHeaderCell: {
-    fontSize: FontSizes.smMd,
-    fontWeight: FontWeights.semibold,
-    color: AppColors.textMuted,
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
+    borderBottomColor: Line.hairline,
   },
   colName: {
     width: 200,
     flexDirection: 'row',
     alignItems: 'center',
-    gap: Spacing.md,
+    gap: Space.md,
   },
   colEmail: {
     width: 220,
@@ -151,326 +147,158 @@ export const styles = StyleSheet.create({
   coachRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: Spacing.lg,
-    paddingVertical: Spacing.mdPlus,
+    paddingHorizontal: Space.lg,
+    paddingVertical: Space.md,
     borderBottomWidth: 1,
-    borderBottomColor: AppColors.backgroundDivider,
+    borderBottomColor: Line.hairline,
   },
   coachRowSelected: {
-    backgroundColor: AppColors.surfaceBlueHint,
+    backgroundColor: Accent.wash,
   },
   coachAvatar: {
     width: 36,
     height: 36,
     borderRadius: 18,
-    backgroundColor: AppColors.backgroundDivider,
+    backgroundColor: Ground.sunken,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  coachAvatarText: {
-    fontSize: FontSizes.body,
-    fontWeight: FontWeights.semibold,
-    color: AppColors.textHeading,
-  },
-  coachInfo: {
+  coachNameText: {
     flex: 1,
-    gap: Spacing.hairline,
-  },
-  coachName: {
-    flex: 1,
-    fontSize: FontSizes.body,
-    fontWeight: FontWeights.medium,
-    color: AppColors.textHeading,
-  },
-  coachEmail: {
-    fontSize: FontSizes.smMd,
-    color: AppColors.textMuted,
-  },
-  coachClasses: {
-    fontSize: FontSizes.smMd,
-    color: AppColors.textSecondary,
-  },
-  coachClassesEmpty: {
-    fontSize: FontSizes.smMd,
-    color: AppColors.textDisabled,
   },
 
   // View button (desktop actions)
   viewBtn: {
-    paddingHorizontal: Spacing.md,
-    paddingVertical: Spacing.compact,
-    borderRadius: BorderRadius.mdSm,
-  },
-  viewBtnText: {
-    fontSize: FontSizes.mdSm,
-    fontWeight: FontWeights.semibold,
-    color: AppColors.actionBlue,
+    paddingHorizontal: Space.md,
+    paddingVertical: Space.xs,
+    borderRadius: Radius.control,
   },
 
   // Detail panel (desktop)
   detailPanel: {
     width: 340,
+    backgroundColor: Ground.surface,
     borderWidth: 1,
-    borderColor: AppColors.backgroundDivider,
-    borderRadius: BorderRadius.mdLg,
-    backgroundColor: AppColors.backgroundWhite,
-    padding: Spacing.xl,
-    gap: Spacing.base,
-  },
-  detailEmpty: {
-    fontSize: FontSizes.body,
-    color: AppColors.textMuted,
-  },
-  detailTitle: {
-    fontSize: FontSizes.lg,
-    fontWeight: FontWeights.bold,
-    color: AppColors.textHeading,
+    borderColor: Line.hairline,
+    borderRadius: Radius.card,
+    padding: Space.xl,
+    gap: Space.base,
+    ...Elevation.card,
   },
   detailField: {
-    gap: Spacing.tight,
-  },
-  detailLabel: {
-    fontSize: FontSizes.sm,
-    fontWeight: FontWeights.bold,
-    color: AppColors.textMuted,
-    textTransform: 'uppercase',
-    letterSpacing: 0.8,
-  },
-  detailValue: {
-    fontSize: FontSizes.bodyMd,
-    fontWeight: FontWeights.semibold,
-    color: AppColors.textHeading,
-  },
-  detailValueMuted: {
-    fontSize: FontSizes.body,
-    color: AppColors.textSecondary,
-  },
-  detailClassItem: {
-    fontSize: FontSizes.body,
-    color: AppColors.textSecondary,
-  },
-  detailClassEmpty: {
-    fontSize: FontSizes.body,
-    color: AppColors.textDisabled,
+    gap: Space.xs,
   },
   detailBtnRow: {
     flexDirection: 'row',
-    marginTop: Spacing.tight,
+    marginTop: Space.xs,
+  },
+  detailBtnWrap: {
+    flex: 1,
   },
 
-  // Action button
-  actionBtn: {
-    paddingHorizontal: Spacing.md,
-    paddingVertical: Spacing.compact,
-    borderRadius: BorderRadius.mdSm,
-    borderWidth: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  actionBtnDeactivate: {
-    borderColor: AppColors.errorBgRose,
-  },
-  actionBtnReactivate: {
-    borderColor: AppColors.separatorDefault,
-  },
-  actionBtnDisabled: {
-    opacity: 0.5,
-  },
-  actionBtnText: {
-    fontSize: FontSizes.smMd,
-    fontWeight: FontWeights.semibold,
-  },
-  actionBtnTextDeactivate: {
-    color: AppColors.errorDefault,
-  },
-  actionBtnTextReactivate: {
-    color: AppColors.textSecondary,
-  },
-
-  // Badge
-  badge: {
-    paddingHorizontal: Spacing.smMd,
-    paddingVertical: Spacing.tight,
-    borderRadius: BorderRadius.lg,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  badgeActive: {
-    backgroundColor: AppColors.successBg,
-  },
-  badgeInactive: {
-    backgroundColor: AppColors.backgroundLight,
-  },
-  badgeText: {
-    fontSize: FontSizes.smMd,
-    fontWeight: FontWeights.medium,
-  },
-  badgeTextActive: {
-    color: AppColors.successDark,
-  },
-  badgeTextInactive: {
-    color: AppColors.textMuted,
-  },
+  // Badge (mobile/desktop status pill handled by StatusChip)
 
   // Modal overlay
   overlay: {
     flex: 1,
-    backgroundColor: AppColors.overlay,
+    backgroundColor: 'rgba(26,26,26,0.45)',
     alignItems: 'center',
     justifyContent: 'center',
-    padding: Spacing.base,
+    padding: Space.base,
   },
   modalCard: {
     width: '100%',
     maxWidth: 440,
-    backgroundColor: AppColors.backgroundWhite,
-    borderRadius: BorderRadius.lg,
-    padding: Spacing.xxl,
-    gap: Spacing.base,
-  },
-  modalTitle: {
-    fontSize: FontSizes.lg,
-    fontWeight: FontWeights.bold,
-    color: AppColors.textHeading,
+    backgroundColor: Ground.surface,
+    borderRadius: Radius.sheet,
+    padding: Space.xxl,
+    gap: Space.base,
+    ...Elevation.raised,
   },
   modalSubtitle: {
-    fontSize: FontSizes.body,
-    color: AppColors.textMuted,
-    marginTop: -Spacing.sm,
+    marginTop: -Space.sm,
   },
 
   // Form field
   fieldGroup: {
-    gap: Spacing.compact,
+    gap: Space.xs,
   },
-  fieldLabel: {
-    fontSize: FontSizes.mdSm,
-    fontWeight: FontWeights.medium,
-    color: AppColors.textHeading,
-  },
-  input: {
+  inputWrap: {
     borderWidth: 1,
-    borderColor: AppColors.separatorDefault,
-    borderRadius: BorderRadius.md,
-    paddingHorizontal: Spacing.mdPlus,
-    paddingVertical: Spacing.smMd,
-    fontSize: FontSizes.body,
-    color: AppColors.textHeading,
+    borderColor: Line.divider,
+    borderRadius: Radius.control,
+    paddingHorizontal: Space.md,
+    height: 46,
+    justifyContent: 'center',
+  },
+  // TextInput can't route through the Text primitive; name the face explicitly.
+  input: {
+    fontFamily: Type.family.regular,
+    fontSize: Type.size.body,
+    color: Ink.strong,
   },
 
   // Inline error
   inlineError: {
-    fontSize: FontSizes.mdSm,
-    color: AppColors.errorDefault,
-    marginTop: -Spacing.tight,
+    marginTop: -Space.xs,
   },
 
   // Modal actions
   modalActions: {
     flexDirection: 'row',
-    gap: Spacing.smMd,
-    marginTop: Spacing.tight,
+    gap: Space.sm,
+    marginTop: Space.xs,
     justifyContent: 'flex-end',
   },
-  cancelBtn: {
-    paddingHorizontal: Spacing.basePlus,
-    paddingVertical: Spacing.smMd,
-    borderRadius: BorderRadius.md,
-    borderWidth: 1,
-    borderColor: AppColors.separatorDefault,
-  },
-  cancelBtnText: {
-    fontSize: FontSizes.body,
-    fontWeight: FontWeights.medium,
-    color: AppColors.textSecondary,
-  },
-  submitBtn: {
-    paddingHorizontal: Spacing.lg,
-    paddingVertical: Spacing.smMd,
-    borderRadius: BorderRadius.md,
-    backgroundColor: AppColors.textHeading,
+  modalActionBtn: {
     minWidth: 110,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  submitBtnDisabled: {
-    opacity: 0.6,
-  },
-  submitBtnText: {
-    fontSize: FontSizes.body,
-    fontWeight: FontWeights.medium,
-    color: AppColors.backgroundWhite,
   },
 
   // Mobile responsive styles
-  drawerOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.4)',
-    flexDirection: 'row',
-  },
-  drawerContainer: {
-    width: 220,
-    height: '100%',
-  },
   hamburgerBtn: {
     width: 44,
     height: 44,
     alignItems: 'center',
     justifyContent: 'center',
-    marginRight: Spacing.sm,
-  },
-  hamburgerText: {
-    fontSize: FontSizes.xl,
-    color: AppColors.textHeading,
+    marginRight: Space.sm,
   },
   mainMobile: {
-    paddingHorizontal: Spacing.base,
-    paddingVertical: Spacing.base,
-    gap: Spacing.base,
-  },
-  inviteBtnMobile: {
-    minWidth: 44,
-    minHeight: 44,
-    paddingHorizontal: Spacing.md,
-    alignItems: 'center',
-    justifyContent: 'center',
+    paddingHorizontal: Space.base,
+    paddingVertical: Space.base,
+    gap: Space.base,
   },
 
   // Coach cards (mobile)
   coachCardList: {
-    gap: Spacing.md,
-    paddingBottom: Spacing.lg,
+    gap: Space.md,
+    paddingBottom: Space.lg,
   },
   coachCard: {
+    backgroundColor: Ground.surface,
     borderWidth: 1,
-    borderColor: AppColors.backgroundDivider,
-    borderRadius: BorderRadius.mdLg,
-    padding: Spacing.base,
-    gap: Spacing.md,
+    borderColor: Line.hairline,
+    borderRadius: Radius.card,
+    padding: Space.base,
+    gap: Space.md,
+    ...Elevation.card,
   },
   coachCardTop: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: Spacing.md,
+    gap: Space.md,
   },
   coachCardInfo: {
     flex: 1,
-    gap: Spacing.hairline,
+    gap: Space.hair,
   },
   coachCardClasses: {
-    gap: Spacing.hairline,
-  },
-  coachCardClassesLabel: {
-    fontSize: FontSizes.smMd,
-    fontWeight: FontWeights.semibold,
-    color: AppColors.textMuted,
-  },
-  coachCardClassesValue: {
-    fontSize: FontSizes.mdSm,
-    color: AppColors.textSecondary,
+    gap: Space.hair,
   },
   coachCardActions: {
     flexDirection: 'row',
     justifyContent: 'flex-end',
+  },
+  coachCardActionBtn: {
+    minWidth: 140,
   },
 });

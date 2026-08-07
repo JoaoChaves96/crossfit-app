@@ -1,14 +1,13 @@
 import React, { useState } from 'react';
 import {
   View,
-  Text,
   FlatList,
   TouchableOpacity,
   Modal,
   TextInput,
-  ActivityIndicator,
   Clipboard,
   ScrollView,
+  ActivityIndicator,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useAuth } from '@/hooks/useAuth';
@@ -16,10 +15,13 @@ import { useGym } from '@/hooks/useGym';
 import { createApiClient } from '@/utils/api-client';
 import { showError } from '@/utils/alert';
 import { components } from '@/types/api.gen';
-import { AppColors, Spacing } from '@/constants/theme';
+import { Ink, Accent, Space, Status } from '@/constants/design';
+import { Text, Icon, Button, StatusChip } from '@/components/cleanink';
+import type { ChipTone } from '@/components/cleanink';
 import { useResponsiveLayout } from '@/hooks/useResponsiveLayout';
 import { SafeScreen } from '@/components/SafeScreen';
 import { OwnerSidebar, OWNER_NAV_ITEMS } from '@/components/OwnerSidebar';
+import { OwnerNavDrawer } from '@/components/OwnerNavDrawer';
 import { NotificationBell } from '@/components/NotificationBell';
 import { styles } from './invites.styles';
 
@@ -39,10 +41,12 @@ interface LocalInvite {
 }
 
 // ─── Badge config ─────────────────────────────────────────────────────────────
-const BADGE_CONFIG: Record<InviteStatus, { bg: string; text: string; label: string }> = {
-  pending: { bg: AppColors.warningBg, text: AppColors.warningTextDark, label: 'Pending' },
-  accepted: { bg: AppColors.successBg, text: AppColors.successDark, label: 'Accepted' },
-  expired: { bg: AppColors.backgroundLight, text: AppColors.textMuted, label: 'Expired' },
+// Tone maps by MEANING: accepted → open (green), pending → neutral,
+// expired/revoked → danger (deeper red). Same-Hue Chip Rule via StatusChip.
+const BADGE_CONFIG: Record<InviteStatus, { tone: ChipTone; label: string }> = {
+  pending: { tone: 'neutral', label: 'Pending' },
+  accepted: { tone: 'open', label: 'Accepted' },
+  expired: { tone: 'danger', label: 'Expired' },
 };
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -68,11 +72,7 @@ interface StatusBadgeProps {
 
 function StatusBadge({ status }: StatusBadgeProps) {
   const config = BADGE_CONFIG[status];
-  return (
-    <View style={[styles.badge, { backgroundColor: config.bg }]}>
-      <Text style={[styles.badgeText, { color: config.text }]}>{config.label}</Text>
-    </View>
-  );
+  return <StatusChip tone={config.tone} label={config.label} />;
 }
 
 interface InviteRowProps {
@@ -91,10 +91,14 @@ function InviteRow({ invite, onResend, onRevoke, isRevoking }: InviteRowProps) {
     <View style={[styles.row, isAccepted && styles.rowAccepted, isExpiredStatus && styles.rowExpired]}>
       <View style={styles.rowMain}>
         <View style={styles.rowLeft}>
-          <Text style={[styles.rowEmail, isExpiredStatus && styles.rowEmailExpired]} numberOfLines={1}>
+          <Text
+            size="body"
+            tone={isExpiredStatus ? 'muted' : 'strong'}
+            style={isExpiredStatus ? styles.rowEmailExpired : undefined}
+            numberOfLines={1}>
             {invite.inviteeEmail}
           </Text>
-          <Text style={styles.rowDate}>
+          <Text size="meta" tone="muted">
             {isAccepted ? `Joined ${formatDate(invite.createdAt)}` : `Sent ${formatDate(invite.createdAt)}`}
           </Text>
         </View>
@@ -102,7 +106,7 @@ function InviteRow({ invite, onResend, onRevoke, isRevoking }: InviteRowProps) {
       </View>
       <View style={styles.rowActions}>
         {isAccepted ? (
-          <Text style={styles.noActionsText}>—</Text>
+          <Text size="body" tone="faint">—</Text>
         ) : (
           <>
             <TouchableOpacity
@@ -110,7 +114,7 @@ function InviteRow({ invite, onResend, onRevoke, isRevoking }: InviteRowProps) {
               onPress={() => onResend(invite)}
               activeOpacity={0.7}
             >
-              <Text style={styles.actionBtnText}>Resend</Text>
+              <Text size="meta" weight="medium" tone="muted">Resend</Text>
             </TouchableOpacity>
             {!isExpiredStatus && (
               <TouchableOpacity
@@ -120,9 +124,9 @@ function InviteRow({ invite, onResend, onRevoke, isRevoking }: InviteRowProps) {
                 disabled={isRevoking}
               >
                 {isRevoking ? (
-                  <ActivityIndicator size="small" color={AppColors.errorDefault} />
+                  <ActivityIndicator size="small" color={Status.danger} />
                 ) : (
-                  <Text style={[styles.actionBtnText, styles.revokeText]}>Revoke</Text>
+                  <Text size="meta" weight="medium" tone={Status.danger}>Revoke</Text>
                 )}
               </TouchableOpacity>
             )}
@@ -204,9 +208,9 @@ function CreateInviteModal({ visible, gymId, token, prefillEmail = '', onClose, 
         <View style={styles.modalContainer}>
           {/* Header */}
           <View style={styles.modalHeader}>
-            <Text style={styles.modalTitle}>Create Invite</Text>
+            <Text size="lead" weight="bold">Create Invite</Text>
             <TouchableOpacity style={styles.modalCloseBtn} onPress={handleClose} activeOpacity={0.7}>
-              <Text style={styles.modalCloseBtnText}>✕</Text>
+              <Icon name="close" size={18} tone="muted" />
             </TouchableOpacity>
           </View>
 
@@ -216,11 +220,11 @@ function CreateInviteModal({ visible, gymId, token, prefillEmail = '', onClose, 
           <View style={styles.modalBody}>
             {/* Email field */}
             <View style={styles.fieldGroup}>
-              <Text style={styles.fieldLabel}>Email address</Text>
+              <Text size="label" weight="semibold" tone="faint" upper>Email address</Text>
               <TextInput
                 style={styles.fieldInput}
                 placeholder="athlete@example.com"
-                placeholderTextColor={AppColors.textDisabled}
+                placeholderTextColor={Ink.faint}
                 keyboardType="email-address"
                 autoCapitalize="none"
                 autoCorrect={false}
@@ -233,15 +237,15 @@ function CreateInviteModal({ visible, gymId, token, prefillEmail = '', onClose, 
             {/* Success state */}
             {createdInvite !== null && (
               <View style={styles.successBox}>
-                <Text style={styles.successLabel}>Invite link generated</Text>
+                <Text size="meta" weight="semibold" tone={Status.open}>Invite link generated</Text>
                 <View style={styles.linkRow}>
                   <View style={styles.linkTextBox}>
-                    <Text style={styles.linkTextContent} numberOfLines={1}>
+                    <Text size="meta" tone="muted" numberOfLines={1}>
                       {createdInvite.inviteLink}
                     </Text>
                   </View>
                   <TouchableOpacity style={styles.copyBtn} onPress={handleCopyLink} activeOpacity={0.7}>
-                    <Text style={styles.copyBtnText}>{copyLabel}</Text>
+                    <Text size="meta" weight="semibold">{copyLabel}</Text>
                   </TouchableOpacity>
                 </View>
               </View>
@@ -250,22 +254,13 @@ function CreateInviteModal({ visible, gymId, token, prefillEmail = '', onClose, 
 
           {/* Footer */}
           <View style={styles.modalFooter}>
-            <TouchableOpacity style={styles.cancelBtn} onPress={handleClose} activeOpacity={0.7}>
-              <Text style={styles.cancelBtnText}>Cancel</Text>
-            </TouchableOpacity>
+            <View style={styles.modalActionBtn}>
+              <Button label="Cancel" variant="quiet" onPress={handleClose} disabled={isSending} />
+            </View>
             {createdInvite === null && (
-              <TouchableOpacity
-                style={[styles.sendBtn, isSending && styles.sendBtnDisabled]}
-                onPress={handleSend}
-                activeOpacity={0.7}
-                disabled={isSending}
-              >
-                {isSending ? (
-                  <ActivityIndicator size="small" color={AppColors.backgroundWhite} />
-                ) : (
-                  <Text style={styles.sendBtnText}>Send Invite</Text>
-                )}
-              </TouchableOpacity>
+              <View style={styles.modalActionBtn}>
+                <Button label="Send Invite" variant="primary" onPress={handleSend} loading={isSending} />
+              </View>
             )}
           </View>
         </View>
@@ -300,7 +295,9 @@ export default function InvitesScreen() {
         {!isMobile && <OwnerSidebar activeItem="invites" onNavigate={handleSidebarNav} />}
         <View style={styles.main}>
           <View style={styles.centeredState}>
-            <Text style={styles.errorText}>Access denied. This screen is for gym owners and coaches only.</Text>
+            <Text size="body" tone={Status.danger} style={styles.errorText}>
+              Access denied. This screen is for gym owners and coaches only.
+            </Text>
           </View>
         </View>
       </View>
@@ -313,7 +310,9 @@ export default function InvitesScreen() {
         {!isMobile && <OwnerSidebar activeItem="invites" onNavigate={handleSidebarNav} />}
         <View style={styles.main}>
           <View style={styles.centeredState}>
-            <Text style={styles.errorText}>Please log in and select a gym to manage invites.</Text>
+            <Text size="body" tone={Status.danger} style={styles.errorText}>
+              Please log in and select a gym to manage invites.
+            </Text>
           </View>
         </View>
       </View>
@@ -351,10 +350,18 @@ export default function InvitesScreen() {
     <>
       {/* Table header */}
       <View style={styles.tableHeader}>
-        <Text style={[styles.tableHeaderCell, styles.tableHeaderCellEmail]}>Email</Text>
-        <Text style={styles.tableHeaderCell}>Date</Text>
-        <Text style={styles.tableHeaderCell}>Status</Text>
-        <Text style={styles.tableHeaderCell}>Actions</Text>
+        <View style={styles.tableHeaderCellEmail}>
+          <Text size="label" weight="semibold" tone="faint" upper>Email</Text>
+        </View>
+        <View style={styles.tableHeaderCell}>
+          <Text size="label" weight="semibold" tone="faint" upper>Date</Text>
+        </View>
+        <View style={styles.tableHeaderCell}>
+          <Text size="label" weight="semibold" tone="faint" upper>Status</Text>
+        </View>
+        <View style={styles.tableHeaderCell}>
+          <Text size="label" weight="semibold" tone="faint" upper>Actions</Text>
+        </View>
       </View>
       <View style={styles.tableHeaderDivider} />
       <FlatList
@@ -377,22 +384,22 @@ export default function InvitesScreen() {
   ) : (
     <ScrollView contentContainerStyle={styles.emptyContainer}>
       <View style={styles.emptyIconCircle}>
-        <Text style={styles.emptyIconGlyph}>{'✉'}</Text>
+        <Icon name="mail" size={28} tone="faint" />
       </View>
-      <Text style={styles.emptyTitle}>No invites sent yet</Text>
-      <Text style={styles.emptyDesc}>
+      <Text size="title" weight="semibold" style={styles.emptyTitle}>No invites sent yet</Text>
+      <Text size="body" tone="muted" style={styles.emptyDesc}>
         {"Invite athletes to join your gym. They'll receive an email with a link to accept."}
       </Text>
-      <TouchableOpacity
-        style={styles.createBtn}
-        onPress={() => {
-          setModalPrefillEmail('');
-          setModalVisible(true);
-        }}
-        activeOpacity={0.7}
-      >
-        <Text style={styles.createBtnText}>+ Invite an Athlete</Text>
-      </TouchableOpacity>
+      <View style={styles.emptyBtnWrap}>
+        <Button
+          label="Invite an Athlete"
+          variant="primary"
+          onPress={() => {
+            setModalPrefillEmail('');
+            setModalVisible(true);
+          }}
+        />
+      </View>
     </ScrollView>
   );
 
@@ -420,28 +427,24 @@ export default function InvitesScreen() {
 
       {/* Mobile drawer */}
       {isMobile && (
-        <Modal visible={drawerOpen} transparent animationType="fade" onRequestClose={() => setDrawerOpen(false)}>
-          <TouchableOpacity style={styles.drawerOverlay} activeOpacity={1} onPress={() => setDrawerOpen(false)}>
-            <View style={styles.drawerContainer}>
-              <OwnerSidebar activeItem="invites" onNavigate={handleSidebarNav} />
-            </View>
-          </TouchableOpacity>
-        </Modal>
+        <OwnerNavDrawer visible={drawerOpen} onClose={() => setDrawerOpen(false)}>
+          <OwnerSidebar activeItem="invites" onNavigate={handleSidebarNav} />
+        </OwnerNavDrawer>
       )}
 
       <View style={[styles.main, isMobile && styles.mainMobile]}>
         {/* Page header */}
-        <SafeScreen style={styles.pageHeader} applyTopInset={isMobile} extraTopPadding={Spacing.base}>
+        <SafeScreen style={styles.pageHeader} applyTopInset={isMobile} extraTopPadding={Space.base}>
           <View style={styles.pageHeaderLeft}>
             {isMobile && (
               <TouchableOpacity
                 testID="hamburger-btn"
                 style={styles.hamburgerBtn}
                 onPress={() => setDrawerOpen(true)}>
-                <Text style={styles.hamburgerText}>☰</Text>
+                <Icon name="menu" size={24} tone="strong" />
               </TouchableOpacity>
             )}
-            <Text style={styles.pageTitle}>Invites</Text>
+            <Text size="screen" weight="bold">Invites</Text>
           </View>
           <View style={styles.headerActions}>
             <TouchableOpacity
@@ -452,7 +455,8 @@ export default function InvitesScreen() {
               }}
               activeOpacity={0.7}
             >
-              <Text style={styles.createBtnText}>+ Create Invite</Text>
+              <Icon name="add" size={18} tone={Accent.on} />
+              <Text size="body" weight="semibold" tone={Accent.on}>Create Invite</Text>
             </TouchableOpacity>
             {isMobile && <NotificationBell />}
           </View>

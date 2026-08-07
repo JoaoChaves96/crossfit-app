@@ -1,9 +1,7 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import {
   ActivityIndicator,
-  Modal,
   ScrollView,
-  Text,
   TouchableOpacity,
   View,
 } from 'react-native';
@@ -13,11 +11,12 @@ import { useAuth } from '@/hooks/useAuth';
 import { useGym } from '@/hooks/useGym';
 import { useResponsiveLayout } from '@/hooks/useResponsiveLayout';
 import { SafeScreen } from '@/components/SafeScreen';
-import { Spacing } from '@/constants/theme';
+import { Text, Icon, SegmentedToggle } from '@/components/cleanink';
+import { Ink, Accent, Space, Status } from '@/constants/design';
 import { createApiClient } from '@/utils/api-client';
 import { components } from '@/types/api.gen';
 import { OwnerSidebar, OWNER_NAV_ITEMS } from '@/components/OwnerSidebar';
-import { Ionicons } from '@expo/vector-icons';
+import { OwnerNavDrawer } from '@/components/OwnerNavDrawer';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -25,40 +24,6 @@ type GymClass = components['schemas']['ClassScheduleItemDto'];
 type ApiClassesResponse = components['schemas']['GetClassScheduleResponseDto'];
 
 type ViewMode = 'week' | 'list';
-
-// ─── Design Tokens ────────────────────────────────────────────────────────────
-
-const COLOR = {
-  white: '#FFFFFF',
-  bodyText: '#111827',
-  subText: '#6B7280',
-  mutedText: '#9CA3AF',
-  borderLight: '#E5E7EB',
-  borderMid: '#D1D5DB',
-  createBtnBg: '#111827',
-  createBtnText: '#FFFFFF',
-  fullCapacity: '#DC2626',
-
-  // Class card variants — [bg, border, timeColor]
-  blue: { bg: '#EFF6FF', border: '#BFDBFE', time: '#1D4ED8' },
-  green: { bg: '#F0FDF4', border: '#BBF7D0', time: '#15803D' },
-  yellow: { bg: '#FEF3C7', border: '#FDE68A', time: '#B45309' },
-  purple: { bg: '#F5F3FF', border: '#DDD6FE', time: '#7C3AED' },
-  pink: { bg: '#FFF1F2', border: '#FECDD3', time: '#BE123C' },
-  empty: { bg: 'transparent', border: '#E5E7EB', time: '#9CA3AF' },
-};
-
-const CLASS_TYPE_COLORS: { bg: string; border: string; time: string }[] = [
-  COLOR.blue,
-  COLOR.green,
-  COLOR.yellow,
-  COLOR.purple,
-  COLOR.pink,
-];
-
-function getClassColor(index: number): { bg: string; border: string; time: string } {
-  return CLASS_TYPE_COLORS[index % CLASS_TYPE_COLORS.length];
-}
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -103,38 +68,25 @@ function isSameDay(a: Date, b: Date): boolean {
 
 const DAY_LABELS = ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN'];
 
-// ─── Class Card ───────────────────────────────────────────────────────────────
+// ─── Class Card (desktop grid) ──────────────────────────────────────────────────
 
 interface ClassCardProps {
   gymClass: GymClass;
-  colorIndex: number;
   onPress: () => void;
 }
 
-function ClassCard({ gymClass, colorIndex, onPress }: ClassCardProps) {
-  const color = getClassColor(colorIndex);
+function ClassCard({ gymClass, onPress }: ClassCardProps) {
   const isFull = gymClass.bookedCount >= gymClass.capacity;
-
   return (
-    <TouchableOpacity
-      activeOpacity={0.75}
-      onPress={onPress}
-      style={[
-        styles.classCard,
-        { backgroundColor: color.bg, borderColor: color.border },
-      ]}>
-      <Text style={[styles.classTime, { color: color.time }]}>
+    <TouchableOpacity activeOpacity={0.75} onPress={onPress} style={styles.classCard}>
+      <Text size="meta" weight="semibold" tone="strong">
         {formatTime(gymClass.scheduledTime)}
       </Text>
-      <Text style={styles.className}>{gymClass.classTypeName}</Text>
+      <Text size="meta" weight="semibold" tone="strong">{gymClass.classTypeName}</Text>
       {gymClass.coachName ? (
-        <Text style={styles.classCoach}>Coach: {gymClass.coachName}</Text>
+        <Text size="label" tone="muted">Coach: {gymClass.coachName}</Text>
       ) : null}
-      <Text
-        style={[
-          styles.classCapacity,
-          isFull && styles.classCapacityFull,
-        ]}>
+      <Text size="label" tone={isFull ? Status.danger : 'muted'}>
         {gymClass.bookedCount}/{gymClass.capacity} spots
       </Text>
     </TouchableOpacity>
@@ -147,29 +99,23 @@ interface DayColumnProps {
   dayLabel: string;
   dayDate: number;
   classes: GymClass[];
-  colorOffset: number;
   onClassPress: (classId: string) => void;
 }
 
-function DayColumn({ dayLabel, dayDate, classes, colorOffset, onClassPress }: DayColumnProps) {
+function DayColumn({ dayLabel, dayDate, classes, onClassPress }: DayColumnProps) {
   return (
     <View style={styles.dayColumn}>
       <View style={styles.dayHeader}>
-        <Text style={styles.dayLabel}>{dayLabel}</Text>
-        <Text style={styles.dayDate}>{dayDate}</Text>
+        <Text size="label" weight="semibold" tone="faint" upper>{dayLabel}</Text>
+        <Text size="title" weight="bold" tone="strong">{dayDate}</Text>
       </View>
       {classes.length === 0 ? (
         <View style={styles.emptyDayCard}>
-          <Text style={styles.emptyDayText}>No classes</Text>
+          <Text size="meta" tone="faint">No classes</Text>
         </View>
       ) : (
-        classes.map((cls, idx) => (
-          <ClassCard
-            key={cls.id}
-            gymClass={cls}
-            colorIndex={colorOffset + idx}
-            onPress={() => onClassPress(cls.id)}
-          />
+        classes.map((cls) => (
+          <ClassCard key={cls.id} gymClass={cls} onPress={() => onClassPress(cls.id)} />
         ))
       )}
     </View>
@@ -178,25 +124,18 @@ function DayColumn({ dayLabel, dayDate, classes, colorOffset, onClassPress }: Da
 
 // ─── List View Row ────────────────────────────────────────────────────────────
 
-interface ListRowProps {
-  gymClass: GymClass;
-  colorIndex: number;
-}
-
-function ListRow({ gymClass, colorIndex }: ListRowProps) {
-  const color = getClassColor(colorIndex);
+function ListRow({ gymClass }: { gymClass: GymClass }) {
   const isFull = gymClass.bookedCount >= gymClass.capacity;
-
   return (
-    <View style={[styles.listRow, { borderLeftColor: color.time }]}>
+    <View style={styles.listRow}>
       <View style={styles.listRowMain}>
-        <Text style={styles.listRowName}>{gymClass.classTypeName}</Text>
-        <Text style={styles.listRowTime}>
+        <Text size="body" weight="semibold" tone="strong">{gymClass.classTypeName}</Text>
+        <Text size="meta" tone="muted">
           {formatTime(gymClass.scheduledTime)}
           {gymClass.coachName ? `  •  Coach: ${gymClass.coachName}` : ''}
         </Text>
       </View>
-      <Text style={[styles.listRowCapacity, isFull && styles.classCapacityFull]}>
+      <Text size="body" weight="medium" tone={isFull ? Status.danger : 'muted'}>
         {gymClass.bookedCount}/{gymClass.capacity}
       </Text>
     </View>
@@ -223,10 +162,10 @@ function MobileDayStrip({ weekDays, selectedDayIdx, onSelectDay }: MobileDayStri
             style={[styles.dayPill, isActive && styles.dayPillActive]}
             onPress={() => onSelectDay(idx)}
             activeOpacity={0.8}>
-            <Text style={[styles.dayPillLabel, isActive && styles.dayPillLabelActive]}>
+            <Text size="label" weight="medium" tone={isActive ? Accent.on : 'muted'}>
               {DAY_LABELS[idx].charAt(0) + DAY_LABELS[idx].slice(1).toLowerCase()}
             </Text>
-            <Text style={[styles.dayPillDate, isActive && styles.dayPillDateActive]}>
+            <Text size="body" weight="bold" tone={isActive ? Accent.on : 'strong'}>
               {day.getDate()}
             </Text>
           </TouchableOpacity>
@@ -240,12 +179,10 @@ function MobileDayStrip({ weekDays, selectedDayIdx, onSelectDay }: MobileDayStri
 
 interface MobileClassCardProps {
   gymClass: GymClass;
-  colorIndex: number;
   onPress: () => void;
 }
 
-function MobileClassCard({ gymClass, colorIndex, onPress }: MobileClassCardProps) {
-  const color = getClassColor(colorIndex);
+function MobileClassCard({ gymClass, onPress }: MobileClassCardProps) {
   const isFull = gymClass.bookedCount >= gymClass.capacity;
   const metaParts = [
     gymClass.spaceName,
@@ -253,27 +190,21 @@ function MobileClassCard({ gymClass, colorIndex, onPress }: MobileClassCardProps
   ].filter(Boolean);
 
   return (
-    <TouchableOpacity
-      activeOpacity={0.75}
-      onPress={onPress}
-      style={[
-        styles.mobileClassCard,
-        { backgroundColor: color.bg, borderColor: color.border, borderLeftColor: color.time },
-      ]}>
+    <TouchableOpacity activeOpacity={0.75} onPress={onPress} style={styles.mobileClassCard}>
       <View style={styles.mobileClassCardTop}>
-        <Text style={[styles.mobileClassTime, { color: color.time }]}>
+        <Text size="lead" weight="bold" tone="strong">
           {formatTime(gymClass.scheduledTime)}
         </Text>
-        <Text style={[styles.mobileClassCapacity, isFull && styles.classCapacityFull]}>
+        <Text size="body" weight="medium" tone={isFull ? Status.danger : 'muted'}>
           {gymClass.bookedCount}/{gymClass.capacity}
         </Text>
       </View>
-      <Text style={styles.mobileClassName}>{gymClass.classTypeName}</Text>
-      <Text style={styles.mobileClassMeta}>
+      <Text size="title" weight="semibold" tone="strong">{gymClass.classTypeName}</Text>
+      <Text size="meta" tone="muted">
         {gymClass.coachName ? `Coach: ${gymClass.coachName}` : 'No coach assigned'}
       </Text>
       {metaParts.length > 0 ? (
-        <Text style={styles.mobileClassMeta}>{metaParts.join(' · ')}</Text>
+        <Text size="meta" tone="muted">{metaParts.join(' · ')}</Text>
       ) : null}
     </TouchableOpacity>
   );
@@ -356,7 +287,7 @@ export default function ScheduleDashboard() {
     if (isLoading) {
       return (
         <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color={COLOR.bodyText} />
+          <ActivityIndicator size="large" color={Ink.strong} />
         </View>
       );
     }
@@ -364,9 +295,9 @@ export default function ScheduleDashboard() {
     if (error) {
       return (
         <View style={styles.errorContainer}>
-          <Text style={styles.errorText}>{error}</Text>
+          <Text size="body" tone={Status.danger} style={{ textAlign: 'center' }}>{error}</Text>
           <TouchableOpacity style={styles.retryBtn} onPress={fetchClasses}>
-            <Text style={styles.retryBtnText}>Retry</Text>
+            <Text size="body" tone="strong">Retry</Text>
           </TouchableOpacity>
         </View>
       );
@@ -377,12 +308,10 @@ export default function ScheduleDashboard() {
         <ScrollView style={styles.listContainer} showsVerticalScrollIndicator={false}>
           {weekClasses.length === 0 ? (
             <View style={styles.emptyListContainer}>
-              <Text style={styles.emptyListText}>No classes scheduled this week</Text>
+              <Text size="body" tone="faint">No classes scheduled this week</Text>
             </View>
           ) : (
-            weekClasses.map((cls, idx) => (
-              <ListRow key={cls.id} gymClass={cls} colorIndex={idx} />
-            ))
+            weekClasses.map((cls) => <ListRow key={cls.id} gymClass={cls} />)
           )}
         </ScrollView>
       );
@@ -390,9 +319,6 @@ export default function ScheduleDashboard() {
 
     if (isMobile) {
       const dayClasses = classesByDay[selectedDayIdx] ?? [];
-      const offset = classesByDay
-        .slice(0, selectedDayIdx)
-        .reduce((sum, arr) => sum + arr.length, 0);
       return (
         <View style={{ flex: 1 }}>
           <MobileDayStrip
@@ -403,14 +329,13 @@ export default function ScheduleDashboard() {
           <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.mobileCardList}>
             {dayClasses.length === 0 ? (
               <View style={styles.mobileEmptyDay}>
-                <Text style={styles.mobileEmptyDayText}>No classes scheduled</Text>
+                <Text size="body" tone="faint">No classes scheduled</Text>
               </View>
             ) : (
-              dayClasses.map((cls, idx) => (
+              dayClasses.map((cls) => (
                 <MobileClassCard
                   key={cls.id}
                   gymClass={cls}
-                  colorIndex={offset + idx}
                   onPress={() => handleClassPress(cls.id)}
                 />
               ))
@@ -427,16 +352,12 @@ export default function ScheduleDashboard() {
         contentContainerStyle={styles.gridContainer}>
         {weekDays.map((day, dayIdx) => {
           const dayKey = day.toISOString().slice(0, 10);
-          const offset = classesByDay
-            .slice(0, dayIdx)
-            .reduce((sum, arr) => sum + arr.length, 0);
           return (
             <DayColumn
               key={dayKey}
               dayLabel={DAY_LABELS[dayIdx]}
               dayDate={day.getDate()}
               classes={classesByDay[dayIdx]}
-              colorOffset={offset}
               onClassPress={handleClassPress}
             />
           );
@@ -451,16 +372,12 @@ export default function ScheduleDashboard() {
 
       {/* Mobile drawer */}
       {isMobile && (
-        <Modal visible={drawerOpen} transparent animationType="fade" onRequestClose={() => setDrawerOpen(false)}>
-          <TouchableOpacity style={styles.drawerOverlay} activeOpacity={1} onPress={() => setDrawerOpen(false)}>
-            <View style={styles.drawerContainer}>
-              <OwnerSidebar activeItem="schedule" onNavigate={handleSidebarNav} />
-            </View>
-          </TouchableOpacity>
-        </Modal>
+        <OwnerNavDrawer visible={drawerOpen} onClose={() => setDrawerOpen(false)}>
+          <OwnerSidebar activeItem="schedule" onNavigate={handleSidebarNav} />
+        </OwnerNavDrawer>
       )}
 
-      <SafeScreen style={[styles.main, isMobile && styles.mainMobile]} applyTopInset={isMobile} extraTopPadding={Spacing.base}>
+      <SafeScreen style={[styles.main, isMobile && styles.mainMobile]} applyTopInset={isMobile} extraTopPadding={Space.base}>
         {/* Header */}
         <View style={[styles.header, isMobile && styles.headerMobile]}>
           <View style={styles.headerLeft}>
@@ -469,27 +386,28 @@ export default function ScheduleDashboard() {
                 testID="hamburger-btn"
                 style={styles.hamburgerBtn}
                 onPress={() => setDrawerOpen(true)}>
-                <Text style={styles.hamburgerText}>☰</Text>
+                <Icon name="menu" size={24} tone="strong" />
               </TouchableOpacity>
             )}
-            <Text style={[styles.headerTitle, isMobile && styles.headerTitleMobile]}>
+            <Text size="screen" weight="bold" tone="strong">
               {isMobile ? 'Schedule' : 'Schedule Dashboard'}
             </Text>
-            {!isMobile && <Text style={styles.headerSubtitle}>Manage your weekly class schedule</Text>}
+            {!isMobile && <Text size="meta" tone="muted">Manage your weekly class schedule</Text>}
           </View>
           {isMobile ? (
             <TouchableOpacity
               testID="create-class-btn"
               style={styles.createIconBtn}
               onPress={() => router.push('/create-class' as never)}>
-              <Ionicons name="add" size={24} color={COLOR.bodyText} />
+              <Icon name="add" size={26} tone={Accent.base} />
             </TouchableOpacity>
           ) : (
             <TouchableOpacity
               testID="create-class-btn"
               style={styles.createBtn}
               onPress={() => router.push('/create-class' as never)}>
-              <Text style={styles.createBtnText}>+ Create Class</Text>
+              <Icon name="add" size={18} tone={Accent.on} />
+              <Text size="body" weight="semibold" tone={Accent.on}>Create Class</Text>
             </TouchableOpacity>
           )}
         </View>
@@ -498,48 +416,34 @@ export default function ScheduleDashboard() {
         {isMobile ? (
           <View style={styles.weekNavMobile}>
             <TouchableOpacity testID="week-nav-prev-btn" style={styles.navArrowBtnMobile} onPress={handlePrevWeek}>
-              <Ionicons name="chevron-back" size={20} color={COLOR.subText} />
+              <Icon name="back" size={20} tone="muted" />
             </TouchableOpacity>
-            <Text style={styles.weekLabelMobile}>{formatWeekLabel(weekStart)}</Text>
+            <Text size="body" weight="semibold" tone="strong">{formatWeekLabel(weekStart)}</Text>
             <TouchableOpacity testID="week-nav-next-btn" style={styles.navArrowBtnMobile} onPress={handleNextWeek}>
-              <Ionicons name="chevron-forward" size={20} color={COLOR.subText} />
+              <Icon name="chevronForward" size={20} tone="muted" />
             </TouchableOpacity>
           </View>
         ) : (
           <View style={styles.toolbar}>
             <View style={styles.weekNav}>
               <TouchableOpacity testID="week-nav-prev-btn" style={styles.navArrowBtn} onPress={handlePrevWeek}>
-                <Text style={styles.navArrowText}>{'<'}</Text>
+                <Icon name="back" size={18} tone="muted" />
               </TouchableOpacity>
-              <Text style={styles.weekLabel}>{formatWeekLabel(weekStart)}</Text>
+              <Text size="body" weight="semibold" tone="strong">{formatWeekLabel(weekStart)}</Text>
               <TouchableOpacity testID="week-nav-next-btn" style={styles.navArrowBtn} onPress={handleNextWeek}>
-                <Text style={styles.navArrowText}>{'>'}</Text>
+                <Icon name="chevronForward" size={18} tone="muted" />
               </TouchableOpacity>
             </View>
 
             <View style={styles.viewToggle}>
-              <TouchableOpacity
-                style={[styles.toggleBtn, viewMode === 'week' && styles.toggleBtnActive]}
-                onPress={() => setViewMode('week')}>
-                <Text
-                  style={[
-                    styles.toggleBtnText,
-                    viewMode === 'week' && styles.toggleBtnTextActive,
-                  ]}>
-                  Week
-                </Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[styles.toggleBtn, viewMode === 'list' && styles.toggleBtnActive]}
-                onPress={() => setViewMode('list')}>
-                <Text
-                  style={[
-                    styles.toggleBtnText,
-                    viewMode === 'list' && styles.toggleBtnTextActive,
-                  ]}>
-                  List
-                </Text>
-              </TouchableOpacity>
+              <SegmentedToggle<ViewMode>
+                options={[
+                  { value: 'week', label: 'Week' },
+                  { value: 'list', label: 'List' },
+                ]}
+                value={viewMode}
+                onChange={setViewMode}
+              />
             </View>
           </View>
         )}
@@ -550,4 +454,3 @@ export default function ScheduleDashboard() {
     </View>
   );
 }
-

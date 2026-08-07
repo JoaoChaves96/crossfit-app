@@ -1,52 +1,43 @@
 import { StyleSheet } from 'react-native';
-import { AppColors, BorderRadius, FontSizes, FontWeights, Spacing } from '@/constants/theme';
+import { Ground, Line, Radius, Space, Elevation } from '@/constants/design';
 
 export const styles = StyleSheet.create({
   root: {
     flex: 1,
     flexDirection: 'row',
-    backgroundColor: AppColors.backgroundWhite,
+    backgroundColor: Ground.base,
   },
 
   // Main area
   main: {
     flex: 1,
-    paddingHorizontal: Spacing.xxxl,
-    paddingVertical: Spacing.xl,
-    gap: Spacing.xl,
+    paddingHorizontal: Space.xxl,
+    paddingVertical: Space.xl,
+    gap: Space.xl,
   },
 
   // Page header
   pageHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: Spacing.md,
-  },
-  pageTitle: {
-    fontSize: FontSizes.title,
-    fontWeight: FontWeights.bold,
-    color: AppColors.textHeading,
+    gap: Space.md,
   },
   countBadge: {
-    backgroundColor: AppColors.backgroundLight,
-    borderRadius: BorderRadius.lg,
-    paddingHorizontal: Spacing.smMd,
-    paddingVertical: Spacing.tight,
-  },
-  countBadgeText: {
-    fontSize: FontSizes.mdSm,
-    fontWeight: FontWeights.medium,
-    color: AppColors.textMuted,
+    backgroundColor: Ground.sunken,
+    borderRadius: Radius.chip,
+    paddingHorizontal: Space.md,
+    paddingVertical: Space.xs,
   },
 
   // Table card
   tableCard: {
     flex: 1,
-    borderRadius: BorderRadius.mdLg,
-    backgroundColor: AppColors.backgroundWhite,
+    borderRadius: Radius.card,
+    backgroundColor: Ground.surface,
     borderWidth: 1,
-    borderColor: AppColors.borderLight,
+    borderColor: Line.hairline,
     overflow: 'hidden',
+    ...Elevation.card,
   },
 
   // Column widths
@@ -58,7 +49,7 @@ export const styles = StyleSheet.create({
   colNameRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: Spacing.sm,
+    gap: Space.sm,
   },
   colEmail: {
     width: 200,
@@ -81,14 +72,10 @@ export const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     height: 44,
-    paddingHorizontal: Spacing.base,
-    backgroundColor: AppColors.backgroundScreen,
-  },
-  hCell: {
-    fontSize: FontSizes.sm,
-    fontWeight: FontWeights.bold,
-    color: AppColors.textDisabled,
-    letterSpacing: 0.5,
+    paddingHorizontal: Space.base,
+    backgroundColor: Ground.base,
+    borderBottomWidth: 1,
+    borderBottomColor: Line.hairline,
   },
 
   // Data row
@@ -96,86 +83,52 @@ export const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     height: 52,
-    paddingHorizontal: Spacing.base,
+    paddingHorizontal: Space.base,
     borderBottomWidth: 1,
-    borderBottomColor: AppColors.backgroundDivider,
+    borderBottomColor: Line.hairline,
   },
   drowAlt: {
-    backgroundColor: AppColors.surfaceBlueHint,
+    backgroundColor: Ground.base,
   },
 
   // Avatar
   avatar: {
     width: 32,
     height: 32,
-    borderRadius: Spacing.base,
-    backgroundColor: AppColors.badgeBlueBg,
+    borderRadius: 16,
+    backgroundColor: Ground.sunken,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  avatarText: {
-    fontSize: FontSizes.sm,
-    fontWeight: FontWeights.bold,
-    color: AppColors.actionBlue,
-  },
 
-  // Member name cell
-  memberName: {
-    fontSize: FontSizes.mdSm,
-    fontWeight: FontWeights.semibold,
-    color: AppColors.darkSurface,
+  // Name cell text (needs flex to truncate within its column)
+  nameText: {
     flex: 1,
-  },
-
-  // Cell text
-  cellText: {
-    fontSize: FontSizes.mdSm,
-    fontWeight: FontWeights.regular,
-    color: AppColors.darkTextDim,
-  },
-
-  // Active badge
-  activeBadge: {
-    backgroundColor: AppColors.successBg,
-    borderRadius: BorderRadius.mdLg,
-    paddingHorizontal: Spacing.smMd,
-    paddingVertical: Spacing.micro,
-    alignSelf: 'flex-start',
-  },
-  activeBadgeText: {
-    fontSize: FontSizes.sm,
-    fontWeight: FontWeights.semibold,
-    color: AppColors.successDark,
   },
 
   // Empty state card
   emptyCard: {
-    borderRadius: BorderRadius.mdLg,
-    backgroundColor: AppColors.backgroundWhite,
+    borderRadius: Radius.card,
+    backgroundColor: Ground.surface,
     borderWidth: 1,
-    borderColor: AppColors.borderLight,
-    paddingVertical: Spacing.jumboLg,
+    borderColor: Line.hairline,
+    paddingVertical: Space.jumbo,
     alignItems: 'center',
     justifyContent: 'center',
-    gap: Spacing.base,
+    gap: Space.base,
+    ...Elevation.card,
   },
   emptyIconCircle: {
     width: 64,
     height: 64,
-    borderRadius: BorderRadius.round,
-    backgroundColor: AppColors.backgroundSurface,
-  },
-  emptyTitle: {
-    fontSize: FontSizes.md,
-    fontWeight: FontWeights.semibold,
-    color: AppColors.textHeading,
+    borderRadius: 32,
+    backgroundColor: Ground.sunken,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   emptyDesc: {
-    fontSize: FontSizes.mdSm,
-    fontWeight: FontWeights.regular,
-    color: AppColors.textMuted,
     textAlign: 'center',
-    paddingHorizontal: Spacing.xl,
+    paddingHorizontal: Space.xl,
   },
 
   // Loading / error
@@ -188,76 +141,57 @@ export const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    gap: Spacing.md,
+    gap: Space.md,
   },
   errorText: {
-    fontSize: FontSizes.body,
-    color: AppColors.errorDefault,
     textAlign: 'center',
   },
   retryBtn: {
-    paddingHorizontal: Spacing.lg,
-    paddingVertical: Spacing.sm,
-    borderRadius: BorderRadius.mdSm,
+    paddingHorizontal: Space.lg,
+    paddingVertical: Space.sm,
+    borderRadius: Radius.control,
     borderWidth: 1,
-    borderColor: AppColors.separatorDefault,
-  },
-  retryBtnText: {
-    fontSize: FontSizes.body,
-    color: AppColors.textHeading,
+    borderColor: Line.divider,
   },
 
   // Mobile responsive styles
-  drawerOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.4)',
-    flexDirection: 'row',
-  },
-  drawerContainer: {
-    width: 220,
-    height: '100%',
-  },
   hamburgerBtn: {
     width: 44,
     height: 44,
     alignItems: 'center',
     justifyContent: 'center',
-    marginRight: Spacing.sm,
-  },
-  hamburgerText: {
-    fontSize: FontSizes.xl,
-    color: AppColors.textHeading,
+    marginRight: Space.sm,
   },
   mainMobile: {
-    paddingHorizontal: Spacing.base,
-    paddingVertical: Spacing.base,
-    gap: Spacing.base,
+    paddingHorizontal: Space.base,
+    paddingVertical: Space.base,
+    gap: Space.base,
   },
 
   // Member cards (mobile)
   memberCardList: {
-    gap: Spacing.md,
-    paddingBottom: Spacing.lg,
+    gap: Space.md,
+    paddingBottom: Space.lg,
   },
   memberCard: {
+    backgroundColor: Ground.surface,
     borderWidth: 1,
-    borderColor: AppColors.borderLight,
-    borderRadius: BorderRadius.mdLg,
-    padding: Spacing.base,
-    gap: Spacing.sm,
+    borderColor: Line.hairline,
+    borderRadius: Radius.card,
+    padding: Space.base,
+    gap: Space.sm,
+    ...Elevation.card,
   },
   memberCardTop: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: Spacing.md,
+    gap: Space.md,
   },
   memberCardInfo: {
     flex: 1,
-    gap: Spacing.hairline,
+    gap: Space.hair,
   },
   memberCardJoined: {
-    fontSize: FontSizes.smMd,
-    color: AppColors.textMuted,
-    paddingLeft: Spacing.jumboLg,
+    paddingLeft: Space.jumbo,
   },
 });

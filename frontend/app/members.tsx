@@ -1,9 +1,7 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import {
   ActivityIndicator,
-  Modal,
   ScrollView,
-  Text,
   TouchableOpacity,
   View,
 } from 'react-native';
@@ -13,21 +11,17 @@ import { useAuth } from '@/hooks/useAuth';
 import { useGym } from '@/hooks/useGym';
 import { useResponsiveLayout } from '@/hooks/useResponsiveLayout';
 import { SafeScreen } from '@/components/SafeScreen';
-import { Spacing } from '@/constants/theme';
+import { Text, Icon, StatusChip } from '@/components/cleanink';
+import { Ink, Status, Space } from '@/constants/design';
 import { createApiClient } from '@/utils/api-client';
 import { components } from '@/types/api.gen';
 import { OwnerSidebar, OWNER_NAV_ITEMS } from '@/components/OwnerSidebar';
+import { OwnerNavDrawer } from '@/components/OwnerNavDrawer';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 type GymMember = components['schemas']['GymMemberItemDto'];
 type GetGymMembersResponse = components['schemas']['GetGymMembersResponseDto'];
-
-// ─── Design Tokens ────────────────────────────────────────────────────────────
-
-const COLOR = {
-  bodyText: '#111827',
-};
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -54,16 +48,16 @@ function TableHeaderRow() {
   return (
     <View style={styles.hrow}>
       <View style={styles.colName}>
-        <Text style={styles.hCell}>NAME</Text>
+        <Text size="label" weight="semibold" tone="muted" upper>NAME</Text>
       </View>
       <View style={styles.colEmail}>
-        <Text style={styles.hCell}>EMAIL</Text>
+        <Text size="label" weight="semibold" tone="muted" upper>EMAIL</Text>
       </View>
       <View style={styles.colJoined}>
-        <Text style={styles.hCell}>JOINED</Text>
+        <Text size="label" weight="semibold" tone="muted" upper>JOINED</Text>
       </View>
       <View style={styles.colStatus}>
-        <Text style={styles.hCell}>STATUS</Text>
+        <Text size="label" weight="semibold" tone="muted" upper>STATUS</Text>
       </View>
     </View>
   );
@@ -81,24 +75,22 @@ function MemberRow({ member, isAlternate }: MemberRowProps) {
     <View style={[styles.drow, isAlternate && styles.drowAlt]}>
       <View style={[styles.colName, styles.colNameRow]}>
         <View style={styles.avatar}>
-          <Text style={styles.avatarText}>{getInitials(member.name)}</Text>
+          <Text size="meta" weight="bold" tone="muted">{getInitials(member.name)}</Text>
         </View>
-        <Text style={styles.memberName} numberOfLines={1}>
+        <Text size="body" weight="semibold" tone="strong" style={styles.nameText} numberOfLines={1}>
           {member.name}
         </Text>
       </View>
       <View style={styles.colEmail}>
-        <Text style={styles.cellText} numberOfLines={1}>
+        <Text size="body" tone="muted" numberOfLines={1}>
           {member.email}
         </Text>
       </View>
       <View style={styles.colJoined}>
-        <Text style={styles.cellText}>{formatJoinedDate(member.joinedAt)}</Text>
+        <Text size="body" tone="muted">{formatJoinedDate(member.joinedAt)}</Text>
       </View>
       <View style={styles.colStatus}>
-        <View style={styles.activeBadge}>
-          <Text style={styles.activeBadgeText}>Active</Text>
-        </View>
+        <StatusChip tone="open" label="Active" />
       </View>
     </View>
   );
@@ -115,17 +107,15 @@ function MemberCard({ member }: MemberCardProps) {
     <View style={styles.memberCard}>
       <View style={styles.memberCardTop}>
         <View style={styles.avatar}>
-          <Text style={styles.avatarText}>{getInitials(member.name)}</Text>
+          <Text size="meta" weight="bold" tone="muted">{getInitials(member.name)}</Text>
         </View>
         <View style={styles.memberCardInfo}>
-          <Text style={styles.memberName} numberOfLines={1}>{member.name}</Text>
-          <Text style={styles.cellText} numberOfLines={1}>{member.email}</Text>
+          <Text size="body" weight="semibold" tone="strong" numberOfLines={1}>{member.name}</Text>
+          <Text size="meta" tone="muted" numberOfLines={1}>{member.email}</Text>
         </View>
-        <View style={styles.activeBadge}>
-          <Text style={styles.activeBadgeText}>Active</Text>
-        </View>
+        <StatusChip tone="open" label="Active" />
       </View>
-      <Text style={styles.memberCardJoined}>Joined {formatJoinedDate(member.joinedAt)}</Text>
+      <Text size="meta" tone="muted" style={styles.memberCardJoined}>Joined {formatJoinedDate(member.joinedAt)}</Text>
     </View>
   );
 }
@@ -135,9 +125,11 @@ function MemberCard({ member }: MemberCardProps) {
 function EmptyState() {
   return (
     <View style={styles.emptyCard}>
-      <View style={styles.emptyIconCircle} />
-      <Text style={styles.emptyTitle}>No members yet</Text>
-      <Text style={styles.emptyDesc}>Members will appear here once athletes join your gym.</Text>
+      <View style={styles.emptyIconCircle}>
+        <Icon name="people" size={28} tone="faint" />
+      </View>
+      <Text size="title" weight="semibold" tone="strong">No members yet</Text>
+      <Text size="body" tone="muted" style={styles.emptyDesc}>Members will appear here once athletes join your gym.</Text>
     </View>
   );
 }
@@ -191,16 +183,12 @@ export default function MembersScreen() {
 
       {/* Mobile drawer */}
       {isMobile && (
-        <Modal visible={drawerOpen} transparent animationType="fade" onRequestClose={() => setDrawerOpen(false)}>
-          <TouchableOpacity style={styles.drawerOverlay} activeOpacity={1} onPress={() => setDrawerOpen(false)}>
-            <View style={styles.drawerContainer}>
-              <OwnerSidebar activeItem="members" onNavigate={handleNavigate} />
-            </View>
-          </TouchableOpacity>
-        </Modal>
+        <OwnerNavDrawer visible={drawerOpen} onClose={() => setDrawerOpen(false)}>
+          <OwnerSidebar activeItem="members" onNavigate={handleNavigate} />
+        </OwnerNavDrawer>
       )}
 
-      <SafeScreen style={[styles.main, isMobile && styles.mainMobile]} applyTopInset={isMobile} extraTopPadding={Spacing.base}>
+      <SafeScreen style={[styles.main, isMobile && styles.mainMobile]} applyTopInset={isMobile} extraTopPadding={Space.base}>
         {/* Page Header */}
         <View style={styles.pageHeader}>
           {isMobile && (
@@ -208,12 +196,12 @@ export default function MembersScreen() {
               testID="hamburger-btn"
               style={styles.hamburgerBtn}
               onPress={() => setDrawerOpen(true)}>
-              <Text style={styles.hamburgerText}>☰</Text>
+              <Icon name="menu" size={24} tone="strong" />
             </TouchableOpacity>
           )}
-          <Text style={styles.pageTitle}>Members</Text>
+          <Text size="screen" weight="bold" tone="strong">Members</Text>
           <View style={styles.countBadge}>
-            <Text style={styles.countBadgeText}>
+            <Text size="meta" weight="medium" tone="muted">
               {isLoading ? '…' : `${members.length} members`}
             </Text>
           </View>
@@ -222,13 +210,13 @@ export default function MembersScreen() {
         {/* Content */}
         {isLoading ? (
           <View style={styles.loadingContainer}>
-            <ActivityIndicator size="large" color={COLOR.bodyText} />
+            <ActivityIndicator size="large" color={Ink.strong} />
           </View>
         ) : error ? (
           <View style={styles.errorContainer}>
-            <Text style={styles.errorText}>{error}</Text>
+            <Text size="body" tone={Status.danger} style={styles.errorText}>{error}</Text>
             <TouchableOpacity style={styles.retryBtn} onPress={fetchMembers}>
-              <Text style={styles.retryBtnText}>Retry</Text>
+              <Text size="body" tone="strong">Retry</Text>
             </TouchableOpacity>
           </View>
         ) : members.length === 0 ? (
@@ -254,4 +242,3 @@ export default function MembersScreen() {
     </View>
   );
 }
-

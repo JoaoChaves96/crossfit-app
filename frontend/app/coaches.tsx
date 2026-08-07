@@ -4,7 +4,6 @@ import {
   Alert,
   Modal,
   ScrollView,
-  Text,
   TextInput,
   TouchableOpacity,
   View,
@@ -14,10 +13,12 @@ import { useAuth } from '@/hooks/useAuth';
 import { useGym } from '@/hooks/useGym';
 import { useResponsiveLayout } from '@/hooks/useResponsiveLayout';
 import { SafeScreen } from '@/components/SafeScreen';
+import { Text, Icon, Button, StatusChip } from '@/components/cleanink';
+import { Ink, Accent, Space } from '@/constants/design';
 import { createApiClient } from '@/utils/api-client';
 import { components } from '@/types/api.gen';
-import { AppColors, Spacing } from '@/constants/theme';
 import { OwnerSidebar, OWNER_NAV_ITEMS } from '@/components/OwnerSidebar';
+import { OwnerNavDrawer } from '@/components/OwnerNavDrawer';
 import { styles } from './coaches.styles';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -44,31 +45,19 @@ function confirmDeactivate(displayName: string, onConfirm: () => void) {
 }
 
 // ─── Status Badge ─────────────────────────────────────────────────────────────
+// Active coaches read as an "open"/available state; inactive is a quiet neutral.
 
-interface StatusBadgeProps {
-  status: 'active' | 'inactive';
-}
-
-function StatusBadge({ status }: StatusBadgeProps) {
-  const isActive = status === 'active';
-  return (
-    <View
-      style={[
-        styles.badge,
-        isActive ? styles.badgeActive : styles.badgeInactive,
-      ]}>
-      <Text
-        style={[
-          styles.badgeText,
-          isActive ? styles.badgeTextActive : styles.badgeTextInactive,
-        ]}>
-        {isActive ? 'Active' : 'Inactive'}
-      </Text>
-    </View>
+function StatusBadge({ status }: { status: 'active' | 'inactive' }) {
+  return status === 'active' ? (
+    <StatusChip tone="open" label="Active" />
+  ) : (
+    <StatusChip tone="neutral" label="Inactive" />
   );
 }
 
 // ─── Action Button ────────────────────────────────────────────────────────────
+// Deactivate/Disable is destructive → danger. Reactivate/Enable is a quiet
+// neutral action; the single crimson accent stays reserved for the Invite CTA.
 
 interface ActionButtonProps {
   label: string;
@@ -78,25 +67,13 @@ interface ActionButtonProps {
 }
 
 function ActionButton({ label, onPress, variant, disabled }: ActionButtonProps) {
-  const isDeactivate = variant === 'deactivate';
   return (
-    <TouchableOpacity
-      style={[
-        styles.actionBtn,
-        isDeactivate ? styles.actionBtnDeactivate : styles.actionBtnReactivate,
-        disabled && styles.actionBtnDisabled,
-      ]}
+    <Button
+      label={label}
       onPress={onPress}
+      variant={variant === 'deactivate' ? 'danger' : 'quiet'}
       disabled={disabled}
-      activeOpacity={0.7}>
-      <Text
-        style={[
-          styles.actionBtnText,
-          isDeactivate ? styles.actionBtnTextDeactivate : styles.actionBtnTextReactivate,
-        ]}>
-        {label}
-      </Text>
-    </TouchableOpacity>
+    />
   );
 }
 
@@ -120,23 +97,25 @@ function CoachRow({ coach, isSelected, onSelect }: CoachRowProps) {
       activeOpacity={0.7}>
       <View style={styles.colName}>
         <View style={styles.coachAvatar}>
-          <Text style={styles.coachAvatarText}>
+          <Text size="body" weight="semibold" tone="muted">
             {displayName.charAt(0).toUpperCase()}
           </Text>
         </View>
-        <Text style={styles.coachName} numberOfLines={1}>{displayName}</Text>
+        <View style={styles.coachNameText}>
+          <Text size="body" weight="semibold" numberOfLines={1}>{displayName}</Text>
+        </View>
       </View>
       <View style={styles.colEmail}>
-        <Text style={styles.coachEmail} numberOfLines={1}>{coach.email}</Text>
+        <Text size="meta" tone="muted" numberOfLines={1}>{coach.email}</Text>
       </View>
       <View style={styles.colStatus}>
         <StatusBadge status={coach.status} />
       </View>
       <View style={styles.colClasses}>
         {classesLabel !== null ? (
-          <Text style={styles.coachClasses} numberOfLines={1}>{classesLabel}</Text>
+          <Text size="meta" tone="muted" numberOfLines={1}>{classesLabel}</Text>
         ) : (
-          <Text style={styles.coachClassesEmpty}>—</Text>
+          <Text size="meta" tone="faint">—</Text>
         )}
       </View>
       <View style={styles.colActions}>
@@ -145,7 +124,7 @@ function CoachRow({ coach, isSelected, onSelect }: CoachRowProps) {
           style={styles.viewBtn}
           onPress={() => onSelect(coach.userId)}
           activeOpacity={0.7}>
-          <Text style={styles.viewBtnText}>View</Text>
+          <Text size="body" weight="medium" tone="muted">View</Text>
         </TouchableOpacity>
       </View>
     </TouchableOpacity>
@@ -164,7 +143,7 @@ function CoachDetailPanel({ coach, onChangeStatus, isChangingStatus }: CoachDeta
   if (coach === null) {
     return (
       <View style={styles.detailPanel}>
-        <Text style={styles.detailEmpty}>Select a coach to view details</Text>
+        <Text size="meta" tone="faint">Select a coach to view details</Text>
       </View>
     );
   }
@@ -180,45 +159,47 @@ function CoachDetailPanel({ coach, onChangeStatus, isChangingStatus }: CoachDeta
 
   return (
     <View style={styles.detailPanel}>
-      <Text style={styles.detailTitle}>Coach Details</Text>
+      <Text size="title" weight="semibold">Coach Details</Text>
 
       <View style={styles.detailField}>
-        <Text style={styles.detailLabel}>Name</Text>
-        <Text style={styles.detailValue}>{displayName}</Text>
+        <Text size="label" weight="semibold" tone="faint" upper>Name</Text>
+        <Text size="body" weight="medium">{displayName}</Text>
       </View>
 
       <View style={styles.detailField}>
-        <Text style={styles.detailLabel}>Email</Text>
-        <Text style={styles.detailValueMuted}>{coach.email}</Text>
+        <Text size="label" weight="semibold" tone="faint" upper>Email</Text>
+        <Text size="body" tone="muted">{coach.email}</Text>
       </View>
 
       <View style={styles.detailField}>
-        <Text style={styles.detailLabel}>Classes Assigned</Text>
+        <Text size="label" weight="semibold" tone="faint" upper>Classes Assigned</Text>
         {coach.classesAssigned.length > 0 ? (
           coach.classesAssigned.map((className) => (
-            <Text key={className} style={styles.detailClassItem}>{className}</Text>
+            <Text key={className} size="body">{className}</Text>
           ))
         ) : (
-          <Text style={styles.detailClassEmpty}>No classes assigned</Text>
+          <Text size="meta" tone="faint">No classes assigned</Text>
         )}
       </View>
 
       <View style={styles.detailBtnRow}>
-        {isActive ? (
-          <ActionButton
-            label="Disable"
-            onPress={handleDisable}
-            variant="deactivate"
-            disabled={isChangingStatus}
-          />
-        ) : (
-          <ActionButton
-            label="Enable"
-            onPress={() => onChangeStatus(coach.userId, 'active')}
-            variant="reactivate"
-            disabled={isChangingStatus}
-          />
-        )}
+        <View style={styles.detailBtnWrap}>
+          {isActive ? (
+            <ActionButton
+              label="Disable"
+              onPress={handleDisable}
+              variant="deactivate"
+              disabled={isChangingStatus}
+            />
+          ) : (
+            <ActionButton
+              label="Enable"
+              onPress={() => onChangeStatus(coach.userId, 'active')}
+              variant="reactivate"
+              disabled={isChangingStatus}
+            />
+          )}
+        </View>
       </View>
     </View>
   );
@@ -281,53 +262,55 @@ function InviteModal({ visible, onClose, onSuccess, gymId, token }: InviteModalP
       onRequestClose={handleClose}>
       <View style={styles.overlay}>
         <View style={styles.modalCard}>
-          <Text style={styles.modalTitle}>Invite Coach</Text>
-          <Text style={styles.modalSubtitle}>
+          <Text size="lead" weight="bold">Invite Coach</Text>
+          <Text size="meta" tone="muted" style={styles.modalSubtitle}>
             Enter the email address of the coach you want to invite.
           </Text>
 
           <View style={styles.fieldGroup}>
-            <Text style={styles.fieldLabel}>Email address</Text>
-            <TextInput
-              testID="invite-coach-email-input"
-              style={styles.input}
-              placeholder="coach@example.com"
-              placeholderTextColor={AppColors.textDisabled}
-              value={email}
-              onChangeText={(text) => {
-                setEmail(text);
-                if (error) setError(null);
-              }}
-              keyboardType="email-address"
-              autoCapitalize="none"
-              autoCorrect={false}
-              editable={!isSubmitting}
-            />
+            <Text size="label" weight="semibold" tone="faint" upper>Email address</Text>
+            <View style={styles.inputWrap}>
+              <TextInput
+                testID="invite-coach-email-input"
+                style={styles.input}
+                placeholder="coach@example.com"
+                placeholderTextColor={Ink.faint}
+                value={email}
+                onChangeText={(text) => {
+                  setEmail(text);
+                  if (error) setError(null);
+                }}
+                keyboardType="email-address"
+                autoCapitalize="none"
+                autoCorrect={false}
+                editable={!isSubmitting}
+              />
+            </View>
           </View>
 
           {error !== null ? (
-            <Text style={styles.inlineError}>{error}</Text>
+            <Text size="meta" tone={Ink.strong} style={styles.inlineError}>{error}</Text>
           ) : null}
 
           <View style={styles.modalActions}>
-            <TouchableOpacity
-              testID="modal-cancel-btn"
-              style={styles.cancelBtn}
-              onPress={handleClose}
-              disabled={isSubmitting}>
-              <Text style={styles.cancelBtnText}>Cancel</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              testID="modal-confirm-btn"
-              style={[styles.submitBtn, isSubmitting && styles.submitBtnDisabled]}
-              onPress={handleSubmit}
-              disabled={isSubmitting}>
-              {isSubmitting ? (
-                <ActivityIndicator size="small" color={AppColors.backgroundWhite} />
-              ) : (
-                <Text style={styles.submitBtnText}>Send Invite</Text>
-              )}
-            </TouchableOpacity>
+            <View style={styles.modalActionBtn}>
+              <Button
+                testID="modal-cancel-btn"
+                label="Cancel"
+                variant="quiet"
+                onPress={handleClose}
+                disabled={isSubmitting}
+              />
+            </View>
+            <View style={styles.modalActionBtn}>
+              <Button
+                testID="modal-confirm-btn"
+                label="Send Invite"
+                variant="primary"
+                onPress={handleSubmit}
+                loading={isSubmitting}
+              />
+            </View>
           </View>
         </View>
       </View>
@@ -356,38 +339,40 @@ function CoachCard({ coach, onChangeStatus, isChangingStatus }: CoachCardProps) 
     <View style={styles.coachCard}>
       <View style={styles.coachCardTop}>
         <View style={styles.coachAvatar}>
-          <Text style={styles.coachAvatarText}>
+          <Text size="body" weight="semibold" tone="muted">
             {displayName.charAt(0).toUpperCase()}
           </Text>
         </View>
         <View style={styles.coachCardInfo}>
-          <Text style={styles.coachName} numberOfLines={1}>{displayName}</Text>
-          <Text style={styles.coachEmail} numberOfLines={1}>{coach.email}</Text>
+          <Text size="body" weight="semibold" numberOfLines={1}>{displayName}</Text>
+          <Text size="meta" tone="muted" numberOfLines={1}>{coach.email}</Text>
         </View>
         <StatusBadge status={coach.status} />
       </View>
       <View style={styles.coachCardClasses}>
-        <Text style={styles.coachCardClassesLabel}>Classes Assigned</Text>
-        <Text style={styles.coachCardClassesValue}>
+        <Text size="label" weight="semibold" tone="faint" upper>Classes Assigned</Text>
+        <Text size="body">
           {classesLabel !== '' ? classesLabel : 'No classes assigned'}
         </Text>
       </View>
       <View style={styles.coachCardActions}>
-        {isActive ? (
-          <ActionButton
-            label="Deactivate"
-            onPress={handleDeactivate}
-            variant="deactivate"
-            disabled={isChangingStatus}
-          />
-        ) : (
-          <ActionButton
-            label="Reactivate"
-            onPress={() => onChangeStatus(coach.userId, 'active')}
-            variant="reactivate"
-            disabled={isChangingStatus}
-          />
-        )}
+        <View style={styles.coachCardActionBtn}>
+          {isActive ? (
+            <ActionButton
+              label="Deactivate"
+              onPress={handleDeactivate}
+              variant="deactivate"
+              disabled={isChangingStatus}
+            />
+          ) : (
+            <ActionButton
+              label="Reactivate"
+              onPress={() => onChangeStatus(coach.userId, 'active')}
+              variant="reactivate"
+              disabled={isChangingStatus}
+            />
+          )}
+        </View>
       </View>
     </View>
   );
@@ -473,16 +458,12 @@ export default function CoachesScreen() {
 
       {/* Mobile drawer */}
       {isMobile && (
-        <Modal visible={drawerOpen} transparent animationType="fade" onRequestClose={() => setDrawerOpen(false)}>
-          <TouchableOpacity style={styles.drawerOverlay} activeOpacity={1} onPress={() => setDrawerOpen(false)}>
-            <View style={styles.drawerContainer}>
-              <OwnerSidebar activeItem="coaches" onNavigate={handleSidebarNav} />
-            </View>
-          </TouchableOpacity>
-        </Modal>
+        <OwnerNavDrawer visible={drawerOpen} onClose={() => setDrawerOpen(false)}>
+          <OwnerSidebar activeItem="coaches" onNavigate={handleSidebarNav} />
+        </OwnerNavDrawer>
       )}
 
-      <SafeScreen style={[styles.main, isMobile && styles.mainMobile]} applyTopInset={isMobile} extraTopPadding={Spacing.base}>
+      <SafeScreen style={[styles.main, isMobile && styles.mainMobile]} applyTopInset={isMobile} extraTopPadding={Space.base}>
         {/* Header */}
         <View style={styles.header}>
           <View style={styles.headerLeft}>
@@ -491,47 +472,60 @@ export default function CoachesScreen() {
                 testID="hamburger-btn"
                 style={styles.hamburgerBtn}
                 onPress={() => setDrawerOpen(true)}>
-                <Text style={styles.hamburgerText}>☰</Text>
+                <Icon name="menu" size={24} tone="strong" />
               </TouchableOpacity>
             )}
-            <Text style={styles.headerTitle}>Coaches</Text>
-            {!isMobile && (
-              <Text style={styles.headerSubtitle}>
-                {'Manage your gym\'s coaching staff'}
-              </Text>
-            )}
+            <View style={styles.headerTitleWrap}>
+              <Text size="screen" weight="bold">Coaches</Text>
+              {!isMobile && (
+                <Text size="meta" tone="muted">
+                  {'Manage your gym\'s coaching staff'}
+                </Text>
+              )}
+            </View>
           </View>
-          <TouchableOpacity
-            testID="invite-coach-btn"
-            style={[styles.inviteBtn, isMobile && styles.inviteBtnMobile]}
-            onPress={() => setModalVisible(true)}>
-            <Text style={styles.inviteBtnText}>{isMobile ? '+' : '+ Invite Coach'}</Text>
-          </TouchableOpacity>
+          {isMobile ? (
+            <TouchableOpacity
+              testID="invite-coach-btn"
+              style={styles.createIconBtn}
+              onPress={() => setModalVisible(true)}>
+              <Icon name="add" size={24} tone={Accent.on} />
+            </TouchableOpacity>
+          ) : (
+            <TouchableOpacity
+              testID="invite-coach-btn"
+              style={styles.createBtn}
+              onPress={() => setModalVisible(true)}>
+              <Icon name="add" size={18} tone={Accent.on} />
+              <Text size="body" weight="semibold" tone={Accent.on}>Invite Coach</Text>
+            </TouchableOpacity>
+          )}
         </View>
 
         {/* Content */}
         {isLoading ? (
           <View style={styles.centered}>
-            <ActivityIndicator size="large" color={AppColors.textHeading} />
+            <ActivityIndicator size="large" color={Ink.strong} />
           </View>
         ) : error !== null ? (
           <View style={styles.centered}>
-            <Text style={styles.errorText}>{error}</Text>
+            <Text size="body" tone={Ink.strong} style={styles.errorText}>{error}</Text>
             <TouchableOpacity style={styles.retryBtn} onPress={fetchCoaches}>
-              <Text style={styles.retryBtnText}>Retry</Text>
+              <Text size="body" weight="medium">Retry</Text>
             </TouchableOpacity>
           </View>
         ) : coaches.length === 0 ? (
           <View style={styles.emptyState}>
-            <Text style={styles.emptyTitle}>No coaches yet</Text>
-            <Text style={styles.emptySubtitle}>
+            <View style={styles.emptyIconCircle}>
+              <Icon name="coach" size={28} tone="faint" />
+            </View>
+            <Text size="title" weight="semibold">No coaches yet</Text>
+            <Text size="meta" tone="muted">
               Invite your first coach to get started
             </Text>
-            <TouchableOpacity
-              style={styles.inviteBtn}
-              onPress={() => setModalVisible(true)}>
-              <Text style={styles.inviteBtnText}>Invite Coach</Text>
-            </TouchableOpacity>
+            <View style={styles.emptyBtnWrap}>
+              <Button label="Invite Coach" variant="primary" onPress={() => setModalVisible(true)} />
+            </View>
           </View>
         ) : isMobile ? (
           /* Mobile: card-based layout */
@@ -550,17 +544,19 @@ export default function CoachesScreen() {
             <View style={styles.listCard}>
               {/* Table header */}
               <View style={styles.tableHeader}>
-                <Text style={[styles.tableHeaderCell, styles.colName]}>Name</Text>
-                <Text style={[styles.tableHeaderCell, styles.colEmail]}>Email</Text>
-                <Text style={[styles.tableHeaderCell, styles.colStatus]}>
-                  Status
-                </Text>
-                <Text style={[styles.tableHeaderCell, styles.colClasses]}>
-                  Classes Assigned
-                </Text>
-                <Text style={[styles.tableHeaderCell, styles.colActionsHeader]}>
-                  Actions
-                </Text>
+                <View style={styles.colName}>
+                  <Text size="label" weight="semibold" tone="faint" upper>Name</Text>
+                </View>
+                <View style={styles.colEmail}>
+                  <Text size="label" weight="semibold" tone="faint" upper>Email</Text>
+                </View>
+                <View style={styles.colStatus}>
+                  <Text size="label" weight="semibold" tone="faint" upper>Status</Text>
+                </View>
+                <View style={styles.colClasses}>
+                  <Text size="label" weight="semibold" tone="faint" upper>Classes Assigned</Text>
+                </View>
+                <Text size="label" weight="semibold" tone="faint" upper style={styles.colActionsHeader}>Actions</Text>
               </View>
 
               <ScrollView showsVerticalScrollIndicator={false}>

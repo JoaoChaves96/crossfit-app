@@ -1,41 +1,28 @@
 import { StyleSheet } from 'react-native';
-import { AppColors, BorderRadius, FontSizes, FontWeights, LineHeights, Spacing } from '@/constants/theme';
+import { Ground, Ink, Line, Accent, Status, Radius, Space, Elevation, Type } from '@/constants/design';
 
 export const styles = StyleSheet.create({
   // Shell
   root: {
     flex: 1,
     flexDirection: 'row',
-    backgroundColor: AppColors.backgroundWhite,
+    backgroundColor: Ground.base,
   },
   main: {
     flex: 1,
-    backgroundColor: AppColors.backgroundWhite,
+    backgroundColor: Ground.base,
   },
   mainMobile: {
     paddingHorizontal: 0,
   },
 
-  // Mobile drawer
-  drawerOverlay: {
-    flex: 1,
-    backgroundColor: AppColors.overlay,
-    flexDirection: 'row',
-  },
-  drawerContainer: {
-    width: 220,
-    height: '100%',
-  },
+  // Mobile drawer / hamburger
   hamburgerBtn: {
     width: 44,
     height: 44,
     alignItems: 'center',
     justifyContent: 'center',
-    marginRight: Spacing.sm,
-  },
-  hamburgerText: {
-    fontSize: FontSizes.xl,
-    color: AppColors.textHeading,
+    marginRight: Space.sm,
   },
 
   // Page header
@@ -43,67 +30,52 @@ export const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: Spacing.xl,
-    paddingTop: Spacing.jumbo,
-    paddingBottom: Spacing.base,
+    paddingHorizontal: Space.xl,
+    paddingTop: Space.jumbo,
+    paddingBottom: Space.base,
+    backgroundColor: Ground.surface,
   },
   pageHeaderLeft: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: Spacing.sm,
-  },
-  pageTitle: {
-    fontFamily: 'Inter',
-    fontSize: FontSizes.title,
-    fontWeight: FontWeights.bold,
-    color: AppColors.textHeading,
+    gap: Space.sm,
   },
   headerActions: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: Spacing.sm,
+    gap: Space.sm,
   },
   createBtn: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: AppColors.textDark,
-    borderRadius: BorderRadius.mdSm,
-    paddingVertical: Spacing.smMd,
-    paddingHorizontal: Spacing.base,
-    gap: Spacing.compact,
-  },
-  createBtnText: {
-    fontFamily: 'Inter',
-    fontSize: FontSizes.body,
-    fontWeight: FontWeights.semibold,
-    color: AppColors.backgroundWhite,
+    backgroundColor: Accent.base,
+    borderRadius: Radius.control,
+    paddingVertical: Space.sm,
+    paddingHorizontal: Space.base,
+    gap: Space.xs,
   },
   headerDivider: {
     height: 1,
-    backgroundColor: AppColors.backgroundDivider,
+    backgroundColor: Line.hairline,
     marginHorizontal: 0,
   },
 
   // Table header
   tableHeader: {
     flexDirection: 'row',
-    paddingHorizontal: Spacing.base,
-    paddingVertical: Spacing.md,
-    backgroundColor: AppColors.backgroundScreen,
+    paddingHorizontal: Space.base,
+    paddingVertical: Space.md,
+    backgroundColor: Ground.base,
   },
   tableHeaderCell: {
     flex: 1,
-    fontFamily: 'Inter',
-    fontSize: FontSizes.smMd,
-    fontWeight: FontWeights.semibold,
-    color: AppColors.textMuted,
   },
   tableHeaderCellEmail: {
     flex: 2,
   },
   tableHeaderDivider: {
     height: 1,
-    backgroundColor: AppColors.backgroundDivider,
+    backgroundColor: Line.hairline,
   },
   tableBody: {
     flexGrow: 1,
@@ -111,10 +83,10 @@ export const styles = StyleSheet.create({
 
   // Row
   row: {
-    paddingHorizontal: Spacing.base,
-    paddingVertical: Spacing.mdPlus,
-    backgroundColor: AppColors.backgroundWhite,
-    gap: Spacing.sm,
+    paddingHorizontal: Space.base,
+    paddingVertical: Space.md,
+    backgroundColor: Ground.surface,
+    gap: Space.sm,
   },
   rowAccepted: {
     opacity: 0.6,
@@ -125,75 +97,40 @@ export const styles = StyleSheet.create({
   rowMain: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: Spacing.sm,
+    gap: Space.sm,
   },
   rowLeft: {
     flex: 1,
-    gap: Spacing.hairline,
+    gap: Space.hair,
   },
   rowEmail: {
-    fontFamily: 'Inter',
-    fontSize: FontSizes.body,
-    color: AppColors.textHeading,
+    // rendered via Text primitive
   },
   rowEmailExpired: {
     fontStyle: 'italic',
-    color: AppColors.textMuted,
-  },
-  rowDate: {
-    fontFamily: 'Inter',
-    fontSize: FontSizes.mdSm,
-    color: AppColors.textMuted,
   },
   rowActions: {
     flexDirection: 'row',
-    gap: Spacing.sm,
-  },
-  noActionsText: {
-    fontFamily: 'Inter',
-    fontSize: FontSizes.body,
-    color: AppColors.textDisabled,
+    gap: Space.sm,
   },
   rowDivider: {
     height: 1,
-    backgroundColor: AppColors.backgroundLight,
+    backgroundColor: Line.hairline,
     marginHorizontal: 0,
   },
 
   // Action buttons (row level)
   actionBtn: {
-    borderRadius: BorderRadius.mdSm,
-    paddingVertical: Spacing.compact,
-    paddingHorizontal: Spacing.md,
+    borderRadius: Radius.control,
+    paddingVertical: Space.xs,
+    paddingHorizontal: Space.md,
     borderWidth: 1,
-    borderColor: AppColors.backgroundDivider,
+    borderColor: Line.divider,
     alignItems: 'center',
     justifyContent: 'center',
   },
   actionBtnRevoke: {
-    borderColor: AppColors.errorBgPale,
-  },
-  actionBtnText: {
-    fontFamily: 'Inter',
-    fontSize: FontSizes.mdSm,
-    fontWeight: FontWeights.medium,
-    color: AppColors.textSecondary,
-  },
-  revokeText: {
-    color: AppColors.errorDefault,
-  },
-
-  // Badge
-  badge: {
-    borderRadius: BorderRadius.xxl,
-    paddingVertical: Spacing.micro,
-    paddingHorizontal: Spacing.smMd,
-    alignSelf: 'flex-start',
-  },
-  badgeText: {
-    fontFamily: 'Inter',
-    fontSize: FontSizes.smMd,
-    fontWeight: FontWeights.semibold,
+    borderColor: Status.danger,
   },
 
   // Empty state
@@ -201,36 +138,28 @@ export const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    paddingHorizontal: Spacing.jumbo,
-    paddingVertical: Spacing.super,
-    gap: Spacing.base,
+    paddingHorizontal: Space.jumbo,
+    paddingVertical: Space.jumbo,
+    gap: Space.base,
   },
   emptyIconCircle: {
     width: 64,
     height: 64,
-    borderRadius: BorderRadius.round,
-    backgroundColor: AppColors.backgroundSurface,
+    borderRadius: 32,
+    backgroundColor: Ground.sunken,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  emptyIconGlyph: {
-    fontSize: FontSizes.display,
-    color: AppColors.textDisabled,
-  },
   emptyTitle: {
-    fontFamily: 'Inter',
-    fontSize: FontSizes.md,
-    fontWeight: FontWeights.semibold,
-    color: AppColors.textSecondary,
     textAlign: 'center',
   },
   emptyDesc: {
-    fontFamily: 'Inter',
-    fontSize: FontSizes.body,
-    color: AppColors.textDisabled,
     textAlign: 'center',
-    lineHeight: LineHeights.medium,
     maxWidth: 400,
+  },
+  emptyBtnWrap: {
+    marginTop: Space.sm,
+    minWidth: 200,
   },
 
   // Centered state (guards)
@@ -238,181 +167,112 @@ export const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    paddingHorizontal: Spacing.jumbo,
+    paddingHorizontal: Space.jumbo,
   },
   errorText: {
-    fontFamily: 'Inter',
-    fontSize: FontSizes.md,
-    color: AppColors.errorDefault,
     textAlign: 'center',
   },
 
   // Modal
   modalOverlay: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: AppColors.overlay,
+    backgroundColor: 'rgba(26,26,26,0.45)',
     alignItems: 'center',
     justifyContent: 'center',
-    paddingHorizontal: Spacing.xl,
+    paddingHorizontal: Space.xl,
   },
   modalContainer: {
     width: '100%',
     maxWidth: 480,
-    backgroundColor: AppColors.backgroundWhite,
-    borderRadius: BorderRadius.lg,
-    borderWidth: 1,
-    borderColor: AppColors.backgroundDivider,
+    backgroundColor: Ground.surface,
+    borderRadius: Radius.sheet,
     overflow: 'hidden',
+    ...Elevation.raised,
   },
   modalHeader: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingTop: Spacing.lg,
-    paddingHorizontal: Spacing.xl,
-    paddingBottom: Spacing.base,
-  },
-  modalTitle: {
-    fontFamily: 'Inter',
-    fontSize: FontSizes.lg,
-    fontWeight: FontWeights.bold,
-    color: AppColors.textHeading,
+    paddingTop: Space.lg,
+    paddingHorizontal: Space.xl,
+    paddingBottom: Space.base,
   },
   modalCloseBtn: {
     width: 32,
     height: 32,
-    borderRadius: BorderRadius.mdSm,
-    backgroundColor: AppColors.backgroundLight,
+    borderRadius: Radius.control,
+    backgroundColor: Ground.sunken,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  modalCloseBtnText: {
-    fontFamily: 'Inter',
-    fontSize: FontSizes.body,
-    color: AppColors.textMuted,
-  },
   modalDivider: {
     height: 1,
-    backgroundColor: AppColors.backgroundDivider,
+    backgroundColor: Line.hairline,
   },
   modalBody: {
-    padding: Spacing.xl,
-    gap: Spacing.lg,
+    padding: Space.xl,
+    gap: Space.lg,
   },
   modalFooter: {
     flexDirection: 'row',
     justifyContent: 'flex-end',
-    gap: Spacing.smMd,
-    paddingTop: Spacing.base,
-    paddingHorizontal: Spacing.xl,
-    paddingBottom: Spacing.xl,
+    gap: Space.sm,
+    paddingTop: Space.base,
+    paddingHorizontal: Space.xl,
+    paddingBottom: Space.xl,
+  },
+  modalActionBtn: {
+    minWidth: 110,
   },
 
   // Form fields
   fieldGroup: {
-    gap: Spacing.compact,
-  },
-  fieldLabel: {
-    fontFamily: 'Inter',
-    fontSize: FontSizes.body,
-    fontWeight: FontWeights.medium,
-    color: AppColors.textSecondary,
+    gap: Space.xs,
   },
   fieldInput: {
-    height: 42,
-    borderRadius: BorderRadius.mdSm,
+    height: 46,
+    borderRadius: Radius.control,
     borderWidth: 1,
-    borderColor: AppColors.separatorDefault,
-    paddingHorizontal: Spacing.md,
-    fontFamily: 'Inter',
-    fontSize: FontSizes.body,
-    color: AppColors.textHeading,
-    backgroundColor: AppColors.backgroundWhite,
+    borderColor: Line.divider,
+    paddingHorizontal: Space.md,
+    fontFamily: Type.family.regular,
+    fontSize: Type.size.body,
+    color: Ink.strong,
+    backgroundColor: Ground.surface,
   },
 
   // Success state
   successBox: {
-    borderRadius: BorderRadius.md,
-    backgroundColor: AppColors.successBg50Alt,
+    borderRadius: Radius.control,
+    backgroundColor: Status.openWash,
     borderWidth: 1,
-    borderColor: AppColors.successBgLighter,
-    padding: Spacing.mdPlus,
-    gap: Spacing.sm,
-  },
-  successLabel: {
-    fontFamily: 'Inter',
-    fontSize: FontSizes.mdSm,
-    fontWeight: FontWeights.semibold,
-    color: AppColors.successDefault,
+    borderColor: Line.hairline,
+    padding: Space.md,
+    gap: Space.sm,
   },
   linkRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: Spacing.sm,
+    gap: Space.sm,
   },
   linkTextBox: {
     flex: 1,
     height: 36,
-    borderRadius: BorderRadius.mdSm,
+    borderRadius: Radius.control,
     borderWidth: 1,
-    borderColor: AppColors.separatorDefault,
-    paddingHorizontal: Spacing.smMd,
-    backgroundColor: AppColors.backgroundWhite,
+    borderColor: Line.divider,
+    paddingHorizontal: Space.sm,
+    backgroundColor: Ground.surface,
     justifyContent: 'center',
-  },
-  linkTextContent: {
-    fontFamily: 'Inter',
-    fontSize: FontSizes.smMd,
-    color: AppColors.textMuted,
   },
   copyBtn: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: AppColors.textDark,
-    borderRadius: BorderRadius.mdSm,
-    paddingVertical: Spacing.sm,
-    paddingHorizontal: Spacing.md,
-    gap: Spacing.tight,
-  },
-  copyBtnText: {
-    fontFamily: 'Inter',
-    fontSize: FontSizes.mdSm,
-    fontWeight: FontWeights.semibold,
-    color: AppColors.backgroundWhite,
-  },
-
-  // Modal buttons
-  cancelBtn: {
-    borderRadius: BorderRadius.mdSm,
     borderWidth: 1,
-    borderColor: AppColors.backgroundDivider,
-    paddingVertical: Spacing.smMd,
-    paddingHorizontal: Spacing.lg,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  cancelBtnText: {
-    fontFamily: 'Inter',
-    fontSize: FontSizes.body,
-    fontWeight: FontWeights.medium,
-    color: AppColors.textSecondary,
-  },
-  sendBtn: {
-    borderRadius: BorderRadius.mdSm,
-    backgroundColor: AppColors.textDark,
-    paddingVertical: Spacing.smMd,
-    paddingHorizontal: Spacing.lg,
-    alignItems: 'center',
-    justifyContent: 'center',
-    minWidth: 100,
-  },
-  sendBtnDisabled: {
-    opacity: 0.6,
-  },
-  sendBtnText: {
-    fontFamily: 'Inter',
-    fontSize: FontSizes.body,
-    fontWeight: FontWeights.semibold,
-    color: AppColors.backgroundWhite,
+    borderColor: Line.divider,
+    borderRadius: Radius.control,
+    paddingVertical: Space.sm,
+    paddingHorizontal: Space.md,
+    gap: Space.xs,
   },
 });
