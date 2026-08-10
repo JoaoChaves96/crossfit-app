@@ -55,3 +55,39 @@ carry programming fields.
 
 Programming is a single `content` text field. There is no separate structured
 "notes" field in MVP; WOD, instructions and notes all live in `content`.
+
+## Gym Registration Approval
+
+New gyms are created with `status = 'active'`. Platform-admin approval is
+deferred to Phase 2.
+
+This resolves the first blocking question in `MVP_SCREENS.md` ("Gym Registration
+Approval — manual or auto-approval?") and takes the auto-approval branch that
+`COMMAND_MODEL.md` → RegisterGym already permits ("Implementation may
+auto-approve for MVP simplicity").
+
+Rationale: every gym-configuration command rejects a non-active gym, and no
+approval endpoint or platform-admin surface exists. Creating gyms as
+`pending_approval` therefore left them permanently unconfigurable — a new owner
+could register a gym and then do nothing with it.
+
+Rules:
+
+- `POST /api/gyms` creates the gym `active` and its creator as `owner`.
+- The `pending_approval` and `suspended` states remain in the model; nothing
+  transitions into them in MVP.
+- Approving/suspending gyms (`ApproveGymRegistration`) and the Pending Gym
+  Registrations screen are Phase 2.
+
+## Owner Gym Context After Creation
+
+`POST /api/gyms` returns a re-signed `accessToken` alongside the new gym.
+
+JWT claims (`gymId`, `role`) are resolved at sign time. A user who registers and
+then creates a gym still holds a token claiming `gymId: null`, which
+`GymOwnershipGuard` rejects — so the setup wizard could create a gym but not
+configure it. Returning a refreshed token makes the transition atomic from the
+client's point of view; it must store the new token in place of the old one.
+
+There is deliberately no general `/api/auth/refresh` endpoint in MVP. If another
+mid-session role change appears (e.g. accepting a coach invite), revisit this.

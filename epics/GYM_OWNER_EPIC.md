@@ -26,6 +26,14 @@ This unblocks all downstream features (Coach, Athlete complete flow) and enables
 - Class scheduling (date, time, coach, space, capacity)
 - Coach invitation (auto-create user on invite)
 
+### Deferred to Phase 2
+- **Gym registration approval workflow (platform admin).** Gyms are auto-approved
+  (created `active`) for MVP — see `DECISIONS.md` → "Gym Registration Approval".
+  Phase 2 owes: an `ApproveGymRegistration` endpoint, a platform-admin auth path,
+  and the Pending Gym Registrations / Gym Details (Admin View) screens that
+  `MVP_SCREENS.md` marks MUST. Until then nothing transitions a gym into
+  `pending_approval` or `suspended`.
+
 ### Deferred to Phase 3
 - Member management UI
 - Billing/revenue dashboards

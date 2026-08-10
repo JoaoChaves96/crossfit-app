@@ -350,7 +350,11 @@ MVP scope. Coach desktop has NO duplicate-header bug). Discovery/triage only; fi
 - Navigation guard — unauthenticated users redirected to `/login`
 - Login screen — logs in any role, routes by role (owner/athlete → `/(tabs)/schedule`, coach → `/coach-classes`)
 - Register screen — creates new athlete account, routes to `/no-gym`
-- No-gym screen — holds unauthenticated athletes until invited to a gym
+- No-gym screen — the landing place for any user with no gym: holds athletes until
+  invited, and offers "Set Up My Gym" → `/gym-setup` for a new owner
+- Gym setup wizard (`/gym-setup`) — 4 steps (basics → spaces → class types →
+  review); creates the gym, adopts the re-signed token it returns, then configures
+  spaces and class types. Wired up 2026-08-10 (previously an orphan route)
 - Dev bootstrap — three tappable user cards (Owner, Coach, Athlete) with instant login
 
 ## Local Environment

@@ -211,9 +211,9 @@ from earlier documents (including `SCREENS.md` and initial screen inventories).
 
 ## Blocking Questions (Must Answer Before Design)
 
-1. **Gym Registration Approval**
-   - Manual or auto-approval? SLA for manual review?
-   - **Impact:** New gym onboarding timeline
+1. ~~**Gym Registration Approval**~~ — ✅ RESOLVED 2026-08-10
+   - Auto-approval for MVP: gyms are created `active`. Admin approval is Phase 2.
+   - See `DECISIONS.md` → "Gym Registration Approval"
 
 2. **Coach Multi-Gym Assignment**
    - Can coaches be assigned to classes in multiple gyms?
