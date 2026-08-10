@@ -35,9 +35,21 @@ export default function NoGymScreen() {
           {"You're Not in a Gym Yet"}
         </Text>
         <Text size="body" tone={Ink.muted} style={styles.emptyDesc}>
-          {'Your account is active, but you haven\'t been added to a gym. Ask your gym owner to send you an invite.'}
+          {'Your account is active, but you haven\'t been added to a gym. Ask your gym owner to send you an invite — or set up a gym of your own.'}
         </Text>
+        {/* This screen is the only landing place for a user with no gym, which
+            covers two people: an athlete waiting on an invite, and an owner who
+            has registered but not yet created their gym. The invite path needs
+            nothing from us, so the gym-creation path leads. */}
         <View style={styles.emptyButton}>
+          <Button
+            testID="no-gym-create-gym-btn"
+            variant="primary"
+            label="Set Up My Gym"
+            onPress={() => router.push('/gym-setup' as never)}
+          />
+        </View>
+        <View style={styles.secondaryButton}>
           <Button variant="danger" label="Log Out" onPress={handleLogout} />
         </View>
       </View>

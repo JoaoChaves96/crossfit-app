@@ -42,4 +42,9 @@ export const styles = StyleSheet.create({
     marginTop: Space.sm,
     alignSelf: 'stretch',
   },
+  // Log Out below the primary action. Tighter than emptyButton's lead-in gap so
+  // the two actions read as one stack rather than two separate blocks.
+  secondaryButton: {
+    alignSelf: 'stretch',
+  },
 });

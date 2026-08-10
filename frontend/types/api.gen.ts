@@ -623,7 +623,7 @@ export interface paths {
         put?: never;
         /**
          * Create a gym
-         * @description Register a new gym. The authenticated user becomes the gym owner.
+         * @description Register a new gym. The authenticated user becomes the gym owner. Returns a re-signed access token carrying the new gym context, which the client must store in place of the one it used for this request.
          */
         post: operations["GymController_createGym"];
         delete?: never;
@@ -2315,6 +2315,11 @@ export interface components {
              * @example 2024-01-01T00:00:00.000Z
              */
             createdAt: string;
+            /**
+             * @description Re-signed JWT for the caller, now carrying gymId and role=owner. The token used to create the gym predates it and claims gymId: null, so gym-scoped requests would be rejected until this one replaces it.
+             * @example eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+             */
+            accessToken: string;
         };
         CoachClassItemDto: {
             /**

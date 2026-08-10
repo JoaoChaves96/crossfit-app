@@ -4,17 +4,21 @@ import {
   TextInput,
   TouchableOpacity,
   ScrollView,
-  KeyboardAvoidingView,
-  Platform,
 } from 'react-native';
 import { styles } from './gym-setup.styles';
 import { useRouter } from 'expo-router';
 import { useAuth } from '@/hooks/useAuth';
+import { useKeyboardAwareScroll } from '@/hooks/useKeyboardAwareScroll';
 import { createApiClient } from '@/utils/api-client';
 import { Text, Button } from '@/components/cleanink';
 import { Ink, Status } from '@/constants/design';
+import { components } from '@/types/api.gen';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
+
+type CreateGymResponse = components['schemas']['CreateGymResponseDto'];
+type CreateSpaceBody = components['schemas']['CreateSpaceDto'];
+type ConfigureClassTypesBody = components['schemas']['ConfigureClassTypesDto'];
 
 interface SpaceEntry {
   name: string;
@@ -23,7 +27,6 @@ interface SpaceEntry {
 
 interface ClassTypeEntry {
   name: string;
-  description: string;
 }
 
 interface GymBasics {
@@ -83,16 +86,26 @@ function StepIndicator({ currentStep }: { currentStep: Step }) {
   );
 }
 
+/**
+ * Keyboard-follow handlers from the wizard's `useKeyboardAwareScroll`. The
+ * ScrollView belongs to the wizard shell, so a step can only report focus —
+ * it cannot scroll itself.
+ */
+interface KeyboardHandlers {
+  onInputFocus: () => void;
+  onInputBlur: () => void;
+}
+
 // ─── Step 1: Gym Basics ───────────────────────────────────────────────────────
 
-interface Step1Props {
+interface Step1Props extends KeyboardHandlers {
   basics: GymBasics;
   onChange: (basics: GymBasics) => void;
   onNext: () => void;
   onCancel: () => void;
 }
 
-function Step1Basics({ basics, onChange, onNext, onCancel }: Step1Props) {
+function Step1Basics({ basics, onChange, onNext, onCancel, onInputFocus, onInputBlur }: Step1Props) {
   const [errors, setErrors] = useState<Partial<GymBasics>>({});
 
   const validate = (): boolean => {
@@ -117,6 +130,8 @@ function Step1Basics({ basics, onChange, onNext, onCancel }: Step1Props) {
       <View style={styles.field}>
         <Text size="label" weight="semibold" tone="faint" upper>Gym Name</Text>
         <TextInput
+          onFocus={onInputFocus}
+          onBlur={onInputBlur}
           style={[styles.input, errors.name ? styles.inputError : null]}
           placeholder="e.g. CrossFit Downtown"
           placeholderTextColor={Ink.faint}
@@ -129,6 +144,8 @@ function Step1Basics({ basics, onChange, onNext, onCancel }: Step1Props) {
       <View style={styles.field}>
         <Text size="label" weight="semibold" tone="faint" upper>Location</Text>
         <TextInput
+          onFocus={onInputFocus}
+          onBlur={onInputBlur}
           style={[styles.input, errors.location ? styles.inputError : null]}
           placeholder="e.g. 123 Main St, City"
           placeholderTextColor={Ink.faint}
@@ -143,6 +160,8 @@ function Step1Basics({ basics, onChange, onNext, onCancel }: Step1Props) {
       <View style={styles.field}>
         <Text size="label" weight="semibold" tone="faint" upper>Description</Text>
         <TextInput
+          onFocus={onInputFocus}
+          onBlur={onInputBlur}
           style={[styles.input, styles.textArea]}
           placeholder="Describe your gym, services, and what makes it unique..."
           placeholderTextColor={Ink.faint}
@@ -168,14 +187,14 @@ function Step1Basics({ basics, onChange, onNext, onCancel }: Step1Props) {
 
 // ─── Step 2: Spaces ───────────────────────────────────────────────────────────
 
-interface Step2Props {
+interface Step2Props extends KeyboardHandlers {
   spaces: SpaceEntry[];
   onChange: (spaces: SpaceEntry[]) => void;
   onNext: () => void;
   onBack: () => void;
 }
 
-function Step2Spaces({ spaces, onChange, onNext, onBack }: Step2Props) {
+function Step2Spaces({ spaces, onChange, onNext, onBack, onInputFocus, onInputBlur }: Step2Props) {
   const [spaceErrors, setSpaceErrors] = useState<Record<number, Partial<SpaceEntry>>>({});
 
   const addSpace = () => {
@@ -246,6 +265,8 @@ function Step2Spaces({ spaces, onChange, onNext, onBack }: Step2Props) {
             <View style={styles.field}>
               <Text size="label" weight="semibold" tone="faint" upper>Name</Text>
               <TextInput
+                onFocus={onInputFocus}
+                onBlur={onInputBlur}
                 style={[
                   styles.input,
                   spaceErrors[index]?.name ? styles.inputError : null,
@@ -263,6 +284,8 @@ function Step2Spaces({ spaces, onChange, onNext, onBack }: Step2Props) {
             <View style={styles.field}>
               <Text size="label" weight="semibold" tone="faint" upper>Capacity</Text>
               <TextInput
+                onFocus={onInputFocus}
+                onBlur={onInputBlur}
                 style={[
                   styles.input,
                   spaceErrors[index]?.capacity ? styles.inputError : null,
@@ -299,18 +322,18 @@ function Step2Spaces({ spaces, onChange, onNext, onBack }: Step2Props) {
 
 // ─── Step 3: Class Types ──────────────────────────────────────────────────────
 
-interface Step3Props {
+interface Step3Props extends KeyboardHandlers {
   classTypes: ClassTypeEntry[];
   onChange: (classTypes: ClassTypeEntry[]) => void;
   onNext: () => void;
   onBack: () => void;
 }
 
-function Step3ClassTypes({ classTypes, onChange, onNext, onBack }: Step3Props) {
+function Step3ClassTypes({ classTypes, onChange, onNext, onBack, onInputFocus, onInputBlur }: Step3Props) {
   const [classTypeErrors, setClassTypeErrors] = useState<Record<number, string>>({});
 
   const addClassType = () => {
-    onChange([...classTypes, { name: '', description: '' }]);
+    onChange([...classTypes, { name: '' }]);
   };
 
   const updateClassType = (
@@ -374,6 +397,8 @@ function Step3ClassTypes({ classTypes, onChange, onNext, onBack }: Step3Props) {
             <View style={styles.field}>
               <Text size="label" weight="semibold" tone="faint" upper>Name</Text>
               <TextInput
+                onFocus={onInputFocus}
+                onBlur={onInputBlur}
                 style={[
                   styles.input,
                   classTypeErrors[index] ? styles.inputError : null,
@@ -387,20 +412,8 @@ function Step3ClassTypes({ classTypes, onChange, onNext, onBack }: Step3Props) {
                 <Text size="meta" tone={Status.danger} style={styles.errorText}>{classTypeErrors[index]}</Text>
               ) : null}
             </View>
-
-            <View style={styles.field}>
-              <Text size="label" weight="semibold" tone="faint" upper>Description (optional)</Text>
-              <TextInput
-                style={[styles.input, styles.textArea]}
-                placeholder="Describe this class type..."
-                placeholderTextColor={Ink.faint}
-                value={ct.description}
-                onChangeText={(val) => updateClassType(index, 'description', val)}
-                multiline
-                numberOfLines={2}
-                textAlignVertical="top"
-              />
-            </View>
+            {/* No description field: ClassTypeEntity has no such column, so
+                anything typed here would be silently discarded on submit. */}
           </View>
         ))
       )}
@@ -479,9 +492,6 @@ function Step4Review({ state, onBack, onSubmit, isSubmitting, submitError }: Ste
           state.classTypes.map((ct, index) => (
             <View key={index} style={styles.reviewItem}>
               <Text size="body" weight="semibold" tone="strong">{ct.name}</Text>
-              {ct.description ? (
-                <Text size="meta" tone="muted">{ct.description}</Text>
-              ) : null}
             </View>
           ))
         )}
@@ -533,7 +543,11 @@ function SuccessScreen({ gymName, onCreateFirstClass }: SuccessScreenProps) {
 
 export default function GymSetupScreen() {
   const router = useRouter();
-  const { token } = useAuth();
+  const { token, login } = useAuth();
+
+  // Steps 1–3 run long enough that the lower fields sit under the keyboard on a
+  // phone, so the focused field has to be scrolled clear of it (mobile only).
+  const kb = useKeyboardAwareScroll();
 
   const [currentStep, setCurrentStep] = useState<Step>(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -548,7 +562,9 @@ export default function GymSetupScreen() {
   });
 
   const handleCancel = () => {
-    router.back();
+    // Not router.back(): the wizard is reachable by deep link, where there is
+    // no history to pop and Cancel would do nothing at all.
+    router.replace('/no-gym' as never);
   };
 
   const handleSubmit = async () => {
@@ -561,32 +577,41 @@ export default function GymSetupScreen() {
     setSubmitError(null);
 
     try {
-      // Step 1: Create the gym
-      const client = createApiClient({ token });
-      const gymResponse = await client.post<{ gymId: string }>('/api/gyms', {
-        name: wizardState.basics.name.trim(),
-        location: wizardState.basics.location.trim(),
-        description: wizardState.basics.description.trim(),
-      });
+      // Step 1: Create the gym. The caller becomes its owner.
+      const gymResponse = await createApiClient({ token }).post<CreateGymResponse>(
+        '/api/gyms',
+        {
+          name: wizardState.basics.name.trim(),
+          location: wizardState.basics.location.trim(),
+          description: wizardState.basics.description.trim(),
+        },
+      );
 
-      const gymId = gymResponse.gymId;
+      const gymId = gymResponse.id;
+
+      // The token we just used predates the gym and still claims `gymId: null`,
+      // so the configuration calls below would be rejected by the backend's
+      // ownership guard. Adopt the re-signed one the create returned, and use
+      // it directly here rather than waiting for the context state to settle.
+      const ownerToken = gymResponse.accessToken;
+      await login(ownerToken);
+      const client = createApiClient({ token: ownerToken });
 
       // Step 2: Create spaces sequentially
       for (const space of wizardState.spaces) {
-        await client.post('/gym-configuration/spaces', {
-          gymId,
+        await client.post(`/api/gyms/${gymId}/configuration/spaces`, {
           name: space.name.trim(),
-          capacity: Number(space.capacity),
-        });
+          baseCapacity: Number(space.capacity),
+        } satisfies CreateSpaceBody);
       }
 
-      // Step 3: Create class types sequentially
+      // Step 3: Create class types sequentially. The endpoint multiplexes
+      // create/update/delete, hence the explicit operation.
       for (const classType of wizardState.classTypes) {
-        await client.post('/gym-configuration/class-types', {
-          gymId,
+        await client.post(`/api/gyms/${gymId}/configuration/class-types`, {
+          operation: 'create',
           name: classType.name.trim(),
-          description: classType.description.trim(),
-        });
+        } satisfies ConfigureClassTypesBody);
       }
 
       setCreatedGymName(wizardState.basics.name.trim());
@@ -605,17 +630,23 @@ export default function GymSetupScreen() {
       <ScrollView style={styles.container} contentContainerStyle={styles.scrollContent}>
         <SuccessScreen
           gymName={createdGymName}
-          onCreateFirstClass={() => router.replace('/(tabs)/schedule')}
+          // The owner's home, matching login's routeForRole. `/(tabs)/schedule`
+          // is the athlete surface and would strand them outside their new gym.
+          onCreateFirstClass={() => router.replace('/schedule-dashboard' as never)}
         />
       </ScrollView>
     );
   }
 
+  // Keyboard handling (inset, focus-follow) comes from useKeyboardAwareScroll —
+  // a KeyboardAvoidingView only shrinks this container, it never scrolls the
+  // focused field into view.
   return (
-    <KeyboardAvoidingView
-      style={styles.container}
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-      <ScrollView contentContainerStyle={styles.scrollContent}>
+    <View style={styles.container}>
+      <ScrollView
+        ref={kb.scrollRef}
+        contentContainerStyle={[styles.scrollContent, kb.contentInsetStyle]}
+        {...kb.scrollViewProps}>
         <StepIndicator currentStep={currentStep} />
 
         {currentStep === 1 && (
@@ -624,6 +655,8 @@ export default function GymSetupScreen() {
             onChange={(basics) => setWizardState((s) => ({ ...s, basics }))}
             onNext={() => setCurrentStep(2)}
             onCancel={handleCancel}
+            onInputFocus={kb.onInputFocus}
+            onInputBlur={kb.onInputBlur}
           />
         )}
 
@@ -633,6 +666,8 @@ export default function GymSetupScreen() {
             onChange={(spaces) => setWizardState((s) => ({ ...s, spaces }))}
             onNext={() => setCurrentStep(3)}
             onBack={() => setCurrentStep(1)}
+            onInputFocus={kb.onInputFocus}
+            onInputBlur={kb.onInputBlur}
           />
         )}
 
@@ -642,6 +677,8 @@ export default function GymSetupScreen() {
             onChange={(classTypes) => setWizardState((s) => ({ ...s, classTypes }))}
             onNext={() => setCurrentStep(4)}
             onBack={() => setCurrentStep(2)}
+            onInputFocus={kb.onInputFocus}
+            onInputBlur={kb.onInputBlur}
           />
         )}
 
@@ -655,6 +692,6 @@ export default function GymSetupScreen() {
           />
         )}
       </ScrollView>
-    </KeyboardAvoidingView>
+    </View>
   );
 }
