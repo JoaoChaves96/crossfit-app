@@ -17,5 +17,8 @@ import { GymMembershipEntity } from '../../domain/gym-membership/entities/gym-me
   ],
   controllers: [AuthController],
   providers: [AuthService],
+  // Exported so CreateGymHandler can re-issue a token when a user's gym
+  // context changes mid-session (see AuthService.issueTokenForUser).
+  exports: [AuthService],
 })
 export class AuthModule {}

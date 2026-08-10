@@ -35,14 +35,17 @@ export class GymController {
    * - User must exist
    *
    * **Postconditions:**
-   * - Gym created with status = pending_approval
+   * - Gym created with status = active (auto-approved for MVP)
    * - Authenticated user added to gym_staff as owner
+   * - A re-signed token is returned, now carrying gymId and role = owner
    */
   @Post()
   @ApiOperation({
     summary: 'Create a gym',
     description:
-      'Register a new gym. The authenticated user becomes the gym owner.',
+      'Register a new gym. The authenticated user becomes the gym owner. ' +
+      'Returns a re-signed access token carrying the new gym context, which ' +
+      'the client must store in place of the one it used for this request.',
   })
   @ApiBody({ type: CreateGymDto })
   @ApiResponse({

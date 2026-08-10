@@ -78,6 +78,31 @@ export class AuthService {
     return this.jwtService.sign(payload);
   }
 
+  /**
+   * Mint a fresh token for an existing user, re-resolving their gym context.
+   *
+   * Needed whenever a user's gym or role changes *after* they logged in: the
+   * claims are baked into the token at sign time, so the stored token would
+   * otherwise keep saying `gymId: null` and every gym-scoped request would be
+   * rejected by GymOwnershipGuard. The first case is a new owner creating their
+   * gym (CreateGymHandler).
+   */
+  async issueTokenForUser(userId: string): Promise<string> {
+    const user = await this.userRepository.findOne({ where: { id: userId } });
+    if (!user) {
+      throw new UnauthorizedException('User not found');
+    }
+
+    const { gymId, role } = await this.resolveGymContext(user.id);
+
+    return this.jwtService.sign({
+      sub: user.id,
+      email: user.email,
+      gymId,
+      role,
+    });
+  }
+
   private async resolveGymContext(
     userId: string,
   ): Promise<{ gymId: string | null; role: string | null }> {

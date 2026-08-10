@@ -4,12 +4,15 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { GymEntity } from './entities/gym.entity';
 import { GymStaffEntity } from '../gym-staff/entities/gym-staff.entity';
 import { UserModule } from '../user/user.module';
+import { AuthModule } from '../../api/auth/auth.module';
 import { CreateGymHandler } from '../../commands/gym/handlers/create-gym.handler';
 
 @Module({
   imports: [
     CqrsModule,
     UserModule,
+    // For re-issuing the caller's token once they become the gym's owner.
+    AuthModule,
     TypeOrmModule.forFeature([GymEntity, GymStaffEntity]),
   ],
   providers: [CreateGymHandler],
