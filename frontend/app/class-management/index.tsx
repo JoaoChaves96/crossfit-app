@@ -1,8 +1,6 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import {
   ActivityIndicator,
-  KeyboardAvoidingView,
-  Platform,
   ScrollView,
   TouchableOpacity,
   View,
@@ -10,6 +8,7 @@ import {
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useAuth } from '@/hooks/useAuth';
 import { useGym } from '@/hooks/useGym';
+import { useKeyboardAwareScroll } from '@/hooks/useKeyboardAwareScroll';
 import { useResponsiveLayout } from '@/hooks/useResponsiveLayout';
 import { useSafeAreaTop } from '@/components/SafeScreen';
 import { Text, Icon } from '@/components/cleanink';
@@ -49,6 +48,10 @@ export default function ClassManagement() {
   const { classId } = useLocalSearchParams<{ classId: string }>();
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [mobileTab, setMobileTab] = useState<MobileTab>('info');
+
+  // The programming input on the Programming tab sits low on the page, so it
+  // needs the focused field scrolled clear of the keyboard (mobile only).
+  const kb = useKeyboardAwareScroll();
 
   const [classDetail, setClassDetail] = useState<ClassDetail | null>(null);
   const [allBookings, setAllBookings] = useState<ClassBookingItem[]>([]);
@@ -154,9 +157,7 @@ export default function ClassManagement() {
   }, [router, classId, currentGymId]);
 
   return (
-    <KeyboardAvoidingView
-      style={styles.root}
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+    <View style={styles.root}>
       {!isMobile && <ClassManagementSidebar onNavigate={handleNavigate} />}
 
       {/* Mobile drawer */}
@@ -167,10 +168,11 @@ export default function ClassManagement() {
       )}
 
       <ScrollView
+        ref={kb.scrollRef}
         style={styles.mainScroll}
-        contentContainerStyle={[styles.mainContent, isMobile && styles.mainContentMobile, isMobile && { paddingTop: safeTop + Space.base }]}
+        contentContainerStyle={[styles.mainContent, isMobile && styles.mainContentMobile, isMobile && { paddingTop: safeTop + Space.base }, kb.contentInsetStyle]}
         showsVerticalScrollIndicator={false}
-        keyboardShouldPersistTaps="handled">
+        {...kb.scrollViewProps}>
 
         {isMobile ? (
           <View style={styles.topBar}>
@@ -291,6 +293,10 @@ export default function ClassManagement() {
                     currentGymId={currentGymId}
                     classId={classId}
                     classState={classDetail.state}
+                    onInputFocus={kb.onInputFocus}
+                    onInputBlur={kb.onInputBlur}
+                    onInputGrow={kb.scrollFocusedIntoView}
+                    keepVisibleRef={kb.keepVisibleRef}
                   />
                 )}
               </View>
@@ -305,12 +311,16 @@ export default function ClassManagement() {
                   currentGymId={currentGymId}
                   classId={classId}
                   classState={classDetail.state}
+                  onInputFocus={kb.onInputFocus}
+                  onInputBlur={kb.onInputBlur}
+                  onInputGrow={kb.scrollFocusedIntoView}
+                  keepVisibleRef={kb.keepVisibleRef}
                 />
               </>
             )}
           </>
         ) : null}
       </ScrollView>
-    </KeyboardAvoidingView>
+    </View>
   );
 }

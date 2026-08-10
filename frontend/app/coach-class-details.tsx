@@ -1,8 +1,6 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   ActivityIndicator,
-  Keyboard,
-  Platform,
   Pressable,
   ScrollView,
   Switch,
@@ -12,6 +10,7 @@ import {
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useAuth } from '@/hooks/useAuth';
 import { useGym } from '@/hooks/useGym';
+import { useKeyboardAwareScroll } from '@/hooks/useKeyboardAwareScroll';
 import { useResponsiveLayout } from '@/hooks/useResponsiveLayout';
 import { SafeScreen } from '@/components/SafeScreen';
 import { CoachSidebar } from '@/components/CoachSidebar';
@@ -112,60 +111,10 @@ export default function CoachClassDetailsScreen() {
   const [loggable, setLoggable] = useState(false);
   const [inputHeight, setInputHeight] = useState(PROGRAMMING_INPUT_MIN_HEIGHT);
 
-  // Mobile: keep the programming input clear of the on-screen keyboard.
-  // `automaticallyAdjustKeyboardInsets` only reserves the inset; it does not
-  // bring an off-screen field up, and it does not follow the input as it grows.
-  const scrollRef = useRef<ScrollView>(null);
-  const inputWrapRef = useRef<View>(null);
-  const scrollOffsetRef = useRef(0);
-  const isInputFocusedRef = useRef(false);
-  /** Top edge of the keyboard in window coords; null while it is dismissed. */
-  const keyboardTopRef = useRef<number | null>(null);
-  const [keyboardHeight, setKeyboardHeight] = useState(0);
-
-  // Scroll just enough to bring the input's bottom edge (where the caret sits
-  // while typing) above the keyboard. Measured in window coords against the
-  // keyboard's own frame: `measureLayout` needs a native-component ref as its
-  // relative node — `getInnerViewNode()` returns a node handle, which Fabric
-  // rejects with "must be called with a ref to a native component".
-  const scrollInputAboveKeyboard = useCallback((animated: boolean) => {
-    if (Platform.OS === 'web') return;
-    const keyboardTop = keyboardTopRef.current;
-    const wrap = inputWrapRef.current;
-    if (keyboardTop == null || wrap == null) return;
-    wrap.measureInWindow((_x: number, y: number, _w: number, h: number) => {
-      const overflow = y + h + Space.base - keyboardTop;
-      if (overflow <= 0) return;
-      scrollRef.current?.scrollTo({ y: scrollOffsetRef.current + overflow, animated });
-    });
-  }, []);
-
-  useEffect(() => {
-    if (Platform.OS === 'web') return;
-    const onShow = Keyboard.addListener('keyboardDidShow', (e) => {
-      keyboardTopRef.current = e.endCoordinates.screenY;
-      setKeyboardHeight(e.endCoordinates.height);
-      if (isInputFocusedRef.current) scrollInputAboveKeyboard(true);
-    });
-    const onHide = Keyboard.addListener('keyboardDidHide', () => {
-      keyboardTopRef.current = null;
-      setKeyboardHeight(0);
-    });
-    return () => {
-      onShow.remove();
-      onHide.remove();
-    };
-  }, [scrollInputAboveKeyboard]);
-
-  const handleInputFocus = useCallback(() => {
-    isInputFocusedRef.current = true;
-    // If the keyboard is already up, focus won't fire keyboardDidShow — scroll now.
-    scrollInputAboveKeyboard(true);
-  }, [scrollInputAboveKeyboard]);
-
-  const handleInputBlur = useCallback(() => {
-    isInputFocusedRef.current = false;
-  }, []);
+  // Mobile: keep the programming input AND its Save button clear of the
+  // on-screen keyboard. Shared with the owner ProgrammingPanel — see
+  // useKeyboardAwareScroll for why measureInWindow is required here.
+  const kb = useKeyboardAwareScroll();
 
   // Existing programming fetch state
   const [isProgrammingLoading, setIsProgrammingLoading] = useState(true);
@@ -335,65 +284,70 @@ export default function CoachClassDetailsScreen() {
         <>
           <View style={s.separator} />
 
-          {/* Edit Programming Form */}
-          <View ref={inputWrapRef} collapsable={false} style={s.fieldBlock}>
-            <Text size="title" weight="semibold">Edit Programming</Text>
-            <Text size="label" weight="semibold" tone="faint" upper>Programming</Text>
-            <TextInput
-              testID="programming-wod-input"
-              onFocus={handleInputFocus}
-              onBlur={handleInputBlur}
-              style={[
-                s.progInput,
-                { height: Math.max(PROGRAMMING_INPUT_MIN_HEIGHT, inputHeight) },
-              ]}
-              placeholder="Describe the workout, scaling and any notes…"
-              placeholderTextColor={Ink.faint}
-              value={content}
-              onChangeText={(t) => {
-                setContent(t);
-                if (didSave) setDidSave(false);
-              }}
-              onContentSizeChange={(e) => {
-                // Track the measured content height verbatim. Padding it out (or
-                // re-measuring the height we just applied) feeds the new height
-                // straight back into contentSize and loops until React aborts
-                // with "Maximum update depth exceeded". The 1px deadband absorbs
-                // sub-pixel jitter from web's fractional scrollHeight.
-                const measured = Math.ceil(e.nativeEvent.contentSize.height);
-                setInputHeight((prev) => (Math.abs(prev - measured) > 1 ? measured : prev));
-                // Growing pushes the caret line down, back under the keyboard —
-                // follow it. Unanimated so the scroll keeps pace with typing.
-                if (isInputFocusedRef.current) scrollInputAboveKeyboard(false);
-              }}
-              multiline
-              textAlignVertical="top"
-              editable={!isSubmitting}
-            />
-          </View>
-
-          {submitError !== null && (
-            <View style={s.errorBanner}>
-              <Text size="meta" tone="strong">{submitError}</Text>
-            </View>
-          )}
-
-          <View style={s.progFooter}>
-            {didSave ? (
-              <Text size="meta" tone="muted">Saved</Text>
-            ) : lastUpdatedAt ? (
-              <Text size="meta" tone="faint">Updated {formatLastUpdated(lastUpdatedAt)}</Text>
-            ) : (
-              <View />
-            )}
-            <View style={s.saveWrap}>
-              <Button
-                testID="programming-save-btn"
-                label="Save Programming"
-                variant="primary"
-                loading={isSubmitting}
-                onPress={handleSaveProgramming}
+          {/* Edit Programming Form. The input, the error banner and the Save
+              row are measured as ONE group so the keyboard-follow scroll
+              clears the Save button too — clearing only the input leaves it
+              under the keyboard's predictive-text strip. */}
+          <View ref={kb.keepVisibleRef} collapsable={false} style={s.editGroup}>
+            <View style={s.fieldBlock}>
+              <Text size="title" weight="semibold">Edit Programming</Text>
+              <Text size="label" weight="semibold" tone="faint" upper>Programming</Text>
+              <TextInput
+                testID="programming-wod-input"
+                onFocus={kb.onInputFocus}
+                onBlur={kb.onInputBlur}
+                style={[
+                  s.progInput,
+                  { height: Math.max(PROGRAMMING_INPUT_MIN_HEIGHT, inputHeight) },
+                ]}
+                placeholder="Describe the workout, scaling and any notes…"
+                placeholderTextColor={Ink.faint}
+                value={content}
+                onChangeText={(t) => {
+                  setContent(t);
+                  if (didSave) setDidSave(false);
+                }}
+                onContentSizeChange={(e) => {
+                  // Track the measured content height verbatim. Padding it out (or
+                  // re-measuring the height we just applied) feeds the new height
+                  // straight back into contentSize and loops until React aborts
+                  // with "Maximum update depth exceeded". The 1px deadband absorbs
+                  // sub-pixel jitter from web's fractional scrollHeight.
+                  const measured = Math.ceil(e.nativeEvent.contentSize.height);
+                  setInputHeight((prev) => (Math.abs(prev - measured) > 1 ? measured : prev));
+                  // Growing pushes the caret line down, back under the keyboard —
+                  // follow it. Unanimated so the scroll keeps pace with typing.
+                  kb.scrollFocusedIntoView(false);
+                }}
+                multiline
+                textAlignVertical="top"
+                editable={!isSubmitting}
               />
+            </View>
+
+            {submitError !== null && (
+              <View style={s.errorBanner}>
+                <Text size="meta" tone="strong">{submitError}</Text>
+              </View>
+            )}
+
+            <View style={s.progFooter}>
+              {didSave ? (
+                <Text size="meta" tone="muted">Saved</Text>
+              ) : lastUpdatedAt ? (
+                <Text size="meta" tone="faint">Updated {formatLastUpdated(lastUpdatedAt)}</Text>
+              ) : (
+                <View />
+              )}
+              <View style={s.saveWrap}>
+                <Button
+                  testID="programming-save-btn"
+                  label="Save Programming"
+                  variant="primary"
+                  loading={isSubmitting}
+                  onPress={handleSaveProgramming}
+                />
+              </View>
             </View>
           </View>
         </>
@@ -407,25 +361,14 @@ export default function CoachClassDetailsScreen() {
     const ms = mobileStyles;
     return (
       <SafeScreen style={ms.root} testID="coach-class-details-screen">
-          {/* `automaticallyAdjustKeyboardInsets` (iOS) reserves the keyboard inset so
-              content can scroll clear of it; Android has no equivalent, so the inset
-              is added as real bottom padding from the measured keyboard height. The
-              inset alone doesn't move the focused field — `scrollInputAboveKeyboard`
-              does that, both on focus and as the input auto-grows. */}
+          {/* Keyboard handling (inset, focus-follow, auto-grow-follow) all comes
+              from useKeyboardAwareScroll — see that hook for the details. */}
           <ScrollView
-            ref={scrollRef}
+            ref={kb.scrollRef}
             style={ms.main}
-            contentContainerStyle={[
-              ms.scrollContent,
-              Platform.OS === 'android' ? { paddingBottom: keyboardHeight } : null,
-            ]}
-            automaticallyAdjustKeyboardInsets={Platform.OS === 'ios'}
-            onScroll={(e) => {
-              scrollOffsetRef.current = e.nativeEvent.contentOffset.y;
-            }}
-            scrollEventThrottle={16}
+            contentContainerStyle={[ms.scrollContent, kb.contentInsetStyle]}
             showsVerticalScrollIndicator={false}
-            keyboardShouldPersistTaps="handled">
+            {...kb.scrollViewProps}>
             {/* Header */}
             <View style={ms.header}>
               <View style={ms.headerTopRow}>

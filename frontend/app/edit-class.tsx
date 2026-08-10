@@ -2,8 +2,6 @@ import React, { useCallback, useEffect, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
-  KeyboardAvoidingView,
-  Platform,
   ScrollView,
   TextInput,
   TouchableOpacity,
@@ -13,6 +11,7 @@ import { styles } from './edit-class.styles';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useAuth } from '@/hooks/useAuth';
 import { useGym } from '@/hooks/useGym';
+import { useKeyboardAwareScroll } from '@/hooks/useKeyboardAwareScroll';
 import { useResponsiveLayout } from '@/hooks/useResponsiveLayout';
 import { useSafeAreaTop } from '@/components/SafeScreen';
 import { Text, Icon, Button, SelectField } from '@/components/cleanink';
@@ -68,6 +67,9 @@ interface TextFieldProps {
   keyboardType?: 'default' | 'numeric';
   error?: string;
   testID?: string;
+  /** Keyboard-follow handlers from the screen's useKeyboardAwareScroll. */
+  onFocus?: () => void;
+  onBlur?: () => void;
 }
 
 function TextField({
@@ -78,12 +80,16 @@ function TextField({
   keyboardType,
   error,
   testID,
+  onFocus,
+  onBlur,
 }: TextFieldProps) {
   return (
     <View style={styles.fieldContainer}>
       <Text size="label" weight="semibold" tone="faint" upper>{label}</Text>
       <TextInput
         testID={testID}
+        onFocus={onFocus}
+        onBlur={onBlur}
         style={[
           styles.inputBox,
           styles.inputBoxText,
@@ -251,6 +257,10 @@ export default function EditClassScreen() {
   const { isMobile } = useResponsiveLayout();
   const safeTop = useSafeAreaTop();
   const { classId } = useLocalSearchParams<{ classId: string }>();
+
+  // The lower fields sit under the keyboard on a phone, so the focused field
+  // has to be scrolled clear of it (mobile only).
+  const kb = useKeyboardAwareScroll();
 
   const [classLoadState, setClassLoadState] = useState<FetchState<ClassDetail>>({
     status: 'loading',
@@ -438,11 +448,15 @@ export default function EditClassScreen() {
     );
   }
 
+  // Keyboard handling (inset, focus-follow) comes from useKeyboardAwareScroll —
+  // a KeyboardAvoidingView only shrinks this container, it never scrolls the
+  // focused field into view.
   return (
-    <KeyboardAvoidingView
-      style={styles.screen}
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-      <ScrollView contentContainerStyle={[styles.scrollContent, isMobile && styles.scrollContentMobile, isMobile && { paddingTop: safeTop + Space.base }]} keyboardShouldPersistTaps="handled">
+    <View style={styles.screen}>
+      <ScrollView
+        ref={kb.scrollRef}
+        contentContainerStyle={[styles.scrollContent, isMobile && styles.scrollContentMobile, isMobile && { paddingTop: safeTop + Space.base }, kb.contentInsetStyle]}
+        {...kb.scrollViewProps}>
         {/* Header */}
         <View style={styles.header}>
           <TouchableOpacity
@@ -512,6 +526,8 @@ export default function EditClassScreen() {
                 onChangeText={(v) => setForm((s) => ({ ...s, scheduledDate: v }))}
                 placeholder="YYYY-MM-DD"
                 error={formErrors.scheduledDate}
+                onFocus={kb.onInputFocus}
+                onBlur={kb.onInputBlur}
               />
             </View>
           </View>
@@ -526,6 +542,8 @@ export default function EditClassScreen() {
                 onChangeText={(v) => setForm((s) => ({ ...s, scheduledTime: v }))}
                 placeholder="HH:mm"
                 error={formErrors.scheduledTime}
+                onFocus={kb.onInputFocus}
+                onBlur={kb.onInputBlur}
               />
             </View>
             <View style={styles.rowItem}>
@@ -537,6 +555,8 @@ export default function EditClassScreen() {
                 placeholder="e.g. 20"
                 keyboardType="numeric"
                 error={formErrors.capacity}
+                onFocus={kb.onInputFocus}
+                onBlur={kb.onInputBlur}
               />
             </View>
           </View>
@@ -552,6 +572,8 @@ export default function EditClassScreen() {
                 placeholder="e.g. 60"
                 keyboardType="numeric"
                 error={formErrors.duration}
+                onFocus={kb.onInputFocus}
+                onBlur={kb.onInputBlur}
               />
             </View>
             {!isMobile && <View style={styles.rowItem} />}
@@ -647,7 +669,7 @@ export default function EditClassScreen() {
           )}
         </View>
       </ScrollView>
-    </KeyboardAvoidingView>
+    </View>
   );
 }
 

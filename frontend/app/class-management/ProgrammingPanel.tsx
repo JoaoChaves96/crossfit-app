@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { ActivityIndicator, Switch, TextInput, TouchableOpacity, View } from 'react-native';
 import { Text, Button, StatusChip } from '@/components/cleanink';
 import { useResponsiveLayout } from '@/hooks/useResponsiveLayout';
-import { Accent, Ground, Ink, Line, Space } from '@/constants/design';
+import { Accent, Ground, Ink, Line } from '@/constants/design';
 import { styles } from './class-management.styles';
 import { ClassState, isProgrammingEditable } from './classStates';
 import { useClassProgramming } from './useClassProgramming';
@@ -27,6 +27,17 @@ interface ProgrammingPanelProps {
   currentGymId: string | null;
   classId: string | undefined;
   classState: ClassState;
+  /**
+   * Keyboard-follow handlers from the host screen's `useKeyboardAwareScroll`.
+   * The ScrollView lives on the host, so this panel can only report focus and
+   * growth — it cannot scroll itself. Optional: the desktop layout has no
+   * keyboard to avoid.
+   */
+  onInputFocus?: () => void;
+  onInputBlur?: () => void;
+  onInputGrow?: (animated: boolean) => void;
+  /** Attach to the input+Save group so the host can measure it as one unit. */
+  keepVisibleRef?: React.Ref<View>;
 }
 
 export function ProgrammingPanel({
@@ -34,6 +45,10 @@ export function ProgrammingPanel({
   currentGymId,
   classId,
   classState,
+  onInputFocus,
+  onInputBlur,
+  onInputGrow,
+  keepVisibleRef,
 }: ProgrammingPanelProps) {
   const {
     content,
@@ -98,16 +113,29 @@ export function ProgrammingPanel({
             </TouchableOpacity>
           </View>
         ) : isEditable ? (
-          <>
+          /* The input and its Save button are measured as one group so the
+             keyboard-follow scroll clears the button too, not just the input. */
+          <View ref={keepVisibleRef} collapsable={false} style={styles.progEditGroup}>
             <Text size="label" weight="semibold" tone="faint" upper>Programming</Text>
             <TextInput
               testID="programming-content-input"
+              onFocus={onInputFocus}
+              onBlur={onInputBlur}
               style={[styles.progInput, { height: Math.max(INPUT_MIN_HEIGHT, inputHeight) }]}
               value={content}
               onChangeText={setContent}
-              onContentSizeChange={(e) =>
-                setInputHeight(e.nativeEvent.contentSize.height + Space.base)
-              }
+              onContentSizeChange={(e) => {
+                // Track the measured height verbatim. Padding it out feeds the
+                // padded height straight back into contentSize and loops until
+                // React aborts with "Maximum update depth exceeded" — the same
+                // crash coach-class-details hit. The 1px deadband absorbs
+                // sub-pixel jitter from web's fractional scrollHeight.
+                const measured = Math.ceil(e.nativeEvent.contentSize.height);
+                setInputHeight((prev) => (Math.abs(prev - measured) > 1 ? measured : prev));
+                // Growing pushes the caret line back down under the keyboard —
+                // follow it. Unanimated so the scroll keeps pace with typing.
+                onInputGrow?.(false);
+              }}
               placeholder="Describe the workout, scaling and any notes…"
               placeholderTextColor={Ink.faint}
               multiline
@@ -142,7 +170,7 @@ export function ProgrammingPanel({
                 />
               </View>
             </View>
-          </>
+          </View>
         ) : (
           <>
             <Text size="label" weight="semibold" tone="faint" upper>Programming</Text>

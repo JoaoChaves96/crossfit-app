@@ -144,6 +144,12 @@ export const styles = StyleSheet.create({
     padding: Space.md,
   },
   // Footer holding the quiet saved/updated meta and the save action.
+  // Groups the input, error banner and Save row so the keyboard-follow scroll
+  // measures them as one unit. Repeats progPanel's gap so nesting the group
+  // inside it leaves spacing unchanged.
+  editGroup: {
+    gap: Space.base,
+  },
   progFooter: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -302,6 +308,10 @@ export const mobileStyles = StyleSheet.create({
     padding: Space.md,
   },
   // Mobile: meta stacks above a full-width save button.
+  // See editGroup in the desktop sheet above — same purpose, mobile spacing.
+  editGroup: {
+    gap: Space.base,
+  },
   progFooter: {
     flexDirection: 'column',
     alignItems: 'stretch',

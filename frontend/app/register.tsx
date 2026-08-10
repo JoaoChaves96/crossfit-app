@@ -1,7 +1,5 @@
 import React, { useContext, useState } from 'react';
 import {
-  KeyboardAvoidingView,
-  Platform,
   ScrollView,
   TextInput,
   TouchableOpacity,
@@ -9,6 +7,7 @@ import {
 } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { AuthContext } from '@/context/AuthContext';
+import { useKeyboardAwareScroll } from '@/hooks/useKeyboardAwareScroll';
 import { ApiError, createApiClient } from '@/utils/api-client';
 import { Ink, Status } from '@/constants/design';
 import { Text, Icon, Button } from '@/components/cleanink';
@@ -38,6 +37,9 @@ export default function RegisterScreen() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+
+  // Keep the focused field above the on-screen keyboard (mobile only).
+  const kb = useKeyboardAwareScroll();
 
   const handleRegister = async () => {
     setError(null);
@@ -73,12 +75,11 @@ export default function RegisterScreen() {
   };
 
   return (
-    <KeyboardAvoidingView
-      style={styles.screen}
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+    <View style={styles.screen}>
       <ScrollView
-        contentContainerStyle={styles.scrollContent}
-        keyboardShouldPersistTaps="handled">
+        ref={kb.scrollRef}
+        contentContainerStyle={[styles.scrollContent, kb.contentInsetStyle]}
+        {...kb.scrollViewProps}>
         {/* Status Bar placeholder */}
         <View style={styles.statusBar} />
 
@@ -104,6 +105,8 @@ export default function RegisterScreen() {
               <Text size="meta" weight="semibold">Name</Text>
               <TextInput
                 testID="register-name-input"
+                onFocus={kb.onInputFocus}
+                onBlur={kb.onInputBlur}
                 style={styles.input}
                 placeholder="Your full name"
                 placeholderTextColor={Ink.faint}
@@ -120,6 +123,8 @@ export default function RegisterScreen() {
               <Text size="meta" weight="semibold">Email</Text>
               <TextInput
                 testID="register-email-input"
+                onFocus={kb.onInputFocus}
+                onBlur={kb.onInputBlur}
                 style={[styles.input, fromInvite && styles.inputReadOnly]}
                 placeholder="your@email.com"
                 placeholderTextColor={Ink.faint}
@@ -138,6 +143,8 @@ export default function RegisterScreen() {
               <Text size="meta" weight="semibold">Password</Text>
               <TextInput
                 testID="register-password-input"
+                onFocus={kb.onInputFocus}
+                onBlur={kb.onInputBlur}
                 style={styles.input}
                 placeholder="••••••••"
                 placeholderTextColor={Ink.faint}
@@ -175,7 +182,7 @@ export default function RegisterScreen() {
           </View>
         </View>
       </ScrollView>
-    </KeyboardAvoidingView>
+    </View>
   );
 }
 

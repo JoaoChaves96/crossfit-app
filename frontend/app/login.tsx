@@ -1,7 +1,5 @@
 import React, { useContext, useEffect, useState } from 'react';
 import {
-  KeyboardAvoidingView,
-  Platform,
   ScrollView,
   TextInput,
   TouchableOpacity,
@@ -10,6 +8,7 @@ import {
 import { useRouter } from 'expo-router';
 import { AuthContext } from '@/context/AuthContext';
 import { GymContext } from '@/context/GymContext';
+import { useKeyboardAwareScroll } from '@/hooks/useKeyboardAwareScroll';
 import { createApiClient, ApiError } from '@/utils/api-client';
 import { Ink, Status } from '@/constants/design';
 import { Text, Icon, Button } from '@/components/cleanink';
@@ -32,6 +31,9 @@ export default function LoginScreen() {
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // Keep the focused field above the on-screen keyboard (mobile only).
+  const kb = useKeyboardAwareScroll();
 
   // If the user is already authenticated (a valid token was restored from
   // storage on app start), skip the login form and send them to their home
@@ -81,13 +83,12 @@ export default function LoginScreen() {
   }
 
   return (
-    <KeyboardAvoidingView
-      style={styles.root}
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+    <View style={styles.root}>
       <ScrollView
-        contentContainerStyle={styles.scroll}
-        keyboardShouldPersistTaps="handled"
-        showsVerticalScrollIndicator={false}>
+        ref={kb.scrollRef}
+        contentContainerStyle={[styles.scroll, kb.contentInsetStyle]}
+        showsVerticalScrollIndicator={false}
+        {...kb.scrollViewProps}>
 
         {/* Brand */}
         <View style={styles.brand}>
@@ -110,6 +111,8 @@ export default function LoginScreen() {
             <Text size="meta" weight="semibold">Email</Text>
             <TextInput
               testID="login-email-input"
+              onFocus={kb.onInputFocus}
+              onBlur={kb.onInputBlur}
               style={styles.input}
               placeholder="your@email.com"
               placeholderTextColor={Ink.faint}
@@ -130,6 +133,8 @@ export default function LoginScreen() {
             <Text size="meta" weight="semibold">Password</Text>
             <TextInput
               testID="login-password-input"
+              onFocus={kb.onInputFocus}
+              onBlur={kb.onInputBlur}
               style={styles.input}
               placeholder="••••••••"
               placeholderTextColor={Ink.faint}
@@ -169,7 +174,7 @@ export default function LoginScreen() {
         </View>
 
       </ScrollView>
-    </KeyboardAvoidingView>
+    </View>
   );
 }
 

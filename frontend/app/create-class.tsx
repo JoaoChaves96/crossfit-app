@@ -1,7 +1,6 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import {
   ActivityIndicator,
-  KeyboardAvoidingView,
   Platform,
   ScrollView,
   TextInput,
@@ -11,6 +10,7 @@ import {
 import { useRouter } from 'expo-router';
 import { useAuth } from '@/hooks/useAuth';
 import { useGym } from '@/hooks/useGym';
+import { useKeyboardAwareScroll } from '@/hooks/useKeyboardAwareScroll';
 import { useResponsiveLayout } from '@/hooks/useResponsiveLayout';
 import { useSafeAreaTop } from '@/components/SafeScreen';
 import { Text, Icon, Button, SelectField } from '@/components/cleanink';
@@ -78,14 +78,19 @@ interface TextFieldProps {
   keyboardType?: 'default' | 'numeric';
   error?: string;
   testID?: string;
+  /** Keyboard-follow handlers from the screen's useKeyboardAwareScroll. */
+  onFocus?: () => void;
+  onBlur?: () => void;
 }
 
-function TextField({ label, value, onChangeText, placeholder, keyboardType, error, testID }: TextFieldProps) {
+function TextField({ label, value, onChangeText, placeholder, keyboardType, error, testID, onFocus, onBlur }: TextFieldProps) {
   return (
     <View style={styles.fieldContainer}>
       <Text size="label" weight="semibold" tone="faint" upper>{label}</Text>
       <TextInput
         testID={testID}
+        onFocus={onFocus}
+        onBlur={onBlur}
         style={[styles.inputBox, styles.inputBoxText, error ? styles.inputBoxValidationError : null]}
         value={value}
         onChangeText={onChangeText}
@@ -114,9 +119,12 @@ interface DateTimeFieldProps {
   onChange: (value: string) => void;
   error?: string;
   testID?: string;
+  /** Keyboard-follow handlers from the screen's useKeyboardAwareScroll. */
+  onFocus?: () => void;
+  onBlur?: () => void;
 }
 
-function DateTimeField({ label, mode, value, onChange, error, testID }: DateTimeFieldProps) {
+function DateTimeField({ label, mode, value, onChange, error, testID, onFocus, onBlur }: DateTimeFieldProps) {
   const [editing, setEditing] = useState(false);
   const iconName = mode === 'date' ? 'calendar' : 'time';
   const placeholder = mode === 'date' ? 'YYYY-MM-DD' : 'HH:mm';
@@ -150,7 +158,12 @@ function DateTimeField({ label, mode, value, onChange, error, testID }: DateTime
             style={styles.pickerValueText}
             value={value}
             onChangeText={onChange}
-            onBlur={() => setEditing(false)}
+            onFocus={onFocus}
+            // Composed: the box also has to close itself on blur.
+            onBlur={() => {
+              setEditing(false);
+              onBlur?.();
+            }}
             placeholder={placeholder}
             placeholderTextColor={Ink.faint}
             keyboardType={mode === 'time' ? 'numbers-and-punctuation' : 'default'}
@@ -321,6 +334,10 @@ export default function CreateClassScreen() {
   const { currentGymId } = useGym();
   const { isMobile } = useResponsiveLayout();
   const safeTop = useSafeAreaTop();
+
+  // The form runs long and the lower fields sit under the keyboard on a phone,
+  // so the focused field has to be scrolled clear of it (mobile only).
+  const kb = useKeyboardAwareScroll();
 
   const [classTypesFetch, setClassTypesFetch] = useState<FetchState<PickerItem[]>>({
     status: 'loading',
@@ -497,11 +514,15 @@ export default function CreateClassScreen() {
     if (key === 'settings') router.push('/gym-settings' as never);
   };
 
+  // Keyboard handling (inset, focus-follow) comes from useKeyboardAwareScroll —
+  // a KeyboardAvoidingView only shrinks this container, it never scrolls the
+  // focused field into view.
   const formContent = (
-    <KeyboardAvoidingView
-      style={styles.screen}
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-      <ScrollView contentContainerStyle={[styles.scrollContent, isMobile && styles.scrollContentMobile, isMobile && { paddingTop: safeTop + Space.base }]} keyboardShouldPersistTaps="handled">
+    <View style={styles.screen}>
+      <ScrollView
+        ref={kb.scrollRef}
+        contentContainerStyle={[styles.scrollContent, isMobile && styles.scrollContentMobile, isMobile && { paddingTop: safeTop + Space.base }, kb.contentInsetStyle]}
+        {...kb.scrollViewProps}>
 
         {/* Header */}
         <View style={styles.header}>
@@ -566,6 +587,8 @@ export default function CreateClassScreen() {
                   value={form.scheduledDate}
                   onChange={(v) => setForm((s) => ({ ...s, scheduledDate: v }))}
                   error={formErrors.scheduledDate}
+                  onFocus={kb.onInputFocus}
+                  onBlur={kb.onInputBlur}
                 />
               </View>
               <View style={styles.rowItem}>
@@ -576,6 +599,8 @@ export default function CreateClassScreen() {
                   value={form.scheduledTime}
                   onChange={(v) => setForm((s) => ({ ...s, scheduledTime: v }))}
                   error={formErrors.scheduledTime}
+                  onFocus={kb.onInputFocus}
+                  onBlur={kb.onInputBlur}
                 />
               </View>
             </View>
@@ -591,6 +616,8 @@ export default function CreateClassScreen() {
                     value={form.startDate}
                     onChange={(v) => setForm((s) => ({ ...s, startDate: v }))}
                     error={formErrors.startDate}
+                    onFocus={kb.onInputFocus}
+                    onBlur={kb.onInputBlur}
                   />
                 </View>
                 <View style={styles.rowItem}>
@@ -601,6 +628,8 @@ export default function CreateClassScreen() {
                     value={form.endDate}
                     onChange={(v) => setForm((s) => ({ ...s, endDate: v }))}
                     error={formErrors.endDate}
+                    onFocus={kb.onInputFocus}
+                    onBlur={kb.onInputBlur}
                   />
                 </View>
               </View>
@@ -624,6 +653,8 @@ export default function CreateClassScreen() {
                     value={form.scheduledTime}
                     onChange={(v) => setForm((s) => ({ ...s, scheduledTime: v }))}
                     error={formErrors.scheduledTime}
+                    onFocus={kb.onInputFocus}
+                    onBlur={kb.onInputBlur}
                   />
                 </View>
               </View>
@@ -684,6 +715,8 @@ export default function CreateClassScreen() {
                 placeholder="e.g. 15"
                 keyboardType="numeric"
                 error={formErrors.capacity}
+                onFocus={kb.onInputFocus}
+                onBlur={kb.onInputBlur}
               />
             </View>
           </View>
@@ -699,6 +732,8 @@ export default function CreateClassScreen() {
                 placeholder="e.g. 60"
                 keyboardType="numeric"
                 error={formErrors.duration}
+                onFocus={kb.onInputFocus}
+                onBlur={kb.onInputBlur}
               />
             </View>
             {!isMobile && <View style={styles.rowItem} />}
@@ -744,7 +779,7 @@ export default function CreateClassScreen() {
           </View>
         </View>
       </ScrollView>
-    </KeyboardAvoidingView>
+    </View>
   );
 
   if (isMobile) {

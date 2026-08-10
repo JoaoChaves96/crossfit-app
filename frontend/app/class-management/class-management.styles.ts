@@ -237,6 +237,12 @@ export const styles = StyleSheet.create({
   },
   // Applied to the TextInput itself; the face must be named explicitly since a
   // TextInput can't route through the Text primitive.
+  // Groups the input with the controls below it so the keyboard-follow scroll
+  // can measure them as one unit. Repeats progCard's gap so nesting the group
+  // inside it leaves spacing unchanged.
+  progEditGroup: {
+    gap: Space.sm,
+  },
   progInput: {
     borderWidth: 1,
     borderColor: Line.divider,
