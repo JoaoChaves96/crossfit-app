@@ -195,6 +195,19 @@ MVP scope. Coach desktop has NO duplicate-header bug). Discovery/triage only; fi
     `__tests__/gym-setup.test.tsx`, 16 tests.
   - 🔍 **Responsive `adapt` pass** — Impeccable Phase 4, BUILT, awaiting commit go-ahead. See
     `epics/IMPECCABLE_RESTYLE_EPIC.md` → Phase 4.
+  - ✅ **Owners are coaches (2026-08-11)** — closes the last dead end: a configured but
+    coachless gym could not schedule anything, because `CreateClass` demanded an assigned
+    coach and a new gym has none. An active `owner` gym_staff row now satisfies that
+    precondition in `create-class`, `edit-class`, and `create-recurring-classes`. Still
+    **one `gym_staff` row per user per gym** — no second row, no compound role — so the
+    unfiltered `findOne({userId, gymId})` lookups and the single JWT `role` claim stay
+    unambiguous. `GET /configuration/coaches` gained `?assignable=true`: the class coach
+    picker passes it and gets the owner, the staff-management list does not (it can
+    deactivate a row, and an owner must never deactivate their own ownership).
+    `ChangeCoachStatus` still filters `role='coach'`. The wizard's closing screen now
+    offers "Create Your First Class" again — it is submittable. See `docs/DECISIONS.md`
+    → **Owners as Coaches**. BE 264/264, FE 299/299; live-verified against
+    `owner.b2@test.local`'s coachless gym.
 
 ## Previous Phase (2026-05-23)
 
@@ -373,7 +386,10 @@ MVP scope. Coach desktop has NO duplicate-header bug). Discovery/triage only; fi
   (see `docs/DECISIONS.md` → Minimum Gym Configuration); covered by
   `__tests__/gym-setup.test.tsx` (2026-08-11). Responsive `adapt` pass 2026-08-11
   (Impeccable Phase 4): the wizard now draws its own header — the navigator's had
-  no back target and sent a deep-linked owner to the athlete surface
+  no back target and sent a deep-linked owner to the athlete surface. The closing
+  screen offers "Create Your First Class" (primary) and "Go to My Gym" (quiet):
+  owners may coach their own classes, so a coachless new gym can schedule
+  immediately (see `docs/DECISIONS.md` → Owners as Coaches)
 - Dev bootstrap — three tappable user cards (Owner, Coach, Athlete) with instant login
 
 ## Local Environment

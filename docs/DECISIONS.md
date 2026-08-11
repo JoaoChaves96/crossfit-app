@@ -126,8 +126,41 @@ them produced a gym that looked configured and was not.
 Rules:
 
 - Steps 2 and 3 block until at least one valid entry exists.
-- A new gym still has **no coach** — the owner must invite one before the first
-  class can be scheduled. The wizard's closing screen says so; it deliberately
-  does not offer "create your first class", which cannot yet succeed.
+- A new gym has no coach on staff, but the owner may coach their own classes
+  (see "Owners as Coaches"), so the wizard's closing screen offers "Create Your
+  First Class" — it is submittable with the owner as the assigned coach.
+  Inviting a coach is offered as an alternative, not a prerequisite.
 - Membership plans remain optional at setup time; they gate athlete visibility,
   not class creation.
+
+## Owners as Coaches
+
+Every gym owner is treated as a coach for the purpose of **class assignment**.
+An active `owner` gym_staff row satisfies the coach-assignment precondition on
+CreateClass, EditClass, and CreateRecurringClasses.
+
+Rationale: `CreateClass` requires a coach, and a brand-new gym has none, so a
+solo box owner could never schedule their first class — the wizard completed
+into a dead end. Small boxes are commonly owner-coached, so requiring an invite
+to a second person modelled staffing that many gyms do not have.
+
+Rules:
+
+- This changes **who can be named on a class**, not what the owner may do.
+  Owners already hold coach-side permissions independently: attendance and
+  result endpoints are `@Role(['coach', 'owner'])`.
+- **One `gym_staff` row per user per gym still holds.** Owners are not given a
+  second `role = 'coach'` row, and `role` gains no compound value. Ambiguity in
+  the unfiltered `findOne({ userId, gymId })` lookups, and in the single `role`
+  claim baked into the JWT by `resolveGymContext`, is thereby avoided.
+- The `status` check is unchanged: an **inactive** owner row is still rejected.
+- `GET /configuration/coaches` keeps returning only `role = 'coach'` rows —
+  that list drives *staff management*, which can deactivate a row, and an owner
+  must never deactivate their own ownership. The class coach **picker** passes
+  `?assignable=true`, which additionally returns the active owner.
+- Owners are therefore selectable as a class coach but do not appear in the
+  Coaches management screen, and `ChangeCoachStatus` still filters
+  `role = 'coach'`.
+
+Supersedes the rule that an owner had to invite a coach before the first class
+could be scheduled.
