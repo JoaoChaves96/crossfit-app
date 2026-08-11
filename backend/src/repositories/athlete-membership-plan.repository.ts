@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { LessThanOrEqual, Repository } from 'typeorm';
 import { AthleteMembershipPlanEntity } from '../domain/athlete-membership-plan/entities/athlete-membership-plan.entity';
 
 /**
@@ -68,6 +68,20 @@ export class AthleteMembershipPlanRepository {
   ): Promise<AthleteMembershipPlanEntity[]> {
     return this.athleteMembershipPlanRepository.find({
       where: { gymMembershipId },
+      relations: ['membershipPlan'],
+    });
+  }
+
+  /**
+   * Retrieve every active plan whose expiry has arrived.
+   * Rows with a null expiresAt are unlimited and are never returned.
+   */
+  async findDueForRenewal(now: Date): Promise<AthleteMembershipPlanEntity[]> {
+    return this.athleteMembershipPlanRepository.find({
+      where: {
+        status: 'active',
+        expiresAt: LessThanOrEqual(now),
+      },
       relations: ['membershipPlan'],
     });
   }

@@ -36,6 +36,12 @@ export class AthleteMembershipPlanEntity {
   @Column('timestamp', { nullable: true })
   expiresAt: Date | null;
 
+  @Column('boolean', { default: true })
+  autoRoll: boolean;
+
+  @Column('integer', { default: 0 })
+  autoRollCount: number;
+
   // Relationships
   @OneToOne(() => GymMembershipEntity, (gm) => gm.activeMembershipPlan)
   @JoinColumn({ name: 'gymMembershipId' })
