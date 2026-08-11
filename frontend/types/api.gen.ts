@@ -469,7 +469,7 @@ export interface paths {
         };
         /**
          * List coaches
-         * @description Returns all coaches (active and inactive) for the gym. Gym owners only.
+         * @description Returns all coaches (active and inactive) for the gym. Gym owners only. Pass `assignable=true` to get the list of staff who can be assigned as a class coach instead — that list also contains the gym's owner, who may coach their own classes, and is limited to active staff. The default list is for staff management and deliberately excludes the owner.
          */
         get: operations["GymConfigurationController_getCoaches"];
         put?: never;
@@ -3973,7 +3973,10 @@ export interface operations {
     };
     GymConfigurationController_getCoaches: {
         parameters: {
-            query?: never;
+            query?: {
+                /** @description When true, return active staff assignable as a class coach (includes the owner). */
+                assignable?: boolean;
+            };
             header?: never;
             path: {
                 /** @description Gym ID */

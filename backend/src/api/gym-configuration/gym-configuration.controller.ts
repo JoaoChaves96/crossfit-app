@@ -6,6 +6,7 @@ import {
   Delete,
   Body,
   Param,
+  Query,
   UseGuards,
   ValidationPipe,
   Inject,
@@ -22,6 +23,7 @@ import {
   ApiOperation,
   ApiResponse,
   ApiParam,
+  ApiQuery,
   ApiBody,
 } from '@nestjs/swagger';
 
@@ -572,15 +574,28 @@ export class GymConfigurationController {
    *
    * **Postconditions:**
    * - Returns all coaches (active and inactive) for the gym
+   * - With `assignable=true`, returns active staff who may be assigned as a
+   *   class coach, which additionally includes the owner
    */
   @Get('/coaches')
   @Role('owner')
   @ApiOperation({
     summary: 'List coaches',
     description:
-      'Returns all coaches (active and inactive) for the gym. Gym owners only.',
+      'Returns all coaches (active and inactive) for the gym. Gym owners only. ' +
+      'Pass `assignable=true` to get the list of staff who can be assigned as a ' +
+      "class coach instead — that list also contains the gym's owner, who may " +
+      'coach their own classes, and is limited to active staff. The default ' +
+      'list is for staff management and deliberately excludes the owner.',
   })
   @ApiParam({ name: 'gymId', description: 'Gym ID' })
+  @ApiQuery({
+    name: 'assignable',
+    required: false,
+    type: Boolean,
+    description:
+      'When true, return active staff assignable as a class coach (includes the owner).',
+  })
   @ApiResponse({
     status: 200,
     description: 'Coaches list returned',
@@ -590,8 +605,11 @@ export class GymConfigurationController {
   @ApiResponse({ status: 403, description: 'Forbidden - Owner role required' })
   async getCoaches(
     @Param('gymId') gymId: string,
+    @Query('assignable') assignable?: string,
   ): Promise<GetCoachesResponseDto> {
-    return this.coachesQueryService.getCoachesByGym(gymId);
+    return this.coachesQueryService.getCoachesByGym(gymId, {
+      assignable: assignable === 'true',
+    });
   }
 
   /**

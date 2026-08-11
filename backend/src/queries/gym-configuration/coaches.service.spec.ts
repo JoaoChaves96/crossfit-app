@@ -1,6 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
-import { IsNull } from 'typeorm';
+import { In, IsNull } from 'typeorm';
 import { CoachesQueryService } from './coaches.service';
 import { GymStaffEntity } from '../../domain/gym-staff/entities/gym-staff.entity';
 import { UserEntity } from '../../domain/user/entities/user.entity';
@@ -80,6 +80,31 @@ describe('CoachesQueryService', () => {
       );
     });
   }
+
+  // The management list and the create-class coach picker share this endpoint.
+  // Only the picker may offer the owner: the management screen can deactivate a
+  // row, and an owner must never be able to deactivate their own ownership.
+  describe('assignable', () => {
+    it('lists only coach rows by default, so the owner cannot be managed as staff', async () => {
+      scopedClasses([]);
+
+      await service.getCoachesByGym(gymId);
+
+      expect(gymStaffRepository.find).toHaveBeenCalledWith({
+        where: { gymId, role: 'coach' },
+      });
+    });
+
+    it('includes the owner row when assignable coaches are requested', async () => {
+      scopedClasses([]);
+
+      await service.getCoachesByGym(gymId, { assignable: true });
+
+      expect(gymStaffRepository.find).toHaveBeenCalledWith({
+        where: { gymId, role: In(['coach', 'owner']), status: 'active' },
+      });
+    });
+  });
 
   it('de-duplicates multiple classes of the same type into a single name', async () => {
     scopedClasses([
