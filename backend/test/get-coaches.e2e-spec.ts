@@ -231,7 +231,7 @@ describe('GET /api/gyms/:gymId/configuration/coaches', () => {
 
         // email: string
         expect(typeof coach.email).toBe('string');
-        expect(coach.email.length).toBeGreaterThan(0);
+        expect((coach.email as string).length).toBeGreaterThan(0);
 
         // role: 'owner' | 'coach'
         expect(['owner', 'coach']).toContain(coach.role);
