@@ -385,11 +385,9 @@ header documents the testIDs that were added specifically to unblock its coverag
 - No unit tests cover `coach-class-details` lifecycle gating; the owner equivalent has
   them in `edit-class.test.tsx`. The new `isProgrammingEditable` gate is live-verified
   across all five states but not test-locked.
-- API errors surface as raw JSON (`{"message":"…","statusCode":400}`) because
-  `ApiError` carries `response.text()` verbatim. Visible when submitting attendance on
-  a `published` class — the backend correctly refuses (lifecycle invariant: attendance
-  requires `in_progress` or `completed`), but the message is unreadable. `api-client.ts`
-  is untouched by this phase and every screen shares the behaviour.
+- ~~API errors surface as raw JSON (`{"message":"…","statusCode":400}`) because
+  `ApiError` carries `response.text()` verbatim.~~ ✅ **FIXED 2026-08-11** — see
+  "API error copy" below.
 
 ---
 
@@ -494,6 +492,39 @@ Each block was mutation-verified, then **discrimination-checked** by forcing the
 `describe` to render mobile — which caught `edit-class`'s first draft passing in both
 registers (it asserted only shared behaviour). Rewritten around footer document order,
 it now fails when forced to mobile. Zero production lines changed by the sweep.
+
+---
+
+### API error copy — ✅ DONE (2026-08-11)
+
+Closes the Phase 3 flag above. `ApiError.message` was `response.text()` verbatim, and
+all ~25 screens render `err.message` in their error state, so users saw
+`{"message":"…","statusCode":400}`. Fixed at the source in `frontend/utils/api-client.ts`
+rather than per screen.
+
+- `ApiError.message` is now **status-derived user-facing copy**; the verbatim server
+  body moved to a new `ApiError.detail` field (not for display).
+- Backend messages are deliberately **not** passed through: they are written for
+  developers and leak internals (`Class <uuid> not found in gym <uuid>`, `Gym ID
+  mismatch`, `JWT secret not configured`). A screen that can be more specific already
+  branches on `status` and writes its own copy — the 409 in `gym-setup`, the 401 in
+  `login`, the 404/409 in `invite/[inviteToken]`.
+- A **rejected fetch** (offline device, dead server) now becomes an `ApiError` with
+  `status: 0` and an offline hint, instead of escaping as a raw `TypeError` whose
+  "Network request failed" reached the same error states. All four verbs share one
+  `request()` helper, so the normalization cannot be forgotten on a new verb.
+- 15 tests added to `__tests__/useApiClient.test.tsx` (298 total, 23/23 suites green).
+
+Two screens the live run then exposed as needing their own copy:
+- `coach-mark-attendance` — the shared 400 sentence ("check your details") is wrong here;
+  the coach's selections are fine, the class just has not started. Now branches on 400 to
+  say so, which is the exact case the Phase 3 flag was filed against.
+- `dev-bootstrap` — was printing `Login failed (${err.status})`, i.e. "Login failed (0)"
+  once a rejected fetch became a status-0 ApiError. Now renders `err.message`, which
+  distinguishes a dead backend from a rejected login.
+
+Live-verified against the running backend as coach and athlete: the attendance 400 shows
+its specific sentence, and a genuinely unreachable host shows the offline hint.
 
 ---
 

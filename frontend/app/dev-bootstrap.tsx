@@ -9,7 +9,7 @@ import {
 import { useRouter } from "expo-router";
 import { AuthContext } from "@/context/AuthContext";
 import { GymContext } from "@/context/GymContext";
-import { createApiClient, ApiError } from "@/utils/api-client";
+import { createApiClient } from "@/utils/api-client";
 import { AppColors } from "@/constants/theme";
 import { styles } from "./dev-bootstrap.styles";
 
@@ -133,10 +133,11 @@ export default function DevBootstrapScreen() {
       const route = (role && ROLE_ROUTES[role]) ?? "/no-gym";
       router.replace(route as never);
     } catch (err) {
+      // ApiError.message is already user-facing copy, and it distinguishes a
+      // dead backend (status 0) from a rejected login — the status code alone
+      // did not.
       const message =
-        err instanceof ApiError
-          ? `Login failed (${err.status})`
-          : "Something went wrong";
+        err instanceof Error ? err.message : "Something went wrong";
       setErrorEmail(email);
       setErrorMessage(message);
     } finally {

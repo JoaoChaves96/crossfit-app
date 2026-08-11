@@ -207,6 +207,94 @@ describe('createApiClient — non-ok responses throw ApiError', () => {
   });
 });
 
+// ─── ApiError — user-facing message ───────────────────────────────────────────
+
+/**
+ * Every screen renders `err.message` in its error state, so ApiError.message is
+ * user-facing copy — it must never be the raw response body. The server text is
+ * kept on `detail` for logging: backend messages routinely leak internals
+ * ("Class <uuid> not found in gym <uuid>", "JWT secret not configured").
+ */
+describe('ApiError — message is user-facing copy, not the raw body', () => {
+  it('does not put the raw JSON body in message', () => {
+    const error = new ApiError(400, '{"message":"Capacity must be greater than 0","statusCode":400}');
+
+    expect(error.message).not.toContain('{');
+    expect(error.message).not.toContain('statusCode');
+  });
+
+  it('keeps the raw server body on detail', () => {
+    const body = '{"message":"Capacity must be greater than 0","statusCode":400}';
+    const error = new ApiError(400, body);
+
+    expect(error.detail).toBe(body);
+  });
+
+  it('gives each status class its own sentence', () => {
+    expect(new ApiError(400, 'x').message).toBe(
+      'Something in that request was not valid. Please check your details and try again.',
+    );
+    expect(new ApiError(401, 'x').message).toBe('Your session has expired. Please log in again.');
+    expect(new ApiError(403, 'x').message).toBe('You do not have permission to do that.');
+    expect(new ApiError(404, 'x').message).toBe('We could not find what you were looking for.');
+    expect(new ApiError(409, 'x').message).toBe(
+      'That conflicts with something that already exists. Please refresh and try again.',
+    );
+  });
+
+  it('treats any 5xx as a server-side problem', () => {
+    const expected = 'Something went wrong on our end. Please try again in a moment.';
+
+    expect(new ApiError(500, 'x').message).toBe(expected);
+    expect(new ApiError(503, 'x').message).toBe(expected);
+  });
+
+  it('falls back to a generic sentence for unmapped statuses', () => {
+    expect(new ApiError(418, 'x').message).toBe('Something went wrong. Please try again.');
+  });
+
+  it('surfaces an offline hint for the status-0 network failure case', () => {
+    expect(new ApiError(0, '').message).toBe(
+      'Could not reach the server. Check your connection and try again.',
+    );
+  });
+
+  it('is still an Error with a readable stack-trace name', () => {
+    const error = new ApiError(404, 'nope');
+
+    expect(error).toBeInstanceOf(Error);
+    expect(error.name).toBe('ApiError');
+  });
+});
+
+// ─── createApiClient — network failures ──────────────────────────────────────
+
+describe('createApiClient — a failed fetch becomes an ApiError', () => {
+  it('converts a rejected fetch into a status-0 ApiError instead of a raw TypeError', async () => {
+    // A dead server / offline device rejects fetch outright; screens render
+    // err.message, and "Network request failed" is not user-facing copy.
+    const client = createApiClient({ token: 'tok' });
+    mockFetch.mockRejectedValueOnce(new TypeError('Network request failed'));
+
+    const error = await client.get('/anything').catch((e: unknown) => e);
+
+    expect(error).toBeInstanceOf(ApiError);
+    expect((error as ApiError).status).toBe(0);
+    expect((error as ApiError).message).toBe(
+      'Could not reach the server. Check your connection and try again.',
+    );
+  });
+
+  it('does not swallow an ApiError raised from a non-ok response', async () => {
+    const client = createApiClient({ token: 'tok' });
+    mockFetch.mockResolvedValueOnce(makeResponse(404, 'Not Found'));
+
+    const error = await client.get('/missing').catch((e: unknown) => e);
+
+    expect((error as ApiError).status).toBe(404);
+  });
+});
+
 // ─── MISSING BEHAVIORS (intentionally failing) ────────────────────────────────
 
 describe('useApiClient — 401 response triggers logout and redirect', () => {

@@ -13,7 +13,7 @@ import { SafeScreen } from '@/components/SafeScreen';
 import { CoachSidebar } from '@/components/CoachSidebar';
 import { Text, Icon, StatusChip, Button } from '@/components/cleanink';
 import { Ink, Space, Status } from '@/constants/design';
-import { createApiClient } from '@/utils/api-client';
+import { ApiError, createApiClient } from '@/utils/api-client';
 import { components } from '@/types/api.gen';
 import { STATE_LABEL, STATE_CHIP_TONE, type ClassState } from './class-management/classStates';
 import { styles, mobileStyles } from './coach-mark-attendance.styles';
@@ -270,6 +270,15 @@ export default function CoachMarkAttendanceScreen() {
       );
       setSuccessMessage('Attendance submitted successfully.');
     } catch (err) {
+      // A 400 here is the lifecycle invariant: attendance requires in_progress
+      // or completed. The shared 400 copy ("check your details") is wrong — the
+      // coach's selections are fine, the class simply has not started.
+      if (err instanceof ApiError && err.status === 400) {
+        setSubmitError(
+          'This class has not started yet. Attendance can be marked once it is in progress.',
+        );
+        return;
+      }
       const msg = err instanceof Error ? err.message : 'Failed to submit attendance.';
       setSubmitError(msg);
     } finally {
