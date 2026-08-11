@@ -91,3 +91,25 @@ client's point of view; it must store the new token in place of the old one.
 
 There is deliberately no general `/api/auth/refresh` endpoint in MVP. If another
 mid-session role change appears (e.g. accepting a coach invite), revisit this.
+
+## One Gym Per Owner
+
+A user may own **at most one** gym. `POST /api/gyms` rejects a second attempt
+with `409 Conflict` when the caller already has an active `owner` entry in
+`gym_staff`.
+
+Rationale: a JWT carries exactly one `gymId`, resolved from a single `gym_staff`
+lookup. With two owned gyms, which gym the owner logs into is arbitrary, so a
+second gym is unreachable rather than merely additional. `DATA_MODEL.md` grants
+multi-gym staffing to **coaches** only; there has never been an owner equivalent.
+
+Rules:
+
+- The ownership check runs *before* the gym row is written, so a rejected attempt
+  leaves no orphan gym.
+- Only `role = 'owner'` and `status = 'active'` entries block creation. Coach
+  staffing at other gyms, and inactive historical rows, do not.
+- Gym-context resolution is explicitly ordered (oldest assignment first) so a
+  coach staffing several gyms gets the same context on every login.
+- Multi-gym ownership (gym groups/franchises) is out of MVP scope. Introducing it
+  means changing how gym context is carried, not just relaxing this check.

@@ -342,6 +342,9 @@ MVP scope. Coach desktop has NO duplicate-header bug). Discovery/triage only; fi
 - All endpoints protected with JwtAuthGuard + role-based RolesGuard
 - `POST /api/auth/login` — public, issues 7-day JWT for valid credentials
 - `POST /api/auth/register` — public, creates athlete account and issues JWT (gymId: null, role: null)
+- `POST /api/gyms` — 409 if the caller already owns an active gym (one gym per
+  owner, see `docs/DECISIONS.md`); gym context resolution is explicitly ordered so
+  a multi-gym coach gets the same gym on every login (2026-08-10)
 - `CurrentUser` and `CurrentGym` decorators read from JWT claims
 
 ### Frontend
