@@ -3,7 +3,18 @@ import { Cron, CronExpression } from '@nestjs/schedule';
 import { ClassRepository } from '../../repositories/class.repository';
 import { ClassEntity } from './entities/class.entity';
 
-const BOOKING_CLOSE_MINUTES_BEFORE_START = 30;
+/**
+ * How long before a class starts the booking window shuts.
+ *
+ * This also defines how long the waitlist is inert: cancellation is the only
+ * promotion path and it rejects any class past `published`, so a seat freed
+ * inside this window can never be reassigned (see DECISIONS.md → Absence Does
+ * Not Promote). Keep it small for that reason.
+ *
+ * Unrelated to REMINDER_MINUTES_BEFORE in notification-reminder.scheduler.ts,
+ * which is the class-reminder lead time.
+ */
+const BOOKING_CLOSE_MINUTES_BEFORE_START = 5;
 
 @Injectable()
 export class ClassLifecycleScheduler {
