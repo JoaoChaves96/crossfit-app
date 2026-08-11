@@ -19,7 +19,7 @@ export class AttendanceRecordResponseDto {
   @ApiProperty({ example: 'uuid-coach-user-id' })
   markedByUserId: string;
 
-  @ApiProperty({ example: 'Arrived late', nullable: true })
+  @ApiProperty({ type: String, example: 'Arrived late', nullable: true })
   notes: string | null;
 }
 

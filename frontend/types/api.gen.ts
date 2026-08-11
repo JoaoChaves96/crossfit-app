@@ -1227,14 +1227,17 @@ export interface components {
              */
             status: "booked" | "waitlisted" | "cancelled";
             /** @example 1 */
-            bookedPosition: Record<string, never> | null;
+            bookedPosition: number | null;
             /**
              * Format: date-time
              * @example 2024-01-01T00:00:00.000Z
              */
             createdAt: string;
-            /** @example null */
-            cancelledAt: Record<string, never> | null;
+            /**
+             * Format: date-time
+             * @example null
+             */
+            cancelledAt: string | null;
         };
         CancelBookingResponseDto: {
             /** @example uuid-booking-id */
@@ -1249,14 +1252,17 @@ export interface components {
              */
             status: "booked" | "waitlisted" | "cancelled";
             /** @example null */
-            bookedPosition: Record<string, never> | null;
+            bookedPosition: number | null;
             /**
              * Format: date-time
              * @example 2024-01-01T00:00:00.000Z
              */
             createdAt: string;
-            /** @example 2024-06-15T10:00:00.000Z */
-            cancelledAt: Record<string, never> | null;
+            /**
+             * Format: date-time
+             * @example 2024-06-15T10:00:00.000Z
+             */
+            cancelledAt: string | null;
         };
         GetClassProgrammingResponseDto: {
             /**
@@ -1304,7 +1310,7 @@ export interface components {
              */
             lastModifiedAt: string;
             /** @example uuid-coach-user-id */
-            lastModifiedByUserId: Record<string, never> | null;
+            lastModifiedByUserId: string | null;
         };
         ToggleLoggableStatusDto: {
             /** @example uuid-class-id */
@@ -1476,7 +1482,7 @@ export interface components {
             /** @example uuid-coach-user-id */
             markedByUserId: string;
             /** @example Arrived late */
-            notes: Record<string, never> | null;
+            notes: string | null;
         };
         MarkAttendanceResponseDto: {
             /** @example uuid-class-id */
@@ -1580,14 +1586,17 @@ export interface components {
              */
             unit: "seconds" | "minutes" | "reps" | "kg" | "lb" | "rounds" | "none";
             /** @example Felt strong today */
-            notes: Record<string, never> | null;
+            notes: string | null;
             /**
              * Format: date-time
              * @example 2024-06-15T09:00:00.000Z
              */
             loggedAt: string;
-            /** @example null */
-            editedAt: Record<string, never> | null;
+            /**
+             * Format: date-time
+             * @example null
+             */
+            editedAt: string | null;
         };
         EditResultDto: {
             /** @example uuid-result-id */
@@ -1627,14 +1636,17 @@ export interface components {
              */
             unit: "seconds" | "minutes" | "reps" | "kg" | "lb" | "rounds" | "none";
             /** @example Felt better this time */
-            notes: Record<string, never> | null;
+            notes: string | null;
             /**
              * Format: date-time
              * @example 2024-06-15T09:00:00.000Z
              */
             loggedAt: string;
-            /** @example 2024-06-15T10:00:00.000Z */
-            editedAt: Record<string, never> | null;
+            /**
+             * Format: date-time
+             * @example 2024-06-15T10:00:00.000Z
+             */
+            editedAt: string | null;
         };
         SpaceItemDto: {
             /**
@@ -1672,8 +1684,11 @@ export interface components {
             name: string;
             /** @example 20 */
             baseCapacity: number;
-            /** @example null */
-            deletedAt: Record<string, never> | null;
+            /**
+             * Format: date-time
+             * @example null
+             */
+            deletedAt: string | null;
         };
         UpdateSpaceDto: {
             /** @example Rig Room */
@@ -1690,8 +1705,11 @@ export interface components {
             name: string;
             /** @example 25 */
             baseCapacity: number;
-            /** @example null */
-            deletedAt: Record<string, never> | null;
+            /**
+             * Format: date-time
+             * @example null
+             */
+            deletedAt: string | null;
         };
         DeleteSpaceResponseDto: {
             /** @example uuid-space-id */
@@ -1773,8 +1791,11 @@ export interface components {
              * @enum {string}
              */
             resultMetrics: "time" | "reps" | "weight" | "rounds" | "none";
-            /** @example null */
-            deletedAt: Record<string, never> | null;
+            /**
+             * Format: date-time
+             * @example null
+             */
+            deletedAt: string | null;
         };
         CreateMembershipPlanDto: {
             /** @example Premium Plan */
@@ -1928,8 +1949,11 @@ export interface components {
              * @example 2024-01-01T00:00:00.000Z
              */
             startedAt: string;
-            /** @example 2025-01-01T00:00:00.000Z */
-            expiresAt: Record<string, never> | null;
+            /**
+             * Format: date-time
+             * @example 2025-01-01T00:00:00.000Z
+             */
+            expiresAt: string | null;
         };
         ManuallyAddMemberDto: {
             /** @example uuid-athlete-user-id */
@@ -2112,7 +2136,7 @@ export interface components {
              * @description Optional description of the gym
              * @example A community-driven CrossFit box focused on functional fitness.
              */
-            description: Record<string, never> | null;
+            description: string | null;
             /**
              * @description Physical location of the gym
              * @example 123 Main St, New York, NY
@@ -2307,7 +2331,7 @@ export interface components {
             /** @example Rua das Flores 123, São Paulo */
             location: string;
             /** @example A premium CrossFit gym. */
-            description: Record<string, never> | null;
+            description: string | null;
             /** @example uuid-owner-user-id */
             ownerId: string;
             /**
@@ -2389,8 +2413,15 @@ export interface components {
             title: string;
             /** @description Notification body text */
             body: string;
-            /** @description Additional data payload */
-            data: Record<string, never>;
+            /**
+             * @description Additional data payload
+             * @example {
+             *       "classId": "uuid-class-id"
+             *     }
+             */
+            data: {
+                [key: string]: string;
+            };
             /** @description Whether the notification has been read */
             read: boolean;
             /**
@@ -2485,10 +2516,10 @@ export interface components {
              */
             expiresAt: string;
             /**
-             * @description ISO timestamp when the invite was accepted, if applicable
+             * @description ISO timestamp when the invite was accepted, or null if not accepted
              * @example 2026-05-03T14:00:00.000Z
              */
-            acceptedAt?: Record<string, never> | null;
+            acceptedAt: string | null;
         };
         RevokeInviteResponseDto: {
             /**

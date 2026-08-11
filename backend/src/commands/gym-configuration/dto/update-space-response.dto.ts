@@ -13,6 +13,6 @@ export class UpdateSpaceResponseDto {
   @ApiProperty({ example: 25 })
   baseCapacity: number;
 
-  @ApiProperty({ example: null, nullable: true })
+  @ApiProperty({ type: Date, example: null, nullable: true })
   deletedAt: Date | null;
 }

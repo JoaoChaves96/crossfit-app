@@ -25,12 +25,12 @@ export class LogResultResponseDto {
   })
   unit: 'seconds' | 'minutes' | 'reps' | 'kg' | 'lb' | 'rounds' | 'none';
 
-  @ApiProperty({ example: 'Felt strong today', nullable: true })
+  @ApiProperty({ type: String, example: 'Felt strong today', nullable: true })
   notes: string | null;
 
   @ApiProperty({ example: '2024-06-15T09:00:00.000Z' })
   loggedAt: Date;
 
-  @ApiProperty({ example: null, nullable: true })
+  @ApiProperty({ type: Date, example: null, nullable: true })
   editedAt: Date | null;
 }

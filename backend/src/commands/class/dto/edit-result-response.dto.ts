@@ -25,12 +25,20 @@ export class EditResultResponseDto {
   })
   unit: 'seconds' | 'minutes' | 'reps' | 'kg' | 'lb' | 'rounds' | 'none';
 
-  @ApiProperty({ example: 'Felt better this time', nullable: true })
+  @ApiProperty({
+    type: String,
+    example: 'Felt better this time',
+    nullable: true,
+  })
   notes: string | null;
 
   @ApiProperty({ example: '2024-06-15T09:00:00.000Z' })
   loggedAt: Date;
 
-  @ApiProperty({ example: '2024-06-15T10:00:00.000Z', nullable: true })
+  @ApiProperty({
+    type: Date,
+    example: '2024-06-15T10:00:00.000Z',
+    nullable: true,
+  })
   editedAt: Date | null;
 }

@@ -16,12 +16,16 @@ export class CancelBookingResponseDto {
   })
   status: 'booked' | 'waitlisted' | 'cancelled';
 
-  @ApiProperty({ example: null, nullable: true })
+  @ApiProperty({ type: Number, example: null, nullable: true })
   bookedPosition: number | null;
 
   @ApiProperty({ example: '2024-01-01T00:00:00.000Z' })
   createdAt: Date;
 
-  @ApiProperty({ example: '2024-06-15T10:00:00.000Z', nullable: true })
+  @ApiProperty({
+    type: Date,
+    example: '2024-06-15T10:00:00.000Z',
+    nullable: true,
+  })
   cancelledAt: Date | null;
 }

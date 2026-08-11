@@ -14,6 +14,7 @@ export class GymProfileDto {
   name: string;
 
   @ApiProperty({
+    type: String,
     example: 'A community-driven CrossFit box focused on functional fitness.',
     description: 'Optional description of the gym',
     nullable: true,

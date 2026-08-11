@@ -1,4 +1,4 @@
-import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { ApiProperty } from '@nestjs/swagger';
 export class InviteListItemDto {
   @ApiProperty({
     description: 'Unique identifier of the invite',
@@ -37,8 +37,10 @@ export class InviteListItemDto {
   })
   expiresAt!: string;
 
-  @ApiPropertyOptional({
-    description: 'ISO timestamp when the invite was accepted, if applicable',
+  @ApiProperty({
+    type: String,
+    description:
+      'ISO timestamp when the invite was accepted, or null if not accepted',
     example: '2026-05-03T14:00:00.000Z',
     nullable: true,
   })

@@ -10,7 +10,11 @@ export class CreateGymResponseDto {
   @ApiProperty({ example: 'Rua das Flores 123, São Paulo' })
   location: string;
 
-  @ApiProperty({ example: 'A premium CrossFit gym.', nullable: true })
+  @ApiProperty({
+    type: String,
+    example: 'A premium CrossFit gym.',
+    nullable: true,
+  })
   description: string | null;
 
   @ApiProperty({ example: 'uuid-owner-user-id' })

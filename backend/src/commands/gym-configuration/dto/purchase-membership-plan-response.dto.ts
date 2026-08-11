@@ -16,6 +16,10 @@ export class PurchaseMembershipPlanResponseDto {
   @ApiProperty({ example: '2024-01-01T00:00:00.000Z' })
   startedAt: Date;
 
-  @ApiProperty({ example: '2025-01-01T00:00:00.000Z', nullable: true })
+  @ApiProperty({
+    type: Date,
+    example: '2025-01-01T00:00:00.000Z',
+    nullable: true,
+  })
   expiresAt: Date | null;
 }

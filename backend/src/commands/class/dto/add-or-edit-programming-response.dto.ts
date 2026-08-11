@@ -21,6 +21,6 @@ export class AddOrEditProgrammingResponseDto {
   @ApiProperty({ example: '2024-06-14T19:00:00.000Z' })
   lastModifiedAt: Date;
 
-  @ApiProperty({ example: 'uuid-coach-user-id', nullable: true })
+  @ApiProperty({ type: String, example: 'uuid-coach-user-id', nullable: true })
   lastModifiedByUserId: string | null;
 }

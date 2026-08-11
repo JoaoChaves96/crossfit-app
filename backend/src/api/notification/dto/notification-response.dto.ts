@@ -28,7 +28,12 @@ export class NotificationItemDto {
   @ApiProperty({ description: 'Notification body text' })
   body: string;
 
-  @ApiProperty({ description: 'Additional data payload', type: Object })
+  @ApiProperty({
+    description: 'Additional data payload',
+    type: 'object',
+    additionalProperties: { type: 'string' },
+    example: { classId: 'uuid-class-id' },
+  })
   data: Record<string, string>;
 
   @ApiProperty({ description: 'Whether the notification has been read' })
