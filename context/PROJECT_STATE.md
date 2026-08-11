@@ -184,6 +184,17 @@ MVP scope. Coach desktop has NO duplicate-header bug). Discovery/triage only; fi
 - ✅ **Issues Found is now empty of actionable 🐞 cards.** All Phase 3 audit bugs are fixed and sit
   in To Verify awaiting live verification. Membership Plans / Members cards are parked in Backlog
   (deferred post-go-live).
+- 🔍 **Owner onboarding follow-up (2026-08-11)** — three items off the newly-wired
+  `/gym-setup` route:
+  - ✅ **One gym per owner** (`3f4146c`, docs `d5662ac`) — `POST /api/gyms` returns 409 when the
+    caller already owns an active gym, checked before the save so no orphan gym is created;
+    `resolveGymContext` findOnes ordered for a stable gym per login. See `docs/DECISIONS.md`.
+  - ✅ **Wizard correctness** — steps 2/3 block Next on an empty list, the 409 surfaces as
+    readable copy, and `GymContext` is now set on submit (without it the owner left setup with
+    `currentGymId: null` and every gym-scoped owner screen silently no-oped). New
+    `__tests__/gym-setup.test.tsx`, 16 tests.
+  - 🔍 **Responsive `adapt` pass** — Impeccable Phase 4, BUILT, awaiting commit go-ahead. See
+    `epics/IMPECCABLE_RESTYLE_EPIC.md` → Phase 4.
 
 ## Previous Phase (2026-05-23)
 
@@ -360,7 +371,9 @@ MVP scope. Coach desktop has NO duplicate-header bug). Discovery/triage only; fi
   GymContext, then configures spaces and class types. Wired up 2026-08-10
   (previously an orphan route). Steps 2 and 3 require at least one entry each
   (see `docs/DECISIONS.md` → Minimum Gym Configuration); covered by
-  `__tests__/gym-setup.test.tsx` (2026-08-11)
+  `__tests__/gym-setup.test.tsx` (2026-08-11). Responsive `adapt` pass 2026-08-11
+  (Impeccable Phase 4): the wizard now draws its own header — the navigator's had
+  no back target and sent a deep-linked owner to the athlete surface
 - Dev bootstrap — three tappable user cards (Owner, Coach, Athlete) with instant login
 
 ## Local Environment

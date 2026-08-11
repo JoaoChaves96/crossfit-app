@@ -2,6 +2,7 @@
 
 **Status:** 🟢 Phase 1 (athlete) COMPLETE · Phase 2 (gym owner) **CLOSED** 2026-08-07
 · Phase 3 (coach) **COMMITTED** 2026-08-07 — keyboard fix pending device re-test
+· Phase 4 (`gym-setup` adapt) **BUILT** 2026-08-11 — awaiting commit go-ahead
 **Start Date:** 2026-08-07 (Phase 0 pilot built)
 **Owner:** Frontend + Impeccable design system
 **Depends on:** none (visual layer only; no API/contract changes)
@@ -389,6 +390,56 @@ header documents the testIDs that were added specifically to unblock its coverag
   a `published` class — the backend correctly refuses (lifecycle invariant: attendance
   requires `in_progress` or `completed`), but the message is unreadable. `api-client.ts`
   is untouched by this phase and every screen shares the behaviour.
+
+---
+
+### Phase 4 — Owner onboarding follow-up: `gym-setup` — ✅ BUILT (2026-08-11)
+
+The first owner screen touched since Phase 2 closed. It was restyled to Clean Ink in
+Phase 2 but never adapted, so it was the **only owner screen without
+`useResponsiveLayout`**. Impeccable command: `adapt`, mode Operate, REFINEMENT —
+Clean Ink and `frontend/DESIGN.md` preserved.
+
+**Scope:** `app/gym-setup.tsx`, `app/gym-setup.styles.ts`, one line of `app/_layout.tsx`.
+
+**Structural (the reason `adapt` and not `polish`):**
+- Adopted `useResponsiveLayout`; one measure-capped, centred column (`maxWidth: 640`)
+  so fields stop stretching a 1280px window edge to edge.
+- Mobile register: actions restack full-width `column-reverse` (primary on top,
+  matching `no-gym` and `login`); the space name/capacity pair stacks; `Add …`
+  stretches.
+- The 4-step rail survives 320pt by dropping its labels to numbered circles only.
+- Header and form content now share one left edge — padding then measure cap, in the
+  same order the ScrollView applies below.
+
+**DESIGN.md violation fixed:** completed step circles and connectors used
+`Status.open` green — the only green in the owner surface. DESIGN.md scopes that hue
+to status-chip text on its wash. Progress now reads through ink + weight, with an
+`Ink.inverse` check on ink marking done steps.
+
+**Also:** collapsed the triple title (header + rail label + step heading all said
+"Create Your Gym"); step headings dropped `screen` → `lead` so the surface header
+outranks them; empty states adopted the icon-circle-on-`Ground.sunken` treatment from
+`no-gym`; error banners swapped a heavy 4px side stripe for a full 1px hairline;
+`Accent.base` focus borders wired to the focus state the keyboard-follow already
+tracked; `Remove` given a real 44pt target plus `accessibilityRole`/label.
+
+**Bug fixed (`_layout.tsx`):** the route was registered `headerShown: true` with no
+back target, so Expo Router's arrow fell back to the parent group and sent a
+**deep-linked owner into `/my-bookings` — the athlete surface**, while in-screen
+Cancel correctly went to `/no-gym`. The wizard now draws its own header
+(`headerShown: false`) and both affordances agree. Reproduces only via deep link.
+
+**Gates:** `tsc` clean but for the 2 known pre-existing `__tests__` errors; FE jest
+266/269 (the 3 reds are `schedule-dashboard.test.tsx`, untouched — see Phase 3's
+flagged list); **`__tests__/gym-setup.test.tsx` 16/16**, every testID preserved.
+Verified in one batched round at 1280 / 390 / 320 (device emulation — the Chrome
+window has a 500px floor, so `resize_page` alone silently lies about mobile widths).
+Console clean. Reviewed by `impeccable-finish-reviewer`; all material findings applied.
+
+**Not verified live:** the success state. Reaching it consumes `owner@newgym.test`,
+the fresh-owner fixture that must stay gym-less; it is covered by jest instead.
+Keyboard behaviour remains **web-only, unconfirmed on device** (screen 7 of the sweep).
 
 ---
 
