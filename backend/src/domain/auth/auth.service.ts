@@ -106,8 +106,13 @@ export class AuthService {
   private async resolveGymContext(
     userId: string,
   ): Promise<{ gymId: string | null; role: string | null }> {
+    // Ordered explicitly: a coach may staff several gyms (DATA_MODEL.md), so
+    // without an ORDER BY the gym baked into the token is whatever the database
+    // returned first and could differ between logins. Oldest assignment wins,
+    // with id as a tiebreak so the result is stable.
     const staffEntry = await this.gymStaffRepository.findOne({
       where: { userId, status: 'active' },
+      order: { assignedAt: 'ASC', id: 'ASC' },
     });
 
     if (staffEntry) {
@@ -116,6 +121,7 @@ export class AuthService {
 
     const membership = await this.gymMembershipRepository.findOne({
       where: { userId, status: 'active' },
+      order: { joinedAt: 'ASC', id: 'ASC' },
     });
 
     if (membership) {

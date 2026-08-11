@@ -33,6 +33,7 @@ export class GymController {
    * **Preconditions:**
    * - User must be authenticated
    * - User must exist
+   * - User must not already own an active gym (one gym per owner)
    *
    * **Postconditions:**
    * - Gym created with status = active (auto-approved for MVP)
@@ -45,7 +46,8 @@ export class GymController {
     description:
       'Register a new gym. The authenticated user becomes the gym owner. ' +
       'Returns a re-signed access token carrying the new gym context, which ' +
-      'the client must store in place of the one it used for this request.',
+      'the client must store in place of the one it used for this request. ' +
+      'An owner may own at most one gym; a second attempt is rejected with 409.',
   })
   @ApiBody({ type: CreateGymDto })
   @ApiResponse({
@@ -54,6 +56,10 @@ export class GymController {
     type: CreateGymResponseDto,
   })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiResponse({
+    status: 409,
+    description: 'The authenticated user already owns an active gym',
+  })
   async createGym(
     @Body(ValidationPipe) createGymDto: CreateGymDto,
     @CurrentUser() userId: string,

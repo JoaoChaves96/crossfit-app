@@ -1,5 +1,5 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { NotFoundException } from '@nestjs/common';
+import { ConflictException, NotFoundException } from '@nestjs/common';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { CreateGymHandler } from './create-gym.handler';
 import { CreateGymCommand } from '../create-gym.command';
@@ -11,7 +11,7 @@ import { AuthService } from '../../../domain/auth/auth.service';
 describe('CreateGymHandler', () => {
   let handler: CreateGymHandler;
   let gymRepository: { save: jest.Mock };
-  let gymStaffRepository: { save: jest.Mock };
+  let gymStaffRepository: { save: jest.Mock; findOne: jest.Mock };
   let userService: { getUserById: jest.Mock };
   let authService: { issueTokenForUser: jest.Mock };
 
@@ -33,6 +33,7 @@ describe('CreateGymHandler', () => {
     };
     gymStaffRepository = {
       save: jest.fn().mockImplementation((e) => Promise.resolve(e)),
+      findOne: jest.fn().mockResolvedValue(null),
     };
     userService = {
       getUserById: jest.fn().mockResolvedValue({ id: mockUserId }),
@@ -62,6 +63,39 @@ describe('CreateGymHandler', () => {
 
     await expect(handler.execute(command)).rejects.toThrow(NotFoundException);
     expect(gymRepository.save).not.toHaveBeenCalled();
+  });
+
+  // One gym per owner: a token carries a single gymId, so a second owned gym
+  // makes the owner's login context arbitrary.
+  it('should throw ConflictException when the user already owns an active gym', async () => {
+    gymStaffRepository.findOne.mockResolvedValue({
+      id: 'staff-1',
+      gymId: 'gym-1',
+      userId: mockUserId,
+      role: 'owner',
+      status: 'active',
+    });
+
+    await expect(handler.execute(command)).rejects.toThrow(ConflictException);
+  });
+
+  it('should not save a gym or staff entry when ownership already exists', async () => {
+    // Rejecting after the gym save would leave an orphan gym with no owner.
+    gymStaffRepository.findOne.mockResolvedValue({ role: 'owner' });
+
+    await expect(handler.execute(command)).rejects.toThrow(ConflictException);
+    expect(gymRepository.save).not.toHaveBeenCalled();
+    expect(gymStaffRepository.save).not.toHaveBeenCalled();
+  });
+
+  it('should look for active owner staffing only', async () => {
+    // A coach may staff several gyms, and inactive rows are historical, so
+    // neither should block a first gym of one's own.
+    await handler.execute(command);
+
+    expect(gymStaffRepository.findOne).toHaveBeenCalledWith({
+      where: { userId: mockUserId, role: 'owner', status: 'active' },
+    });
   });
 
   // Auto-approval is what makes onboarding work at all: every configuration

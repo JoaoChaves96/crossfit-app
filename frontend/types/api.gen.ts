@@ -623,7 +623,7 @@ export interface paths {
         put?: never;
         /**
          * Create a gym
-         * @description Register a new gym. The authenticated user becomes the gym owner. Returns a re-signed access token carrying the new gym context, which the client must store in place of the one it used for this request.
+         * @description Register a new gym. The authenticated user becomes the gym owner. Returns a re-signed access token carrying the new gym context, which the client must store in place of the one it used for this request. An owner may own at most one gym; a second attempt is rejected with 409.
          */
         post: operations["GymController_createGym"];
         delete?: never;
@@ -4381,6 +4381,13 @@ export interface operations {
             };
             /** @description Unauthorized */
             401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description The authenticated user already owns an active gym */
+            409: {
                 headers: {
                     [name: string]: unknown;
                 };

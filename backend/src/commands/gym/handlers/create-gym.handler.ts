@@ -1,5 +1,5 @@
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
-import { Inject, NotFoundException } from '@nestjs/common';
+import { ConflictException, Inject, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { v4 as uuid } from 'uuid';
@@ -25,6 +25,18 @@ export class CreateGymHandler implements ICommandHandler<CreateGymCommand> {
     const user = await this.userService.getUserById(command.userId);
     if (!user) {
       throw new NotFoundException('Authenticated user not found');
+    }
+
+    // One gym per owner. DATA_MODEL.md grants multi-gym staffing to coaches
+    // only, and a token carries exactly one gymId, so a second owned gym would
+    // leave which gym this user logs into down to whichever gym_staff row the
+    // query happened to return. Checked before the gym save so a rejected
+    // attempt leaves no orphan gym row behind.
+    const existingOwnership = await this.gymStaffRepository.findOne({
+      where: { userId: command.userId, role: 'owner', status: 'active' },
+    });
+    if (existingOwnership) {
+      throw new ConflictException('This user already owns a gym');
     }
 
     const gym = new GymEntity();
