@@ -356,8 +356,11 @@ MVP scope. Coach desktop has NO duplicate-header bug). Discovery/triage only; fi
 - No-gym screen — the landing place for any user with no gym: holds athletes until
   invited, and offers "Set Up My Gym" → `/gym-setup` for a new owner
 - Gym setup wizard (`/gym-setup`) — 4 steps (basics → spaces → class types →
-  review); creates the gym, adopts the re-signed token it returns, then configures
-  spaces and class types. Wired up 2026-08-10 (previously an orphan route)
+  review); creates the gym, adopts the re-signed token it returns, sets
+  GymContext, then configures spaces and class types. Wired up 2026-08-10
+  (previously an orphan route). Steps 2 and 3 require at least one entry each
+  (see `docs/DECISIONS.md` → Minimum Gym Configuration); covered by
+  `__tests__/gym-setup.test.tsx` (2026-08-11)
 - Dev bootstrap — three tappable user cards (Owner, Coach, Athlete) with instant login
 
 ## Local Environment

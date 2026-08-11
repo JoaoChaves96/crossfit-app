@@ -113,3 +113,21 @@ Rules:
   coach staffing several gyms gets the same context on every login.
 - Multi-gym ownership (gym groups/franchises) is out of MVP scope. Introducing it
   means changing how gym context is carried, not just relaxing this check.
+
+## Minimum Gym Configuration
+
+The gym setup wizard requires **at least one training space and at least one
+class type** before the gym can be created. Neither step can be skipped.
+
+Rationale: `CreateClass` requires a space, a class type *and* a coach. A gym with
+none of the first two can never schedule a class, so allowing the wizard to skip
+them produced a gym that looked configured and was not.
+
+Rules:
+
+- Steps 2 and 3 block until at least one valid entry exists.
+- A new gym still has **no coach** — the owner must invite one before the first
+  class can be scheduled. The wizard's closing screen says so; it deliberately
+  does not offer "create your first class", which cannot yet succeed.
+- Membership plans remain optional at setup time; they gate athlete visibility,
+  not class creation.
