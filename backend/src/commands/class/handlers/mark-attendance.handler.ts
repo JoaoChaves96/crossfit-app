@@ -7,13 +7,11 @@ import {
 } from '../dto/mark-attendance-response.dto';
 import { ClassRepository } from '../../../repositories/class.repository';
 import { AttendanceRepository } from '../../../repositories/attendance.repository';
-import { BookingRepository } from '../../../repositories/booking.repository';
 import { GymStaffService } from '../../../domain/gym-staff/gym-staff.service';
 import { AttendanceEntity } from '../../../domain/attendance/entities/attendance.entity';
 import { notFound, forbidden, invalidState } from '../../../http/exceptions';
 import { Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
-import { BookingEntity } from '../../../domain/booking/entities/booking.entity';
 import { v4 as uuid } from 'uuid';
 
 /**
@@ -22,8 +20,12 @@ import { v4 as uuid } from 'uuid';
  * Responsibilities:
  * - Enforce all 4 preconditions from COMMAND_MODEL.md lines 577-582
  * - Create or update Attendance records with present status
- * - Automatically promote waitlist if athlete changes from present to absent
  * - Return all marked attendance records
+ *
+ * Deliberately does NOT promote from the waitlist. Attendance is only markable
+ * once the class is in_progress or completed, so a promotion here would add an
+ * athlete to a session already underway or over. Promotion belongs to
+ * CancelBooking, which is guarded on state === 'published'.
  *
  * COMMAND_MODEL.md reference: lines 562-605
  */
@@ -33,14 +35,10 @@ export class MarkAttendanceHandler implements ICommandHandler<MarkAttendanceComm
     @Inject(ClassRepository) private readonly classRepository: ClassRepository,
     @Inject(AttendanceRepository)
     private readonly attendanceRepository: AttendanceRepository,
-    @Inject(BookingRepository)
-    private readonly bookingRepository: BookingRepository,
     @Inject(GymStaffService)
     private readonly gymStaffService: GymStaffService,
     @InjectRepository(AttendanceEntity)
     private readonly attendanceDbRepository: Repository<AttendanceEntity>,
-    @InjectRepository(BookingEntity)
-    private readonly bookingDbRepository: Repository<BookingEntity>,
   ) {}
 
   async execute(
@@ -101,8 +99,6 @@ export class MarkAttendanceHandler implements ICommandHandler<MarkAttendanceComm
           command.classId,
         );
 
-      let wasPresent: boolean | null = null;
-
       if (!attendance) {
         // Create new attendance
         attendance = new AttendanceEntity();
@@ -114,9 +110,6 @@ export class MarkAttendanceHandler implements ICommandHandler<MarkAttendanceComm
         attendance.markedByUserId = command.userId;
         attendance.notes = record.notes || null;
       } else {
-        // Track status change for potential waitlist promotion
-        wasPresent = attendance.present;
-
         // Update existing attendance
         attendance.present = record.present;
         attendance.markedAt = now;
@@ -131,48 +124,12 @@ export class MarkAttendanceHandler implements ICommandHandler<MarkAttendanceComm
       markedRecords.push(
         this.mapToAttendanceRecordResponseDto(savedAttendance),
       );
-
-      // State Change: If status changed from present to absent, promote from waitlist
-      if (wasPresent === true && attendance.present === false) {
-        await this.promoteFirstWaitlistedBooking(command.classId);
-      }
     }
 
     return {
       classId: command.classId,
       attendanceRecords: markedRecords,
     };
-  }
-
-  /**
-   * PromoteWaitlist (internal/automatic when athlete marked absent)
-   *
-   * Promotes first waitlisted athlete to booked status.
-   */
-  private async promoteFirstWaitlistedBooking(classId: string): Promise<void> {
-    const firstWaitlisted =
-      await this.bookingRepository.getFirstWaitlistedBooking(classId);
-    if (!firstWaitlisted) {
-      // No waitlisted athletes; nothing to promote
-      return;
-    }
-
-    // Promote first waitlisted to booked
-    firstWaitlisted.status = 'booked';
-    firstWaitlisted.bookedPosition = null;
-    await this.bookingRepository.save(firstWaitlisted);
-
-    // Renumber remaining waitlist positions
-    const remainingWaitlisted =
-      await this.bookingRepository.getWaitlistedBookingsByClass(classId);
-
-    for (let i = 0; i < remainingWaitlisted.length; i++) {
-      remainingWaitlisted[i].bookedPosition = i + 1;
-    }
-
-    if (remainingWaitlisted.length > 0) {
-      await this.bookingDbRepository.save(remainingWaitlisted);
-    }
   }
 
   private mapToAttendanceRecordResponseDto(

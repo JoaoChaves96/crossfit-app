@@ -268,5 +268,34 @@ describe('CancelBookingHandler', () => {
         expect(bookingDbRepository.save).not.toHaveBeenCalled();
       });
     });
+
+    // Cancellation is the only promotion path, so this guard is what makes the
+    // waitlist inert from booking_closed onward (per DECISIONS.md → Absence Does
+    // Not Promote). Relaxing it would silently reopen promotion into a window
+    // where a freed seat is no longer usable, so it is pinned here.
+    describe('waitlist is inert once the booking window has closed', () => {
+      it.each(['booking_closed', 'in_progress', 'completed', 'archived'])(
+        'should reject cancellation and promote nobody when the class is %s',
+        async (state) => {
+          const command = new CancelBookingCommand(mockUserId, mockBookingId, mockGymId);
+
+          jest.spyOn(bookingRepository, 'getBookingById').mockResolvedValue(mockBookedBooking());
+          jest
+            .spyOn(classRepository, 'getClassById')
+            .mockResolvedValue({ ...mockPublishedClass, state } as any);
+
+          const promoteSpy = jest.spyOn(bookingRepository, 'getFirstWaitlistedBooking');
+          const saveSpy = jest.spyOn(bookingRepository, 'save');
+
+          await expect(handler.execute(command)).rejects.toThrow(
+            'Cancellations are only allowed while the class is in published state',
+          );
+
+          expect(promoteSpy).not.toHaveBeenCalled();
+          expect(saveSpy).not.toHaveBeenCalled();
+          expect(bookingDbRepository.save).not.toHaveBeenCalled();
+        },
+      );
+    });
   });
 });
