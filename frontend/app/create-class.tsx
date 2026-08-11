@@ -406,7 +406,11 @@ export default function CreateClassScreen() {
     // Fetch coaches
     setCoachesFetch({ status: 'loading' });
     client
-      .get<GetCoachesResponse>(`/api/gyms/${currentGymId}/configuration/coaches`)
+      // assignable=true so the owner is offered too — they coach their own
+      // classes, and a new gym has no coach on staff yet.
+      .get<GetCoachesResponse>(
+        `/api/gyms/${currentGymId}/configuration/coaches?assignable=true`,
+      )
       .then((data) => {
         const items: PickerItem[] = data.coaches.map((c: Coach) => ({
           id: c.userId,

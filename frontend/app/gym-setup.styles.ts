@@ -314,6 +314,7 @@ export const styles = StyleSheet.create({
   },
   successBtnWrap: {
     minWidth: 220,
+    gap: Space.sm,
   },
   successBtnWrapMobile: {
     alignSelf: 'stretch',

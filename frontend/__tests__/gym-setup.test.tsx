@@ -287,8 +287,9 @@ describe('GymSetupScreen — submit', () => {
     await waitFor(() => expect(mockSetCurrentGymId).toHaveBeenCalledWith(GYM_ID));
   });
 
-  it('does not promise a first class the owner cannot yet create', async () => {
-    // A new gym has no coach, and create-class requires one.
+  it('offers a first class the owner can now coach themselves', async () => {
+    // A new gym has no coach on staff, but the owner may be assigned as one
+    // (DECISIONS.md, "Owners as Coaches"), so this CTA is submittable.
     api.post
       .mockResolvedValueOnce(CREATE_GYM_RESPONSE)
       .mockResolvedValueOnce({})
@@ -299,8 +300,24 @@ describe('GymSetupScreen — submit', () => {
     fireEvent.press(utils.getByTestId('create-gym-btn'));
 
     await waitFor(() => expect(utils.getByTestId('setup-continue-btn')).toBeTruthy());
-    expect(utils.queryByText('Create Your First Class')).toBeNull();
-    expect(utils.getByText(/Invite a coach next/)).toBeTruthy();
+    expect(utils.getByText('Create Your First Class')).toBeTruthy();
+    expect(utils.getByText(/coach it yourself/)).toBeTruthy();
+  });
+
+  it('routes to create-class from the success screen', async () => {
+    api.post
+      .mockResolvedValueOnce(CREATE_GYM_RESPONSE)
+      .mockResolvedValueOnce({})
+      .mockResolvedValueOnce({});
+
+    const utils = renderWizard();
+    goToReview(utils);
+    fireEvent.press(utils.getByTestId('create-gym-btn'));
+
+    await waitFor(() => expect(utils.getByTestId('setup-create-class-btn')).toBeTruthy());
+    fireEvent.press(utils.getByTestId('setup-create-class-btn'));
+
+    expect(mockRouter.replace).toHaveBeenCalledWith('/create-class');
   });
 
   it('explains a 409 instead of surfacing the raw response', async () => {

@@ -315,7 +315,10 @@ export default function EditClassScreen() {
       });
 
     const coachesPromise = client
-      .get<GetCoachesResponse>(`/api/gyms/${currentGymId}/configuration/coaches`)
+      // assignable=true so the owner is offered too (see create-class.tsx).
+      .get<GetCoachesResponse>(
+        `/api/gyms/${currentGymId}/configuration/coaches?assignable=true`,
+      )
       .then((data) => {
         const items: PickerItem[] = data.coaches.map((c: Coach) => ({
           id: c.userId,

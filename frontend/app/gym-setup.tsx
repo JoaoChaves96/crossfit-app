@@ -673,9 +673,10 @@ function Step4Review({ state, onBack, onSubmit, isSubmitting, submitError, isMob
 interface SuccessScreenProps extends LayoutProps {
   gymName: string;
   onContinue: () => void;
+  onCreateClass: () => void;
 }
 
-function SuccessScreen({ gymName, onContinue, isMobile }: SuccessScreenProps) {
+function SuccessScreen({ gymName, onContinue, onCreateClass, isMobile }: SuccessScreenProps) {
   return (
     <View style={styles.successContainer}>
       {/* Same icon-circle-on-sunken-ground treatment as the no-gym zero state
@@ -687,15 +688,17 @@ function SuccessScreen({ gymName, onContinue, isMobile }: SuccessScreenProps) {
       <Text size="title" weight="semibold" tone="strong" style={styles.successTitle}>
         {`"${gymName}" has been successfully set up.`}
       </Text>
-      {/* Not "Create Your First Class": scheduling a class also requires a
-          coach, and a brand-new gym has none until the owner invites one, so
-          that CTA led straight to a form that could not be submitted. */}
+      {/* This CTA is submittable again: owners may be assigned as the coach of
+          their own classes (DECISIONS.md, "Owners as Coaches"), so a gym with
+          no coach on staff can still schedule. Inviting a coach is offered as
+          the secondary path rather than a prerequisite. */}
       <Text size="body" tone="muted" style={styles.successBody}>
-        Your spaces and class types are configured. Invite a coach next — every
-        class needs one — then you can start scheduling.
+        Your spaces and class types are configured. You can schedule your first
+        class now and coach it yourself, or invite a coach to take it.
       </Text>
       <View style={[styles.successBtnWrap, isMobile && styles.successBtnWrapMobile]}>
-        <Button label="Go to My Gym" variant="primary" onPress={onContinue} testID="setup-continue-btn" />
+        <Button label="Create Your First Class" variant="primary" onPress={onCreateClass} testID="setup-create-class-btn" />
+        <Button label="Go to My Gym" variant="quiet" onPress={onContinue} testID="setup-continue-btn" />
       </View>
     </View>
   );
@@ -853,6 +856,7 @@ export default function GymSetupScreen() {
               // The owner's home, matching login's routeForRole. `/(tabs)/schedule`
               // is the athlete surface and would strand them outside their new gym.
               onContinue={() => router.replace('/schedule-dashboard' as never)}
+              onCreateClass={() => router.replace('/create-class' as never)}
             />
           </View>
         </ScrollView>
