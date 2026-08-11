@@ -8,8 +8,9 @@ import {
 import { styles } from './gym-setup.styles';
 import { useRouter } from 'expo-router';
 import { useAuth } from '@/hooks/useAuth';
+import { useGym } from '@/hooks/useGym';
 import { useKeyboardAwareScroll } from '@/hooks/useKeyboardAwareScroll';
-import { createApiClient } from '@/utils/api-client';
+import { ApiError, createApiClient } from '@/utils/api-client';
 import { Text, Button } from '@/components/cleanink';
 import { Ink, Status } from '@/constants/design';
 import { components } from '@/types/api.gen';
@@ -132,6 +133,7 @@ function Step1Basics({ basics, onChange, onNext, onCancel, onInputFocus, onInput
         <TextInput
           onFocus={onInputFocus}
           onBlur={onInputBlur}
+          testID="gym-name-input"
           style={[styles.input, errors.name ? styles.inputError : null]}
           placeholder="e.g. CrossFit Downtown"
           placeholderTextColor={Ink.faint}
@@ -146,6 +148,7 @@ function Step1Basics({ basics, onChange, onNext, onCancel, onInputFocus, onInput
         <TextInput
           onFocus={onInputFocus}
           onBlur={onInputBlur}
+          testID="gym-location-input"
           style={[styles.input, errors.location ? styles.inputError : null]}
           placeholder="e.g. 123 Main St, City"
           placeholderTextColor={Ink.faint}
@@ -175,10 +178,10 @@ function Step1Basics({ basics, onChange, onNext, onCancel, onInputFocus, onInput
 
       <View style={styles.buttonRow}>
         <View style={styles.buttonWrap}>
-          <Button label="Cancel" variant="quiet" onPress={onCancel} />
+          <Button label="Cancel" variant="quiet" onPress={onCancel} testID="basics-cancel-btn" />
         </View>
         <View style={styles.buttonWrap}>
-          <Button label="Next" variant="primary" onPress={handleNext} />
+          <Button label="Next" variant="primary" onPress={handleNext} testID="basics-next-btn" />
         </View>
       </View>
     </View>
@@ -196,9 +199,11 @@ interface Step2Props extends KeyboardHandlers {
 
 function Step2Spaces({ spaces, onChange, onNext, onBack, onInputFocus, onInputBlur }: Step2Props) {
   const [spaceErrors, setSpaceErrors] = useState<Record<number, Partial<SpaceEntry>>>({});
+  const [stepError, setStepError] = useState<string | null>(null);
 
   const addSpace = () => {
     onChange([...spaces, { name: '', capacity: '' }]);
+    setStepError(null);
   };
 
   const updateSpace = (index: number, field: keyof SpaceEntry, value: string) => {
@@ -219,6 +224,18 @@ function Step2Spaces({ spaces, onChange, onNext, onBack, onInputFocus, onInputBl
   };
 
   const validate = (): boolean => {
+    // At least one space is required, not merely encouraged: create-class makes
+    // spaceId mandatory, so a gym with no space cannot schedule anything and the
+    // Success screen's "Create Your First Class" would lead to a form that can
+    // never be submitted. Checked separately because iterating an empty array
+    // passes vacuously.
+    if (spaces.length === 0) {
+      setSpaceErrors({});
+      setStepError('Add at least one training space to continue.');
+      return false;
+    }
+    setStepError(null);
+
     const newErrors: Record<number, Partial<SpaceEntry>> = {};
     spaces.forEach((space, index) => {
       const fieldErrors: Partial<SpaceEntry> = {};
@@ -242,14 +259,15 @@ function Step2Spaces({ spaces, onChange, onNext, onBack, onInputFocus, onInputBl
     <View style={styles.stepContent}>
       <Text size="screen" weight="bold" tone="strong" style={styles.stepTitle}>Step 2: Training Spaces</Text>
       <Text size="body" tone="muted" style={styles.stepSubtitle}>
-        Add the training spaces available at your gym. You can add more later.
+        Add the training spaces available at your gym. At least one is required —
+        you can add more later.
       </Text>
 
       {spaces.length === 0 ? (
-        <View style={styles.emptyState}>
+        <View style={styles.emptyState} testID="spaces-empty-state">
           <Text size="body" weight="semibold" tone="muted">No spaces configured yet</Text>
           <Text size="meta" tone="faint" style={styles.emptyStateSubText}>
-            Add your first training space to start organizing classes.
+            Every class is scheduled into a space, so add at least one to continue.
           </Text>
         </View>
       ) : (
@@ -271,6 +289,7 @@ function Step2Spaces({ spaces, onChange, onNext, onBack, onInputFocus, onInputBl
                   styles.input,
                   spaceErrors[index]?.name ? styles.inputError : null,
                 ]}
+                testID={`space-name-input-${index}`}
                 placeholder="e.g. Main Floor"
                 placeholderTextColor={Ink.faint}
                 value={space.name}
@@ -290,6 +309,7 @@ function Step2Spaces({ spaces, onChange, onNext, onBack, onInputFocus, onInputBl
                   styles.input,
                   spaceErrors[index]?.capacity ? styles.inputError : null,
                 ]}
+                testID={`space-capacity-input-${index}`}
                 placeholder="e.g. 20"
                 placeholderTextColor={Ink.faint}
                 value={space.capacity}
@@ -305,15 +325,21 @@ function Step2Spaces({ spaces, onChange, onNext, onBack, onInputFocus, onInputBl
       )}
 
       <View style={styles.addBtnWrap}>
-        <Button label="Add Space" icon="add" variant="quiet" onPress={addSpace} />
+        <Button label="Add Space" icon="add" variant="quiet" onPress={addSpace} testID="add-space-btn" />
       </View>
+
+      {stepError ? (
+        <View style={styles.errorBanner}>
+          <Text size="meta" tone={Status.danger} testID="spaces-step-error">{stepError}</Text>
+        </View>
+      ) : null}
 
       <View style={styles.buttonRow}>
         <View style={styles.buttonWrap}>
-          <Button label="Back" variant="quiet" onPress={onBack} />
+          <Button label="Back" variant="quiet" onPress={onBack} testID="spaces-back-btn" />
         </View>
         <View style={styles.buttonWrap}>
-          <Button label="Next" variant="primary" onPress={handleNext} />
+          <Button label="Next" variant="primary" onPress={handleNext} testID="spaces-next-btn" />
         </View>
       </View>
     </View>
@@ -331,9 +357,11 @@ interface Step3Props extends KeyboardHandlers {
 
 function Step3ClassTypes({ classTypes, onChange, onNext, onBack, onInputFocus, onInputBlur }: Step3Props) {
   const [classTypeErrors, setClassTypeErrors] = useState<Record<number, string>>({});
+  const [stepError, setStepError] = useState<string | null>(null);
 
   const addClassType = () => {
     onChange([...classTypes, { name: '' }]);
+    setStepError(null);
   };
 
   const updateClassType = (
@@ -358,6 +386,15 @@ function Step3ClassTypes({ classTypes, onChange, onNext, onBack, onInputFocus, o
   };
 
   const validate = (): boolean => {
+    // Required for the same reason as spaces: create-class makes classTypeId
+    // mandatory, and an empty array would otherwise pass this loop vacuously.
+    if (classTypes.length === 0) {
+      setClassTypeErrors({});
+      setStepError('Add at least one class type to continue.');
+      return false;
+    }
+    setStepError(null);
+
     const newErrors: Record<number, string> = {};
     classTypes.forEach((ct, index) => {
       if (!ct.name.trim()) newErrors[index] = 'Name is required';
@@ -374,14 +411,16 @@ function Step3ClassTypes({ classTypes, onChange, onNext, onBack, onInputFocus, o
     <View style={styles.stepContent}>
       <Text size="screen" weight="bold" tone="strong" style={styles.stepTitle}>Step 3: Class Types</Text>
       <Text size="body" tone="muted" style={styles.stepSubtitle}>
-        Define the types of fitness classes your gym offers. You can add more later.
+        Define the types of fitness classes your gym offers. At least one is
+        required — you can add more later.
       </Text>
 
       {classTypes.length === 0 ? (
-        <View style={styles.emptyState}>
+        <View style={styles.emptyState} testID="class-types-empty-state">
           <Text size="body" weight="semibold" tone="muted">No class types defined yet</Text>
           <Text size="meta" tone="faint" style={styles.emptyStateSubText}>
-            Add the types of classes you offer (e.g. WOD, Open Gym, Barbell Club).
+            Every class has a type, so add at least one to continue (e.g. WOD,
+            Open Gym, Barbell Club).
           </Text>
         </View>
       ) : (
@@ -403,6 +442,7 @@ function Step3ClassTypes({ classTypes, onChange, onNext, onBack, onInputFocus, o
                   styles.input,
                   classTypeErrors[index] ? styles.inputError : null,
                 ]}
+                testID={`class-type-name-input-${index}`}
                 placeholder="e.g. WOD, Open Gym, Barbell Club"
                 placeholderTextColor={Ink.faint}
                 value={ct.name}
@@ -419,15 +459,21 @@ function Step3ClassTypes({ classTypes, onChange, onNext, onBack, onInputFocus, o
       )}
 
       <View style={styles.addBtnWrap}>
-        <Button label="Add Class Type" icon="add" variant="quiet" onPress={addClassType} />
+        <Button label="Add Class Type" icon="add" variant="quiet" onPress={addClassType} testID="add-class-type-btn" />
       </View>
+
+      {stepError ? (
+        <View style={styles.errorBanner}>
+          <Text size="meta" tone={Status.danger} testID="class-types-step-error">{stepError}</Text>
+        </View>
+      ) : null}
 
       <View style={styles.buttonRow}>
         <View style={styles.buttonWrap}>
-          <Button label="Back" variant="quiet" onPress={onBack} />
+          <Button label="Back" variant="quiet" onPress={onBack} testID="class-types-back-btn" />
         </View>
         <View style={styles.buttonWrap}>
-          <Button label="Next" variant="primary" onPress={handleNext} />
+          <Button label="Next" variant="primary" onPress={handleNext} testID="class-types-next-btn" />
         </View>
       </View>
     </View>
@@ -470,45 +516,40 @@ function Step4Review({ state, onBack, onSubmit, isSubmitting, submitError }: Ste
         <Text size="title" weight="semibold" tone="strong" style={styles.reviewSectionTitle}>
           Spaces ({state.spaces.length})
         </Text>
-        {state.spaces.length === 0 ? (
-          <Text size="meta" tone="faint">No spaces added</Text>
-        ) : (
-          state.spaces.map((space, index) => (
-            <View key={index} style={styles.reviewItem}>
-              <Text size="body" weight="semibold" tone="strong">{space.name}</Text>
-              <Text size="meta" tone="muted">Capacity: {space.capacity}</Text>
-            </View>
-          ))
-        )}
+        {/* No empty branch: step 2 blocks Next until there is at least one
+            space, so this section can never be reached empty. */}
+        {state.spaces.map((space, index) => (
+          <View key={index} style={styles.reviewItem}>
+            <Text size="body" weight="semibold" tone="strong">{space.name}</Text>
+            <Text size="meta" tone="muted">Capacity: {space.capacity}</Text>
+          </View>
+        ))}
       </View>
 
       <View style={styles.reviewSection}>
         <Text size="title" weight="semibold" tone="strong" style={styles.reviewSectionTitle}>
           Class Types ({state.classTypes.length})
         </Text>
-        {state.classTypes.length === 0 ? (
-          <Text size="meta" tone="faint">No class types added</Text>
-        ) : (
-          state.classTypes.map((ct, index) => (
-            <View key={index} style={styles.reviewItem}>
-              <Text size="body" weight="semibold" tone="strong">{ct.name}</Text>
-            </View>
-          ))
-        )}
+        {/* Likewise gated by step 3. */}
+        {state.classTypes.map((ct, index) => (
+          <View key={index} style={styles.reviewItem}>
+            <Text size="body" weight="semibold" tone="strong">{ct.name}</Text>
+          </View>
+        ))}
       </View>
 
       {submitError ? (
         <View style={styles.errorBanner}>
-          <Text size="meta" tone={Status.danger}>{submitError}</Text>
+          <Text size="meta" tone={Status.danger} testID="submit-error">{submitError}</Text>
         </View>
       ) : null}
 
       <View style={styles.buttonRow}>
         <View style={styles.buttonWrap}>
-          <Button label="Back" variant="quiet" onPress={onBack} disabled={isSubmitting} />
+          <Button label="Back" variant="quiet" onPress={onBack} disabled={isSubmitting} testID="review-back-btn" />
         </View>
         <View style={styles.buttonWrap}>
-          <Button label="Create Gym" variant="primary" onPress={onSubmit} loading={isSubmitting} />
+          <Button label="Create Gym" variant="primary" onPress={onSubmit} loading={isSubmitting} testID="create-gym-btn" />
         </View>
       </View>
     </View>
@@ -519,21 +560,25 @@ function Step4Review({ state, onBack, onSubmit, isSubmitting, submitError }: Ste
 
 interface SuccessScreenProps {
   gymName: string;
-  onCreateFirstClass: () => void;
+  onContinue: () => void;
 }
 
-function SuccessScreen({ gymName, onCreateFirstClass }: SuccessScreenProps) {
+function SuccessScreen({ gymName, onContinue }: SuccessScreenProps) {
   return (
     <View style={styles.successContainer}>
       <Text size="display" weight="bold" tone="strong">Gym Created!</Text>
       <Text size="title" weight="semibold" tone="strong">
         {`"${gymName}" has been successfully set up.`}
       </Text>
+      {/* Not "Create Your First Class": scheduling a class also requires a
+          coach, and a brand-new gym has none until the owner invites one, so
+          that CTA led straight to a form that could not be submitted. */}
       <Text size="body" tone="muted" style={styles.successBody}>
-        {'Your spaces and class types have been configured. You\'re ready to start scheduling classes.'}
+        Your spaces and class types are configured. Invite a coach next — every
+        class needs one — then you can start scheduling.
       </Text>
       <View style={styles.successBtnWrap}>
-        <Button label="Create Your First Class" variant="primary" onPress={onCreateFirstClass} />
+        <Button label="Go to My Gym" variant="primary" onPress={onContinue} testID="setup-continue-btn" />
       </View>
     </View>
   );
@@ -544,6 +589,7 @@ function SuccessScreen({ gymName, onCreateFirstClass }: SuccessScreenProps) {
 export default function GymSetupScreen() {
   const router = useRouter();
   const { token, login } = useAuth();
+  const { setCurrentGymId } = useGym();
 
   // Steps 1–3 run long enough that the lower fields sit under the keyboard on a
   // phone, so the focused field has to be scrolled clear of it (mobile only).
@@ -595,6 +641,14 @@ export default function GymSetupScreen() {
       // it directly here rather than waiting for the context state to settle.
       const ownerToken = gymResponse.accessToken;
       await login(ownerToken);
+
+      // GymContext is loaded from storage and is otherwise only populated by
+      // login, so without this the owner leaves the wizard with
+      // currentGymId: null — and every gym-scoped owner screen quietly does
+      // nothing (create-class's pickers hang on "Loading…", the dashboard shows
+      // an empty week) until they log out and back in.
+      await setCurrentGymId(gymId);
+
       const client = createApiClient({ token: ownerToken });
 
       // Step 2: Create spaces sequentially
@@ -617,6 +671,15 @@ export default function GymSetupScreen() {
       setCreatedGymName(wizardState.basics.name.trim());
       setIsSuccess(true);
     } catch (err) {
+      // A 409 means this account already owns a gym (see docs/DECISIONS.md →
+      // One Gym Per Owner). Retrying cannot succeed, so say what happened
+      // instead of surfacing the raw response body.
+      if (err instanceof ApiError && err.status === 409) {
+        setSubmitError(
+          'This account already owns a gym. Log out and back in to open it.',
+        );
+        return;
+      }
       const message =
         err instanceof Error ? err.message : 'Failed to create gym. Please try again.';
       setSubmitError(message);
@@ -632,7 +695,7 @@ export default function GymSetupScreen() {
           gymName={createdGymName}
           // The owner's home, matching login's routeForRole. `/(tabs)/schedule`
           // is the athlete surface and would strand them outside their new gym.
-          onCreateFirstClass={() => router.replace('/schedule-dashboard' as never)}
+          onContinue={() => router.replace('/schedule-dashboard' as never)}
         />
       </ScrollView>
     );
