@@ -82,10 +82,10 @@ export default function RootLayout() {
             <Stack.Screen name="register" options={{ headerShown: false }} />
             <Stack.Screen name="no-gym" options={{ headerShown: false }} />
             <Stack.Screen name="modal" options={{ presentation: 'modal', title: 'Modal' }} />
-            <Stack.Screen
-              name="gym-setup"
-              options={{ title: 'Create Your Gym', headerShown: true }}
-            />
+            {/* The wizard draws its own header. The navigator's had no back
+                target, so its arrow fell back to the parent group and sent a
+                deep-linked owner into /my-bookings — the athlete surface. */}
+            <Stack.Screen name="gym-setup" options={{ headerShown: false }} />
             <Stack.Screen
               name="schedule-dashboard"
               options={{ title: 'Schedule Dashboard', headerShown: false }}
