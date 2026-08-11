@@ -499,9 +499,9 @@ it now fails when forced to mobile. Zero production lines changed by the sweep.
 
 ## Carried Debt (outlives this epic)
 
-### ⚠️ Nullable DTO fields generate as opaque `Record<string, never>`
+### ✅ Nullable DTO fields generate as opaque `Record<string, never>` — CLEARED 2026-08-11
 
-**Confirmed to revisit** (user, 2026-08-07) — deferred, not dropped.
+**Resolved** by its own sweep on 2026-08-11, as the debt entry asked for.
 
 A DTO property declared `T | null` and annotated `@ApiProperty({ nullable: true })`
 with **no explicit `type:`** gives Nest nothing to infer from: the union defeats
@@ -509,20 +509,44 @@ with **no explicit `type:`** gives Nest nothing to infer from: the union defeats
 generates `Record<string, never> | null`. Any real value assigned to it is then a
 type error at the call site, so the field is unusable without a cast.
 
-Fixed this way for `ClassResultItemDto.notes` / `.editedAt` (adding `type: String` /
-`type: Date`). **Nine fields still affected:** `bookedPosition`, `cancelledAt`,
-`lastModifiedByUserId`, `deletedAt`, `expiresAt`, `description`, `data`,
-`acceptedAt`, `AcceptInviteRequestDto`.
+The fix was to add the explicit `type:` (`type: String` / `type: Number` /
+`type: Date`) alongside `nullable: true`, then regenerate `frontend/types/api.gen.ts`.
 
-- **Prioritise `bookedPosition`** — waitlist promotion order depends on it and the
-  owner bookings UI now surfaces it, so this one is a live correctness risk, not
-  cosmetic typing.
+**All 18 affected properties across 14 DTOs now emit real types**, `bookedPosition`
+first as prioritised:
+
+- `bookedPosition`, `cancelledAt` — `BookClassResponseDto`, `CancelBookingResponseDto`
+- `notes`, `editedAt` — `LogResultResponseDto`, `EditResultResponseDto`,
+  `AttendanceRecordResponseDto`
+- `deletedAt` — `CreateSpaceResponseDto`, `UpdateSpaceResponseDto`,
+  `ConfigureClassTypesResponseDto`
+- `description` — `CreateGymResponseDto`, `GymProfileDto`
+- `expiresAt` — `PurchaseMembershipPlanResponseDto`
+- `lastModifiedByUserId` — `AddOrEditProgrammingResponseDto`
+- `acceptedAt` — `InviteListItemDto` (also corrected `@ApiPropertyOptional` →
+  `@ApiProperty`; the service always returns the key, `null` when unaccepted, so it
+  is required-and-nullable, not optional)
+- `data` — `NotificationItemDto`, a distinct cause: `type: Object` erases the value
+  type, so it now declares `type: 'object'` with
+  `additionalProperties: { type: 'string' }`
+
+`AcceptInviteRequestDto` was on the original nine but needed **no change** — it is a
+genuinely empty request body, so `Record<string, never>` is the correct generated
+type. The only remaining occurrences in `api.gen.ts` are it, `webhooks`, and `$defs`,
+all legitimately empty.
+
 - **Beware casts as cover.** The old `ResultsPanel` carried an `as unknown` cast that
   hid the broken schema entirely; the bug only surfaced once the cast was removed.
   Treat an existing cast around a generated type as a symptom to investigate.
-- **Wants its own sweep**, not a ride-along: it touches backend DTOs, Swagger, and
-  regenerated frontend types, which is explicitly outside this epic's visual-only
-  scope (see Excluded below).
+- **Guard for future DTOs:** any new `T | null` property must pass an explicit `type:`.
+  A `Record<string, never>` in `api.gen.ts` outside the three known-empty schemas is
+  the signal that one was missed.
+
+**Verification:** backend `tsc` and 258/258 unit tests green; frontend `tsc` clean
+(bar the two long-standing `useClassTransition` / `useRefreshOnAppActive` test-file
+errors) and 289/289 tests across 23 suites green. The one red e2e case
+(`PATCH /api/me` empty body → 400 in `invite-lifecycle-and-profile.e2e-spec.ts`) was
+confirmed pre-existing by stashing the change.
 
 ---
 
