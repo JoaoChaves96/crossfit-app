@@ -70,7 +70,8 @@ Visible information includes:
 
 ### Step 4 — Booking Closure
 
-- At the configured freeze time (e.g. 30 minutes before start):
+- At the booking freeze time (5 minutes before start; see DECISIONS.md →
+  Booking Close Lead Time):
   - The class transitions to `Booking Closed`
   - Athlete can no longer book or cancel
 

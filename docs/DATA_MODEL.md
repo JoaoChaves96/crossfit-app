@@ -317,9 +317,14 @@ The model enforces:
 **Rules:**
 - Bookings can only be created when class state = `published`
 - When a class reaches capacity, new bookings go to `waitlisted` status
-- When an athlete cancels or is marked absent, if there is a waitlisted athlete, they are automatically promoted to `booked` (no confirmation window required; per DECISIONS.md)
+- When an athlete cancels, if there is a waitlisted athlete, they are automatically promoted to `booked` (no confirmation window required; per DECISIONS.md)
+- Being **marked absent does not promote** anyone. Attendance is only markable once the class is `in_progress` or `completed`, so a promotion then would add an athlete to a session already underway or over (see DECISIONS.md → Absence Does Not Promote)
 - Cancelled bookings retain a record (soft delete via `cancelled_at` timestamp)
 - Athletes can cancel bookings only while class state = `published`
+- Because cancellation is the only promotion path and is limited to `published`, the
+  waitlist is **inert from `booking_closed` onward** — a waitlisted athlete not
+  promoted before the booking window closes does not get in, and the booking stays
+  `waitlisted` (see DECISIONS.md → Absence Does Not Promote)
 
 ---
 

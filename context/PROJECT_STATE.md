@@ -181,6 +181,39 @@ MVP scope. Coach desktop has NO duplicate-header bug). Discovery/triage only; fi
     (see `6a70cae7` above). 20/20 notification tests, 19/19 schedule tests pass.
   - Spun off a new Backlog card for a separate cold-load robustness issue: direct-URL `/notifications`
     load crashes because `useApiClient` throws before AuthContext restores the token.
+- ✅ **🐞 Absence no longer promotes from the waitlist (2026-08-11)** — product decision by
+  João: marking an athlete absent must not promote anyone. Attendance is only markable once
+  the class is `in_progress`/`completed`, so the promotion added an athlete to a session
+  already underway or over — unnotified (that path never emitted `waitlist.promoted`) and
+  unable to log a result anyway (LogResult needs `present=true`). Removed from
+  `mark-attendance.handler.ts` along with its now-dead Booking deps; `CancelBooking`
+  (guarded on `published`) remains the only promotion path. New
+  `mark-attendance.handler.spec.ts`, 6 tests — the handler had none. `docs/DECISIONS.md`
+  → **Absence Does Not Promote**; `docs/DATA_MODEL.md` booking rules corrected (they said
+  "cancels or is marked absent"). BE 274/274. Live-proved on the seeded waitlist class:
+  present→absent left the waitlisted athlete waitlisted; fixture restored.
+  - **Follow-up decision by João:** the waitlist is accepted as **inert from
+    `booking_closed` onward**. Since cancellation is the only promotion path and it
+    rejects any class past `published`, no seat can be freed once the booking window
+    shuts — a waitlisted athlete not promoted by then simply does not get in. Pinned
+    with 4 new cases in `cancel-booking.handler.spec.ts` (mutation-checked: relaxing
+    the guard to allow `booking_closed` fails them). Explicitly **out of scope**:
+    extending cancellation into `booking_closed` (needs a late-cancellation cutoff
+    MVP has not defined) and expiring never-promoted `waitlisted` bookings (record
+    hygiene, no user-visible effect). Not-telling a waitlisted athlete they didn't
+    get in is **accepted** by João, not a gap to fix.
+- ✅ **Booking close lead time 30 min → 5 min (2026-08-11)** — decision by João, taken
+  once the inert-waitlist window above was quantified: the lead time *is* that window,
+  so 30 minutes meant a booked athlete dropping out in the last half hour left their
+  seat unusable. `BOOKING_CLOSE_MINUTES_BEFORE_START` in `class-lifecycle.scheduler.ts`
+  is now 5. New `class-lifecycle.scheduler.spec.ts` (7 tests, fake timers) — the
+  scheduler had **no spec at all**; RED verified at the 6-min boundary before the
+  change. `docs/DECISIONS.md` → new **Booking Close Lead Time**;
+  `docs/USER_JOURNEYS.md` freeze-time step corrected (it said "e.g. 30 minutes").
+  ⚠️ The other 30 is **unrelated and deliberately untouched**:
+  `REMINDER_MINUTES_BEFORE` in `notification-reminder.scheduler.ts` is the class-reminder
+  lead time, so `profile.tsx`'s "30 minutes before your class starts" copy stays correct.
+  Not gym-configurable in MVP. BE 281/281.
 - ✅ **Issues Found is now empty of actionable 🐞 cards.** All Phase 3 audit bugs are fixed and sit
   in To Verify awaiting live verification. Membership Plans / Members cards are parked in Backlog
   (deferred post-go-live).
