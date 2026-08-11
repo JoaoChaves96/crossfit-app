@@ -78,8 +78,8 @@ export class CreateRecurringClassesHandler
       gymId,
     );
     if (!coachStaff) throw notFound('Coach is not assigned to this gym');
-    if (coachStaff.role !== 'coach') {
-      throw invalidState('Staff member is not a coach');
+    if (coachStaff.role !== 'coach' && coachStaff.role !== 'owner') {
+      throw invalidState('Staff member cannot be assigned as a coach');
     }
     if (coachStaff.status !== 'active') {
       throw invalidState('Coach is not active');

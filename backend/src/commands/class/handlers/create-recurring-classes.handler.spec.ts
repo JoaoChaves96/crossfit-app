@@ -228,6 +228,21 @@ describe('CreateRecurringClassesHandler', () => {
     ).rejects.toThrow(ForbiddenException);
   });
 
+  it('accepts an active owner as the assigned coach', async () => {
+    // Owners coach their own classes (DECISIONS.md, "Owners as Coaches"), so a
+    // solo box can schedule a whole recurring series with no coach on staff.
+    okPreconditions();
+    jest
+      .spyOn(gymStaffService, 'getGymStaffByUserAndGym')
+      .mockResolvedValue({ role: 'owner', status: 'active' } as any);
+
+    await handler.execute(
+      new CreateRecurringClassesCommand(userId, gymId, baseDto as any),
+    );
+
+    expect(savedClasses().length).toBeGreaterThan(0);
+  });
+
   it('throws NotFound if class type not found', async () => {
     jest.spyOn(gymStaffService, 'isGymOwner').mockResolvedValue(true);
     jest

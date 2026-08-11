@@ -335,6 +335,72 @@ describe('CreateClassHandler', () => {
       );
     });
 
+    it('should accept an active owner as the assigned coach', async () => {
+      // A solo box owner coaches their own classes (DECISIONS.md, "Owners as
+      // Coaches"): a brand-new gym has no coach row, so requiring role='coach'
+      // here left the owner unable to schedule anything at all.
+      const command = new CreateClassCommand(
+        mockUserId,
+        mockGymId,
+        mockClassTypeId,
+        mockUserId,
+        mockSpaceId,
+        futureDate,
+        '10:00',
+      );
+
+      jest.spyOn(gymStaffService, 'isGymOwner').mockResolvedValue(true);
+      jest.spyOn(gymService, 'getGymById').mockResolvedValue({
+        status: 'active',
+      } as any);
+      jest.spyOn(classTypeService, 'getClassTypeById').mockResolvedValue({
+        gymId: mockGymId,
+      } as any);
+      jest.spyOn(gymStaffService, 'getGymStaffByUserAndGym').mockResolvedValue({
+        role: 'owner',
+        status: 'active',
+      } as any);
+      jest.spyOn(spaceService, 'getSpaceById').mockResolvedValue({
+        gymId: mockGymId,
+        baseCapacity: 30,
+      } as any);
+      const saveSpy = jest
+        .spyOn(classRepository, 'save')
+        .mockResolvedValue({ id: 'class-uuid-123' } as ClassEntity);
+
+      await handler.execute(command);
+
+      expect(saveSpy.mock.calls[0][0].coachUserId).toBe(mockUserId);
+    });
+
+    it('should throw BadRequestException if the owner staff row is inactive', async () => {
+      const command = new CreateClassCommand(
+        mockUserId,
+        mockGymId,
+        mockClassTypeId,
+        mockUserId,
+        mockSpaceId,
+        futureDate,
+        '10:00',
+      );
+
+      jest.spyOn(gymStaffService, 'isGymOwner').mockResolvedValue(true);
+      jest.spyOn(gymService, 'getGymById').mockResolvedValue({
+        status: 'active',
+      } as any);
+      jest.spyOn(classTypeService, 'getClassTypeById').mockResolvedValue({
+        gymId: mockGymId,
+      } as any);
+      jest.spyOn(gymStaffService, 'getGymStaffByUserAndGym').mockResolvedValue({
+        role: 'owner',
+        status: 'inactive',
+      } as any);
+
+      await expect(handler.execute(command)).rejects.toThrow(
+        BadRequestException,
+      );
+    });
+
     it('should throw NotFoundException if coach not found', async () => {
       const command = new CreateClassCommand(
         mockUserId,

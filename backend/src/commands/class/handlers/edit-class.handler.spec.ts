@@ -338,18 +338,42 @@ describe('EditClassHandler', () => {
       await expect(handler.execute(command)).rejects.toThrow(NotFoundException);
     });
 
-    it('should throw BadRequestException when staff member is not a coach', async () => {
+    it('should accept an active owner as the assigned coach', async () => {
+      // Owners coach their own classes (DECISIONS.md, "Owners as Coaches").
+      // This previously threw — it was the rule that dead-ended a new gym.
       const cls = buildPublishedClass();
       jest.spyOn(classRepository, 'getClassById').mockResolvedValue(cls);
       jest
         .spyOn(gymStaffService, 'getGymStaffByUserAndGym')
         .mockResolvedValue({ role: 'owner', status: 'active' } as any);
+      const saveSpy = jest
+        .spyOn(classRepository, 'save')
+        .mockResolvedValue(cls);
 
       const command = new EditClassCommand(
         mockGymId,
         mockClassId,
         undefined,
         'owner-user-id',
+      );
+
+      await handler.execute(command);
+
+      expect(saveSpy.mock.calls[0][0].coachUserId).toBe('owner-user-id');
+    });
+
+    it('should throw BadRequestException when the staff member is an athlete', async () => {
+      const cls = buildPublishedClass();
+      jest.spyOn(classRepository, 'getClassById').mockResolvedValue(cls);
+      jest
+        .spyOn(gymStaffService, 'getGymStaffByUserAndGym')
+        .mockResolvedValue({ role: 'athlete', status: 'active' } as any);
+
+      const command = new EditClassCommand(
+        mockGymId,
+        mockClassId,
+        undefined,
+        'athlete-user-id',
       );
 
       await expect(handler.execute(command)).rejects.toThrow(BadRequestException);
