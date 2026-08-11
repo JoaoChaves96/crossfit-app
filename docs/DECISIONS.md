@@ -219,3 +219,36 @@ Rules:
 
 Supersedes the rule that an owner had to invite a coach before the first class
 could be scheduled.
+
+## Impeccable Is the Design Source of Truth (Pencil Retired)
+
+**The binding design contract is `frontend/DESIGN.md`** — direction **"Clean Ink"** —
+together with its sidecar `frontend/.impeccable/design.json` and the token layer
+`frontend/constants/design.ts`. All frontend design work goes through the **`impeccable`
+skill**.
+
+**Pencil is retired.** The `.pen` files in `/designs/` are historical reference only.
+
+Rationale: the `.pen` files were a *parallel* description of the UI, so they drifted from
+the app the moment code moved — the Phase 2 audit logged dozens of design-vs-app
+discrepancies that were really design-file staleness. `DESIGN.md` is derived from the
+shipped artifact, so it cannot drift the same way, and its tokens are imported by the
+code rather than transcribed into it.
+
+Rules:
+
+- Claude MUST NOT treat a `.pen` file as a specification, and MUST NOT gate work on a
+  `.pen` frame existing. **The "Design Pre-Check" rule is withdrawn.**
+- The `ux-designer` agent is **retired** (`.claude/agents/ux-designer.md.retired`) and
+  MUST NOT be dispatched.
+- `docs/PENCIL_DESIGN_CODE.md` is superseded and kept only as a historical record.
+- Every color, space, type and elevation value comes from `constants/design.ts`. Raw hex
+  and the legacy `theme.ts` / `AppColors` / `Spacing` are debt, not patterns.
+- Screens are composed from `frontend/components/cleanink/` primitives, following an
+  already-migrated screen as the exemplar.
+- The named DESIGN.md rules are binding: **One Accent**, **Two Reds**, **Named-Face**,
+  **Hairline-First**, **Same-Hue Chip**; `Status.open` is reserved for open/available;
+  **there is no success role** (confirm with quiet meta text, never a green banner).
+
+Supersedes the Pencil design-to-code workflow and the mandatory Design Pre-Check in
+`CLAUDE.md` and `docs/FRONTEND_WORKFLOW.md`.

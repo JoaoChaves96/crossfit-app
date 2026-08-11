@@ -1,4 +1,14 @@
-# Design ↔ Code
+# Design ↔ Code (Pencil) — SUPERSEDED
+
+> **⚠️ SUPERSEDED 2026-08-11. Pencil is no longer the design source of truth.**
+>
+> The binding design contract is **`frontend/DESIGN.md`** (direction "Clean Ink") with
+> tokens in `frontend/constants/design.ts`; design work goes through the **`impeccable`
+> skill**. See `docs/FRONTEND_WORKFLOW.md` and `CLAUDE.md` → Established Development
+> Workflows → 1.
+>
+> This document is kept as a historical record of the retired Pencil flow. Do not follow
+> it for new work.
 
 ## Overview
 

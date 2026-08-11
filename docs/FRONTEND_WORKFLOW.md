@@ -1,214 +1,143 @@
-# Frontend Workflow: Design → Code
+# Frontend Workflow: Design → Code (Impeccable / Clean Ink)
 
 ## Overview
 
 This document describes how frontend development works in this project:
 
-**Design is the source of truth** → Pencil `.pen` files define all screens  
-**Code is generated from design** → Frontend agent extracts specs and implements React code  
-**Specs are programmatic** → No manual translation, no guessing
+**The design contract is `frontend/DESIGN.md`** — direction **"Clean Ink"**
+**Tokens are code** — `frontend/constants/design.ts`, never raw hex
+**Screens are composed, not invented** — primitives in `frontend/components/cleanink/`
+
+> **Pencil is retired.** The `.pen` files under `/designs/` are historical reference
+> only. Do not read them, do not gate work on a frame existing, and do not dispatch the
+> (retired) `ux-designer` agent. This is settled — do not re-litigate it.
+
+Design work goes through the **`impeccable` skill**, which owns the design process end
+to end. `DESIGN.md` and its sidecar `frontend/.impeccable/design.json` were derived from
+the shipped app, which is why they cannot drift from it the way a parked design file did.
 
 ---
 
 ## Workflow Process
 
-### Step 1: Design File (Pencil)
+### Step 1: Read the contract
 
-- Designer creates each screen as a named **frame** inside a role-level `.pen` file
-- Three role files live in `/designs/`:
-  - `athlete-screens.pen` — all athlete screens
-  - `gym-owner-screens.pen` — all gym owner screens
-  - `coach-screens.pen` — all coach screens
-- Each file contains:
-  - One top-level frame per screen (frame name = screen name)
-  - Layout hierarchy (frames, components, groups)
-  - Design tokens (colors, typography, spacing via variables)
-  - Component instances and customizations
-  - Visual specs (dimensions, padding, gaps)
+- `frontend/DESIGN.md` — the binding rules, colors, and type scale
+- `frontend/constants/design.ts` — the token layer you actually import from
+  (`Ink`, `Ground`, `Line`, `Accent`, `Status`, `Space`, `Type`, `Elevation`)
 
-### Step 2: Extract Design Specs (Frontend Agent via Pencil MCP)
+Never hardcode a hex value. Never import the legacy `theme.ts` / `AppColors` /
+`Spacing` — where those still appear on a screen they are debt to remove, not a
+pattern to copy.
 
-Frontend agent uses **Pencil MCP tools** to read the design:
+### Step 2: Find the exemplar
 
-```
-1. mcp__pencil__open_document("/designs/<role>-screens.pen")
-2. mcp__pencil__batch_get() — list top-level frames, locate the target screen by frame name
-3. mcp__pencil__get_variables() — extract design tokens (colors, fonts, spacing)
-4. mcp__pencil__snapshot_layout(frameId) — understand layout structure of target frame
-```
+Copy the shape of a screen already on Clean Ink rather than deriving a new one:
 
-**Output:** Design specs in structured format:
-- Frame hierarchy and layout (flexbox properties)
-- Component instances and their overrides
-- Design tokens (color codes, font sizes, spacing values)
-- Text content and styling
-- Responsive behavior
+| Building… | Follow |
+|---|---|
+| Data-dense owner screen | `app/schedule-dashboard.tsx` |
+| An editor with a save | `app/class-management/ProgrammingPanel.tsx` |
+| A roster / list of people | `app/class-management/BookingsPanel.tsx` |
+| A settings tab | `app/gym-settings/SpacesTab.tsx`, `ClassTypesTab.tsx` |
+| A nav shell | `components/OwnerSidebar.tsx`, `components/CoachSidebar.tsx` |
+| Safe-area wrapping | `components/SafeScreen.tsx` |
 
-### Step 3: Implement React Code (Frontend Agent)
+### Step 3: Compose from primitives
 
-Frontend agent implements React/TypeScript code using extracted specs:
+`frontend/components/cleanink/` provides: `Text`, `Icon`, `StatusChip`,
+`Button` / `ButtonRow`, `SegmentedToggle`, `FilterChips`, `SelectField`.
 
-```typescript
-// Based on extracted specs:
-// - Layout: vertical frame, gap: 16, padding: 24
-// - Colors: primary #3B82F6 (from variables)
-// - Typography: fontSize: 18, fontWeight: 600
+Reuse one before hand-rolling anything. `SelectField` already handles the
+desktop-floating-menu vs mobile-bottom-sheet split; `Icon` wraps Ionicons behind
+semantic names with **zero emoji**.
 
-export function ScheduleDashboard() {
-  return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Schedule Dashboard</Text>
-      {/* ... component implementation ... */}
-    </View>
-  );
-}
-```
+**When a glyph is missing, report it rather than editing `Icon.tsx`** — that file is a
+shared surface and parallel agents collide on it.
 
-**Implementation guidelines:**
-- Use extracted specs as source of truth (not guessing)
-- Match layout hierarchy from design
-- Use extracted color/typography values
-- Keep code idiomatic to the project (React Native, TypeScript, Expo)
-- No design system reinvention — use what design extracted
+### Step 4: Honour the binding rules
 
-### Step 4: Integration
+- **One Accent Rule** — the single crimson `#E23B4E` is one emphasis per view (primary
+  CTA, active state, or key number), never decorative. A list of N rows each with a
+  crimson button is N accents: per-row actions are `quiet`.
+- **Two Reds Rule** — destructive is `Status.danger` `#B3261E`, a deliberately distinct
+  hue. Never interchange it with the accent.
+- **Named-Face Rule** — all text through the `Text` primitive. React Native does **not**
+  select a font face from `fontWeight`; the primitive maps semantic weight → family.
+- **Hairline-First Rule** — structure comes from hairlines and tone, not shadows.
+- **Same-Hue Chip Rule** — a chip's text, background, and border share one hue family.
+- `Status.open` green is reserved for **open/available** status only.
+- **There is no success role.** Confirm with quiet meta text (`Saved`, `Updated …`),
+  never a green success banner.
 
-Frontend agent:
-- Writes code to codebase
-- Registers routes in navigation
-- Passes TypeScript checks
-- Runs locally without errors
+### Step 5: Verify
+
+- `npx tsc --noEmit` clean
+- `npm test` green
+- **Every existing `testID` preserved** — the Playwright specs under `e2e/` locate by
+  them, and a renamed testID passes local gates while breaking CI
+- Live screenshot review at **desktop 1280×832 and mobile 390×844** — this project's
+  jsdom width is 750px, so unpinned test suites exercise the mobile layout *only*
+- No raw hex, no legacy `AppColors`/`Spacing.`, no orphaned style keys left behind
 
 ---
 
-## Pencil MCP Tools Reference
+## Removing a control vs disabling it
 
-| Tool | Purpose |
-|------|---------|
-| `open_document(path)` | Open a `.pen` file |
-| `get_editor_state()` | Current editor state and available components |
-| `batch_get(patterns, nodeIds)` | Read design nodes and structure |
-| `get_variables()` | Extract design tokens (colors, fonts, spacing) |
-| `snapshot_layout(parentId)` | Understand layout/spacing structure |
-| `get_screenshot(nodeId)` | Visual verification of design |
+Established precedent (commit `9f97c2a`): when the backend refuses an action
+**permanently** — e.g. editing a class past `published` — **remove** the control and
+render a locked notice. `disabled` implies a temporary lock and misleads the user.
 
----
-
-## Example: Schedule Dashboard
-
-### Design File
-- `designs/gym-owner-screens.pen`, frame: `Class Management`
-
-### Extraction (Pencil MCP)
-```
-open → gym-owner-screens.pen
-batch_get() → list top-level frames, find "Class Management" frame
-get_variables() → returns color palette, typography, spacing tokens
-snapshot_layout("class-management-frame-id", maxDepth: 2) → returns layout structure
-```
-
-**Extracted Specs:**
-```
-- Container: vertical frame
-  - Gap: 16px
-  - Padding: 24px all sides
-  - Background: white
-  
-- Header section:
-  - Title: "Schedule Dashboard"
-    - fontSize: 24px, fontWeight: 600, color: #1F2937
-  - Subtitle: "Manage your class schedule"
-    - fontSize: 14px, color: #6B7280
-  
-- Classes grid:
-  - Layout: horizontal wrap
-  - Item: Card component instance
-    - Width: 280px, Height: auto
-    - Gap: 12px between items
-    
-- Design tokens:
-  - color.primary: #3B82F6
-  - color.text.primary: #1F2937
-  - spacing.sm: 8px
-  - spacing.md: 16px
-  - font.body.size: 14px
-```
-
-### Implementation (React)
-```typescript
-export function ScheduleDashboard() {
-  return (
-    <View style={{ gap: 16, padding: 24 }}>
-      <View>
-        <Text style={{ fontSize: 24, fontWeight: '600', color: '#1F2937' }}>
-          Schedule Dashboard
-        </Text>
-        <Text style={{ fontSize: 14, color: '#6B7280' }}>
-          Manage your class schedule
-        </Text>
-      </View>
-      
-      <FlatList
-        data={classes}
-        renderItem={({ item }) => <ClassCard class={item} />}
-        numColumns={2}
-        columnWrapperStyle={{ gap: 12 }}
-      />
-    </View>
-  );
-}
-```
+Gate on **lifecycle state, not a date comparison**. `class-lifecycle.scheduler.ts`
+advances class states every minute, so state matches the server exactly while a
+client-side date check drifts from it. The shared predicates live in
+`app/class-management/classStates.ts` (`STATE_LABEL`, `STATE_CHIP_TONE`,
+`isProgrammingEditable`) — import them, don't redefine them.
 
 ---
 
 ## Task Structure
 
-Every frontend task referencing a design includes:
+Every frontend task includes:
 
 ```
-DESIGN REFERENCE: designs/<role>-screens.pen — frame: "<Screen Name>"
+DESIGN CONTRACT: frontend/DESIGN.md (Clean Ink) + constants/design.ts
+EXEMPLAR:        <the closest already-migrated screen>
 
-AGENT WORKFLOW:
-1. Open the role-level .pen file using Pencil MCP
-2. Locate the target frame by name using batch_get()
-3. Extract design specs (layout, colors, typography, components)
-4. Implement React/TypeScript code based on specs
-5. Register route and test locally
+WORKFLOW:
+1. Read DESIGN.md; take all values from constants/design.ts
+2. Compose from components/cleanink/ primitives
+3. Follow the exemplar's structure for this screen shape
+4. Preserve every existing testID
+5. Gate: tsc, jest, screenshots at 1280×832 and 390×844
 
-SPECS TO EXTRACT:
-- Layout structure and flexbox properties
-- Design tokens (colors, fonts, spacing)
-- Component instances and customizations
-- Text content and styling
-- Responsive behavior
+CONSTRAINTS:
+- Do NOT touch cleanink/*, constants/design.ts, or sibling screens
+- Report missing Icon glyphs instead of editing Icon.tsx
+- No raw hex, no theme.ts / AppColors / Spacing
 ```
 
 ---
 
-## Benefits
+## API Type Safety
 
-✅ **Design-driven development** — Code follows design, not vice versa  
-✅ **No manual translation** — Specs extracted programmatically  
-✅ **Consistency** — Same process for every screen  
-✅ **Maintainability** — Design changes → easy code updates  
-✅ **Scalability** — All screens follow same workflow  
+API response types are **generated from Swagger**, never hand-written:
 
----
+1. Backend Swagger must be accurate (all `@Api*` / `@ApiProperty` decorators)
+2. Frontend runs `npm run generate:api-types` → `@/types/api.gen`
+3. Components import `type X = components['schemas']['YDto']`
+4. If a type isn't in the generated file, **the endpoint isn't implemented in backend**
 
-## When Design Changes
-
-If a design is updated in Pencil:
-
-1. Designer updates the relevant frame inside `/designs/<role>-screens.pen`
-2. Frontend agent re-extracts specs via Pencil MCP
-3. Regenerates/updates React code based on new specs
-4. No manual design-to-code translation needed
+Standing rule: a `T | null` field needs an explicit `type:` in its `@ApiProperty`, or
+Nest cannot infer the union and Swagger emits an empty object — which surfaces as
+`Record<string, never> | null` in the generated types.
 
 ---
 
 ## Reference Docs
 
-- **Design System:** `PENCIL_DESIGN_CODE.md` (design ↔ code patterns)
-- **Agent Rules:** `.claude/agents/frontend-developer.md` (execution constraints)
-- **Product Spec:** `docs/MVP_SCREENS.md` (what screens should do)
-- **User Journeys:** `docs/USER_JOURNEYS.md` (user flows)
+- **Design contract:** `frontend/DESIGN.md` + `frontend/.impeccable/design.json`
+- **Tokens:** `frontend/constants/design.ts`
+- **Agent rules:** `.claude/agents/frontend-developer.md`
+- **Product spec:** `docs/MVP_SCREENS.md` (what screens should do)
+- **User journeys:** `docs/USER_JOURNEYS.md`

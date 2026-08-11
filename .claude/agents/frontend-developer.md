@@ -126,42 +126,52 @@ Unless explicitly overridden in the prompt:
 - Navigation: Expo Router
 - Language: TypeScript
 - Networking: fetch or axios
-- Styling: basic React Native styles only
-- No design systems
+- Styling: the **Clean Ink** design system — tokens from `constants/design.ts`,
+  primitives from `components/cleanink/`, rules in `frontend/DESIGN.md`.
+  Never raw hex; never the legacy `theme.ts` / `AppColors` / `Spacing`
 - No animation libraries
 - No global state libraries unless explicitly instructed
 
 ---
 
-## Design-to-Code Workflow (FEATURE tasks with `.pen` files)
+## Design-to-Code Workflow (Impeccable / Clean Ink)
 
-Designs live in role-level files — one file per user role, each screen as a named frame inside it:
+**The design contract is `frontend/DESIGN.md`** (direction "Clean Ink"), with tokens in
+`frontend/constants/design.ts` and its sidecar `frontend/.impeccable/design.json`.
 
-- `designs/athlete-screens.pen`
-- `designs/gym-owner-screens.pen`
-- `designs/coach-screens.pen`
+**Pencil is retired.** `.pen` files under `/designs/` are historical reference only — do
+not read them, do not gate work on them, do not treat them as a spec.
 
-When a FEATURE task references a screen design:
+When a FEATURE task involves UI:
 
-1. **Open the role file and locate the screen frame:**
-   - `mcp__pencil__open_document(roleFilePath)` — open the role-level file
-   - `mcp__pencil__batch_get()` — list top-level frames and find the one matching the screen name
-   - `mcp__pencil__get_variables()` — extract design tokens (colors, fonts, spacing)
-   - `mcp__pencil__snapshot_layout()` — understand the layout structure of the target frame
+1. **Read the contract, then find the exemplar:**
+   - Read `frontend/DESIGN.md` for the binding rules
+   - Take every color, space, type and elevation value from `constants/design.ts`
+   - Copy the shape of an already-migrated screen rather than inventing one:
+     `schedule-dashboard` (data-dense owner screen), `class-management/ProgrammingPanel`
+     (editor), `class-management/BookingsPanel` (roster list), `gym-settings/*Tab`
+     (settings tab)
 
-2. **Implement React code** based on extracted specs:
-   - Use extracted layout properties (flexbox, gaps, padding)
-   - Use extracted design tokens (colors, font sizes, spacing)
-   - Match component hierarchy from the target frame
-   - Keep code idiomatic to Expo/React Native/TypeScript
+2. **Compose from existing primitives** in `components/cleanink/` — Text, Icon,
+   StatusChip, Button/ButtonRow, SegmentedToggle, FilterChips, SelectField. Prefer
+   reusing one over hand-rolling. **Report a missing icon glyph rather than editing
+   `Icon.tsx`** when other agents may be working in parallel.
 
-3. **Verification:**
-   - Code compiles without errors
-   - Layout matches design specs
-   - TypeScript strict mode passes
-   - Runs locally on Expo
+3. **Honour the binding rules:**
+   - **One Accent** — one crimson `#E23B4E` emphasis per view; per-row actions are `quiet`
+   - **Two Reds** — destructive is `Status.danger` `#B3261E`, never the accent
+   - **Named-Face** — all text through the `Text` primitive (`fontWeight` alone does not
+     select a font face in React Native)
+   - **Hairline-First** — structure from hairlines and tone, not shadows
+   - `Status.open` green is reserved for open/available status
+   - **No success role** — confirm with quiet meta text (`Saved`), never a green banner
 
-**Reference:** `docs/FRONTEND_WORKFLOW.md` for detailed design → code process
+4. **Verification:**
+   - `tsc` clean; jest green; **every existing `testID` preserved** (e2e specs depend on them)
+   - Screenshot-reviewed at desktop 1280×832 **and** mobile 390×844
+   - No raw hex, no legacy `AppColors`/`Spacing.`, no orphaned style keys left behind
+
+**Reference:** `docs/FRONTEND_WORKFLOW.md`
 
 ---
 

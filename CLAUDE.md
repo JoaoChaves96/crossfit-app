@@ -121,8 +121,10 @@ Specialized subagents Claude may dispatch when it judges delegation worthwhile:
 
 - `backend-developer` — backend implementation
 - `frontend-developer` — frontend implementation
-- `ux-designer` — Pencil `.pen` screen designs
 - `security-review` — audits backend code against the security/authz invariants
+- `ux-designer` — **RETIRED** along with Pencil. Do not dispatch it. Design work goes
+  through the `impeccable` skill against `frontend/DESIGN.md` (see Established
+  Development Workflows → 1).
 
 These subagents execute a scoped task and report back. Claude decides when to use
 them and when to just do the work itself — there is no rule requiring delegation.
@@ -262,36 +264,45 @@ When any work is completed—tasks, features, endpoints, fixes, or milestones—
 These patterns are mandatory whether Claude implements directly or delegates to a
 subagent (the subagent definitions in `.claude/agents/` restate them for delegated work).
 
-### 1. Design-to-Code Workflow (Frontend)
+### 1. Design-to-Code Workflow (Frontend) — Impeccable
 
-Frontend FEATURE tasks **must** reference Pencil design files (`.pen` files in `/designs`).
+**The design source of truth is `frontend/DESIGN.md` (direction "Clean Ink") plus its
+sidecar `frontend/.impeccable/design.json` and the token layer
+`frontend/constants/design.ts`.** All frontend work follows the **Impeccable** skill.
 
-When implementing from designs:
-- Use Pencil MCP tools to extract specs (batch_get, get_variables, snapshot_layout)
-- Extract layout properties, design tokens, and component hierarchy
-- Implement React code matching extracted specs exactly
-- Verification: Code compiles, layout matches design, TypeScript strict mode passes
+**Pencil is retired.** The `.pen` files in `/designs/` are historical reference only.
+Claude MUST NOT treat them as a specification, MUST NOT gate work on a `.pen` frame
+existing, and MUST NOT dispatch `ux-designer` for new screens. Do not re-litigate this.
 
-**Why:** Prevents design→code drift. Designs are the specification, not suggestions.
+When building or restyling a screen:
+- Invoke the `impeccable` skill; it owns the design process end to end
+- Read `frontend/DESIGN.md` for the binding rules and take tokens from
+  `constants/design.ts` — never raw hex, never the legacy `theme.ts` / `AppColors` /
+  `Spacing` (their presence on a screen is debt to remove, not a pattern to copy)
+- Compose from the existing primitives in `frontend/components/cleanink/`
+  (Text, Icon, StatusChip, Button/ButtonRow, SegmentedToggle, FilterChips, SelectField)
+  before inventing anything new
+- Follow an already-migrated screen as the exemplar for its shape: `schedule-dashboard`
+  for a data-dense owner screen, `class-management/ProgrammingPanel` for an editor,
+  `class-management/BookingsPanel` for a roster list, `gym-settings/*Tab` for a
+  settings tab
+- Verification: `tsc` clean, jest green, and a live screenshot review at desktop
+  1280×832 **and** mobile 390×844
 
-**Documentation:** `docs/FRONTEND_WORKFLOW.md` and `frontend-developer.md`
+**Binding DESIGN.md rules** (full text in `frontend/DESIGN.md`):
+- **One Accent Rule** — the single crimson `#E23B4E` is one emphasis per view (primary
+  CTA / active state / key number), never decorative. N rows each with a crimson button
+  is a violation: per-row actions are `quiet`.
+- **Two Reds Rule** — destructive is `Status.danger` `#B3261E`, a distinct hue; never
+  interchange it with the accent.
+- **Named-Face Rule** — all text goes through the `Text` primitive (React Native won't
+  pick a face from `fontWeight`; the primitive maps semantic weight → font family).
+- **Hairline-First Rule** — structure comes from hairlines and tone, not shadows.
+- **Same-Hue Chip Rule**, and `Status.open` green is reserved for open/available status.
+- **There is no success role.** Confirm with quiet meta text (`Saved`), not a green banner.
 
-#### Design Pre-Check (MANDATORY when planning a new epic)
-
-Designs live in three role-level files in `/designs/`, one frame per screen:
-- `athlete-screens.pen`
-- `gym-owner-screens.pen`
-- `coach-screens.pen`
-
-Before creating any frontend tasks for a new epic:
-
-1. Open the relevant role file in Pencil and check whether frames exist for all screens in scope
-2. If any screen frame is missing, the **first task must be a `ux-designer` agent run** to add the missing frames
-3. Frontend work MUST NOT start until the corresponding frames exist in the role file
-
-If delegating design work, the `ux-designer` agent is defined in `.claude/agents/ux-designer.md`; its prompt must include: epic file path (under `epics/`), list of screens to design, a style reference `.pen` file, and the **role file** (e.g. `designs/coach-screens.pen`).
-
-**Why:** Frontend implementation follows the designs. Without a frame in the role file, layout and UX decisions get made that shouldn't be.
+**Why:** DESIGN.md is derived from the shipped artifact, so it cannot drift from the app
+the way a parked design file did.
 
 ### 2. Swagger/OpenAPI as Authoritative API Contract
 

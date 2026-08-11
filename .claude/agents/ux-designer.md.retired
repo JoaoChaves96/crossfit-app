@@ -1,0 +1,19 @@
+---
+name: ux-designer-RETIRED
+description: "RETIRED 2026-08-11. Pencil is no longer the design source of truth. Do not dispatch this agent."
+---
+
+# RETIRED — DO NOT USE
+
+This agent designed screens in Pencil `.pen` files. **Pencil was retired as the design
+source of truth**; the binding contract is now `frontend/DESIGN.md` (direction "Clean
+Ink") with tokens in `frontend/constants/design.ts`.
+
+Design work goes through the **`impeccable` skill** instead. See:
+
+- `CLAUDE.md` → Established Development Workflows → 1. Design-to-Code Workflow
+- `docs/FRONTEND_WORKFLOW.md`
+- `.claude/agents/frontend-developer.md`
+
+The original definition is preserved in git history (removed at the Membership Plans
+epic planning, 2026-08-11) should the Pencil flow ever need reconstructing.
