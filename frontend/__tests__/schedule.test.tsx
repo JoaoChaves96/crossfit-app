@@ -50,6 +50,8 @@ jest.mock('expo-router', () => ({
   })),
   useLocalSearchParams: jest.fn(() => ({})),
   useSegments: jest.fn(() => []),
+  // DesktopTopNav (desktop register only) marks its active item via usePathname.
+  usePathname: jest.fn(() => '/(tabs)/schedule'),
   // Invoke the callback via React.useEffect so async state updates happen
   // after the component mounts, matching the real useFocusEffect timing.
   useFocusEffect: jest.fn((cb: () => void) => {
@@ -63,6 +65,15 @@ jest.mock('expo-router', () => ({
 }));
 
 import { createApiClient } from '@/utils/api-client';
+
+// jsdom's window is 750px wide, which is under the 768px mobile breakpoint, so
+// an unpinned suite silently tests the mobile register only. Pin it, and let
+// the desktop describe block opt in — the desktop register is a separate return
+// with its own top nav and a 3-column grid that mobile has no equivalent for.
+let mockIsDesktop = false;
+jest.mock('@/hooks/useResponsiveLayout', () => ({
+  useResponsiveLayout: () => ({ isMobile: !mockIsDesktop, isDesktop: mockIsDesktop, width: mockIsDesktop ? 1280 : 390 }),
+}));
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -145,6 +156,12 @@ function renderScreen(mockApi = createMockApiClient()) {
 }
 
 // ─── Tests ────────────────────────────────────────────────────────────────────
+
+// Top-level, so every describe below starts in the mobile register regardless of
+// what an earlier block pinned.
+beforeEach(() => {
+  mockIsDesktop = false;
+});
 
 describe('ScheduleScreen — booking status badges', () => {
   beforeEach(() => {
@@ -640,5 +657,110 @@ describe('ScheduleScreen — Week/Day toggle', () => {
       expect(screen.queryByText('09:00 – 10:00')).toBeNull();
     });
     expect(screen.getByText('07:00 – 08:00')).toBeTruthy();
+  });
+});
+
+// ─── Desktop register ─────────────────────────────────────────────────────────
+
+// The desktop register is a separate early return: a DesktopTopNav plus a
+// three-column card grid, where mobile renders a tab bar and a single-column
+// FlatList. Nothing below has a mobile equivalent, so it had no coverage at all.
+describe('ScheduleScreen — desktop register', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+    mockIsDesktop = true;
+  });
+
+  function mockSchedule(classes: GymClass[], bookings: UserBookingItem[] = []) {
+    const mockApi = createMockApiClient();
+    mockApi.get.mockImplementation((url: string) => {
+      if (url.includes('/classes')) return Promise.resolve(buildScheduleResponse(classes));
+      if (url.includes('/bookings')) return Promise.resolve(buildBookingsResponse(bookings));
+      return Promise.reject(new Error(`Unexpected GET: ${url}`));
+    });
+    return mockApi;
+  }
+
+  it('renders the desktop top nav instead of the mobile tab bar', async () => {
+    // Arrange
+    const mockApi = mockSchedule([buildGymClass()]);
+
+    // Act
+    renderScreen(mockApi);
+
+    // Assert — all four top-nav destinations are present
+    await waitFor(() => {
+      expect(screen.getByText('Schedule')).toBeTruthy();
+    });
+    expect(screen.getByText('My Bookings')).toBeTruthy();
+    expect(screen.getByText('Training History')).toBeTruthy();
+    expect(screen.getByText('Profile')).toBeTruthy();
+  });
+
+  it('distributes every class across the three grid columns without dropping any', async () => {
+    // Arrange — 7 classes on one date exercises the round-robin's uneven tail
+    // (columns get 3 / 2 / 2). All share a date so they land in one grid.
+    // Identify them by start time, not class type: classTypeName also feeds the
+    // filter chip row, so a distinct name per class would match twice.
+    const classes = Array.from({ length: 7 }, (_, i) =>
+      buildGymClass({
+        id: `class-${i}`,
+        scheduledDate: '2025-05-06',
+        scheduledTime: `0${i + 1}:00`,
+      })
+    );
+    const mockApi = mockSchedule(classes);
+
+    // Act
+    renderScreen(mockApi);
+
+    // Assert — every class is on screen exactly once; the grid partitions, it
+    // does not duplicate or truncate.
+    await waitFor(() => {
+      expect(screen.getByText('01:00 – 02:00')).toBeTruthy();
+    });
+    for (let i = 0; i < 7; i++) {
+      expect(screen.getAllByText(`0${i + 1}:00 – 0${i + 2}:00`)).toHaveLength(1);
+    }
+  });
+
+  it('still derives booking status per card in the grid', async () => {
+    // Arrange — a booked class and a full one, so the status badges the mobile
+    // suite covers are proven to survive the grid path too
+    const mockApi = mockSchedule(
+      [
+        buildGymClass({ id: 'booked-cls', scheduledDate: '2025-05-06', bookedCount: 5, capacity: 20 }),
+        buildGymClass({ id: 'full-cls', scheduledDate: '2025-05-06', bookedCount: 20, capacity: 20, classTypeName: 'Olympic Lifting' }),
+      ],
+      [buildUserBooking({ classId: 'booked-cls', status: 'booked' })]
+    );
+
+    // Act
+    renderScreen(mockApi);
+
+    // Assert
+    await waitFor(() => {
+      expect(screen.getByText('Booked')).toBeTruthy();
+    });
+    expect(screen.getByText('Full')).toBeTruthy();
+  });
+
+  it('shows the filtered-empty message when no class matches the active filter', async () => {
+    // Arrange — the only class is a CrossFit one. Note Day view cannot produce
+    // this state: it deliberately falls back to the nearest day that has
+    // classes, so a class-type chip that matches nothing is the way in.
+    const mockApi = mockSchedule([buildGymClass({ classTypeId: 'ct-1', classTypeName: 'CrossFit' })]);
+    renderScreen(mockApi);
+    await waitFor(() => {
+      expect(screen.getByTestId('schedule-chip-Gymnastics')).toBeTruthy();
+    });
+
+    // Act — filter to a canonical type that no loaded class has
+    fireEvent.press(screen.getByTestId('schedule-chip-Gymnastics'));
+
+    // Assert
+    await waitFor(() => {
+      expect(screen.getByText('No classes match the selected filters.')).toBeTruthy();
+    });
   });
 });

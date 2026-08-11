@@ -13,6 +13,14 @@ jest.mock('@/utils/api-client', () => ({
 }));
 
 import { createApiClient } from '@/utils/api-client';
+// jsdom's window is 750px — under the 768px breakpoint — so an unpinned suite
+// only ever renders the mobile register. Desktop mounts the OwnerSidebar beside
+// the form, so pin the register and let the desktop block opt in.
+let mockIsMobile = true;
+jest.mock('@/hooks/useResponsiveLayout', () => ({
+  useResponsiveLayout: () => ({ isMobile: mockIsMobile, isDesktop: !mockIsMobile, width: mockIsMobile ? 390 : 1280 }),
+}));
+
 
 // ─── Stable router mock ───────────────────────────────────────────────────────
 
@@ -91,6 +99,7 @@ function fillDateTime(utils: ReturnType<typeof renderScreen>, placeholder: strin
 describe('CreateClassScreen', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    mockIsMobile = true;
     (useRouter as jest.Mock).mockReturnValue(mockRouter);
   });
 
@@ -323,6 +332,58 @@ describe('CreateClassScreen', () => {
       // Select and verify list items no longer rendered
       fireEvent.press(utils.getByText('CrossFit'));
       expect(utils.queryByText('Olympic Lifting')).toBeNull();
+    });
+  });
+  // ── Desktop register ──────────────────────────────────────────────────────
+  //
+  // Mobile returns the bare form; desktop wraps it beside the OwnerSidebar. The
+  // sidebar is genuinely desktop-only here, so it had no coverage at all.
+  describe('desktop register', () => {
+    beforeEach(() => {
+      mockIsMobile = false;
+    });
+
+    it('mounts the owner sidebar beside the form', async () => {
+      const utils = renderScreen();
+
+      await waitFor(() => {
+        expect(utils.getByText('Create New Class')).toBeTruthy();
+      });
+
+      // Sidebar nav destinations — absent in the mobile register entirely.
+      expect(utils.getByText('Members')).toBeTruthy();
+      expect(utils.getByText('Coaches')).toBeTruthy();
+      expect(utils.getByText('Settings')).toBeTruthy();
+    });
+
+    it('omits the mobile-only back button', async () => {
+      const utils = renderScreen();
+
+      await waitFor(() => {
+        expect(utils.getByText('Create New Class')).toBeTruthy();
+      });
+
+      expect(utils.queryByTestId('create-class-back-btn')).toBeNull();
+    });
+
+    it('renders every form control and both footer actions on desktop', async () => {
+      const utils = renderScreen();
+
+      await waitFor(() => {
+        expect(utils.getByText('Create New Class')).toBeTruthy();
+      });
+
+      // The desktop branch re-lays out every row, so a dropped control would
+      // only surface here. Cheap breadth over the whole form.
+      expect(utils.getByTestId('create-class-date-input')).toBeTruthy();
+      expect(utils.getByTestId('create-class-time-input')).toBeTruthy();
+      expect(utils.getByTestId('create-class-class-type-picker')).toBeTruthy();
+      expect(utils.getByTestId('create-class-coach-picker')).toBeTruthy();
+      expect(utils.getByTestId('create-class-space-picker')).toBeTruthy();
+      expect(utils.getByTestId('create-class-capacity-input')).toBeTruthy();
+      expect(utils.getByTestId('create-class-duration-input')).toBeTruthy();
+      expect(utils.getByTestId('create-class-save-btn')).toBeTruthy();
+      expect(utils.getByTestId('create-class-cancel-btn')).toBeTruthy();
     });
   });
 });

@@ -27,6 +27,15 @@ jest.mock('@/hooks/useNotifications', () => ({
 
 import { createApiClient } from '@/utils/api-client';
 
+// The week grid, its day columns, and the desktop class card only exist in the
+// desktop register; the mobile register replaces them with a day strip and
+// full-width cards. jsdom's default window is narrower than the 768px mobile
+// breakpoint, so pin the register instead of inheriting it.
+let mockIsMobile = false;
+jest.mock('@/hooks/useResponsiveLayout', () => ({
+  useResponsiveLayout: () => ({ isMobile: mockIsMobile, isDesktop: !mockIsMobile, width: 1280 }),
+}));
+
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 type GymClass = components['schemas']['ClassScheduleItemDto'];
@@ -106,6 +115,13 @@ function addDays(date: Date, days: number): Date {
   return d;
 }
 
+/** Formats a Date as the `YYYY-MM-DD` string the schedule endpoint returns. */
+function toApiDate(date: Date): string {
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${date.getFullYear()}-${month}-${day}`;
+}
+
 function formatWeekLabel(start: Date): string {
   const end = addDays(start, 6);
   const opts: Intl.DateTimeFormatOptions = { month: 'short', day: 'numeric' };
@@ -117,6 +133,7 @@ function formatWeekLabel(start: Date): string {
 describe('ScheduleDashboard', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    mockIsMobile = false;
   });
 
   // ── Week navigation ────────────────────────────────────────────────────────
@@ -340,6 +357,88 @@ describe('ScheduleDashboard', () => {
       await waitFor(() => {
         expect(screen.queryByText('Last Week Class')).toBeNull();
       });
+    });
+  });
+
+  // ── Mobile register ────────────────────────────────────────────────────────
+
+  // The mobile register swaps the seven-column week grid for a day strip that
+  // shows one day at a time, so day selection — not column layout — is what
+  // decides whether a class is on screen.
+  describe('mobile register', () => {
+    beforeEach(() => {
+      mockIsMobile = true;
+    });
+
+    it('shows only the selected day’s classes, and switches on day-pill press', async () => {
+      // Arrange — one class on Monday, one on Wednesday of the current week
+      const mockApi = createMockApiClient();
+      const weekStart = getWeekStart(new Date());
+      mockApi.get.mockResolvedValueOnce(
+        buildScheduleResponse([
+          buildGymClass({ id: 'mon', scheduledDate: toApiDate(weekStart), classTypeName: 'Monday CrossFit' }),
+          buildGymClass({ id: 'wed', scheduledDate: toApiDate(addDays(weekStart, 2)), classTypeName: 'Wednesday Gymnastics' }),
+        ])
+      );
+
+      // Act — Monday (index 0) is selected on mount
+      renderScreen(mockApi);
+
+      // Assert
+      await waitFor(() => {
+        expect(screen.getByText('Monday CrossFit')).toBeTruthy();
+      });
+      expect(screen.queryByText('Wednesday Gymnastics')).toBeNull();
+
+      // Act — select Wednesday
+      fireEvent.press(screen.getByTestId('day-pill-2'));
+
+      // Assert — the two days trade places
+      await waitFor(() => {
+        expect(screen.getByText('Wednesday Gymnastics')).toBeTruthy();
+      });
+      expect(screen.queryByText('Monday CrossFit')).toBeNull();
+    });
+
+    it('shows the empty state when the selected day has no classes', async () => {
+      // Arrange — a class on Monday only
+      const mockApi = createMockApiClient();
+      const weekStart = getWeekStart(new Date());
+      mockApi.get.mockResolvedValueOnce(
+        buildScheduleResponse([buildGymClass({ scheduledDate: toApiDate(weekStart) })])
+      );
+
+      // Act
+      renderScreen(mockApi);
+      await waitFor(() => {
+        expect(screen.getByTestId('day-pill-4')).toBeTruthy();
+      });
+      fireEvent.press(screen.getByTestId('day-pill-4')); // Friday
+
+      // Assert
+      await waitFor(() => {
+        expect(screen.getByText('No classes scheduled')).toBeTruthy();
+      });
+    });
+
+    it('renders capacity without the desktop “spots” suffix', async () => {
+      // Arrange
+      const mockApi = createMockApiClient();
+      const weekStart = getWeekStart(new Date());
+      mockApi.get.mockResolvedValueOnce(
+        buildScheduleResponse([
+          buildGymClass({ scheduledDate: toApiDate(weekStart), bookedCount: 5, capacity: 20 }),
+        ])
+      );
+
+      // Act
+      renderScreen(mockApi);
+
+      // Assert
+      await waitFor(() => {
+        expect(screen.getByText('5/20')).toBeTruthy();
+      });
+      expect(screen.queryByText('5/20 spots')).toBeNull();
     });
   });
 

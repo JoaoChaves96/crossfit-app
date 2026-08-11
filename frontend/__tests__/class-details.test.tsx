@@ -48,6 +48,15 @@ jest.mock('@/utils/alert', () => ({
   showAlert: jest.fn(),
 }));
 
+// jsdom's window is 750px — under the 768px breakpoint — so an unpinned suite
+// only ever renders the mobile register. This screen returns an entirely
+// separate desktop tree (top nav + two columns), so pin the register and let the
+// desktop block opt in.
+let mockIsDesktop = false;
+jest.mock('@/hooks/useResponsiveLayout', () => ({
+  useResponsiveLayout: () => ({ isMobile: !mockIsDesktop, isDesktop: mockIsDesktop, width: mockIsDesktop ? 1280 : 390 }),
+}));
+
 import { createApiClient } from '@/utils/api-client';
 import { showConfirm } from '@/utils/alert';
 
@@ -174,6 +183,12 @@ function buildApiForState(
 }
 
 // ─── Tests ────────────────────────────────────────────────────────────────────
+
+// Top-level, so each describe starts in the mobile register regardless of what
+// an earlier block pinned.
+beforeEach(() => {
+  mockIsDesktop = false;
+});
 
 describe('ClassDetailsScreen — booking action buttons', () => {
   beforeEach(() => {
@@ -455,5 +470,90 @@ describe('ClassDetailsScreen — cancel actions', () => {
         );
       });
     });
+  });
+});
+
+// ─── Desktop register ─────────────────────────────────────────────────────────
+
+// The desktop register is a separate early return: a DesktopTopNav over a
+// two-column split, where the left column carries class info + booking and the
+// right column carries programming + results. Mobile stacks everything in one
+// scroll behind its own header. None of this had coverage.
+describe('ClassDetailsScreen — desktop register', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+    mockIsDesktop = true;
+  });
+
+  it('renders the desktop back affordance instead of the mobile header', async () => {
+    // Arrange
+    const mockApi = buildApiForState('open');
+
+    // Act
+    renderScreen(mockApi);
+
+    // Assert — desktop labels its back control; mobile uses a bare icon under a
+    // "Class Details" title, so the two registers are distinguishable.
+    await waitFor(() => {
+      expect(screen.getByText('Back to Schedule')).toBeTruthy();
+    });
+    expect(screen.queryByText('Class Details')).toBeNull();
+  });
+
+  it('renders both columns: class info alongside programming and results', async () => {
+    // Arrange
+    const mockApi = buildApiForState('open');
+
+    // Act
+    renderScreen(mockApi);
+
+    // Assert — left column content and right column content are both present in
+    // the same tree, which is the whole point of the desktop split
+    await waitFor(() => {
+      expect(screen.getByText('CrossFit')).toBeTruthy();
+    });
+    expect(screen.getByText('Programming')).toBeTruthy();
+    expect(screen.getByText('Recent Results')).toBeTruthy();
+    // Secondary content resolves to its placeholder rather than staying blank
+    expect(screen.getByText('No programming has been posted for this class yet.')).toBeTruthy();
+    // Source writes this with &apos;, which renders as a straight quote.
+    expect(screen.getByText("You haven't logged a result for this class.")).toBeTruthy();
+  });
+
+  it('keeps the booking action available in the desktop layout', async () => {
+    // Arrange — the action buttons are shared between registers but sit in a
+    // different container; prove the desktop path still renders and wires them.
+    const mockApi = buildApiForState('open');
+
+    // Act
+    renderScreen(mockApi);
+    await waitFor(() => {
+      expect(screen.getByTestId('book-btn')).toBeTruthy();
+    });
+    await act(async () => {
+      fireEvent.press(screen.getByTestId('book-btn'));
+    });
+
+    // Assert
+    await waitFor(() => {
+      expect(mockApi.post).toHaveBeenCalledWith(
+        expect.stringContaining('/bookings'),
+        expect.anything()
+      );
+    });
+  });
+
+  it('shows the cancel action for a booked class in the desktop layout', async () => {
+    // Arrange
+    const mockApi = buildApiForState('booked');
+
+    // Act
+    renderScreen(mockApi);
+
+    // Assert
+    await waitFor(() => {
+      expect(screen.getByTestId('cancel-booking-btn')).toBeTruthy();
+    });
+    expect(screen.queryByTestId('book-btn')).toBeNull();
   });
 });

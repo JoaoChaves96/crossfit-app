@@ -14,6 +14,15 @@ jest.mock('@/utils/api-client', () => ({
 }));
 
 import { createApiClient } from '@/utils/api-client';
+// jsdom's window is 750px — under the 768px breakpoint — so an unpinned suite
+// only ever renders the mobile register. The desktop register adds the
+// OwnerSidebar and rearranges the footer, so pin it and let the desktop block
+// opt in.
+let mockIsMobile = true;
+jest.mock('@/hooks/useResponsiveLayout', () => ({
+  useResponsiveLayout: () => ({ isMobile: mockIsMobile, isDesktop: !mockIsMobile, width: mockIsMobile ? 390 : 1280 }),
+}));
+
 
 // ─── Stable router mock ───────────────────────────────────────────────────────
 
@@ -106,6 +115,7 @@ function renderScreen(mockApi = buildApiClientWithClassData()) {
 describe('EditClassScreen', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    mockIsMobile = true;
     jest.spyOn(Alert, 'alert');
     (useRouter as jest.Mock).mockReturnValue(mockRouter);
     (useLocalSearchParams as jest.Mock).mockReturnValue({ classId: CLASS_ID });
@@ -513,6 +523,68 @@ describe('EditClassScreen', () => {
 
       expect(utils.queryByTestId('edit-class-readonly-notice')).toBeNull();
       expect(utils.getByTestId('edit-class-save-btn')).toBeTruthy();
+    });
+  });
+  // ── Desktop register ──────────────────────────────────────────────────────
+  //
+  // Desktop lays the footer out as one row — Cancel then Save on the left,
+  // Delete on the right — while mobile leads with a full-width Save above a
+  // Cancel/Delete pair. Same testIDs in both, so ORDER is what distinguishes
+  // them. This screen mounts no sidebar in either register, unlike create-class.
+  describe('desktop register', () => {
+    beforeEach(() => {
+      mockIsMobile = false;
+    });
+
+    it('pre-fills the form in the desktop register', async () => {
+      const utils = renderScreen();
+
+      // The whole form lives inside the register branch, so proving it loads on
+      // desktop covers the fields the mobile suite asserts one at a time.
+      await waitFor(() => {
+        expect(utils.getByDisplayValue('2026-06-01')).toBeTruthy();
+      });
+      expect(utils.getByDisplayValue('09:00')).toBeTruthy();
+      expect(utils.getByDisplayValue('20')).toBeTruthy();
+      expect(utils.getByText('Edit Class')).toBeTruthy();
+    });
+
+    it('orders the footer row Cancel → Save → Delete, not the mobile stack', async () => {
+      const utils = renderScreen();
+
+      await waitFor(() => {
+        expect(utils.getByTestId('edit-class-save-btn')).toBeTruthy();
+      });
+
+      // All three exist in both registers, so assert the arrangement: desktop
+      // pairs Cancel+Save on the left with Delete right, where mobile leads with
+      // a full-width Save. Document order is the only observable difference.
+      const order = utils
+        .getAllByTestId(/^edit-class-(cancel|save|delete)-btn$/)
+        .map((node) => node.props.testID);
+      expect(order).toEqual([
+        'edit-class-cancel-btn',
+        'edit-class-save-btn',
+        'edit-class-delete-btn',
+      ]);
+    });
+
+    it('gates Save on a dirty form in the desktop register too', async () => {
+      const utils = renderScreen();
+
+      await waitFor(() => {
+        expect(utils.getByDisplayValue('20')).toBeTruthy();
+      });
+
+      // Pristine — the dirty gate is shared logic, but it reaches a different
+      // Button instance on desktop, so prove the wiring survives the branch.
+      expect(utils.getByTestId('edit-class-save-btn').props.accessibilityState?.disabled).toBe(true);
+
+      await act(async () => {
+        fireEvent.changeText(utils.getByDisplayValue('20'), '25');
+      });
+
+      expect(utils.getByTestId('edit-class-save-btn').props.accessibilityState?.disabled).toBe(false);
     });
   });
 });

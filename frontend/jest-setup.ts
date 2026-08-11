@@ -22,6 +22,9 @@ jest.mock('expo-router', () => {
     useRouter: jest.fn(() => routerSingleton),
     useLocalSearchParams: jest.fn(() => ({})),
     useSegments: jest.fn(() => []),
+    // DesktopTopNav marks its active nav item by matching usePathname(); without
+    // this, any test rendering a desktop-register screen throws.
+    usePathname: jest.fn(() => '/'),
     Link: jest.fn(({ children }: { children: unknown }) => children),
     Redirect: jest.fn(() => null),
     Stack: { Screen: jest.fn(() => null) },

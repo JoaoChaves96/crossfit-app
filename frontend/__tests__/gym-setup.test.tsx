@@ -15,6 +15,14 @@ jest.mock('@/utils/api-client', () => {
 });
 
 import { ApiError, createApiClient } from '@/utils/api-client';
+// jsdom's window is 750px — under the 768px breakpoint — so an unpinned suite
+// only ever renders the mobile register. This wizard drops its step-rail labels
+// on mobile, so those labels had no coverage; pin the register and opt in below.
+let mockIsMobile = true;
+jest.mock('@/hooks/useResponsiveLayout', () => ({
+  useResponsiveLayout: () => ({ isMobile: mockIsMobile, isDesktop: !mockIsMobile, width: mockIsMobile ? 390 : 1280 }),
+}));
+
 
 const mockRouter = {
   push: jest.fn(),
@@ -90,6 +98,7 @@ function goToReview(utils: ReturnType<typeof renderWizard>) {
 
 beforeEach(() => {
   jest.clearAllMocks();
+  mockIsMobile = true;
   api = createMockApiClient();
   (createApiClient as jest.Mock).mockReturnValue(api);
 });
@@ -353,5 +362,44 @@ describe('GymSetupScreen — cancel', () => {
     // router.back() would do nothing when there is no history to pop.
     expect(mockRouter.replace).toHaveBeenCalledWith('/no-gym');
     expect(mockRouter.back).not.toHaveBeenCalled();
+  });
+});
+
+// ─── Desktop register ─────────────────────────────────────────────────────────
+
+// The step rail carries text labels on desktop and collapses to numbered
+// circles on mobile (so it survives 320pt). The labelled variant had no
+// coverage, and the whole wizard flow was only ever exercised at mobile width.
+describe('GymSetupScreen — desktop register', () => {
+  beforeEach(() => {
+    mockIsMobile = false;
+  });
+
+  it('labels each step in the rail', () => {
+    const utils = renderWizard();
+
+    // Mobile renders these as numerals only; the accessibility label carries the
+    // name in both registers, so assert the visible text specifically.
+    expect(utils.getByText('Basics')).toBeTruthy();
+    expect(utils.getByText('Spaces')).toBeTruthy();
+    expect(utils.getByText('Class Types')).toBeTruthy();
+    expect(utils.getByText('Review')).toBeTruthy();
+  });
+
+  it('still enforces the minimum-configuration gate on desktop', () => {
+    const utils = renderWizard();
+    goToSpaces(utils);
+
+    // The gate is shared logic, but it renders through the desktop action stack.
+    fireEvent.press(utils.getByTestId('spaces-next-btn'));
+    expect(utils.getByTestId('spaces-step-error')).toBeTruthy();
+  });
+
+  it('walks the full wizard to the review step on desktop', () => {
+    const utils = renderWizard();
+    goToReview(utils);
+
+    // Every step's desktop layout has to render for this to arrive at Review.
+    expect(utils.getByTestId('create-gym-btn')).toBeTruthy();
   });
 });
