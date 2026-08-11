@@ -1,8 +1,8 @@
 # EPIC: Impeccable Full-App Restyle — "Clean Ink"
 
 **Status:** 🟢 Phase 1 (athlete) COMPLETE · Phase 2 (gym owner) **CLOSED** 2026-08-07
-· Phase 3 (coach) **COMMITTED** 2026-08-07 — keyboard fix pending device re-test
-· Phase 4 (`gym-setup` adapt) **BUILT** 2026-08-11 — awaiting commit go-ahead
+· Phase 3 (coach) **CLOSED** 2026-08-07 — keyboard fix device-verified 2026-08-11
+· Phase 4 (`gym-setup` adapt) **CLOSED** 2026-08-11 — committed, pushed, device-verified
 **Start Date:** 2026-08-07 (Phase 0 pilot built)
 **Owner:** Frontend + Impeccable design system
 **Depends on:** none (visual layer only; no API/contract changes)
@@ -286,8 +286,8 @@ All three screens migrated, gates re-run independently (`tsc` clean apart from t
 known pre-existing `__tests__` errors; e2e `tsc` clean; zero legacy tokens, zero raw hex,
 zero orphaned style keys), and reviewed live at desktop 1280×832 and mobile 390×844.
 
-⚠️ The keyboard-follow fix (round 3 below) is **web-verified only** — its native path
-still needs a device re-test.
+✅ The keyboard-follow fix (round 3 below) was **re-tested on a physical device
+2026-08-11 and confirmed working**. No verification debt remains on this phase.
 
 
 `coach-classes`, `coach-class-details`, `coach-mark-attendance`.
@@ -362,7 +362,7 @@ header documents the testIDs that were added specifically to unblock its coverag
   of the *bottom* edge past the keyboard's measured `endCoordinates.screenY`).
   Also: `automaticallyAdjustKeyboardInsets` is iOS-only, so Android had no room to
   scroll into — now gated to iOS with the keyboard height applied as real
-  `paddingBottom` on Android. **Still needs a device re-test** (web takes the
+  `paddingBottom` on Android. ✅ **Device-verified 2026-08-11** (web takes the
   `Platform.OS === 'web'` early return, so only a device exercises this path).
 - **Save Programming offered on past classes.** `isProgrammingEditable()` promoted into
   `classStates.ts` — the owner `ProgrammingPanel` already had this predicate defined
@@ -379,9 +379,9 @@ header documents the testIDs that were added specifically to unblock its coverag
 - The browser-default blue focus ring (`rgb(0, 95, 204)`) on multiline inputs is a
   foreign hue in Clean Ink. The owner `progInput` has the identical default; there is
   no global CSS reset. Wants one app-wide fix, not a coach-only patch.
-- **3 failing tests in `__tests__/schedule-dashboard.test.tsx`** (athlete screen, Phase 1).
-  Verified pre-existing by stashing all Phase 3 work and re-running — they fail
-  identically at HEAD. Untouched by this phase, but they are red.
+- ~~**3 failing tests in `__tests__/schedule-dashboard.test.tsx`.**~~ ✅ **FIXED
+  2026-08-11** — see "Test debt cleared" below. They were stale assertions, not
+  regressions: the suite had drifted into the mobile register.
 - No unit tests cover `coach-class-details` lifecycle gating; the owner equivalent has
   them in `edit-class.test.tsx`. The new `isProgrammingEditable` gate is live-verified
   across all five states but not test-locked.
@@ -393,7 +393,7 @@ header documents the testIDs that were added specifically to unblock its coverag
 
 ---
 
-### Phase 4 — Owner onboarding follow-up: `gym-setup` — ✅ BUILT (2026-08-11)
+### Phase 4 — Owner onboarding follow-up: `gym-setup` — ✅ CLOSED (2026-08-11)
 
 The first owner screen touched since Phase 2 closed. It was restyled to Clean Ink in
 Phase 2 but never adapted, so it was the **only owner screen without
@@ -431,15 +431,69 @@ Cancel correctly went to `/no-gym`. The wizard now draws its own header
 (`headerShown: false`) and both affordances agree. Reproduces only via deep link.
 
 **Gates:** `tsc` clean but for the 2 known pre-existing `__tests__` errors; FE jest
-266/269 (the 3 reds are `schedule-dashboard.test.tsx`, untouched — see Phase 3's
-flagged list); **`__tests__/gym-setup.test.tsx` 16/16**, every testID preserved.
+266/269 at the time (the 3 reds were `schedule-dashboard.test.tsx`, untouched then and
+cleared since — see "Test debt cleared"); **`__tests__/gym-setup.test.tsx` 16/16**, every testID preserved.
 Verified in one batched round at 1280 / 390 / 320 (device emulation — the Chrome
 window has a 500px floor, so `resize_page` alone silently lies about mobile widths).
 Console clean. Reviewed by `impeccable-finish-reviewer`; all material findings applied.
 
 **Not verified live:** the success state. Reaching it consumes `owner@newgym.test`,
 the fresh-owner fixture that must stay gym-less; it is covered by jest instead.
-Keyboard behaviour remains **web-only, unconfirmed on device** (screen 7 of the sweep).
+✅ Keyboard behaviour **device-verified 2026-08-11**.
+
+---
+
+### Test debt cleared — `schedule-dashboard` — ✅ DONE (2026-08-11)
+
+The 3 reds that had stood since Phase 1 are fixed. **The frontend suite is now fully
+green: 272/272 across 23 suites** (was 266/269), so jest is a real gate again.
+
+**They were never product bugs, and never regressions.** All 3 asserted against the
+**desktop** register — `5/20 spots`, `20/20 spots`, and 6 day columns each reading
+"No classes" — but the suite renders under jsdom, whose default window is narrower
+than the 768px mobile breakpoint. So `useResponsiveLayout` reported mobile, the screen
+drew `MobileDayStrip` + `MobileClassCard`, and those texts do not exist there: the
+mobile card renders bare `5/20` (the restyle dropped the "spots" suffix), and the
+mobile register shows **one** day at a time, so there are no seven columns to be empty.
+
+**Fix:** pin the register with the `jest.mock('@/hooks/useResponsiveLayout')` +
+`let mockIsMobile` pattern already established in `ResultsPanel.test.tsx` /
+`BookingsPanel.test.tsx`, reset to desktop in `beforeEach`. No production code changed
+(`git diff` on `schedule-dashboard.tsx` is empty) — which is the proof these were
+assertion drift, not behaviour.
+
+**Coverage added:** the mobile register had **none**, and the switch made it nearly
+free. 3 new tests — day-pill selection swaps which day's classes are on screen; the
+per-day empty state; and the capacity string differing from desktop. Suite 11 → 14.
+Mutation-verified: forcing the day filter to index 0 → 2 fail; adding a `spots` suffix
+to the mobile card → 1 fails; removing the mobile empty state → 2 fail.
+
+**Lesson worth keeping:** a responsive screen's tests silently pick a register from
+jsdom's default window. Pin it explicitly, or an assertion can go stale against a
+branch the test never renders — and read as a product bug for four months.
+
+**Follow-up — desktop-register sweep — ✅ DONE (2026-08-11).** jsdom's default window is
+**750px wide → `isMobile: true`** (probed directly), so before this sweep only 4 suites
+pinned the register (`schedule-dashboard`, `notification-preferences`, `ResultsPanel`,
+`BookingsPanel`) and every other responsive screen was tested in the **mobile branch
+only**. All five gaps are now closed with the pin-the-register pattern:
+
+| Suite | Tests | Desktop coverage added |
+|---|---|---|
+| `(tabs)/schedule` | 19 → 23 | top nav destinations; the 3-column `DesktopGrid` round-robin partitions every class without dup or truncation; per-card booking status; filtered-empty message |
+| `class-details` | 16 → 20 | "Back to Schedule" instead of the mobile header; both columns present (info + `Programming`/`Recent Results`); book action wired; cancel action when booked |
+| `edit-class` | 28 → 31 | form pre-fill; **footer order** `Cancel → Save → Delete` (mobile leads with a full-width Save) — the only observable register difference on this screen; dirty-gate on Save |
+| `create-class` | 9 → 12 | `OwnerSidebar` mounted (genuinely desktop-only here, so it had zero coverage); mobile-only back button absent; breadth over all 7 controls + both footer actions |
+| `gym-setup` | 16 → 19 | step-rail text labels (dropped on mobile); minimum-config gate; full walk to Review |
+
+**Suite total 272 → 289, 23/23 suites green.** One global fix was needed to make any of
+it possible: `usePathname` was missing from `jest-setup.ts`, and `DesktopTopNav` calls
+it, so *no* suite could render a desktop-register screen without throwing.
+
+Each block was mutation-verified, then **discrimination-checked** by forcing the desktop
+`describe` to render mobile — which caught `edit-class`'s first draft passing in both
+registers (it asserted only shared behaviour). Rewritten around footer document order,
+it now fails when forced to mobile. Zero production lines changed by the sweep.
 
 ---
 
