@@ -151,6 +151,55 @@ describe('GymMembersQueryService', () => {
     expect(result.members[0].membershipStatus).toBe('expired');
   });
 
+  it('reports an auto-roll member as active between expiry and the hourly roll', async () => {
+    // The scheduler only rolls hourly, so this row is legitimately stale. The
+    // athlete's own guards derive the rolled expiry and serve them normally, so
+    // the owner's list must not contradict them by reporting "expired".
+    membershipFind.mockResolvedValue([buildMembership()]);
+    planFind.mockResolvedValue([
+      buildActivePlan({
+        expiresAt: new Date('2026-08-11T09:15:00.000Z'),
+        autoRoll: true,
+        membershipPlan: {
+          id: 'plan-1',
+          name: 'Unlimited',
+          billingCycle: 'monthly',
+        },
+      }),
+    ]);
+
+    const result = await service.getMembersByGym('gym-1');
+
+    expect(result.members[0].membershipStatus).toBe('active');
+    expect(result.members[0].expiresAt).toEqual(
+      new Date('2026-09-11T09:15:00.000Z'),
+    );
+  });
+
+  it('derives an overdue auto-roll expiry to the first future cycle, clamped', async () => {
+    membershipFind.mockResolvedValue([buildMembership()]);
+    planFind.mockResolvedValue([
+      buildActivePlan({
+        // Three cycles overdue, and month-end: each roll must clamp rather than
+        // overflow into the following month.
+        expiresAt: new Date('2026-05-31T10:00:00.000Z'),
+        autoRoll: true,
+        membershipPlan: {
+          id: 'plan-1',
+          name: 'Unlimited',
+          billingCycle: 'monthly',
+        },
+      }),
+    ]);
+
+    const result = await service.getMembersByGym('gym-1');
+
+    expect(result.members[0].expiresAt).toEqual(
+      new Date('2026-08-30T10:00:00.000Z'),
+    );
+    expect(result.members[0].membershipStatus).toBe('active');
+  });
+
   it('reports a member with no active plan as expired with null plan fields', async () => {
     membershipFind.mockResolvedValue([buildMembership()]);
     planFind.mockResolvedValue([]);

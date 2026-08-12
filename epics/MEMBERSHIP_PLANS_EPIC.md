@@ -148,6 +148,23 @@ the backend) in the owner's "+1 cycle" expiry suggestion.
 Both time bases documented by this epic are unchanged: cycle arithmetic is
 UTC-calendar, coverage comparisons are instant-to-instant.
 
+**Owner list aligned with the athlete guards.** The derivation above initially
+landed in the two athlete-facing guards only, which left the owner's member list
+reading the stored expiry — so for up to an hour once per billing cycle it could
+report a member as `expired` while that same member was booking classes
+normally. `GymMembersQueryService` now derives both `expiresAt` and
+`membershipStatus` through the same shared function, so all three surfaces
+agree. The DTO contract is unchanged: `expiresAt` is documented as "when the
+current plan lapses", which is exactly what the derived value is.
+
+**An owner may assign a plan to a suspended member** — decided, not incidental.
+The assignment grants nothing while the member is suspended, because both access
+paths independently require an active `GymMembership`, so refusing it would
+block a useful workflow (lining up a plan for someone returning) to prevent an
+effect that cannot occur. Recorded in `DECISIONS.md`.
+
 Remaining known items are recorded in the SDD ledger for this epic, not here:
 the athlete-cutoff/owner-list date-string seam, the members endpoint's missing
-e2e coverage, and the loose rolled-row e2e assertions.
+e2e coverage, the loose rolled-row e2e assertions, and the absence of a
+timezone pin for the frontend jest suite (which can render a UTC-vs-local test
+tautological on a UTC CI runner).

@@ -309,8 +309,10 @@ Rules:
 - A roll that is overdue by several cycles advances to the first **future** cycle in
   one pass (bounded by `MAX_CATCH_UP_CYCLES = 240`) rather than one cycle per tick.
 - The scheduler is a **convenience, not the enforcement boundary.** Both the athlete
-  schedule read model and the booking command re-check `expiresAt` at request time, so
-  a row left stale between hourly ticks can never leak a bookable class.
+  schedule read model and the booking command re-evaluate coverage at request time, so
+  a row left stale between hourly ticks can never leak a bookable class. What they
+  evaluate is the *derived* expiry, not the stored one — see "An Auto-Roll Plan Is
+  Judged By Its Derived Expiry" below.
 - `expiresAt === null` means unlimited: no expiry, nothing to roll.
 - Owners get four actions per member: extend expiry, change plan, toggle auto-renew,
   and suspend/resume the gym membership.
@@ -330,3 +332,50 @@ Rationale: showing a bookable class the athlete's plan does not cover is a promi
 system cannot keep; discovering it at the booking button is worse than not seeing it.
 
 This adds a fifth condition to the Class Visibility invariant in `DATA_MODEL.md`.
+
+## An Auto-Roll Plan Is Judged By Its Derived Expiry
+
+`MembershipRenewalScheduler` only rolls hourly, so a plan with `autoRoll = true` sits on
+a stale past `expiresAt` for up to an hour once per billing cycle. Every surface that
+judges coverage therefore evaluates a **derived** expiry: when `autoRoll` is true and the
+stored expiry has passed, coverage is judged against the first future cycle, computed with
+the same clamped UTC arithmetic the scheduler itself uses.
+
+Rationale: judging against the stored value hard-403s a fully-paid, auto-renewing member
+off the entire schedule until the next tick — a paying member locked out once per cycle,
+surfaced as an error screen rather than as a coverage message. The derived value is
+exactly what the scheduler would persist at the next tick, so it grants nothing the
+scheduler would not grant within the hour.
+
+Rules:
+
+- The derivation is **read-only**. No read path writes the rolled date back; a lazy
+  persisted roll was considered and rejected because it makes a read mutate data and can
+  race the scheduler.
+- `autoRoll === false` is judged against the stored expiry unchanged: expired is expired.
+- `expiresAt === null` (unlimited) derives nothing.
+- A plan overdue beyond `MAX_CATCH_UP_CYCLES` reads as expired, matching what the
+  scheduler does with it.
+- All three surfaces derive identically — the athlete's schedule, the booking command, and
+  the owner's member list. The owner must not be shown "expired" for a member who is
+  booking classes normally.
+
+## Membership Expiry Dates Render In UTC
+
+Membership expiry dates render in **UTC**, so the displayed day matches the stored day and
+is identical for every viewer regardless of their timezone.
+
+Rationale: the owner sees back the date they set; a "last covered day" that shifts with the
+viewer is worse than one that is fixed.
+
+This is display-side only — the backend's coverage comparison remains server-local, per
+the rules above.
+
+## An Owner May Assign A Plan To A Suspended Member
+
+Assigning a membership plan does not require the member's `GymMembership` to be active. An
+owner can line up a plan for someone returning from suspension.
+
+Rationale: the assignment grants nothing while the member is suspended — both access paths
+(schedule visibility and booking) independently require an active `GymMembership` — so
+refusing it would block a useful workflow to prevent an effect that cannot occur.
