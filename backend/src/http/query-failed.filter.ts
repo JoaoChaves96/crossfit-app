@@ -3,6 +3,7 @@ import {
   Catch,
   ExceptionFilter,
   HttpStatus,
+  Logger,
 } from '@nestjs/common';
 import { HttpAdapterHost } from '@nestjs/core';
 import { QueryFailedError } from 'typeorm';
@@ -41,6 +42,8 @@ const ONE_ACTIVE_MEMBERSHIP_PLAN_INDEX =
  */
 @Catch(QueryFailedError)
 export class QueryFailedFilter implements ExceptionFilter {
+  private readonly logger = new Logger(QueryFailedFilter.name);
+
   constructor(private readonly httpAdapterHost: HttpAdapterHost) {}
 
   catch(exception: QueryFailedError, host: ArgumentsHost): void {
@@ -68,12 +71,20 @@ export class QueryFailedFilter implements ExceptionFilter {
       (exception as unknown as { constraint?: string }).constraint ===
         ONE_ACTIVE_MEMBERSHIP_PLAN_INDEX
     ) {
+      // Not necessarily a race: this is whatever caused a second active row
+      // to be attempted, which could equally be a future handler that
+      // forgets the expire-then-create step. Log it so that cause is
+      // findable, rather than assuming and naming a specific one.
+      this.logger.warn(
+        `Unique violation on ${ONE_ACTIVE_MEMBERSHIP_PLAN_INDEX}: a gym membership would have ended up with more than one active plan row`,
+      );
+
       httpAdapter.reply(
         response,
         {
           statusCode: HttpStatus.CONFLICT,
           message:
-            'This member already has an active membership plan assigned by a concurrent request. Please retry.',
+            'This member already has an active membership plan. Only one active plan is allowed per member.',
           error: 'Conflict',
         },
         HttpStatus.CONFLICT,

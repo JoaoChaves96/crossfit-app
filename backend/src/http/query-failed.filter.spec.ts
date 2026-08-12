@@ -1,4 +1,4 @@
-import { ArgumentsHost, HttpStatus } from '@nestjs/common';
+import { ArgumentsHost, HttpStatus, Logger } from '@nestjs/common';
 import { HttpAdapterHost } from '@nestjs/core';
 import { QueryFailedError } from 'typeorm';
 import { QueryFailedFilter } from './query-failed.filter';
@@ -60,7 +60,10 @@ describe('QueryFailedFilter', () => {
     });
   });
 
-  it('maps a 23505 unique violation on the one-active-plan index to 409', () => {
+  it('maps a 23505 unique violation on the one-active-plan index to 409, and logs a warning', () => {
+    const warnSpy = jest
+      .spyOn(Logger.prototype, 'warn')
+      .mockImplementation(() => undefined);
     const { host, response } = buildHost();
     const exception = buildQueryFailedError(
       '23505',
@@ -77,6 +80,13 @@ describe('QueryFailedFilter', () => {
       statusCode: HttpStatus.CONFLICT,
       error: 'Conflict',
     });
+
+    expect(warnSpy).toHaveBeenCalledTimes(1);
+    expect(warnSpy.mock.calls[0][0]).toContain(
+      'IDX_athlete_membership_plans_one_active',
+    );
+
+    warnSpy.mockRestore();
   });
 
   it('re-throws a 23505 unique violation on an unrelated constraint unchanged', () => {

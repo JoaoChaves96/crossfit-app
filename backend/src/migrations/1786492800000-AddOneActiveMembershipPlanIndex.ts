@@ -31,13 +31,14 @@ export class AddOneActiveMembershipPlanIndex1786492800000 implements MigrationIn
   }
 
   public async down(queryRunner: QueryRunner): Promise<void> {
+    // Deliberately does NOT restore the old
+    // REL_160876fc498111a4b78a6e08bc UNIQUE("gymMembershipId") constraint:
+    // that constraint is incompatible with the append-only plan history a
+    // membership now holds (any membership with more than one plan row
+    // would violate it immediately), and restoring it would re-introduce
+    // the exact structural bug this epic exists to fix.
     await queryRunner.query(`
       DROP INDEX IF EXISTS "IDX_athlete_membership_plans_one_active"
-    `);
-
-    await queryRunner.query(`
-      ALTER TABLE "athlete_membership_plans"
-      ADD CONSTRAINT "REL_160876fc498111a4b78a6e08bc" UNIQUE ("gymMembershipId")
     `);
   }
 }
