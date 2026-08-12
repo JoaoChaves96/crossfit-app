@@ -289,3 +289,44 @@ Two membership statuses are distinct and must not be conflated: the **persisted*
 `status` is only `'active' | 'expired'`, while the four-value `membershipStatus`
 (`active | expiring | expired | inactive`) is **derived** for the owner-side members
 list, where suspension outranks plan health.
+
+## Membership Renewal Is Per-Member Auto-Roll (Opt-Out)
+
+An `AthleteMembershipPlan` carries its own `autoRoll` flag (default `true`) and an
+`autoRollCount`. An hourly scheduler (`MembershipRenewalScheduler`) finds every
+`active` plan row whose `expiresAt` has passed and either rolls it forward by its
+plan's `billingCycle` (when `autoRoll` is true) or marks it `expired` (when it is
+false). Renewal is therefore **opt-out per member**, not a property of the plan.
+
+Rationale: owners manage a small roster and need per-person control — a member on
+holiday should stop renewing without the owner having to move everyone off the plan.
+Putting the flag on the plan would force a plan-per-policy explosion.
+
+Rules:
+
+- Turning auto-renew back ON resets `autoRollCount` to 0; turning it OFF leaves the
+  count intact as a record of how many cycles were served.
+- A roll that is overdue by several cycles advances to the first **future** cycle in
+  one pass (bounded by `MAX_CATCH_UP_CYCLES = 240`) rather than one cycle per tick.
+- The scheduler is a **convenience, not the enforcement boundary.** Both the athlete
+  schedule read model and the booking command re-check `expiresAt` at request time, so
+  a row left stale between hourly ticks can never leak a bookable class.
+- `expiresAt === null` means unlimited: no expiry, nothing to roll.
+- Owners get four actions per member: extend expiry, change plan, toggle auto-renew,
+  and suspend/resume the gym membership.
+- Athlete-side plan purchase and payment are **out of scope**; a plan is assigned by
+  the owner. The athlete only sees a quiet note explaining where their coverage ends.
+
+Supersedes the `DATA_MODEL.md` implication that expiry is a one-way transition to
+`expired`.
+
+## Class Visibility Is Bounded by Plan Expiry
+
+A class is visible and bookable to an athlete only if it is scheduled **on or before**
+the day their `AthleteMembershipPlan` expires. An athlete whose plan expires mid-week
+sees the schedule stop at that day rather than seeing classes they cannot attend.
+
+Rationale: showing a bookable class the athlete's plan does not cover is a promise the
+system cannot keep; discovering it at the booking button is worse than not seeing it.
+
+This adds a fifth condition to the Class Visibility invariant in `DATA_MODEL.md`.

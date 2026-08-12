@@ -151,7 +151,8 @@ The model enforces:
 **Rules:**
 - Athletes can only see and book classes whose ClassType is in their active MembershipPlan's class_types
 - A plan's class_types must all belong to the same gym
-- Archived plans remain visible to athletes with existing subscriptions but cannot be purchased by new athletes
+- Archived plans remain in force for athletes who already hold them until their
+  current cycle expires, but cannot be assigned to anyone new
 
 ---
 
@@ -166,6 +167,8 @@ The model enforces:
 - `status` (enum: `active`, `expired`)
 - `started_at` (timestamp)
 - `expires_at` (timestamp; nullable for unlimited plans)
+- `auto_roll` (boolean, default true; whether the row renews on expiry)
+- `auto_roll_count` (integer, default 0; cycles served since auto-renew was last enabled)
 
 **Relationships:**
 - **Cardinality:** One GymMembership has at most one active AthleteMembershipPlan at any time
@@ -445,10 +448,16 @@ The model enforces:
 **Explicit States:** `athlete_membership_plan.status` (enum: `active`, `expired`)
 
 **Rules:**
-- New purchases → `active`
-- Automatic transition to `expired` when `expires_at` timestamp passes
-- Only one `active` plan per GymMembership; creating a new plan expires the old one
-- Expired athletes cannot book classes but can view booking history
+- New assignments → `active`
+- On `expires_at` passing, an hourly scheduler either rolls the row forward by the
+  plan's `billing_cycle` (when `auto_roll` is true) or transitions it to `expired`
+  (when it is false) — see DECISIONS.md, "Membership Renewal Is Per-Member Auto-Roll"
+- Only one `active` plan per GymMembership; assigning a new plan expires the old one
+  in the same transaction
+- `expires_at = NULL` means unlimited coverage: no expiry, no roll
+- Expired athletes cannot see or book classes but can view booking history
+- Expiry is re-checked at request time by the schedule read model and the booking
+  command; the scheduler is a convenience, not the enforcement boundary
 
 ---
 
@@ -462,6 +471,8 @@ A class is visible to an athlete if and only if:
 2. Athlete has `active` AthleteMembershipPlan for that GymMembership
 3. The plan's `class_types` list includes the class's `class_type_id`
 4. The class is in state `published` or `booking_closed` (not in `in_progress` for normal viewing, but historical viewing allowed for `completed` and `archived`)
+5. The class's `scheduled_date` falls on or before the day the AthleteMembershipPlan's
+   `expires_at` lands on (an unlimited plan, `expires_at = NULL`, imposes no bound)
 
 **Consequence:** Athletes cannot see classes outside these conditions. Hidden classes must not appear in search, schedule, or list views.
 
@@ -490,7 +501,7 @@ A class is visible to an athlete if and only if:
 
 ### Waitlist Promotion (DECISIONS.md: Automatic & Immediate)
 
-1. When a `booked` athlete cancels or is marked absent, the system checks for waitlisted athletes
+1. When a `booked` athlete cancels, the system checks for waitlisted athletes
 2. If waitlisted athletes exist, the first one (by position) is automatically promoted to `booked`
 3. No confirmation email or acceptance window; promotion is immediate
 4. Promoted athlete is not notified separately beyond standard booking notification

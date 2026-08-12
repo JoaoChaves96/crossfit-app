@@ -16,6 +16,7 @@
 **→ See `epics/ATHLETE_PROFILE_EPIC.md` for completed epic details**
 **→ See `epics/GYM_PROFILE_EPIC.md` for completed epic details**
 **→ See `epics/NOTIFICATIONS_EPIC.md` for completed epic details**
+**→ See `epics/MEMBERSHIP_PLANS_EPIC.md` for completed epic details**
 
 ## Product
 
@@ -241,6 +242,12 @@ MVP scope. Coach desktop has NO duplicate-header bug). Discovery/triage only; fi
     offers "Create Your First Class" again — it is submittable. See `docs/DECISIONS.md`
     → **Owners as Coaches**. BE 264/264, FE 299/299; live-verified against
     `owner.b2@test.local`'s coachless gym.
+- ✅ **EPIC: Membership Plans (2026-08-12)** — closes the Phase 2 gym-owner audit
+  finding **"Membership Plans feature entirely missing."** Owners can now list plans
+  with subscriber counts, assign/change a member's plan, extend expiry, toggle
+  per-member auto-renew, and suspend/resume a membership; an hourly scheduler rolls
+  or expires plans; the athlete schedule and booking path enforce expiry, live-proved
+  end to end. See `epics/MEMBERSHIP_PLANS_EPIC.md` for the full task breakdown.
 
 ## Previous Phase (2026-05-23)
 
