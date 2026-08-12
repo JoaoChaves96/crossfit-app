@@ -205,7 +205,8 @@ hairline structure — with a single crimson accent and two status hues.
 ### Status Roles
 - **Danger** (`#B3261E`): Destructive and blocking states — cancel actions, "Full", full-spots metadata. A *deeper* red than the accent so the confident "book" action never competes with a cancel/unavailable state.
 - **Danger Wash** (`#FBEAE8`): Faint danger fill behind the "Full" status chip and the danger button's pressed state.
-- **Neutral status** reuses **Ink Muted** (`#5C5C5C`) on a **Ground Sunken** (`#F0F0F0`) wash for lifecycle states (Closed / In Progress / Completed).
+- **Neutral status** reuses **Ink Muted** (`#5C5C5C`) on a **Ground Sunken** (`#F0F0F0`) wash for lifecycle states (Closed / In Progress / Completed) and for the membership states `expiring` / `expired` / `inactive`.
+- **There is no amber/warning token, and this is settled.** Adding one for `expiring` was raised during the Membership Plans epic and **declined by the user after a live review (2026-08-12)**: `expiring` and `inactive` read as neutral chips distinguished by their label alone. A fourth hue would spend the palette's scarcity on a state the label already names. Do not re-open this.
 
 ### Named Rules
 **The One Accent Rule.** Crimson (`#E23B4E`) appears in exactly three places: the primary CTA, the active filter chip, and selection. If a fourth use appears on a screen, it is wrong. The accent is a signal; its rarity is the point.

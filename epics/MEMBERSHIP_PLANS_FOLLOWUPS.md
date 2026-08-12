@@ -102,10 +102,11 @@ The real owner tasks it serves: "price rise — move everyone off Basic onto Bas
 
 Sized as its own small epic rather than an addition to the closed Membership Plans one.
 
-## 6. Parked design questions — need a device and the user's eyes
+## 6. Parked design questions — ✅ CLOSED 2026-08-12
 
-- **No amber token**: `expiring` and `inactive` both render `StatusChip tone="neutral"`, so they
-  are distinguishable by label but not by colour.
-- **Gym Settings now carries five segmented tabs**, which may crowd at 390px.
+Both reviewed live by the user, who accepted the shipped design as-is. **Neither is open.**
 
-Both need a live review at desktop 1280×832 and mobile 390×844, not a code reviewer.
+- **No amber token** — declined. `expiring` / `expired` / `inactive` stay `StatusChip
+  tone="neutral"`, distinguished by label. Recorded in `frontend/DESIGN.md` → Status Roles so it
+  is not re-raised.
+- **Five segmented tabs in Gym Settings** — accepted at 390px, no reflow needed.

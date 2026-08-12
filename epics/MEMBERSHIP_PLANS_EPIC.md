@@ -168,4 +168,9 @@ Remaining known items are recorded in
 seam behind the athlete-cutoff/owner-list divergence, the members endpoint's
 missing e2e coverage, the loose rolled-row e2e assertions, the absence of a
 timezone pin for the frontend jest suite (which can render a UTC-vs-local test
-tautological on a UTC CI runner), and the two parked design questions.
+tautological on a UTC CI runner), and bulk membership operations (open, never
+scoped — not the same thing as declined).
+
+The two parked design questions are **closed**: the user reviewed both live on
+2026-08-12 and accepted the shipped design, declining an amber token for
+`expiring` and accepting five segmented tabs at 390px.
