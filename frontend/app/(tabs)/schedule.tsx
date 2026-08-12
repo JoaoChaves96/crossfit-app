@@ -537,7 +537,7 @@ export default function ScheduleScreen() {
       <View style={isDesktop ? desktopStyles.screen : styles.screen}>
         {isDesktop && <DesktopTopNav />}
         <View style={styles.centeredState}>
-          <Text size="body" tone={Status.danger} style={{ textAlign: 'center' }}>{error}</Text>
+          <Text testID="schedule-error" size="body" tone={Status.danger} style={{ textAlign: 'center' }}>{error}</Text>
         </View>
       </View>
     );

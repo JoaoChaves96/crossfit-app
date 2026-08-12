@@ -147,7 +147,9 @@ function MemberRow({ member, isAlternate, onPress }: MemberRowProps) {
         </View>
       </View>
       <View style={styles.colExpires}>
-        <Text size="body" tone="muted">{member.planName ? formatExpiry(member.expiresAt) : '—'}</Text>
+        <Text size="body" tone="muted" testID={`member-row-${member.id}-expires`}>
+          {member.planName ? formatExpiry(member.expiresAt) : '—'}
+        </Text>
       </View>
       <View style={styles.colJoined}>
         <Text size="body" tone="muted">{formatJoinedDate(member.joinedAt)}</Text>

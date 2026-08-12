@@ -197,7 +197,7 @@ function LoadingScreen() {
 function ErrorScreen({ message, onBack }: { message: string; onBack: () => void }) {
   return (
     <View style={styles.centered}>
-      <Text size="body" tone={Status.danger} style={{ textAlign: 'center' }}>{message}</Text>
+      <Text testID="class-details-error" size="body" tone={Status.danger} style={{ textAlign: 'center' }}>{message}</Text>
       <Button variant="quiet" label="Go Back" onPress={onBack} />
     </View>
   );
