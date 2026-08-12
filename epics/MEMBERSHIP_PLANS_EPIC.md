@@ -163,8 +163,9 @@ paths independently require an active `GymMembership`, so refusing it would
 block a useful workflow (lining up a plan for someone returning) to prevent an
 effect that cannot occur. Recorded in `DECISIONS.md`.
 
-Remaining known items are recorded in the SDD ledger for this epic, not here:
-the athlete-cutoff/owner-list date-string seam, the members endpoint's missing
-e2e coverage, the loose rolled-row e2e assertions, and the absence of a
+Remaining known items are recorded in
+`epics/MEMBERSHIP_PLANS_FOLLOWUPS.md`, not here: the `@Column('date')` parse
+seam behind the athlete-cutoff/owner-list divergence, the members endpoint's
+missing e2e coverage, the loose rolled-row e2e assertions, the absence of a
 timezone pin for the frontend jest suite (which can render a UTC-vs-local test
-tautological on a UTC CI runner).
+tautological on a UTC CI runner), and the two parked design questions.
