@@ -37,4 +37,51 @@ export class GymMemberItemDto {
     description: 'Date and time the member joined the gym',
   })
   joinedAt: Date;
+
+  @ApiProperty({
+    type: String,
+    example: 'uuid-plan-id',
+    description: 'ID of the plan the member is currently on, null if none',
+    nullable: true,
+  })
+  planId: string | null;
+
+  @ApiProperty({
+    type: String,
+    example: 'Unlimited',
+    description: 'Name of the plan the member is currently on, null if none',
+    nullable: true,
+  })
+  planName: string | null;
+
+  @ApiProperty({
+    type: Date,
+    example: '2026-09-01T00:00:00.000Z',
+    description:
+      'When the current plan lapses. Null means the plan is unlimited or the member has no plan.',
+    nullable: true,
+  })
+  expiresAt: Date | null;
+
+  @ApiProperty({
+    enum: ['active', 'expiring', 'expired', 'inactive'],
+    example: 'active',
+    description:
+      'Derived plan health: inactive when the membership is suspended, expired when there is no active plan or it has lapsed, expiring within 7 days of the expiry date, otherwise active',
+  })
+  membershipStatus: 'active' | 'expiring' | 'expired' | 'inactive';
+
+  @ApiProperty({
+    example: true,
+    description:
+      'Whether the current plan rolls forward automatically when it expires',
+  })
+  autoRoll: boolean;
+
+  @ApiProperty({
+    example: 3,
+    description:
+      'How many times the current plan has auto-renewed since auto-renew was last switched on',
+  })
+  autoRollCount: number;
 }

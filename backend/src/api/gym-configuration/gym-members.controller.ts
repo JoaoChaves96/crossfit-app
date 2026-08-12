@@ -23,25 +23,26 @@ export class GymMembersController {
   ) {}
 
   /**
-   * List all active members for a gym (Gym Owner only)
+   * List all members for a gym (Gym Owner only)
    *
    * **Preconditions:**
    * - User must be authenticated as a gym owner
    *
    * **Postconditions:**
-   * - Returns all active gym members with name, email, and join date, sorted by joinedAt DESC
+   * - Returns every gym member (suspended included) with their current plan,
+   *   expiry and derived membership status, sorted by joinedAt DESC
    */
   @Get()
   @Role('owner')
   @ApiOperation({
-    summary: 'List active members',
+    summary: 'List members',
     description:
-      'Returns all active members for the gym, sorted by join date descending. Gym owners only.',
+      'Returns every member for the gym — suspended members included — each with their current plan, expiry date and derived membership status, sorted by join date descending. Gym owners only.',
   })
   @ApiParam({ name: 'gymId', description: 'Gym ID' })
   @ApiResponse({
     status: 200,
-    description: 'Active members list returned',
+    description: 'Members list returned',
     type: GetGymMembersResponseDto,
   })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
