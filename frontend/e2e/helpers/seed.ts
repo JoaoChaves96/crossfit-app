@@ -336,11 +336,41 @@ export async function assignPlan(
  * flipped the status would pass even if the date check were deleted.
  */
 export async function setPlanExpiry(athlete: SeededAthlete, expiresAt: Date): Promise<void> {
+  await updateActivePlan(athlete, `SET "expiresAt" = $2`, [expiresAt]);
+}
+
+/**
+ * Turns auto-renew on or off for an athlete's active plan.
+ *
+ * Required to express "expired", not a convenience. `seedGym` gives every athlete
+ * an auto-roll plan, and both read guards judge a request against
+ * `effectiveExpiresAt`, which rolls a lapsed auto-roll plan forward whole billing
+ * cycles (so a paying member is not locked out between scheduler ticks). An
+ * auto-roll plan that lapsed is therefore still covered by design, and
+ * `setPlanExpiry` alone cannot make an athlete expired.
+ */
+export async function setPlanAutoRoll(athlete: SeededAthlete, autoRoll: boolean): Promise<void> {
+  await updateActivePlan(athlete, `SET "autoRoll" = $2`, [autoRoll]);
+}
+
+/**
+ * Applies a SET clause to the athlete's ONE active plan, or throws.
+ *
+ * The row count is checked rather than trusted: a partial unique index allows a
+ * single active row per membership, so anything other than 1 means the fixture is
+ * not what the caller thinks — which must fail here rather than three assertions
+ * later. `$1` is always the membership id; extra params start at `$2`.
+ */
+async function updateActivePlan(
+  athlete: SeededAthlete,
+  setClause: string,
+  params: unknown[],
+): Promise<void> {
   await withDb(async (db) => {
     const res = await db.query(
-      `UPDATE athlete_membership_plans SET "expiresAt" = $2
+      `UPDATE athlete_membership_plans ${setClause}
        WHERE "gymMembershipId" = $1 AND status = 'active'`,
-      [athlete.gymMembershipId, expiresAt],
+      [athlete.gymMembershipId, ...params],
     );
     if (res.rowCount !== 1) {
       throw new Error(
@@ -423,6 +453,42 @@ export async function countBookings(
       [cls.id, status],
     );
     return Number(res.rows[0].count);
+  });
+}
+
+/**
+ * The athlete's single active plan row, as stored.
+ *
+ * A database read, and like `countBookings` a last resort: prefer asserting what
+ * the actor sees. It exists because the auto-renew toggle carries its state only
+ * in its own styling, so after a reload there is nothing on screen to check a
+ * persisted `autoRoll` against.
+ *
+ * `expiresAt` comes back as the bare calendar day (`to_char`) so a caller never
+ * re-parses a timestamp through the machine's zone to name a day.
+ */
+export async function readActivePlan(athlete: SeededAthlete): Promise<{
+  membershipPlanId: string;
+  autoRoll: boolean;
+  expiresDay: string | null;
+}> {
+  return withDb(async (db) => {
+    const res = await db.query<{
+      membershipPlanId: string;
+      autoRoll: boolean;
+      expiresDay: string | null;
+    }>(
+      `SELECT "membershipPlanId", "autoRoll", to_char("expiresAt", 'YYYY-MM-DD') AS "expiresDay"
+       FROM athlete_membership_plans
+       WHERE "gymMembershipId" = $1 AND status = 'active'`,
+      [athlete.gymMembershipId],
+    );
+    if (res.rowCount !== 1) {
+      throw new Error(
+        `[seed] Expected exactly one active plan for membership ${athlete.gymMembershipId}, found ${res.rowCount}.`,
+      );
+    }
+    return res.rows[0];
   });
 }
 

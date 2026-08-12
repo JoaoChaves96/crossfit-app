@@ -118,14 +118,29 @@ export async function createClassViaForm(page: Page, input: CreateClassInput): P
  * out, so the target is often one week forward. This walks forward a bounded
  * number of weeks and fails with the days it did see — never silently gives up,
  * which is the behaviour that let the old suite skip itself.
+ *
+ * "Is the target week on screen?" must be a RETRYING question, not a reading. A
+ * bare `count()` returns 0 both when the week is elsewhere and when the grid has
+ * not rendered — and after `page.reload()` the grid renders, then Expo Router's
+ * client boot tears the tree down and renders it again, so any single reading can
+ * land in that gap. Observed: a `toBeVisible` on the grid passed, and the very
+ * next `count()` in the same tick saw an empty DOM. The walk then advanced three
+ * weeks past a column that was already there and blamed the fixture's date.
+ *
+ * So each week gets its own bounded wait for the column to APPEAR, and only a
+ * week that genuinely does not contain the day advances the view.
  */
 export async function showWeekContaining(page: Page, day: CalendarDay): Promise<Locator> {
   const column = page.getByTestId(`day-column-${day}`);
 
   for (let attempt = 0; attempt < 3; attempt += 1) {
-    if (await column.count() > 0) {
+    try {
+      await expect(column).toHaveCount(1, { timeout: 8_000 });
       await expect(column).toBeVisible();
       return column;
+    } catch {
+      // Not this week — or not yet rendered, which the wait above has now ruled
+      // out. Advancing is safe.
     }
     await page.getByTestId('week-nav-next-btn').first().click();
     await page.waitForTimeout(250);
@@ -139,6 +154,34 @@ export async function showWeekContaining(page: Page, day: CalendarDay): Promise<
     `Could not reach the week containing ${day} on the owner dashboard after 3 forward steps. ` +
       `Columns visible: ${labels.join(', ') || '(none)'}.`,
   );
+}
+
+/**
+ * Opens an owner section from the sidebar and waits for the route to settle.
+ *
+ * `key` is the sidebar item's key (`members`, `coaches`, `gym-settings`), which
+ * `OwnerSidebar` templates into `nav-${key}` — so a section renamed in one place
+ * fails here loudly rather than in whichever journey happened to use it.
+ */
+export async function openOwnerSection(page: Page, key: string): Promise<void> {
+  await page.getByTestId(`nav-${key}`).click();
+  await expect(page).toHaveURL(new RegExp(key));
+}
+
+/**
+ * Opens a member's detail panel from the members list.
+ *
+ * Keyed by gym_membership id, not user id: that is what the rows carry and what
+ * the plan-assignment and expiry endpoints take.
+ *
+ * Waits on the panel's save control rather than on the panel container, because
+ * a panel that opened but whose plans request has not returned cannot yet be
+ * acted on — and the wait is not an assertion, so a journey whose SUBJECT is the
+ * panel still makes its own claims about what it contains.
+ */
+export async function openMemberPanel(page: Page, gymMembershipId: string): Promise<void> {
+  await page.getByTestId(`member-row-${gymMembershipId}`).click();
+  await expect(page.getByTestId('member-save-btn')).toBeVisible({ timeout: 20_000 });
 }
 
 // ── Athlete flows ────────────────────────────────────────────────────────────

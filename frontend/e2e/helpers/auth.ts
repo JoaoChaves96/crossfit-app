@@ -37,9 +37,12 @@ export async function loginAs(page: Page, user: Credentials): Promise<void> {
 }
 
 /**
- * Resolves a navigation tab by its testID, pinned to the VISIBLE copy.
+ * The VISIBLE copy of a testID.
  *
- * Two reasons the visibility filter is load-bearing, not defensive:
+ * On Expo Web a testID is routinely in the DOM more than once, and the extra
+ * copies are hidden rather than absent — `.first()` therefore picks a node no
+ * user can see, and Playwright waits on it until the test times out instead of
+ * failing fast. Three sources of duplication in this app:
  *
  *  - expo-router's <Tabs> renders the tab bar twice on web (an active and an
  *    inactive layer), so `getByTestId('tab-*')` matches two elements and trips
@@ -47,11 +50,21 @@ export async function loginAs(page: Page, user: Credentials): Promise<void> {
  *  - The athlete has two navigation bars sharing one testID namespace: the
  *    bottom tab bar, which `(tabs)/_layout.tsx` sets to `display: none` on
  *    desktop, and DesktopTopNav, which is absent on mobile. At the 1280px
- *    viewport this suite runs at, only the top nav is real — clicking the hidden
- *    bottom tab hangs until the test times out rather than failing fast.
+ *    viewport this suite runs at, only the top nav is real.
+ *  - A pushed detail route leaves the tabs screen underneath MOUNTED but hidden.
+ *    Chrome that both screens render — DesktopTopNav, and with it the
+ *    notification bell and its badge — resolves to two nodes, hidden one first.
+ *
+ * So anything shared by a tab screen and a detail screen must be addressed
+ * through this, never through `.first()`.
  */
+export function visibleTestId(page: Page, testId: string) {
+  return page.getByTestId(testId).filter({ visible: true });
+}
+
+/** Resolves a navigation tab by its testID, pinned to the visible copy. */
 export function tab(page: Page, name: string) {
-  return page.getByTestId(name).filter({ visible: true });
+  return visibleTestId(page, name);
 }
 
 /**
