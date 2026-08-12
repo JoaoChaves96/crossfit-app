@@ -113,3 +113,41 @@ row still reading `status='active'`, the stale-row state the hourly scheduler
 can leave between ticks) refused the whole schedule and any booking with `403`.
 All touched dev-DB rows were restored to their pre-check state; the hand-seeded
 waitlist-promotion scenario was untouched.
+
+---
+
+## Post-review fixes (2026-08-12)
+
+The whole-branch review raised one merge blocker and two month-end arithmetic
+defects. All three are fixed, plus the duplication that caused them.
+
+**Auto-roll members between renewal ticks.** The renewal scheduler runs hourly,
+but the request-time guards judged coverage against the stored `expiresAt`
+alone — so a fully-paid auto-renewing member was refused the whole schedule and
+every booking for up to an hour, once per billing cycle. Coverage is now judged
+against an **effective** expiry: for an `autoRoll` row whose expiry has passed,
+the guards derive the first future cycle using the same clamped arithmetic the
+scheduler uses, and the athlete's cutoff note shows that derived date. The
+derivation is pure — a read path never writes, so nothing races the scheduler.
+`autoRoll` off still means expired is expired, an unlimited plan is still
+unlimited, and a row past the catch-up cap still reads as expired.
+
+**Month-end clamping (RULING B) is now universal.** Adding a cycle to a
+month-end date clamps to the last day of the shorter month; unclamped copies
+advanced Jan 31 to Mar 3, skipping February and permanently moving the billing
+day. The arithmetic existed in four places — the scheduler's correct clamped
+copy plus a private duplicate in each of the assign, purchase and
+manually-add-member handlers, two of which also used the local rather than the
+UTC calendar. All three duplicates are deleted; every backend caller now uses
+one shared module,
+`backend/src/domain/athlete-membership-plan/billing-cycle.ts`, which is the
+authority for cycle arithmetic and for the effective-expiry derivation. The
+same clamp is mirrored (necessarily by hand — the frontend cannot import from
+the backend) in the owner's "+1 cycle" expiry suggestion.
+
+Both time bases documented by this epic are unchanged: cycle arithmetic is
+UTC-calendar, coverage comparisons are instant-to-instant.
+
+Remaining known items are recorded in the SDD ledger for this epic, not here:
+the athlete-cutoff/owner-list date-string seam, the members endpoint's missing
+e2e coverage, and the loose rolled-row e2e assertions.
