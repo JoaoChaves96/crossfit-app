@@ -151,6 +151,25 @@ describe('MembersScreen', () => {
     expect(screen.queryByText('Jane Doe')).toBeNull();
   });
 
+  it('matches a lowercase target against an uppercase/mixed-case query', async () => {
+    mockApiClient.get.mockResolvedValue({
+      members: [
+        buildMember({ id: 'gm-1', name: 'Jane Doe', email: 'jane@example.com' }),
+        buildMember({ id: 'gm-2', name: 'John Smith', email: 'john@other.com' }),
+      ],
+    });
+
+    render(<MembersScreen />);
+
+    await screen.findByText('Jane Doe');
+    // Reverse direction of the earlier case-insensitivity check: here the query
+    // is upper/mixed-case and the stored name/email are lowercase-ish already.
+    fireEvent.changeText(screen.getByTestId('members-search-input'), 'JANE');
+
+    expect(screen.getByText('Jane Doe')).toBeTruthy();
+    expect(screen.queryByText('John Smith')).toBeNull();
+  });
+
   it('renders the mobile card with plan and expiry', async () => {
     mockIsMobile = true;
     mockApiClient.get.mockResolvedValue({ members: [buildMember()] });
@@ -159,5 +178,26 @@ describe('MembersScreen', () => {
 
     expect(await screen.findByText('Jane Doe')).toBeTruthy();
     expect(screen.getByText('Unlimited · Expires Sep 1, 2026')).toBeTruthy();
+  });
+
+  it('filters the mobile card list by search and updates the count badge', async () => {
+    mockIsMobile = true;
+    mockApiClient.get.mockResolvedValue({
+      members: [
+        buildMember({ id: 'gm-1', name: 'Jane Doe', email: 'jane@example.com' }),
+        buildMember({ id: 'gm-2', name: 'John Smith', email: 'john@example.com' }),
+      ],
+    });
+
+    render(<MembersScreen />);
+
+    await screen.findByText('Jane Doe');
+    expect(screen.getByText('2 members')).toBeTruthy();
+
+    fireEvent.changeText(screen.getByTestId('members-search-input'), 'john');
+
+    expect(screen.queryByText('Jane Doe')).toBeNull();
+    expect(screen.getByText('John Smith')).toBeTruthy();
+    expect(screen.getByText('1 member')).toBeTruthy();
   });
 });
