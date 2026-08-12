@@ -33,21 +33,23 @@ export class GymMembershipRepository {
 
   /**
    * Retrieve a gym membership by ID
+   *
+   * Does not load plan rows: a membership has a history of them and none of
+   * them is authoritatively "the current plan". Callers needing the current
+   * plan use AthleteMembershipPlanRepository.getActivePlanByGymMembership.
    */
   async getGymMembershipById(
     gymMembershipId: string,
   ): Promise<GymMembershipEntity | null> {
     return this.gymMembershipRepository.findOne({
       where: { id: gymMembershipId },
-      relations: [
-        'activeMembershipPlan',
-        'activeMembershipPlan.membershipPlan',
-      ],
     });
   }
 
   /**
    * Retrieve active gym membership for a user in a specific gym
+   *
+   * Plan rows are deliberately not loaded — see getGymMembershipById.
    */
   async getActiveGymMembershipByUserAndGym(
     userId: string,
@@ -59,10 +61,6 @@ export class GymMembershipRepository {
         gymId,
         status: 'active',
       },
-      relations: [
-        'activeMembershipPlan',
-        'activeMembershipPlan.membershipPlan',
-      ],
     });
   }
 

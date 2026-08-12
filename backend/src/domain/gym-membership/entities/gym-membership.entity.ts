@@ -6,7 +6,7 @@ import {
   JoinColumn,
   CreateDateColumn,
   Index,
-  OneToOne,
+  OneToMany,
 } from 'typeorm';
 import { GymEntity } from '../../gym/entities/gym.entity';
 import { UserEntity } from '../../user/entities/user.entity';
@@ -44,6 +44,14 @@ export class GymMembershipEntity {
   @JoinColumn({ name: 'userId' })
   user: UserEntity;
 
-  @OneToOne(() => AthleteMembershipPlanEntity, (plan) => plan.gymMembership)
-  activeMembershipPlan?: AthleteMembershipPlanEntity | null;
+  /**
+   * Full plan history for this membership, newest and oldest alike. It is NOT
+   * "the current plan": the current plan is the row with status 'active', and
+   * asking this relation for it would happily hand back an expired row.
+   * Read the current plan via
+   * AthleteMembershipPlanRepository.getActivePlanByGymMembership, which filters
+   * on status.
+   */
+  @OneToMany(() => AthleteMembershipPlanEntity, (plan) => plan.gymMembership)
+  membershipPlans?: AthleteMembershipPlanEntity[];
 }

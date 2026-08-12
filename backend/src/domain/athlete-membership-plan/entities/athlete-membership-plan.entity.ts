@@ -3,7 +3,6 @@ import {
   PrimaryColumn,
   Column,
   ManyToOne,
-  OneToOne,
   JoinColumn,
   CreateDateColumn,
   Index,
@@ -43,7 +42,10 @@ export class AthleteMembershipPlanEntity {
   autoRollCount: number;
 
   // Relationships
-  @OneToOne(() => GymMembershipEntity, (gm) => gm.activeMembershipPlan)
+  // ManyToOne, not OneToOne: a membership accumulates plan rows over time
+  // (append-only history), at most one of which is status 'active'. A OneToOne
+  // here would emit a UNIQUE("gymMembershipId") and break expire-then-create.
+  @ManyToOne(() => GymMembershipEntity, (gm) => gm.membershipPlans)
   @JoinColumn({ name: 'gymMembershipId' })
   gymMembership: GymMembershipEntity;
 

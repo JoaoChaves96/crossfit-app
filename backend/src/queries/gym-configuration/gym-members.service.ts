@@ -62,8 +62,8 @@ export class GymMembersQueryService {
   }
 
   /**
-   * GymMembershipEntity.activeMembershipPlan is an unfiltered OneToOne and can
-   * resolve to an expired row, so query the active rows directly instead.
+   * GymMembershipEntity.membershipPlans is the unfiltered history and contains
+   * expired rows, so query the active rows directly instead.
    */
   private async loadActivePlans(
     gymMembershipIds: string[],
