@@ -3,6 +3,9 @@ import type { Config } from 'jest';
 const config: Config = {
   preset: 'jest-expo',
   testEnvironment: 'node',
+  // Runs before workers fork; see jest-tz.setup.ts for why this cannot be a
+  // setupFiles/spec-level assignment.
+  globalSetup: '<rootDir>/jest-tz.setup.ts',
   setupFilesAfterEnv: ['<rootDir>/jest-setup.ts'],
   moduleNameMapper: {
     // Prevent the Expo winter ESM-only runtime from loading in Jest (CJS environment)
