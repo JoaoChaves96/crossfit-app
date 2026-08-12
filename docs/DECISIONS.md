@@ -252,3 +252,40 @@ Rules:
 
 Supersedes the Pencil design-to-code workflow and the mandatory Design Pre-Check in
 `CLAUDE.md` and `docs/FRONTEND_WORKFLOW.md`.
+
+## Membership Plan Expiry
+
+A class past the athlete's plan expiry is **hidden, not merely unbookable**, and a
+class **on** the expiry date **is covered**.
+
+Rationale: expiry is a date the owner sets, so it reads as a date. `expiresAt` carries
+whatever time of day the plan happened to be assigned, and comparing raw instants would
+cut the member's final day off at that arbitrary hour — a paying member losing an
+evening class because the owner clicked at 09:00 is the failure mode that generates
+support tickets. Hiding rather than disabling follows the existing Visibility Rule:
+athletes are never shown classes they cannot book.
+
+Rules:
+
+- Classes scheduled after `expiresAt` do not appear in the athlete schedule at all.
+  The expiry filter **composes with** the class-type filter; it does not replace it.
+- A class on the expiry date is covered. Coverage is **day-granular**.
+- The whole schedule is refused (403) once the plan itself has lapsed. That check is
+  **instant-granular**, and the strictest of the two governs: once the expiry
+  time-of-day passes, the schedule 403s regardless of day-granular coverage.
+- Both checks compare against `expiresAt`, **never** the plan row's `status`. The
+  renewal sweep is hourly, so a row can legitimately still read `'active'` with a past
+  expiry between ticks.
+- `expiresAt = null` is unlimited: no cutoff, nothing hidden, `planExpiresAt` is null.
+- The day comparison runs on the **server-local calendar**, matching the seam already
+  documented in `membership-renewal.scheduler.ts` (cycle arithmetic on the UTC
+  calendar, expiry-vs-now comparison server-local). `expiresAt` is `timestamp without
+  time zone`, so local getters reproduce the stored day with no shift.
+- **Existing bookings are never touched.** Expiry changes what can be seen and booked;
+  it does not cancel or hide bookings a member already holds.
+- Owners and coaches are never blocked by plan expiry.
+
+Two membership statuses are distinct and must not be conflated: the **persisted** plan
+`status` is only `'active' | 'expired'`, while the four-value `membershipStatus`
+(`active | expiring | expired | inactive`) is **derived** for the owner-side members
+list, where suspension outranks plan health.
