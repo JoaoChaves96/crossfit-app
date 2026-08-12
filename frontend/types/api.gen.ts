@@ -367,7 +367,11 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get?: never;
+        /**
+         * List membership plans
+         * @description Returns every membership plan for the gym (including archived ones) with active subscriber counts. Gym owners only.
+         */
+        get: operations["GymConfigurationController_getMembershipPlans"];
         put?: never;
         /**
          * Create a membership plan
@@ -512,8 +516,8 @@ export interface paths {
             cookie?: never;
         };
         /**
-         * List active members
-         * @description Returns all active members for the gym, sorted by join date descending. Gym owners only.
+         * List members
+         * @description Returns every member for the gym — suspended members included — each with their current plan, expiry date and derived membership status, sorted by join date descending. Gym owners only.
          */
         get: operations["GymMembersController_getMembers"];
         put?: never;
@@ -522,6 +526,86 @@ export interface paths {
         options?: never;
         head?: never;
         patch?: never;
+        trace?: never;
+    };
+    "/api/gyms/{gymId}/members/{membershipId}/membership/expiry": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /**
+         * Extend a member’s plan expiry
+         * @description Sets a new future expiry date on the member’s plan. A lapsed plan is revived. Gym owners only.
+         */
+        patch: operations["GymMembersController_extendMembership"];
+        trace?: never;
+    };
+    "/api/gyms/{gymId}/members/{membershipId}/membership/plan": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Assign a membership plan to a member
+         * @description Moves the member onto the given active plan, expiring their previous plan atomically. Archived plans are rejected. Gym owners only.
+         */
+        put: operations["GymMembersController_assignMembershipPlan"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/gyms/{gymId}/members/{membershipId}/status": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /**
+         * Suspend or resume a member
+         * @description Sets the gym membership status. Suspending blocks the member without altering their plan. Gym owners only.
+         */
+        patch: operations["GymMembersController_setMembershipStatus"];
+        trace?: never;
+    };
+    "/api/gyms/{gymId}/members/{membershipId}/membership/auto-roll": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /**
+         * Toggle a member’s plan auto-renew
+         * @description Turns auto-renew on or off for the member’s active plan. Turning it on resets the renewal count. Gym owners only.
+         */
+        patch: operations["GymMembersController_setMembershipAutoRoll"];
         trace?: never;
     };
     "/api/gyms/{gymId}/profile": {
@@ -953,6 +1037,11 @@ export interface components {
              * @example CrossFit Downtown
              */
             gymName: string;
+            /**
+             * @description Last date the athlete’s membership plan covers (YYYY-MM-DD, server-local calendar). Null when the plan is unlimited or the caller is not an athlete. Classes after this date are omitted from the list.
+             * @example 2026-08-20
+             */
+            planExpiresAt: string | null;
             /** @description List of classes the athlete is eligible to see and book */
             classes: components["schemas"]["ClassScheduleItemDto"][];
         };
@@ -1797,6 +1886,52 @@ export interface components {
              */
             deletedAt: string | null;
         };
+        MembershipPlanItemDto: {
+            /**
+             * @description Unique identifier for the membership plan
+             * @example uuid-plan-id
+             */
+            id: string;
+            /**
+             * @description Name of the membership plan
+             * @example Unlimited
+             */
+            name: string;
+            /**
+             * @description Price of the plan in minor currency units (cents)
+             * @example 12000
+             */
+            pricing: number;
+            /**
+             * @description How often the plan renews
+             * @example monthly
+             * @enum {string}
+             */
+            billingCycle: "monthly" | "annual";
+            /**
+             * @description IDs of the class types this plan grants access to
+             * @example [
+             *       "uuid-class-type-1",
+             *       "uuid-class-type-2"
+             *     ]
+             */
+            classTypes: string[];
+            /**
+             * @description Archived plans stay attached to existing subscribers but cannot be newly assigned
+             * @example active
+             * @enum {string}
+             */
+            status: "active" | "archived";
+            /**
+             * @description Number of members currently subscribed to this plan
+             * @example 14
+             */
+            subscriberCount: number;
+        };
+        GetMembershipPlansResponseDto: {
+            /** @description Membership plans for the gym, newest first */
+            plans: components["schemas"]["MembershipPlanItemDto"][];
+        };
         CreateMembershipPlanDto: {
             /** @example Premium Plan */
             name: string;
@@ -2116,10 +2251,129 @@ export interface components {
              * @example 2024-01-15T10:00:00.000Z
              */
             joinedAt: string;
+            /**
+             * @description ID of the plan the member is currently on, null if none
+             * @example uuid-plan-id
+             */
+            planId: string | null;
+            /**
+             * @description Name of the plan the member is currently on, null if none
+             * @example Unlimited
+             */
+            planName: string | null;
+            /**
+             * Format: date-time
+             * @description When the current plan lapses. Null means the plan is unlimited or the member has no plan.
+             * @example 2026-09-01T00:00:00.000Z
+             */
+            expiresAt: string | null;
+            /**
+             * @description Derived plan health: inactive when the membership is suspended, expired when there is no active plan or it has lapsed, expiring within 7 days of the expiry date, otherwise active
+             * @example active
+             * @enum {string}
+             */
+            membershipStatus: "active" | "expiring" | "expired" | "inactive";
+            /**
+             * @description Whether the current plan rolls forward automatically when it expires
+             * @example true
+             */
+            autoRoll: boolean;
+            /**
+             * @description How many times the current plan has auto-renewed since auto-renew was last switched on
+             * @example 3
+             */
+            autoRollCount: number;
         };
         GetGymMembersResponseDto: {
             /** @description List of active members for the gym, sorted by join date descending */
             members: components["schemas"]["GymMemberItemDto"][];
+        };
+        ExtendMembershipRequestDto: {
+            /**
+             * @description New expiry date for the member’s plan. Must be in the future. Extending a lapsed plan revives it.
+             * @example 2026-10-01T00:00:00.000Z
+             */
+            expiresAt: string;
+        };
+        AthleteMembershipResponseDto: {
+            /** @example uuid-athlete-membership-plan-id */
+            id: string;
+            /** @example uuid-gym-membership-id */
+            gymMembershipId: string;
+            /** @example uuid-membership-plan-id */
+            membershipPlanId: string;
+            /**
+             * @description Name of the plan, null if the plan relation is unavailable
+             * @example Unlimited
+             */
+            planName: string | null;
+            /**
+             * @example active
+             * @enum {string}
+             */
+            status: "active" | "expired";
+            /**
+             * Format: date-time
+             * @example 2026-07-01T00:00:00.000Z
+             */
+            startedAt: string;
+            /**
+             * Format: date-time
+             * @description Null means the plan is unlimited
+             * @example 2026-10-01T00:00:00.000Z
+             */
+            expiresAt: string | null;
+            /**
+             * @description Whether the plan rolls forward automatically on expiry
+             * @example true
+             */
+            autoRoll: boolean;
+            /**
+             * @description How many times the plan has auto-renewed since auto-renew was last switched on
+             * @example 2
+             */
+            autoRollCount: number;
+        };
+        AssignMembershipPlanRequestDto: {
+            /**
+             * @description ID of the plan to put the member on. Must be an active plan belonging to this gym.
+             * @example uuid-membership-plan-id
+             */
+            membershipPlanId: string;
+        };
+        SetGymMembershipStatusRequestDto: {
+            /**
+             * @description Set inactive to suspend the member, active to resume them. The member’s plan is unaffected either way.
+             * @example inactive
+             * @enum {string}
+             */
+            status: "active" | "inactive";
+        };
+        GymMembershipStatusResponseDto: {
+            /** @example uuid-gym-membership-id */
+            id: string;
+            /** @example uuid-gym-id */
+            gymId: string;
+            /** @example uuid-user-id */
+            userId: string;
+            /**
+             * @description Suspending a member leaves their plan untouched; it only blocks them from the gym
+             * @example inactive
+             * @enum {string}
+             */
+            status: "active" | "inactive";
+            /**
+             * Format: date-time
+             * @example 2026-01-15T10:00:00.000Z
+             */
+            joinedAt: string;
+        };
+        SetMembershipAutoRollRequestDto: {
+            /**
+             * @description Whether the member’s plan should roll forward automatically on expiry. Turning it on resets the renewal count.
+             * @example false
+             */
+            autoRoll: boolean;
         };
         GymProfileDto: {
             /**
@@ -3764,6 +4018,43 @@ export interface operations {
             };
         };
     };
+    GymConfigurationController_getMembershipPlans: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Gym ID */
+                gymId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Membership plans list returned */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GetMembershipPlansResponseDto"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Forbidden - Owner role required */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
     GymConfigurationController_createMembershipPlan: {
         parameters: {
             query?: never;
@@ -4103,7 +4394,7 @@ export interface operations {
         };
         requestBody?: never;
         responses: {
-            /** @description Active members list returned */
+            /** @description Members list returned */
             200: {
                 headers: {
                     [name: string]: unknown;
@@ -4121,6 +4412,234 @@ export interface operations {
             };
             /** @description Forbidden - Owner role required */
             403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    GymMembersController_extendMembership: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Gym ID */
+                gymId: string;
+                /** @description Gym membership ID */
+                membershipId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ExtendMembershipRequestDto"];
+            };
+        };
+        responses: {
+            /** @description Membership extended */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AthleteMembershipResponseDto"];
+                };
+            };
+            /** @description expiresAt missing or not in the future */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Forbidden - Owner role required or wrong gym */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Membership or membership plan not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    GymMembersController_assignMembershipPlan: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Gym ID */
+                gymId: string;
+                /** @description Gym membership ID */
+                membershipId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AssignMembershipPlanRequestDto"];
+            };
+        };
+        responses: {
+            /** @description Plan assigned */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AthleteMembershipResponseDto"];
+                };
+            };
+            /** @description membershipPlanId missing or malformed */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Forbidden - Owner role required or wrong gym */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Membership or active plan not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    GymMembersController_setMembershipStatus: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Gym ID */
+                gymId: string;
+                /** @description Gym membership ID */
+                membershipId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SetGymMembershipStatusRequestDto"];
+            };
+        };
+        responses: {
+            /** @description Membership status updated */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GymMembershipStatusResponseDto"];
+                };
+            };
+            /** @description status missing or not one of active|inactive */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Forbidden - Owner role required or wrong gym */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Membership not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    GymMembersController_setMembershipAutoRoll: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Gym ID */
+                gymId: string;
+                /** @description Gym membership ID */
+                membershipId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SetMembershipAutoRollRequestDto"];
+            };
+        };
+        responses: {
+            /** @description Auto-renew updated */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AthleteMembershipResponseDto"];
+                };
+            };
+            /** @description autoRoll missing or not a boolean */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Forbidden - Owner role required or wrong gym */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Membership or active plan not found */
+            404: {
                 headers: {
                     [name: string]: unknown;
                 };
