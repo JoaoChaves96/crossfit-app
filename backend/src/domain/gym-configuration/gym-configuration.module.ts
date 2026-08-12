@@ -29,6 +29,7 @@ import { InviteCoachHandler } from '../../commands/gym-configuration/handlers/in
 import { ChangeCoachStatusHandler } from '../../commands/gym-configuration/handlers/change-coach-status.handler';
 import { UpdateGymProfileHandler } from '../../commands/gym-configuration/handlers/update-gym-profile.handler';
 import { ExtendMembershipHandler } from '../../commands/gym-configuration/handlers/extend-membership.handler';
+import { AssignMembershipPlanHandler } from '../../commands/gym-configuration/handlers/assign-membership-plan.handler';
 import { GetGymProfileService } from '../../queries/gym-configuration/get-gym-profile.service';
 import { CoachesQueryService } from '../../queries/gym-configuration/coaches.service';
 import { ClassTypesQueryService } from '../../queries/gym-configuration/class-types.service';
@@ -81,6 +82,7 @@ import { MembershipPlansQueryService } from '../../queries/gym-configuration/mem
     ChangeCoachStatusHandler,
     UpdateGymProfileHandler,
     ExtendMembershipHandler,
+    AssignMembershipPlanHandler,
 
     // Query services
     GetGymProfileService,

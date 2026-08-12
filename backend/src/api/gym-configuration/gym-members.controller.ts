@@ -5,6 +5,7 @@ import {
   Inject,
   Param,
   Patch,
+  Put,
   UseGuards,
   ValidationPipe,
 } from '@nestjs/common';
@@ -27,6 +28,8 @@ import { GetGymMembersResponseDto } from '../../queries/gym-configuration/dto/ge
 import { ExtendMembershipCommand } from '../../commands/gym-configuration/extend-membership.command';
 import { AthleteMembershipResponseDto } from '../../commands/gym-configuration/dto/athlete-membership-response.dto';
 import { ExtendMembershipRequestDto } from './dto/extend-membership-request.dto';
+import { AssignMembershipPlanCommand } from '../../commands/gym-configuration/assign-membership-plan.command';
+import { AssignMembershipPlanRequestDto } from './dto/assign-membership-plan-request.dto';
 
 @Controller('/api/gyms/:gymId/members')
 @ApiTags('Gym Members')
@@ -112,6 +115,54 @@ export class GymMembersController {
         gymId,
         membershipId,
         new Date(body.expiresAt),
+      ),
+    );
+  }
+
+  /**
+   * Put a member on a membership plan (Gym Owner only)
+   *
+   * **Preconditions:**
+   * - Caller is an owner of this gym
+   * - Membership exists and belongs to this gym
+   * - Plan exists, is active, and belongs to this gym
+   *
+   * **Postconditions:**
+   * - Any previous active plan row for the member is expired
+   * - A new active plan row exists with auto-renew on and an expiry one
+   *   billing cycle out
+   */
+  @Put('/:membershipId/membership/plan')
+  @Role('owner')
+  @ApiOperation({
+    summary: 'Assign a membership plan to a member',
+    description:
+      'Moves the member onto the given active plan, expiring their previous plan atomically. Archived plans are rejected. Gym owners only.',
+  })
+  @ApiParam({ name: 'gymId', description: 'Gym ID' })
+  @ApiParam({ name: 'membershipId', description: 'Gym membership ID' })
+  @ApiBody({ type: AssignMembershipPlanRequestDto })
+  @ApiResponse({
+    status: 200,
+    description: 'Plan assigned',
+    type: AthleteMembershipResponseDto,
+  })
+  @ApiResponse({ status: 400, description: 'membershipPlanId missing or malformed' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiResponse({ status: 403, description: 'Forbidden - Owner role required or wrong gym' })
+  @ApiResponse({ status: 404, description: 'Membership or active plan not found' })
+  async assignMembershipPlan(
+    @Param('gymId') gymId: string,
+    @Param('membershipId') membershipId: string,
+    @Body(ValidationPipe) body: AssignMembershipPlanRequestDto,
+    @CurrentUser() userId: string,
+  ): Promise<AthleteMembershipResponseDto> {
+    return this.commandBus.execute(
+      new AssignMembershipPlanCommand(
+        userId,
+        gymId,
+        membershipId,
+        body.membershipPlanId,
       ),
     );
   }
