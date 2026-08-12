@@ -40,9 +40,17 @@ const FUTURE_EXPIRY_ISO = FUTURE_EXPIRY.toISOString();
  * guards against (this project has hit it twice already with `expiresAt`).
  */
 function oneMonthAfter(date: Date): string {
-  const next = new Date(date);
-  next.setUTCMonth(next.getUTCMonth() + 1);
-  return next.toISOString().slice(0, 10);
+  let year = date.getUTCFullYear();
+  let month = date.getUTCMonth() + 1;
+  if (month > 11) {
+    month = 0;
+    year += 1;
+  }
+  // Clamped like the implementation, so this fixture stays correct if the run
+  // date ever lands on the 29th-31st. Bare setUTCMonth would overflow there.
+  const lastDay = new Date(Date.UTC(year, month + 1, 0)).getUTCDate();
+  const day = Math.min(date.getUTCDate(), lastDay);
+  return new Date(Date.UTC(year, month, day)).toISOString().slice(0, 10);
 }
 
 const member = {
@@ -76,13 +84,54 @@ describe('nextCycleDate (UTC vs local-time discrimination)', () => {
    * (this dev machine is UTC+1/WEST) reads that instant as September 1st
    * locally, so `getMonth`/`setMonth` would advance from September instead
    * of August, landing one calendar month later than the UTC-correct
-   * answer. Confirmed by temporarily swapping the implementation's
-   * setUTCMonth/getUTCMonth back to setMonth/getMonth and re-running this
-   * test: it fails (produces '2027-09-30' instead of '2027-10-01').
+   * answer. Confirmed by temporarily swapping the implementation's UTC
+   * accessors back to their local counterparts and re-running this test: it
+   * fails (produces '2027-10-01' instead of '2027-09-30').
    */
   it('advances from the UTC calendar date, not the local one', () => {
     const expiresAt = '2027-08-31T23:30:00.000Z';
-    expect(nextCycleDate(expiresAt, 'monthly')).toBe('2027-10-01');
+    expect(nextCycleDate(expiresAt, 'monthly')).toBe('2027-09-30');
+  });
+
+  /**
+   * Month-end clamping, mirroring RULING B and `addCycle` in
+   * backend/src/domain/athlete-membership-plan/billing-cycle.ts. Unclamped
+   * setUTCMonth overflows a short month — Jan 31 lands on Mar 3 — so the date
+   * the owner is offered on the "+1 cycle" button skips a month entirely.
+   * Exact dates, because a loose bound cannot see a skipped month.
+   */
+  describe('month-end clamping', () => {
+    it('clamps Jan 31 to Feb 28, not into March', () => {
+      expect(nextCycleDate('2027-01-31T10:00:00.000Z', 'monthly')).toBe('2027-02-28');
+    });
+
+    it('clamps Jan 31 to Feb 29 in a leap year', () => {
+      expect(nextCycleDate('2028-01-31T10:00:00.000Z', 'monthly')).toBe('2028-02-29');
+    });
+
+    it('clamps Aug 31 to Sep 30, not into October', () => {
+      expect(nextCycleDate('2027-08-31T10:00:00.000Z', 'monthly')).toBe('2027-09-30');
+    });
+
+    it('clamps an annual Feb 29 to Feb 28 of the common year', () => {
+      expect(nextCycleDate('2028-02-29T10:00:00.000Z', 'annual')).toBe('2029-02-28');
+    });
+
+    it('rolls a December month-end into January of the next year', () => {
+      expect(nextCycleDate('2027-12-31T10:00:00.000Z', 'monthly')).toBe('2028-01-31');
+    });
+
+    it('leaves a mid-month date on the same day of the next month', () => {
+      expect(nextCycleDate('2027-03-15T10:00:00.000Z', 'monthly')).toBe('2027-04-15');
+    });
+  });
+
+  /**
+   * A null expiry (unlimited plan) still means "one cycle from today" — the
+   * lapsed/absent branch — and the clamping must not disturb that.
+   */
+  it('advances from today when there is no stored expiry', () => {
+    expect(nextCycleDate(null, 'monthly')).toBe(oneMonthAfter(new Date()));
   });
 });
 

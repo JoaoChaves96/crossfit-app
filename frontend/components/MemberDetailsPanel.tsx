@@ -65,17 +65,36 @@ function errorMessage(err: unknown): string {
  * has hit twice already (see the comment on formatExpiry in app/members.tsx).
  * Advancing in UTC keeps the produced date's calendar day independent of the
  * machine running the code.
+ *
+ * The target day is CLAMPED to the last day of the target month (Jan 31 + 1
+ * cycle → Feb 28, or Feb 29 in a leap year). Bare setUTCMonth overflows on a
+ * short month — Jan 31 lands on Mar 3, skipping February — which would offer
+ * the owner a date a whole month off. This mirrors `addCycle` in
+ * `backend/src/domain/athlete-membership-plan/billing-cycle.ts`, which is the
+ * authority; the frontend cannot import from backend/, so the two must be kept
+ * in step by hand.
  */
 export function nextCycleDate(expiresAt: string | null, billingCycle: 'monthly' | 'annual'): string {
   const today = new Date();
   const from = expiresAt && new Date(expiresAt) > today ? new Date(expiresAt) : today;
-  const next = new Date(from);
+
+  let targetYear = from.getUTCFullYear();
+  let targetMonth = from.getUTCMonth();
+
   if (billingCycle === 'annual') {
-    next.setUTCFullYear(next.getUTCFullYear() + 1);
+    targetYear += 1;
   } else {
-    next.setUTCMonth(next.getUTCMonth() + 1);
+    targetMonth += 1;
+    if (targetMonth > 11) {
+      targetMonth = 0;
+      targetYear += 1;
+    }
   }
-  return next.toISOString().slice(0, 10);
+
+  const lastDayOfTargetMonth = new Date(Date.UTC(targetYear, targetMonth + 1, 0)).getUTCDate();
+  const day = Math.min(from.getUTCDate(), lastDayOfTargetMonth);
+
+  return new Date(Date.UTC(targetYear, targetMonth, day)).toISOString().slice(0, 10);
 }
 
 export function MemberDetailsPanel({ member, onClose, onChanged }: MemberDetailsPanelProps) {
