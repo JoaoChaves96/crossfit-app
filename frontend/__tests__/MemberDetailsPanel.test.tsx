@@ -261,3 +261,50 @@ describe('MemberDetailsPanel', () => {
     expect(screen.getByText('No plan assigned')).toBeTruthy();
   });
 });
+
+/**
+ * Mobile register — the desktop tests above already cover every branch of
+ * business logic (the four actions, validation, +1-cycle math), which the
+ * mobile Modal shares unchanged. What's genuinely different on mobile is the
+ * sheet shell itself: it mounts as a Modal, and it has its own dismissal
+ * logic — the backdrop press closes it, but a press on the sheet body must
+ * NOT (that's the `stopPropagation` in MemberDetailsSheet). That dismissal
+ * logic is branching behaviour, not styling, so it gets its own coverage
+ * rather than being asserted only by construction.
+ */
+describe('MemberDetailsPanel — mobile register', () => {
+  beforeEach(() => {
+    mockIsMobile = true;
+    Object.values(mockApiClient).forEach((fn) => fn.mockReset());
+    mockApiClient.get.mockResolvedValue(plansResponse);
+  });
+
+  it('renders as a Modal bottom sheet', async () => {
+    renderPanel();
+
+    await screen.findByText('Jane Doe');
+    expect(screen.getByTestId('member-sheet-backdrop')).toBeTruthy();
+    expect(screen.getByTestId('member-sheet-body')).toBeTruthy();
+  });
+
+  it('dismisses when the backdrop is pressed', async () => {
+    const { onClose } = renderPanel();
+
+    await screen.findByText('Jane Doe');
+    fireEvent.press(screen.getByTestId('member-sheet-backdrop'));
+
+    expect(onClose).toHaveBeenCalled();
+  });
+
+  it('does not dismiss when the sheet body itself is pressed', async () => {
+    const { onClose } = renderPanel();
+
+    await screen.findByText('Jane Doe');
+    // The sheet body's onPress calls e.stopPropagation() — fireEvent.press
+    // doesn't synthesize a real event object, so it's supplied here the same
+    // way a real bubbled touch event would provide one.
+    fireEvent.press(screen.getByTestId('member-sheet-body'), { stopPropagation: jest.fn() });
+
+    expect(onClose).not.toHaveBeenCalled();
+  });
+});

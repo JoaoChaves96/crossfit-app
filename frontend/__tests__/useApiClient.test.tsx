@@ -79,7 +79,7 @@ describe('useApiClient — called without a token', () => {
 // ─── useApiClient — with token ────────────────────────────────────────────────
 
 describe('useApiClient — called with a valid token', () => {
-  it('returns an object with get, post, patch, delete methods', () => {
+  it('returns an object with get, post, patch, put, delete methods', () => {
     // Arrange
     const { result } = renderHook(() => useApiClient(), { wrapper: AuthWrapper });
 
@@ -87,6 +87,7 @@ describe('useApiClient — called with a valid token', () => {
     expect(typeof result.current.get).toBe('function');
     expect(typeof result.current.post).toBe('function');
     expect(typeof result.current.patch).toBe('function');
+    expect(typeof result.current.put).toBe('function');
     expect(typeof result.current.delete).toBe('function');
   });
 });

@@ -363,7 +363,7 @@ function MemberDetailsSheet({
 
   return (
     <Modal visible transparent animationType="none" onRequestClose={onClose}>
-      <Pressable style={styles.backdropRoot} onPress={onClose}>
+      <Pressable testID="member-sheet-backdrop" style={styles.backdropRoot} onPress={onClose}>
         <Animated.View style={[styles.backdropFill, { opacity: anim }]} />
         <Animated.View
           style={[
@@ -379,7 +379,7 @@ function MemberDetailsSheet({
               ],
             },
           ]}>
-          <Pressable onPress={(e) => e.stopPropagation()}>
+          <Pressable testID="member-sheet-body" onPress={(e) => e.stopPropagation()}>
             <View style={styles.sheetHandle} />
             <ScrollView
               contentContainerStyle={{ gap: Space.base, paddingBottom: Space.md }}
