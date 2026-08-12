@@ -1,9 +1,21 @@
 #!/bin/bash
 
 # Local development database reset and seed script
-# Clears all tables and inserts minimal viable test data
+#
+# ⚠️  THIS TRUNCATES EVERY TABLE. Any hand-seeded scenario in the dev DB is
+# destroyed, and every existing gym id changes, which invalidates the gym
+# context in any client that is already logged in.
+#
+# To ADD data without destroying anything, use scripts/dev-db-populate-members.sh
+# instead — it is additive and re-runnable.
+#
+# Seeds one gym (owner/coach/athlete, 2 class types, 2 spaces, 15 classes) and
+# then runs scripts/sql/populate-members.sql to give it a roster that exercises
+# every membership state. Set MEMBERS=0 to skip the roster.
 
 set -e
+
+cd "$(dirname "$0")/.."
 
 # Load environment from backend/.env
 export $(grep -v '^#' backend/.env | xargs)
@@ -13,6 +25,23 @@ DB_PORT="${DB_PORT:-5432}"
 DB_USERNAME="${DB_USERNAME:-postgres}"
 DB_PASSWORD="${DB_PASSWORD:-postgres}"
 DB_NAME="${DB_NAME:-crossfit_box_dev}"
+
+SEED_GYM_ID="550e8400-e29b-41d4-a716-446655440010"
+MEMBERS="${MEMBERS:-40}"
+
+if [ "$FORCE" != "1" ]; then
+  EXISTING=$(PGPASSWORD="$DB_PASSWORD" psql -h "$DB_HOST" -p "$DB_PORT" -U "$DB_USERNAME" \
+    -d "$DB_NAME" -At -c "SELECT COUNT(*) FROM users;" 2>/dev/null || echo 0)
+  echo "⚠️  This will TRUNCATE every table in $DB_NAME (currently $EXISTING users)."
+  echo "   Anything hand-seeded is lost, and all gym ids change."
+  echo "   To add data without destroying any, run: ./scripts/dev-db-populate-members.sh"
+  echo ""
+  read -r -p "   Type 'reset' to continue: " CONFIRM
+  if [ "$CONFIRM" != "reset" ]; then
+    echo "Aborted."
+    exit 1
+  fi
+fi
 
 echo "🗄️  Resetting database: $DB_NAME on $DB_HOST:$DB_PORT"
 
@@ -75,10 +104,11 @@ INSERT INTO gym_memberships (id, "gymId", "userId", status, "joinedAt")
 VALUES
   ('550e8400-e29b-41d4-a716-446655440060', '550e8400-e29b-41d4-a716-446655440010', '550e8400-e29b-41d4-a716-446655440001', 'active', NOW());
 
--- Insert AthleteMembershipPlan
-INSERT INTO athlete_membership_plans (id, "gymMembershipId", "membershipPlanId", status, "startedAt", "expiresAt")
+-- Insert AthleteMembershipPlan (autoRoll/autoRollCount stated explicitly rather
+-- than left to the column defaults, so the seed documents the renewal policy)
+INSERT INTO athlete_membership_plans (id, "gymMembershipId", "membershipPlanId", status, "startedAt", "expiresAt", "autoRoll", "autoRollCount")
 VALUES
-  ('550e8400-e29b-41d4-a716-446655440070', '550e8400-e29b-41d4-a716-446655440060', '550e8400-e29b-41d4-a716-446655440040', 'active', NOW(), NULL);
+  ('550e8400-e29b-41d4-a716-446655440070', '550e8400-e29b-41d4-a716-446655440060', '550e8400-e29b-41d4-a716-446655440040', 'active', NOW(), NULL, true, 0);
 
 -- Insert Classes (15 classes, 7-14 days in future, various times, published state)
 INSERT INTO classes (
@@ -127,12 +157,28 @@ PGPASSWORD="$DB_PASSWORD" psql \
 # Clean up temp file
 rm "$SEED_SQL"
 
+# Give the seeded gym a roster that exercises every membership state. The base
+# seed above has a single member on a single unlimited plan, which leaves the
+# owner's members list showing one "active" row and exercises none of the
+# derived statuses.
+if [ "$MEMBERS" != "0" ]; then
+  echo ""
+  echo "👥 Adding $MEMBERS members across every membership state"
+  PGPASSWORD="$DB_PASSWORD" psql \
+    -h "$DB_HOST" -p "$DB_PORT" -U "$DB_USERNAME" -d "$DB_NAME" \
+    -v gym_id="$SEED_GYM_ID" -v members="$MEMBERS" \
+    -f scripts/sql/populate-members.sql
+fi
+
 echo "✅ Database reset and seeded successfully"
 echo ""
-echo "Test users created:"
+echo "Test users created (all password123):"
 echo "  Athlete:  athlete@example.com"
 echo "  Coach:    coach@example.com"
 echo "  Owner:    owner@example.com"
+if [ "$MEMBERS" != "0" ]; then
+  echo "  Members:  member01@${SEED_GYM_ID:0:8}.testbox.local … member$(printf '%02d' "$MEMBERS")@…"
+fi
 echo ""
 echo "Gym: CrossFit Test Box (active)"
 echo "Classes: 15 published classes scheduled 7-14 days from now (varied times)"
