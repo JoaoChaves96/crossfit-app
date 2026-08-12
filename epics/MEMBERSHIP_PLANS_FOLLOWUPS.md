@@ -9,7 +9,38 @@ only what is still open. Line numbers were accurate at commit `5b1c78e` and will
 
 ---
 
-## 1. The `@Column('date')` parse seam (F1 + F3) — one task
+## 1. The `@Column('date')` parse seam (F1 + F3) — ✅ DONE 2026-08-12 (uncommitted)
+
+Fixed by routing every calendar-date read through `backend/src/domain/shared/calendar-day.ts`
+(`toCalendarDay`): a bare `YYYY-MM-DD` is returned verbatim and never re-parsed as an instant,
+while real `Date`/ISO/ms values are still truncated on the server-local calendar. Both `KNOWN
+SEAM` tests flipped, the athlete/owner/class-detail render paths gained coverage, and the
+accidental one-day grace period after expiry is gone (accepted: expired is expired).
+
+**The WRITE side had the same seam and was worse — found after the read fix and fixed too.**
+The original write-up below only diagnosed reads. `class-scheduling.controller.ts` was calling
+`new Date(dto.scheduledDate)` before the command was even built, and TypeORM's
+`preparePersistentValue` → `mixedDateToDateString` reads *local* getters, so west of UTC an
+owner creating a Friday class **stored Thursday** — corrupt data no read fix could recover.
+Three write sites: `create-class.handler.ts`, `edit-class.handler.ts`, and
+`create-recurring-classes.handler.ts` (a whole generated series plus
+`ClassSeriesEntity.startDate`/`endDate`, all shifted). `CreateClassCommand`/`EditClassCommand`
+now type `scheduledDate` as `string`, and every `@Column('date')` assignment goes through the
+new `toPersistedCalendarDay(day)`, which is the single documented place the "declared `Date`,
+string at runtime" lie is told. `parseScheduledDateTime` also had a related defect: `setHours`
+on a UTC-midnight `Date` evaluated the must-be-in-the-future check against the previous day.
+
+423/423 backend tests pass under the `America/New_York` pin; `tsc --noEmit` clean. Guards assert
+on the value that reaches `save` via `mixedDateToDateString`, not on a subsequent read — reads
+are now correct and would mask a wrong stored day. Six mutations verified, each restored.
+
+**Still open from F3:** the owner's member list ships `expiresAt: Date | null`
+(`queries/gym-configuration/dto/gym-member-item.dto.ts`) — a raw instant the client renders in
+UTC. The athlete's cutoff note is now a local calendar day, so the two surfaces can still name
+days one apart. Closing that is a DTO-contract change and was deliberately left out of the
+parse fix.
+
+Original write-up below.
 
 **Confirmed a live bug on any west-of-UTC deployment**, and pre-existing — it predates the
 epic, but the epic layered new enforcement on top of it and shipped two tests asserting the
@@ -37,7 +68,16 @@ screens can name days one apart for the same expiry. Fixing the parse fixes both
 
 Training history is **not** affected — `String(x).slice(0, 10)` is exact on the string path.
 
-## 2. Frontend jest has no timezone pin
+## 2. Frontend jest has no timezone pin — ✅ DONE 2026-08-12 (uncommitted)
+
+Pinned to `Asia/Kolkata` (+05:30, no DST, half-hour offset) via `frontend/jest-tz.setup.ts` +
+`globalSetup` in `jest.config.ts`, guarded by `frontend/__tests__/jest-tz.test.ts`, which
+asserts the **offset** (`-330`), not just the zone name. Proven load-bearing rather than
+assumed: unpinned + a local-getter rewrite of `nextCycleDate` + `TZ=UTC` passed 24/24
+(tautological); pinned + the same rewrite failed 1; pinned + correct passed 24/24. Whole
+frontend suite green (28 suites / 352 tests).
+
+Original write-up below.
 
 `backend/test/jest-tz.setup.ts` pins the backend via `globalSetup`. There is **no frontend
 equivalent**, so a UTC-vs-local assertion is tautological on a UTC CI runner. Pin it with a
@@ -78,10 +118,15 @@ review, never executed. Recommended as the first follow-up.
   widened by the dedup — the shared functions require a `billingCycle`, so it still has exactly one
   call site. Throwing would be safer.
 
-## 5. Bulk membership operations — not decided, never scoped
+## 5. Bulk membership operations — DEFERRED past first real customers
+
+**Ruling (user, 2026-08-12): do not build this yet.** It waits until the app has been tested by
+real customers and their feedback says whether they want it — and, if they do, what they expect a
+bulk plan change to do to each member's paid-up date. Guessing that now is how the wrong shape
+gets built. Do not re-propose it before then; the notes below are for when it comes back.
 
 Raised 2026-08-12 while testing a 40-member roster on a device. There is **no ruling either
-way**: the only "no bulk edits" line in Tier 1 (`docs/DECISIONS.md:16`) sits under
+way** on the design: the only "no bulk edits" line in Tier 1 (`docs/DECISIONS.md:16`) sits under
 `## Class Recurrence` and is about classes, and the epic's `Excluded (Future Work)` list does
 not mention member operations. So this is open, not declined.
 
@@ -110,3 +155,35 @@ Both reviewed live by the user, who accepted the shipped design as-is. **Neither
   tone="neutral"`, distinguished by label. Recorded in `frontend/DESIGN.md` → Status Roles so it
   is not re-raised.
 - **Five segmented tabs in Gym Settings** — accepted at 390px, no reflow needed.
+
+
+## 7. Four class DTOs declare `scheduledDate: Date` — contract cleanup
+
+Surfaced by the parse-seam fix (§ 1) and deliberately **not** changed by it: narrowing a
+response type is a Swagger change plus a frontend `npm run generate:api-types` regen, which is
+not a bug fix.
+
+Three of the four declarations are simply **wrong today** — they say `Date` while shipping the
+hydrated `'YYYY-MM-DD'` string: `manually-transition-class-state-response.dto.ts`,
+`update-class-structure-response.dto.ts`, `toggle-loggable-status-response.dto.ts`.
+
+`create-class-response.dto.ts` is the odd one out in two directions: it is the only one whose
+runtime value **matches** its declaration (the handler re-inflates the stored day to a
+UTC-midnight instant precisely to keep the response byte-identical), and therefore the only one
+**inconsistent with every other class endpoint**, all of which ship a bare day.
+
+Cheapest coherent end state: all four typed `string` with `example: '2026-08-21'`, and the
+re-inflation in `create-class.handler.ts`'s `mapToResponseDto` deleted. Risk is any frontend
+consumer doing `new Date(res.scheduledDate)` on the create response — though note that parse is
+*already* wrong for the athlete/owner/coach payloads, which have always shipped bare days.
+
+Sibling debt, same shape: the `expiresAt: Date | null` remnant in § 1, and the standing rule
+that a `T | null` `@ApiProperty` always needs an explicit `type:`.
+
+## 8. Duplicate `create-class.handler.spec.ts`
+
+`src/commands/class/create-class.handler.spec.ts` is a stale near-duplicate of the canonical
+`src/commands/class/handlers/create-class.handler.spec.ts`. Both match jest's `testRegex`, so
+both run, and any change to the handler must be mirrored into both to keep `tsc` clean — which
+the § 1 fix had to do. Delete the non-`handlers/` copy after confirming it asserts nothing the
+canonical one does not.
