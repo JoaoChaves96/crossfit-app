@@ -8,6 +8,14 @@ export const styles = StyleSheet.create({
     backgroundColor: Ground.base,
   },
 
+  // Row holding the main content and the (optional) member details panel side
+  // by side on desktop; on mobile the panel renders as its own Modal, so this
+  // row only ever has one visible child there.
+  contentRow: {
+    flex: 1,
+    flexDirection: 'row',
+  },
+
   // Main area
   main: {
     flex: 1,

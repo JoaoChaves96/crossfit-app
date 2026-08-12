@@ -67,6 +67,14 @@ export function createApiClient(options: ApiClientOptions) {
       });
     },
 
+    put<T>(url: string, body?: Record<string, unknown>): Promise<T> {
+      return request<T>(url, {
+        method: 'PUT',
+        headers,
+        body: body ? JSON.stringify(body) : undefined,
+      });
+    },
+
     delete<T>(url: string): Promise<T> {
       return request<T>(url, { method: 'DELETE', headers });
     },

@@ -18,6 +18,7 @@ import { createApiClient } from '@/utils/api-client';
 import { components } from '@/types/api.gen';
 import { OwnerSidebar, OWNER_NAV_ITEMS } from '@/components/OwnerSidebar';
 import { OwnerNavDrawer } from '@/components/OwnerNavDrawer';
+import { MemberDetailsPanel } from '@/components/MemberDetailsPanel';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -219,6 +220,7 @@ export default function MembersScreen() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [search, setSearch] = useState('');
+  const [selectedId, setSelectedId] = useState<string | null>(null);
 
   const fetchMembers = useCallback(async () => {
     if (!token || !currentGymId) return;
@@ -258,6 +260,7 @@ export default function MembersScreen() {
           member.email.toLowerCase().includes(query),
       )
     : members;
+  const selectedMember = visibleMembers.find((m) => m.id === selectedId) ?? null;
 
   return (
     <View style={styles.root}>
@@ -270,69 +273,84 @@ export default function MembersScreen() {
         </OwnerNavDrawer>
       )}
 
-      <SafeScreen style={[styles.main, isMobile && styles.mainMobile]} applyTopInset={isMobile} extraTopPadding={Space.base}>
-        {/* Page Header */}
-        <View style={styles.pageHeader}>
-          {isMobile && (
-            <TouchableOpacity
-              testID="hamburger-btn"
-              style={styles.hamburgerBtn}
-              onPress={() => setDrawerOpen(true)}>
-              <Icon name="menu" size={24} tone="strong" />
-            </TouchableOpacity>
-          )}
-          <Text size="screen" weight="bold" tone="strong">Members</Text>
-          <View style={styles.countBadge}>
-            <Text size="meta" weight="medium" tone="muted">
-              {isLoading
-                ? '…'
-                : `${visibleMembers.length} ${visibleMembers.length === 1 ? 'member' : 'members'}`}
-            </Text>
+      <SafeScreen style={styles.contentRow} applyTopInset={isMobile} extraTopPadding={Space.base}>
+        <View style={[styles.main, isMobile && styles.mainMobile]}>
+          {/* Page Header */}
+          <View style={styles.pageHeader}>
+            {isMobile && (
+              <TouchableOpacity
+                testID="hamburger-btn"
+                style={styles.hamburgerBtn}
+                onPress={() => setDrawerOpen(true)}>
+                <Icon name="menu" size={24} tone="strong" />
+              </TouchableOpacity>
+            )}
+            <Text size="screen" weight="bold" tone="strong">Members</Text>
+            <View style={styles.countBadge}>
+              <Text size="meta" weight="medium" tone="muted">
+                {isLoading
+                  ? '…'
+                  : `${visibleMembers.length} ${visibleMembers.length === 1 ? 'member' : 'members'}`}
+              </Text>
+            </View>
           </View>
-        </View>
 
-        <View style={styles.searchRow}>
-          <TextInput
-            testID="members-search-input"
-            style={styles.searchInput}
-            placeholder="Search by name or email"
-            placeholderTextColor={Ink.faint}
-            value={search}
-            onChangeText={setSearch}
-            autoCorrect={false}
-          />
-        </View>
+          <View style={styles.searchRow}>
+            <TextInput
+              testID="members-search-input"
+              style={styles.searchInput}
+              placeholder="Search by name or email"
+              placeholderTextColor={Ink.faint}
+              value={search}
+              onChangeText={setSearch}
+              autoCorrect={false}
+            />
+          </View>
 
-        {/* Content */}
-        {isLoading ? (
-          <View style={styles.loadingContainer}>
-            <ActivityIndicator size="large" color={Ink.strong} />
-          </View>
-        ) : error ? (
-          <View style={styles.errorContainer}>
-            <Text size="body" tone={Status.danger} style={styles.errorText}>{error}</Text>
-            <TouchableOpacity style={styles.retryBtn} onPress={fetchMembers}>
-              <Text size="body" tone="strong">Retry</Text>
-            </TouchableOpacity>
-          </View>
-        ) : visibleMembers.length === 0 ? (
-          <EmptyState />
-        ) : isMobile ? (
-          /* Mobile: card-based list */
-          <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.memberCardList}>
-            {visibleMembers.map((member) => (
-              <MemberCard key={member.id} member={member} onPress={() => {}} />
-            ))}
-          </ScrollView>
-        ) : (
-          <View style={styles.tableCard}>
-            <TableHeaderRow />
-            <ScrollView showsVerticalScrollIndicator={false}>
-              {visibleMembers.map((member, idx) => (
-                <MemberRow key={member.id} member={member} isAlternate={idx === 0} onPress={() => {}} />
+          {/* Content */}
+          {isLoading ? (
+            <View style={styles.loadingContainer}>
+              <ActivityIndicator size="large" color={Ink.strong} />
+            </View>
+          ) : error ? (
+            <View style={styles.errorContainer}>
+              <Text size="body" tone={Status.danger} style={styles.errorText}>{error}</Text>
+              <TouchableOpacity style={styles.retryBtn} onPress={fetchMembers}>
+                <Text size="body" tone="strong">Retry</Text>
+              </TouchableOpacity>
+            </View>
+          ) : visibleMembers.length === 0 ? (
+            <EmptyState />
+          ) : isMobile ? (
+            /* Mobile: card-based list */
+            <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.memberCardList}>
+              {visibleMembers.map((member) => (
+                <MemberCard key={member.id} member={member} onPress={() => setSelectedId(member.id)} />
               ))}
             </ScrollView>
-          </View>
+          ) : (
+            <View style={styles.tableCard}>
+              <TableHeaderRow />
+              <ScrollView showsVerticalScrollIndicator={false}>
+                {visibleMembers.map((member, idx) => (
+                  <MemberRow
+                    key={member.id}
+                    member={member}
+                    isAlternate={idx === 0}
+                    onPress={() => setSelectedId(member.id)}
+                  />
+                ))}
+              </ScrollView>
+            </View>
+          )}
+        </View>
+
+        {selectedMember && (
+          <MemberDetailsPanel
+            member={selectedMember}
+            onClose={() => setSelectedId(null)}
+            onChanged={fetchMembers}
+          />
         )}
       </SafeScreen>
     </View>

@@ -12,7 +12,7 @@ type ApiClient = ReturnType<typeof createApiClient>;
 function wrap401<T extends ApiClient>(client: T, on401: () => void): T {
   const wrapped: Record<string, unknown> = {};
 
-  for (const method of ['get', 'post', 'patch', 'delete'] as const) {
+  for (const method of ['get', 'post', 'patch', 'put', 'delete'] as const) {
     const original = client[method] as (...args: unknown[]) => Promise<unknown>;
     wrapped[method] = async (...args: unknown[]) => {
       try {
@@ -68,6 +68,7 @@ export function useApiClient(options?: UseApiClientOptions) {
         get: reject,
         post: reject,
         patch: reject,
+        put: reject,
         delete: reject,
       } as ApiClient;
     }
