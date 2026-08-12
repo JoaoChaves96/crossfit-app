@@ -131,4 +131,11 @@ export const styles = StyleSheet.create({
     lineHeight: Type.lineHeight.relaxed,
     marginTop: Space.xs,
   },
+  // Quiet plan-cutoff note — no border, no background, sits at the end of the
+  // list on both registers.
+  cutoffNote: {
+    paddingHorizontal: Space.base,
+    paddingTop: Space.lg,
+    paddingBottom: Space.xl,
+  },
 });

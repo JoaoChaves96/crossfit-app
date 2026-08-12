@@ -105,6 +105,22 @@ function formatDateLabel(iso: string): string {
   return date.toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' });
 }
 
+/**
+ * "2026-09-01" → "Sep 1, 2026".
+ *
+ * Task 8 sends a bare day string. Formatted in UTC deliberately: a
+ * `YYYY-MM-DD` string parses as UTC midnight, so a local-timezone format would
+ * render the previous day for anyone west of Greenwich.
+ */
+function formatCutoffDate(day: string): string {
+  return new Date(`${day}T00:00:00.000Z`).toLocaleDateString('en-US', {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+    timeZone: 'UTC',
+  });
+}
+
 // Group classes (already sorted by date then time) into consecutive date
 // buckets so the schedule can render one separator per real day.
 function groupByDate(items: EnrichedClass[]): { date: string; items: EnrichedClass[] }[] {
@@ -355,6 +371,7 @@ export default function ScheduleScreen() {
 
   const [classes, setClasses] = useState<EnrichedClass[]>([]);
   const [gymName, setGymName] = useState('My Gym');
+  const [planExpiresAt, setPlanExpiresAt] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   // Full-screen spinner is for the first load only. Refocus refetches keep the
   // existing list on screen (refreshed in place) so tab switches don't flicker.
@@ -438,6 +455,7 @@ export default function ScheduleScreen() {
 
       setClasses(enrichedClasses);
       if (scheduleResponse.gymName) setGymName(scheduleResponse.gymName);
+      setPlanExpiresAt(scheduleResponse.planExpiresAt ?? null);
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Failed to load classes';
       setError(message);
@@ -525,6 +543,16 @@ export default function ScheduleScreen() {
     );
   }
 
+  // Quiet explanation for why the schedule stops where it does. No accent, no
+  // CTA — athlete-side renewal is not in this scope.
+  const cutoffNote = planExpiresAt ? (
+    <View style={styles.cutoffNote}>
+      <Text size="meta" tone={Ink.faint} style={{ textAlign: 'center' }}>
+        {`Your plan covers classes through ${formatCutoffDate(planExpiresAt)}. Talk to your coach to renew.`}
+      </Text>
+    </View>
+  ) : null;
+
   // ── Date separator ─────────────────────────────────────────────────────────
   const renderDateSeparator = (iso: string) => (
     <View style={styles.dateSep}>
@@ -554,6 +582,7 @@ export default function ScheduleScreen() {
             There are no classes for this period. Try changing the day or adjusting your filters.
           </Text>
         </View>
+        {cutoffNote}
       </View>
     );
   }
@@ -593,6 +622,7 @@ export default function ScheduleScreen() {
                   </View>
                 ))
               )}
+              {cutoffNote}
             </ScrollView>
           </View>
         </View>
@@ -639,6 +669,7 @@ export default function ScheduleScreen() {
         keyExtractor={(row) => (row.kind === 'separator' ? `sep-${row.date}` : row.item.id)}
         contentContainerStyle={styles.listContent}
         ListHeaderComponent={controls}
+        ListFooterComponent={cutoffNote}
         ListEmptyComponent={
           <View style={styles.filteredEmpty}>
             <Text size="body" tone={Ink.faint} style={{ textAlign: 'center' }}>
