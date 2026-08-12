@@ -30,6 +30,11 @@ import { AthleteMembershipResponseDto } from '../../commands/gym-configuration/d
 import { ExtendMembershipRequestDto } from './dto/extend-membership-request.dto';
 import { AssignMembershipPlanCommand } from '../../commands/gym-configuration/assign-membership-plan.command';
 import { AssignMembershipPlanRequestDto } from './dto/assign-membership-plan-request.dto';
+import { SetGymMembershipStatusCommand } from '../../commands/gym-configuration/set-gym-membership-status.command';
+import { SetMembershipAutoRollCommand } from '../../commands/gym-configuration/set-membership-auto-roll.command';
+import { GymMembershipStatusResponseDto } from '../../commands/gym-configuration/dto/gym-membership-status-response.dto';
+import { SetGymMembershipStatusRequestDto } from './dto/set-gym-membership-status-request.dto';
+import { SetMembershipAutoRollRequestDto } from './dto/set-membership-auto-roll-request.dto';
 
 @Controller('/api/gyms/:gymId/members')
 @ApiTags('Gym Members')
@@ -163,6 +168,97 @@ export class GymMembersController {
         gymId,
         membershipId,
         body.membershipPlanId,
+      ),
+    );
+  }
+
+  /**
+   * Suspend or resume a member (Gym Owner only)
+   *
+   * **Preconditions:**
+   * - Caller is an owner of this gym
+   * - Membership exists and belongs to this gym
+   *
+   * **Postconditions:**
+   * - The membership status is the requested value; the member's plan is untouched
+   */
+  @Patch('/:membershipId/status')
+  @Role('owner')
+  @ApiOperation({
+    summary: 'Suspend or resume a member',
+    description:
+      'Sets the gym membership status. Suspending blocks the member without altering their plan. Gym owners only.',
+  })
+  @ApiParam({ name: 'gymId', description: 'Gym ID' })
+  @ApiParam({ name: 'membershipId', description: 'Gym membership ID' })
+  @ApiBody({ type: SetGymMembershipStatusRequestDto })
+  @ApiResponse({
+    status: 200,
+    description: 'Membership status updated',
+    type: GymMembershipStatusResponseDto,
+  })
+  @ApiResponse({ status: 400, description: 'status missing or not one of active|inactive' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiResponse({ status: 403, description: 'Forbidden - Owner role required or wrong gym' })
+  @ApiResponse({ status: 404, description: 'Membership not found' })
+  async setMembershipStatus(
+    @Param('gymId') gymId: string,
+    @Param('membershipId') membershipId: string,
+    @Body(ValidationPipe) body: SetGymMembershipStatusRequestDto,
+    @CurrentUser() userId: string,
+  ): Promise<GymMembershipStatusResponseDto> {
+    return this.commandBus.execute(
+      new SetGymMembershipStatusCommand(
+        userId,
+        gymId,
+        membershipId,
+        body.status,
+      ),
+    );
+  }
+
+  /**
+   * Toggle a member's plan auto-renew (Gym Owner only)
+   *
+   * **Preconditions:**
+   * - Caller is an owner of this gym
+   * - Membership exists and belongs to this gym
+   * - Member has an active plan
+   *
+   * **Postconditions:**
+   * - The plan's autoRoll is the requested value; turning it on resets autoRollCount to 0
+   */
+  @Patch('/:membershipId/membership/auto-roll')
+  @Role('owner')
+  @ApiOperation({
+    summary: 'Toggle a member’s plan auto-renew',
+    description:
+      'Turns auto-renew on or off for the member’s active plan. Turning it on resets the renewal count. Gym owners only.',
+  })
+  @ApiParam({ name: 'gymId', description: 'Gym ID' })
+  @ApiParam({ name: 'membershipId', description: 'Gym membership ID' })
+  @ApiBody({ type: SetMembershipAutoRollRequestDto })
+  @ApiResponse({
+    status: 200,
+    description: 'Auto-renew updated',
+    type: AthleteMembershipResponseDto,
+  })
+  @ApiResponse({ status: 400, description: 'autoRoll missing or not a boolean' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiResponse({ status: 403, description: 'Forbidden - Owner role required or wrong gym' })
+  @ApiResponse({ status: 404, description: 'Membership or active plan not found' })
+  async setMembershipAutoRoll(
+    @Param('gymId') gymId: string,
+    @Param('membershipId') membershipId: string,
+    @Body(ValidationPipe) body: SetMembershipAutoRollRequestDto,
+    @CurrentUser() userId: string,
+  ): Promise<AthleteMembershipResponseDto> {
+    return this.commandBus.execute(
+      new SetMembershipAutoRollCommand(
+        userId,
+        gymId,
+        membershipId,
+        body.autoRoll,
       ),
     );
   }
