@@ -8,6 +8,7 @@ import { GymMembershipRepository } from '../../../repositories/gym-membership.re
 import { AthleteMembershipPlanRepository } from '../../../repositories/athlete-membership-plan.repository';
 import { GymService } from '../../../domain/gym/gym.service';
 import { effectiveExpiresAt } from '../../../domain/athlete-membership-plan/billing-cycle';
+import { toCalendarDay } from '../../../domain/shared/calendar-day';
 import { BookingEntity } from '../../../domain/booking/entities/booking.entity';
 import { BookingCreatedEvent } from '../../../domain/notification/events/booking-created.event';
 import { ConflictException } from '@nestjs/common';
@@ -125,9 +126,11 @@ export class BookClassHandler implements ICommandHandler<BookClassCommand> {
       // Precondition 5c: the class must fall within the plan's coverage.
       // Compared date-to-date so a class on the expiry day is still bookable;
       // 5b above is instant-granular, and the stricter of the two governs.
+      // scheduledDate is already a calendar day; the expiry is an instant and is
+      // truncated on the server-local calendar. See toCalendarDay.
       if (planExpiresAt) {
-        const classDay = this.toDayString(classEntity.scheduledDate);
-        const cutoffDay = this.toDayString(planExpiresAt);
+        const classDay = toCalendarDay(classEntity.scheduledDate);
+        const cutoffDay = toCalendarDay(planExpiresAt);
 
         if (classDay > cutoffDay) {
           throw forbidden(
@@ -197,9 +200,7 @@ export class BookClassHandler implements ICommandHandler<BookClassCommand> {
           command.gymId,
           command.classId,
           classEntity.classType?.name || 'Class',
-          classEntity.scheduledDate instanceof Date
-            ? classEntity.scheduledDate.toISOString().slice(0, 10)
-            : String(classEntity.scheduledDate).slice(0, 10),
+          toCalendarDay(classEntity.scheduledDate),
           classEntity.scheduledTime,
         ),
       );
@@ -207,22 +208,6 @@ export class BookClassHandler implements ICommandHandler<BookClassCommand> {
 
     // Map to response DTO
     return this.mapToResponseDto(savedBooking);
-  }
-
-  /**
-   * Reduce a date value to YYYY-MM-DD on the server-local calendar so plan
-   * coverage is compared by day rather than by instant. Local (not UTC) to match
-   * the expiresAt-vs-now comparison in MembershipRenewalScheduler and the dates
-   * the athlete schedule renders.
-   */
-  private toDayString(value: Date | string | number): string {
-    const date = value instanceof Date ? value : new Date(value);
-
-    const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    const day = String(date.getDate()).padStart(2, '0');
-
-    return `${year}-${month}-${day}`;
   }
 
   private mapToResponseDto(booking: BookingEntity): BookClassResponseDto {

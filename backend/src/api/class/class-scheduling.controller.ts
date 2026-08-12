@@ -128,7 +128,9 @@ export class ClassSchedulingController {
       createClassDto.classTypeId,
       createClassDto.coachUserId,
       createClassDto.spaceId,
-      new Date(createClassDto.scheduledDate),
+      // Passed through as the bare 'YYYY-MM-DD' the client sent. Wrapping it in
+      // `new Date()` here is what used to shift the stored day west of UTC.
+      createClassDto.scheduledDate,
       createClassDto.scheduledTime,
       createClassDto.capacity,
       createClassDto.duration,
@@ -197,9 +199,7 @@ export class ClassSchedulingController {
       editClassDto.classTypeId,
       editClassDto.coachUserId,
       editClassDto.spaceId,
-      editClassDto.scheduledDate !== undefined
-        ? new Date(editClassDto.scheduledDate)
-        : undefined,
+      editClassDto.scheduledDate,
       editClassDto.scheduledTime,
       editClassDto.capacity,
       editClassDto.duration,

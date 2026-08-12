@@ -6,6 +6,7 @@ import { AthleteMembershipPlanRepository } from '../../repositories/athlete-memb
 import { GymStaffService } from '../../domain/gym-staff/gym-staff.service';
 import { GymService } from '../../domain/gym/gym.service';
 import { effectiveExpiresAt } from '../../domain/athlete-membership-plan/billing-cycle';
+import { toCalendarDay } from '../../domain/shared/calendar-day';
 import { ClassScheduleItemDto } from './dto/class-schedule-item.dto';
 import { GetClassScheduleResponseDto } from './dto/get-class-schedule-response.dto';
 import { CoachClassItemDto } from './dto/coach-class-item.dto';
@@ -308,8 +309,9 @@ export class ClassScheduleService {
   /**
    * A class is covered when the plan is unlimited, or when the class falls on or
    * before the plan's expiry date. Compared date-to-date (not instant-to-instant)
-   * on the server-local calendar — the same calendar formatDate emits — so a
-   * class later in the day on the expiry date is still covered.
+   * so a class later in the day on the expiry date is still covered: the class's
+   * stored calendar day against the expiry instant truncated to the server-local
+   * calendar.
    *
    * Coverage is day-granular but the lapse check above is instant-granular, and
    * the stricter of the two governs: once the expiry time-of-day passes, the
@@ -325,44 +327,17 @@ export class ClassScheduleService {
   }
 
   /**
-   * Format a date value to YYYY-MM-DD string.
-   * Accepts Date, ISO string, or millisecond timestamp.
-   * Normalizes the input to a Date instance before formatting.
+   * Format a date value to a YYYY-MM-DD string.
    *
-   * @param date - Date object, ISO string, or millisecond timestamp
+   * `cls.scheduledDate` arrives here as a bare 'YYYY-MM-DD' string (the `date`
+   * column path) while `planExpiresAt` arrives as a real Date, so the two kinds
+   * must not be normalised the same way — see toCalendarDay.
+   *
+   * @param date - YYYY-MM-DD string, Date object, ISO string, or ms timestamp
    * @returns Formatted date string (YYYY-MM-DD)
-   * @throws TypeError if the value cannot be converted to a Date
+   * @throws TypeError if the value cannot be reduced to a calendar day
    */
   private formatDate(date: Date | string | number): string {
-    // Normalize input to a Date instance
-    let dateInstance: Date;
-
-    if (date instanceof Date) {
-      dateInstance = date;
-    } else if (typeof date === 'string') {
-      // Try parsing as ISO string (common for DB drivers returning strings)
-      dateInstance = new Date(date);
-    } else if (typeof date === 'number') {
-      // Treat as millisecond timestamp
-      dateInstance = new Date(date);
-    } else {
-      throw new TypeError(
-        `Cannot format date: received ${typeof date}. Expected Date, string, or number.`,
-      );
-    }
-
-    // Validate the Date is valid
-    if (Number.isNaN(dateInstance.getTime())) {
-      const dateStr = String(date);
-      throw new TypeError(
-        `Cannot format date: invalid date value "${dateStr}". Expected valid Date, ISO string, or millisecond timestamp.`,
-      );
-    }
-
-    // Format after normalization
-    const year = dateInstance.getFullYear();
-    const month = String(dateInstance.getMonth() + 1).padStart(2, '0');
-    const day = String(dateInstance.getDate()).padStart(2, '0');
-    return `${year}-${month}-${day}`;
+    return toCalendarDay(date);
   }
 }

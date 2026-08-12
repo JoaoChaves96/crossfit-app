@@ -5,6 +5,7 @@ import {
   BadRequestException,
 } from '@nestjs/common';
 import { DataSource } from 'typeorm';
+import { DateUtils } from 'typeorm/util/DateUtils';
 import { CreateRecurringClassesHandler } from './create-recurring-classes.handler';
 import { CreateRecurringClassesCommand } from '../create-recurring-classes.command';
 import { ClassRepository } from '../../../repositories/class.repository';
@@ -132,6 +133,42 @@ describe('CreateRecurringClassesHandler', () => {
     expect(saved.every((c: any) => c.capacity === 30)).toBe(true); // space base capacity
     // Series stores the raw nullable capacity: null means "use space base at generation".
     expect(savedSeries().capacity).toBeNull();
+  });
+
+  /**
+   * `scheduledDate`, `startDate` and `endDate` are all `@Column('date')`, and
+   * TypeORM runs `DateUtils.mixedDateToDateString` (LOCAL getters) on the way to
+   * such a column. A `Date` built from a bare day is UTC midnight, so west of UTC
+   * every generated occurrence and both series bounds landed one day EARLY.
+   * Asserting through that same function is the closest a unit test gets to the
+   * column. Zone pinned to America/New_York by test/jest-tz.setup.ts.
+   */
+  it('persists every occurrence and both series bounds on the requested days', async () => {
+    expect(new Date().getTimezoneOffset()).not.toBe(0); // else nothing to catch
+
+    okPreconditions();
+    await handler.execute(
+      new CreateRecurringClassesCommand(userId, gymId, baseDto as any),
+    );
+
+    const persisted = savedClasses().map((c: any) =>
+      DateUtils.mixedDateToDateString(c.scheduledDate),
+    );
+    expect(persisted).toEqual([
+      '2026-08-03',
+      '2026-08-05',
+      '2026-08-07',
+      '2026-08-10',
+      '2026-08-12',
+      '2026-08-14',
+    ]);
+
+    expect(
+      DateUtils.mixedDateToDateString(savedSeries().startDate),
+    ).toBe(baseDto.startDate);
+    expect(DateUtils.mixedDateToDateString(savedSeries().endDate)).toBe(
+      baseDto.endDate,
+    );
   });
 
   it('persists explicit capacity on the series and resolves it onto classes', async () => {

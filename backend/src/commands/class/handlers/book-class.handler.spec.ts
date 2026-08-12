@@ -36,6 +36,9 @@ describe('BookClassHandler', () => {
     classTypeId: mockClassTypeId,
     state: 'published',
     capacity: 10,
+    // `@Column('date')` hydrates as a bare 'YYYY-MM-DD' string, never a Date.
+    scheduledDate: '2026-08-12',
+    scheduledTime: '09:00',
   };
 
   const mockActiveGymMembership = {
@@ -523,17 +526,14 @@ describe('BookClassHandler', () => {
       });
 
       /**
-       * KNOWN SEAM, not desired behaviour. ClassEntity.scheduledDate is
-       * @Column('date') and some drivers hand it back as 'YYYY-MM-DD';
-       * toDayString parses that as UTC midnight and then reads local getters, so
-       * west of UTC a string-dated class reads one day EARLY. The class below is
-       * on 08-21 but compares as 08-20, so a plan expiring 08-20 over-grants it.
-       * The direction is safe — a paying member is never cut short, and the
-       * instant-granular lapse check still bounds access — and the seam predates
-       * this task; this test exists so the over-grant is visible rather than
-       * silent. Normalising the date path would flip this expectation.
+       * `ClassEntity.scheduledDate` is `@Column('date')` and hydrates as a bare
+       * 'YYYY-MM-DD' string. That is a calendar date, so it must not be re-parsed
+       * as an instant: `new Date('2026-08-21')` is UTC midnight, and local getters
+       * on that read 08-20 west of UTC. The class below is on 08-21, one day AFTER
+       * a plan expiring 08-20, and must be refused — the day-after grace period
+       * that seam produced is not intended behaviour.
        */
-      it('over-grants a string-dated class one day west of UTC', async () => {
+      it('refuses a string-dated class on the day after the plan expires', async () => {
         const command = new BookClassCommand(mockUserId, mockClassId, mockGymId, 'athlete');
 
         jest.spyOn(athleteMembershipPlanRepository, 'getActivePlanByGymMembership').mockResolvedValue({
@@ -543,6 +543,24 @@ describe('BookClassHandler', () => {
         jest.spyOn(classRepository, 'getClassById').mockResolvedValue({
           ...mockPublishedClass,
           scheduledDate: '2026-08-21',
+        } as any);
+
+        await expect(handler.execute(command)).rejects.toThrow(
+          'Class is scheduled after the athlete membership plan expires',
+        );
+        expect(bookingRepository.save).not.toHaveBeenCalled();
+      });
+
+      it('still books a string-dated class on the plan expiry day itself', async () => {
+        const command = new BookClassCommand(mockUserId, mockClassId, mockGymId, 'athlete');
+
+        jest.spyOn(athleteMembershipPlanRepository, 'getActivePlanByGymMembership').mockResolvedValue({
+          ...mockActiveMembershipPlan,
+          expiresAt: nyDate(2026, 8, 20, 12),
+        } as any);
+        jest.spyOn(classRepository, 'getClassById').mockResolvedValue({
+          ...mockPublishedClass,
+          scheduledDate: '2026-08-20',
         } as any);
 
         const result = await handler.execute(command);

@@ -26,6 +26,9 @@ describe('CancelBookingHandler', () => {
     gymId: mockGymId,
     state: 'published',
     capacity: 10,
+    // `@Column('date')` hydrates as a bare 'YYYY-MM-DD' string, never a Date.
+    scheduledDate: '2026-08-12',
+    scheduledTime: '09:00',
   };
 
   const mockBookedBooking = (): BookingEntity => ({

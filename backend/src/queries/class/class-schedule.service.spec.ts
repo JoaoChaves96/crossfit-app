@@ -47,6 +47,7 @@ function buildClass(overrides: Record<string, unknown> = {}) {
 describe('ClassScheduleService — plan expiry', () => {
   let service: ClassScheduleService;
   const getClassesByGym = jest.fn();
+  const getClassById = jest.fn();
   const countBookedBookings = jest.fn();
   const getActiveGymMembershipByUserAndGym = jest.fn();
   const getActivePlanByGymMembership = jest.fn();
@@ -55,6 +56,7 @@ describe('ClassScheduleService — plan expiry', () => {
   beforeEach(async () => {
     [
       getClassesByGym,
+      getClassById,
       countBookedBookings,
       getActiveGymMembershipByUserAndGym,
       getActivePlanByGymMembership,
@@ -85,7 +87,10 @@ describe('ClassScheduleService — plan expiry', () => {
     const moduleRef = await Test.createTestingModule({
       providers: [
         ClassScheduleService,
-        { provide: ClassRepository, useValue: { getClassesByGym } },
+        {
+          provide: ClassRepository,
+          useValue: { getClassesByGym, getClassById },
+        },
         { provide: BookingRepository, useValue: { countBookedBookings } },
         {
           provide: GymMembershipRepository,
@@ -330,16 +335,13 @@ describe('ClassScheduleService — plan expiry', () => {
     });
 
     /**
-     * KNOWN SEAM, not desired behaviour. formatDate parses a bare 'YYYY-MM-DD'
-     * as UTC midnight and then reads local getters, so west of UTC every
-     * string-dated class reads one day EARLY: the class below is on 08-21 but
-     * compares as 08-20, and a plan expiring 08-20 therefore over-grants it.
-     * The direction is safe (a paying member is never cut short, and the
-     * instant-granular lapse check still bounds access), and the formatDate
-     * seam predates this task — this test exists so the over-grant is visible
-     * rather than silent. Fixing formatDate would flip this expectation.
+     * A bare 'YYYY-MM-DD' is a calendar date and must never round-trip through
+     * `new Date()` + local getters: that lands on UTC midnight, which west of
+     * UTC reads as the PREVIOUS day. The class below is on 08-21, so a plan
+     * expiring 08-20 must not cover it. Getting this wrong grants an accidental
+     * one-day grace period — expired is expired.
      */
-    it('over-grants a string-dated class one day west of UTC', async () => {
+    it('hides a string-dated class on the day after the cutoff', async () => {
       getActivePlanByGymMembership.mockResolvedValue({
         id: 'amp-1',
         status: 'active',
@@ -360,8 +362,45 @@ describe('ClassScheduleService — plan expiry', () => {
       );
 
       expect(result.planExpiresAt).toBe('2026-08-20');
-      expect(result.classes.map((cls) => cls.id)).toEqual(['string-day-after']);
-      expect(result.classes[0].scheduledDate).toBe('2026-08-20');
+      expect(result.classes).toEqual([]);
+    });
+
+    /**
+     * The user-visible half of the same seam: the day the athlete reads must be
+     * the day the database stores. Under the pinned zone, re-parsing '2026-08-21'
+     * as an instant renders it as Thursday 08-20 instead of Friday 08-21.
+     */
+    it('renders a string-dated class on the stored day, not the day before', async () => {
+      getClassesByGym.mockResolvedValue([
+        buildClass({ id: 'string-dated', scheduledDate: '2026-08-21' }),
+      ]);
+
+      const result = await service.getClassScheduleForAthlete(
+        'gym-1',
+        'user-1',
+      );
+
+      expect(result.classes[0].scheduledDate).toBe('2026-08-21');
+    });
+
+    it('renders a string-dated class on the stored day for the owner schedule', async () => {
+      getClassesByGym.mockResolvedValue([
+        buildClass({ id: 'string-dated', scheduledDate: '2026-08-21' }),
+      ]);
+
+      const result = await service.getClassScheduleForOwner('gym-1');
+
+      expect(result.classes[0].scheduledDate).toBe('2026-08-21');
+    });
+
+    it('renders a string-dated class on the stored day for the class detail', async () => {
+      getClassById.mockResolvedValue(
+        buildClass({ id: 'string-dated', scheduledDate: '2026-08-21' }),
+      );
+
+      const result = await service.getClassDetail('gym-1', 'string-dated');
+
+      expect(result.scheduledDate).toBe('2026-08-21');
     });
   });
 

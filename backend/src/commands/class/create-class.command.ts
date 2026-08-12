@@ -7,7 +7,8 @@ export class CreateClassCommand implements ICommand {
     readonly classTypeId: string,
     readonly coachUserId: string,
     readonly spaceId: string,
-    readonly scheduledDate: Date,
+    /** A bare calendar day, 'YYYY-MM-DD'. Never an instant — see toCalendarDay. */
+    readonly scheduledDate: string,
     readonly scheduledTime: string,
     readonly capacity?: number,
     readonly duration?: number,

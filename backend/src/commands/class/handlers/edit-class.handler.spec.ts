@@ -8,6 +8,7 @@ import { GymStaffService } from '../../../domain/gym-staff/gym-staff.service';
 import { SpaceService } from '../../../domain/space/space.service';
 import { ClassEntity } from '../../../domain/class/entities/class.entity';
 import { NotFoundException, BadRequestException } from '@nestjs/common';
+import { DateUtils } from 'typeorm/util/DateUtils';
 
 describe('EditClassHandler', () => {
   let handler: EditClassHandler;
@@ -27,7 +28,8 @@ describe('EditClassHandler', () => {
       classTypeId: 'ct-original',
       coachUserId: 'coach-original',
       spaceId: 'space-original',
-      scheduledDate: new Date('2026-06-01'),
+      // `@Column('date')` hydrates as a bare 'YYYY-MM-DD' string, never a Date.
+      scheduledDate: '2026-06-01' as unknown as Date,
       scheduledTime: '09:00',
       capacity: 20,
       duration: 60,
@@ -178,6 +180,47 @@ describe('EditClassHandler', () => {
       expect(entityPassedToSave.duration).toBe(newDuration);
       expect(result.state).toBe('published');
       expect(result.bookedCount).toBe(5);
+    });
+
+    /**
+     * Asserts on what is PERSISTED rather than on the response, because the
+     * response now formats faithfully and would report a wrong stored day as if
+     * it were right. `DateUtils.mixedDateToDateString` is the function TypeORM
+     * runs on the way to a `@Column('date')`, and it reads LOCAL getters — so a
+     * `Date` built from a bare day (UTC midnight) lands on the PREVIOUS day west
+     * of UTC. Zone pinned to America/New_York by test/jest-tz.setup.ts.
+     */
+    it('persists the rescheduled calendar day, not the day before', async () => {
+      expect(new Date().getTimezoneOffset()).not.toBe(0); // else nothing to catch
+
+      const cls = buildPublishedClass();
+      jest.spyOn(classRepository, 'getClassById').mockResolvedValue(cls);
+      jest
+        .spyOn(classRepository, 'save')
+        .mockImplementation(async (entity) => buildSavedResponse(entity));
+      jest
+        .spyOn(bookingRepository, 'countBookedBookings')
+        .mockResolvedValue(0);
+      const saveSpy = jest.spyOn(classRepository, 'save');
+
+      const newDay = '2026-08-21';
+      const command = new EditClassCommand(
+        mockGymId,
+        mockClassId,
+        undefined,
+        undefined,
+        undefined,
+        newDay,
+      );
+
+      const result = await handler.execute(command);
+
+      const entityPassedToSave = saveSpy.mock.calls[0][0];
+      expect(
+        DateUtils.mixedDateToDateString(entityPassedToSave.scheduledDate),
+      ).toBe(newDay);
+      expect(entityPassedToSave.scheduledDate).toBe(newDay);
+      expect(result.scheduledDate).toBe(newDay);
     });
 
     it('should update classTypeId when a valid classType belonging to the gym is provided', async () => {

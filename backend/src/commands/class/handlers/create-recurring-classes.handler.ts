@@ -13,6 +13,7 @@ import { SpaceService } from '../../../domain/space/space.service';
 import { ClassTypeService } from '../../../domain/class-type/class-type.service';
 import { notFound, forbidden, invalidState } from '../../../http/exceptions';
 import { expandOccurrences } from '../recurrence/expand-occurrences';
+import { toPersistedCalendarDay } from '../../../domain/shared/calendar-day';
 
 /**
  * CreateRecurringClassesHandler: generates a series of classes from a weekly
@@ -150,8 +151,10 @@ export class CreateRecurringClassesHandler
     series.scheduledTime = dto.scheduledTime;
     series.duration = duration;
     series.capacity = dto.capacity ?? null;
-    series.startDate = start;
-    series.endDate = end;
+    // `startDate`/`endDate` are `@Column('date')` too, so they take the bare days
+    // rather than the `start`/`end` instants used for the rule validation above.
+    series.startDate = toPersistedCalendarDay(dto.startDate);
+    series.endDate = toPersistedCalendarDay(dto.endDate);
     series.createdByUserId = userId;
     series.createdAt = now;
 
@@ -162,7 +165,7 @@ export class CreateRecurringClassesHandler
       c.classTypeId = dto.classTypeId;
       c.coachUserId = dto.coachUserId;
       c.spaceId = dto.spaceId;
-      c.scheduledDate = new Date(`${date}T00:00:00.000Z`);
+      c.scheduledDate = toPersistedCalendarDay(date);
       c.scheduledTime = dto.scheduledTime;
       c.capacity = capacity;
       c.duration = duration;

@@ -2,6 +2,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { ClassRepository } from '../../repositories/class.repository';
 import { ClassEntity } from './entities/class.entity';
+import { toCalendarDay } from '../shared/calendar-day';
 
 /**
  * How long before a class starts the booking window shuts.
@@ -81,10 +82,7 @@ export class ClassLifecycleScheduler {
    * single UTC Date. Both values are stored in UTC in the database.
    */
   private buildScheduledStart(scheduledDate: Date, scheduledTime: string): Date {
-    const dateStr =
-      scheduledDate instanceof Date
-        ? scheduledDate.toISOString().slice(0, 10)
-        : String(scheduledDate).slice(0, 10);
+    const dateStr = toCalendarDay(scheduledDate);
 
     const timeStr = scheduledTime.length === 5 ? `${scheduledTime}:00` : scheduledTime;
 

@@ -13,6 +13,19 @@ import {
   BadRequestException,
 } from '@nestjs/common';
 
+/**
+ * A bare 'YYYY-MM-DD' calendar day N days from today, which is the shape
+ * CreateClassCommand carries. Computed from the clock rather than hardcoded so
+ * the "must be in the future" precondition cannot rot.
+ */
+const dayFromToday = (offsetDays: number): string => {
+  const d = new Date();
+  d.setDate(d.getDate() + offsetDays);
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${d.getFullYear()}-${month}-${day}`;
+};
+
 describe('CreateClassHandler', () => {
   let handler: CreateClassHandler;
   let classRepository: ClassRepository;
@@ -26,8 +39,7 @@ describe('CreateClassHandler', () => {
   const mockCoachUserId = 'coach-123';
   const mockClassTypeId = 'class-type-123';
   const mockSpaceId = 'space-123';
-  const futureDate = new Date();
-  futureDate.setDate(futureDate.getDate() + 7);
+  const futureDate = dayFromToday(7);
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
@@ -122,6 +134,8 @@ describe('CreateClassHandler', () => {
         spaceId: mockSpaceId,
         capacity: 20,
         state: 'published',
+        // `@Column('date')` hydrates as a bare 'YYYY-MM-DD' string, never a Date.
+        scheduledDate: futureDate as unknown as Date,
         createdAt: new Date(),
         lastModifiedAt: new Date(),
       } as ClassEntity;
@@ -212,8 +226,7 @@ describe('CreateClassHandler', () => {
 
     it('should throw BadRequestException if scheduled time is in the past', async () => {
       // Arrange
-      const pastDate = new Date();
-      pastDate.setDate(pastDate.getDate() - 1);
+      const pastDate = dayFromToday(-1);
 
       const command = new CreateClassCommand(
         mockUserId,
@@ -277,7 +290,10 @@ describe('CreateClassHandler', () => {
         baseCapacity: 25,
       } as any);
 
-      const mockSavedClass = { capacity: 25 } as ClassEntity;
+      const mockSavedClass = {
+        capacity: 25,
+        scheduledDate: futureDate as unknown as Date,
+      } as ClassEntity;
       const saveSpy = jest
         .spyOn(classRepository, 'save')
         .mockResolvedValue(mockSavedClass);

@@ -20,7 +20,8 @@ describe('ClassLifecycleScheduler', () => {
     ({
       id: 'class-1',
       state,
-      scheduledDate: new Date('2026-08-12T00:00:00Z'),
+      // `@Column('date')` hydrates as a bare 'YYYY-MM-DD' string, never a Date.
+      scheduledDate: '2026-08-12' as unknown as Date,
       scheduledTime: '10:00',
       duration: 60,
       ...overrides,

@@ -12,6 +12,20 @@ import {
   NotFoundException,
   BadRequestException,
 } from '@nestjs/common';
+import { DateUtils } from 'typeorm/util/DateUtils';
+
+/**
+ * A bare 'YYYY-MM-DD' calendar day N days from today, which is the shape
+ * CreateClassCommand carries. Computed from the clock rather than hardcoded so
+ * the "must be in the future" precondition cannot rot.
+ */
+const dayFromToday = (offsetDays: number): string => {
+  const d = new Date();
+  d.setDate(d.getDate() + offsetDays);
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${d.getFullYear()}-${month}-${day}`;
+};
 
 describe('CreateClassHandler', () => {
   let handler: CreateClassHandler;
@@ -26,8 +40,7 @@ describe('CreateClassHandler', () => {
   const mockCoachUserId = 'coach-123';
   const mockClassTypeId = 'class-type-123';
   const mockSpaceId = 'space-123';
-  const futureDate = new Date();
-  futureDate.setDate(futureDate.getDate() + 7);
+  const futureDate = dayFromToday(7);
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
@@ -122,6 +135,8 @@ describe('CreateClassHandler', () => {
         spaceId: mockSpaceId,
         capacity: 20,
         state: 'published',
+        // `@Column('date')` hydrates as a bare 'YYYY-MM-DD' string, never a Date.
+        scheduledDate: futureDate as unknown as Date,
         createdAt: new Date(),
         lastModifiedAt: new Date(),
       } as ClassEntity;
@@ -146,6 +161,60 @@ describe('CreateClassHandler', () => {
       expect(savedEntity.createdAt).toBeInstanceOf(Date);
       expect(savedEntity.lastModifiedAt).toBeInstanceOf(Date);
       expect(savedEntity.id).toBeTruthy(); // UUID was generated
+    });
+
+    /**
+     * Asserts on what gets PERSISTED, not on what a later read returns — the read
+     * paths are faithful now and would happily report a wrong stored day.
+     *
+     * `@Column('date')` values go through `DateUtils.mixedDateToDateString` on the
+     * way to the column, and that reads LOCAL getters. So handing the entity a
+     * `Date` built from a bare day (UTC midnight) persists the PREVIOUS day
+     * anywhere west of UTC: the owner books Friday and the row says Thursday.
+     * Running that same function here is the closest a unit test gets to the
+     * column. The zone is pinned to America/New_York — see test/jest-tz.setup.ts.
+     */
+    it('persists the calendar day the owner asked for, not the day before', async () => {
+      expect(new Date().getTimezoneOffset()).not.toBe(0); // else nothing to catch
+
+      const day = dayFromToday(7);
+      const command = new CreateClassCommand(
+        mockUserId,
+        mockGymId,
+        mockClassTypeId,
+        mockCoachUserId,
+        mockSpaceId,
+        day,
+        '10:00',
+        20,
+      );
+
+      jest.spyOn(gymStaffService, 'isGymOwner').mockResolvedValue(true);
+      jest
+        .spyOn(gymService, 'getGymById')
+        .mockResolvedValue({ id: mockGymId, status: 'active' } as any);
+      jest
+        .spyOn(classTypeService, 'getClassTypeById')
+        .mockResolvedValue({ id: mockClassTypeId, gymId: mockGymId } as any);
+      jest
+        .spyOn(gymStaffService, 'getGymStaffByUserAndGym')
+        .mockResolvedValue({ role: 'coach', status: 'active' } as any);
+      jest
+        .spyOn(spaceService, 'getSpaceById')
+        .mockResolvedValue({ gymId: mockGymId, baseCapacity: 30 } as any);
+
+      const saveSpy = jest
+        .spyOn(classRepository, 'save')
+        .mockImplementation(async (entity) => entity as ClassEntity);
+
+      await handler.execute(command);
+
+      const savedEntity = saveSpy.mock.calls[0][0];
+      expect(DateUtils.mixedDateToDateString(savedEntity.scheduledDate)).toBe(
+        day,
+      );
+      // Stored as the bare day, which is also how the column hydrates back.
+      expect(savedEntity.scheduledDate).toBe(day);
     });
 
     it('should throw ForbiddenException if user is not gym owner', async () => {
@@ -212,8 +281,7 @@ describe('CreateClassHandler', () => {
 
     it('should throw BadRequestException if scheduled time is in the past', async () => {
       // Arrange
-      const pastDate = new Date();
-      pastDate.setDate(pastDate.getDate() - 1);
+      const pastDate = dayFromToday(-1);
 
       const command = new CreateClassCommand(
         mockUserId,
@@ -277,7 +345,10 @@ describe('CreateClassHandler', () => {
         baseCapacity: 25,
       } as any);
 
-      const mockSavedClass = { capacity: 25 } as ClassEntity;
+      const mockSavedClass = {
+        capacity: 25,
+        scheduledDate: futureDate as unknown as Date,
+      } as ClassEntity;
       const saveSpy = jest
         .spyOn(classRepository, 'save')
         .mockResolvedValue(mockSavedClass);
@@ -366,7 +437,10 @@ describe('CreateClassHandler', () => {
       } as any);
       const saveSpy = jest
         .spyOn(classRepository, 'save')
-        .mockResolvedValue({ id: 'class-uuid-123' } as ClassEntity);
+        .mockResolvedValue({
+          id: 'class-uuid-123',
+          scheduledDate: futureDate as unknown as Date,
+        } as ClassEntity);
 
       await handler.execute(command);
 

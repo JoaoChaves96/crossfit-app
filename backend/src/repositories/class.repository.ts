@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { In, IsNull, Repository } from 'typeorm';
 import { ClassEntity } from '../domain/class/entities/class.entity';
+import { toCalendarDay } from '../domain/shared/calendar-day';
 
 /**
  * ClassRepository: Pure persistence layer
@@ -156,10 +157,7 @@ export class ClassRepository {
       select: ['scheduledDate'],
     });
     return rows.map((r) => ({
-      scheduledDate:
-        r.scheduledDate instanceof Date
-          ? r.scheduledDate.toISOString().slice(0, 10)
-          : String(r.scheduledDate),
+      scheduledDate: toCalendarDay(r.scheduledDate),
     }));
   }
 }

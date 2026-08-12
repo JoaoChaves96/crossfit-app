@@ -8,6 +8,10 @@ import { ClassTypeService } from '../../../domain/class-type/class-type.service'
 import { GymStaffService } from '../../../domain/gym-staff/gym-staff.service';
 import { SpaceService } from '../../../domain/space/space.service';
 import { notFound, invalidState } from '../../../http/exceptions';
+import {
+  toCalendarDay,
+  toPersistedCalendarDay,
+} from '../../../domain/shared/calendar-day';
 
 @CommandHandler(EditClassCommand)
 export class EditClassHandler implements ICommandHandler<EditClassCommand> {
@@ -93,7 +97,7 @@ export class EditClassHandler implements ICommandHandler<EditClassCommand> {
     }
 
     if (command.scheduledDate !== undefined) {
-      cls.scheduledDate = command.scheduledDate;
+      cls.scheduledDate = toPersistedCalendarDay(command.scheduledDate);
     }
 
     if (command.scheduledTime !== undefined) {
@@ -127,11 +131,12 @@ export class EditClassHandler implements ICommandHandler<EditClassCommand> {
     };
   }
 
+  /**
+   * `saved.scheduledDate` is a bare 'YYYY-MM-DD' string whenever the command did
+   * not change it (the `date` column hydrates as a string), so it must not be
+   * re-parsed as an instant. See toCalendarDay.
+   */
   private formatDate(date: Date | string): string {
-    const d = date instanceof Date ? date : new Date(date);
-    const year = d.getFullYear();
-    const month = String(d.getMonth() + 1).padStart(2, '0');
-    const day = String(d.getDate()).padStart(2, '0');
-    return `${year}-${month}-${day}`;
+    return toCalendarDay(date);
   }
 }

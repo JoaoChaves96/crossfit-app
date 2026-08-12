@@ -12,6 +12,7 @@ import { notFound, forbidden, invalidState } from '../../../http/exceptions';
 import { Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
 import { ClassEntity } from '../../../domain/class/entities/class.entity';
+import { toCalendarDay } from '../../../domain/shared/calendar-day';
 
 /**
  * CancelBookingHandler: Orchestrates booking cancellation
@@ -130,9 +131,7 @@ export class CancelBookingHandler implements ICommandHandler<CancelBookingComman
         classEntity.gymId,
         classId,
         classEntity.classType?.name || 'Class',
-        classEntity.scheduledDate instanceof Date
-          ? classEntity.scheduledDate.toISOString().slice(0, 10)
-          : String(classEntity.scheduledDate).slice(0, 10),
+        toCalendarDay(classEntity.scheduledDate),
         classEntity.scheduledTime,
       ),
     );

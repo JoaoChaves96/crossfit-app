@@ -9,6 +9,10 @@ import { SpaceService } from '../../../domain/space/space.service';
 import { ClassTypeService } from '../../../domain/class-type/class-type.service';
 import { CreateClassResponseDto } from '../dto/create-class-response.dto';
 import { notFound, forbidden, invalidState } from '../../../http/exceptions';
+import {
+  toCalendarDay,
+  toPersistedCalendarDay,
+} from '../../../domain/shared/calendar-day';
 import { v4 as uuid } from 'uuid';
 
 /**
@@ -111,7 +115,7 @@ export class CreateClassHandler implements ICommandHandler<CreateClassCommand> {
     classEntity.classTypeId = command.classTypeId;
     classEntity.coachUserId = command.coachUserId;
     classEntity.spaceId = command.spaceId;
-    classEntity.scheduledDate = this.toDate(command.scheduledDate);
+    classEntity.scheduledDate = toPersistedCalendarDay(command.scheduledDate);
     classEntity.scheduledTime = command.scheduledTime;
     classEntity.capacity = capacity;
     classEntity.state = 'published'; // ← Initial state decided here
@@ -127,18 +131,16 @@ export class CreateClassHandler implements ICommandHandler<CreateClassCommand> {
     return this.mapToResponseDto(savedClass);
   }
 
-  private parseScheduledDateTime(date: Date, time: string): Date {
-    const [hours, minutes] = time.split(':').map(Number);
-    const result = new Date(date);
-    result.setHours(hours, minutes, 0, 0);
-    return result;
-  }
-
-  private toDate(input: Date | string): Date {
-    if (input instanceof Date) {
-      return input;
-    }
-    return new Date(input);
+  /**
+   * Combine a bare 'YYYY-MM-DD' calendar day with an HH:mm time into the instant
+   * that class starts, on the SERVER-LOCAL calendar. An ISO datetime with no
+   * trailing `Z` is parsed as local time, which is what the day and the wall-clock
+   * time both mean. Going via `new Date(day)` instead would land on UTC midnight
+   * and put the whole check on the previous day west of UTC.
+   */
+  private parseScheduledDateTime(day: string, time: string): Date {
+    const timeStr = time.length === 5 ? `${time}:00` : time;
+    return new Date(`${day}T${timeStr}`);
   }
 
   private mapToResponseDto(classEntity: ClassEntity): CreateClassResponseDto {
@@ -148,7 +150,13 @@ export class CreateClassHandler implements ICommandHandler<CreateClassCommand> {
       classTypeId: classEntity.classTypeId,
       coachUserId: classEntity.coachUserId,
       spaceId: classEntity.spaceId,
-      scheduledDate: classEntity.scheduledDate,
+      // CreateClassResponseDto declares this `Date` where every other endpoint
+      // returns 'YYYY-MM-DD', so the stored calendar day is re-inflated to the
+      // UTC-midnight instant this endpoint has always returned. Narrowing the DTO
+      // to a string is a Swagger + generated-types change, tracked separately.
+      scheduledDate: new Date(
+        `${toCalendarDay(classEntity.scheduledDate)}T00:00:00.000Z`,
+      ),
       scheduledTime: classEntity.scheduledTime,
       capacity: classEntity.capacity,
       duration: classEntity.duration,
