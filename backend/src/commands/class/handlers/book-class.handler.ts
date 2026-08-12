@@ -7,6 +7,7 @@ import { ClassRepository } from '../../../repositories/class.repository';
 import { GymMembershipRepository } from '../../../repositories/gym-membership.repository';
 import { AthleteMembershipPlanRepository } from '../../../repositories/athlete-membership-plan.repository';
 import { GymService } from '../../../domain/gym/gym.service';
+import { effectiveExpiresAt } from '../../../domain/athlete-membership-plan/billing-cycle';
 import { BookingEntity } from '../../../domain/booking/entities/booking.entity';
 import { BookingCreatedEvent } from '../../../domain/notification/events/booking-created.event';
 import { ConflictException } from '@nestjs/common';
@@ -98,10 +99,26 @@ export class BookClassHandler implements ICommandHandler<BookClassCommand> {
       // Precondition 5b: the plan must not have lapsed. The row can still read
       // 'active' between MembershipRenewalScheduler ticks, so check the date.
       // A null expiresAt means unlimited: never expired, never a cutoff.
-      const planExpiresAt =
-        activePlan.expiresAt != null ? new Date(activePlan.expiresAt) : null;
+      //
+      // The staleness cuts both ways, so the expiry is DERIVED rather than read:
+      // an auto-roll plan whose stored expiry has passed but which the hourly
+      // scheduler has not reached yet is still covered through its next cycle,
+      // and a fully-paid auto-renewing member must not lose booking for the
+      // rest of the hour. Derivation only — booking never writes the rolled date.
+      const now = new Date();
+      const planExpiresAt = effectiveExpiresAt(
+        {
+          expiresAt:
+            activePlan.expiresAt != null
+              ? new Date(activePlan.expiresAt)
+              : null,
+          autoRoll: activePlan.autoRoll,
+          billingCycle: plan.billingCycle,
+        },
+        now,
+      );
 
-      if (planExpiresAt && planExpiresAt.getTime() <= Date.now()) {
+      if (planExpiresAt && planExpiresAt.getTime() <= now.getTime()) {
         throw forbidden('Athlete membership plan has expired');
       }
 

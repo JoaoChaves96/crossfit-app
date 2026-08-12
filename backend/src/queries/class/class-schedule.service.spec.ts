@@ -64,11 +64,19 @@ describe('ClassScheduleService — plan expiry', () => {
     countBookedBookings.mockResolvedValue(0);
     getGymById.mockResolvedValue({ id: 'gym-1', name: 'CrossFit Downtown' });
     getActiveGymMembershipByUserAndGym.mockResolvedValue({ id: 'gm-1' });
+    // autoRoll true is the production default, so the unlimited baseline uses it:
+    // an unlimited plan must be unaffected by the auto-roll derivation.
     getActivePlanByGymMembership.mockResolvedValue({
       id: 'amp-1',
       status: 'active',
       expiresAt: null,
-      membershipPlan: { id: 'plan-1', name: 'Unlimited', classTypes: ['ct-1'] },
+      autoRoll: true,
+      membershipPlan: {
+        id: 'plan-1',
+        name: 'Unlimited',
+        classTypes: ['ct-1'],
+        billingCycle: 'monthly',
+      },
     });
 
     jest.useFakeTimers();
@@ -171,7 +179,13 @@ describe('ClassScheduleService — plan expiry', () => {
       id: 'amp-1',
       status: 'active',
       expiresAt: nyDate(2026, 8, 1),
-      membershipPlan: { id: 'plan-1', name: 'Unlimited', classTypes: ['ct-1'] },
+      autoRoll: false,
+      membershipPlan: {
+        id: 'plan-1',
+        name: 'Unlimited',
+        classTypes: ['ct-1'],
+        billingCycle: 'monthly',
+      },
     });
     getClassesByGym.mockResolvedValue([buildClass()]);
 
@@ -182,17 +196,89 @@ describe('ClassScheduleService — plan expiry', () => {
 
   it('refuses the schedule for a lapsed plan whose row still reads active', async () => {
     // The hourly scheduler has not ticked yet: status is stale, expiresAt is not.
+    // autoRoll is off, so there is nothing to derive — expired is expired.
     getActivePlanByGymMembership.mockResolvedValue({
       id: 'amp-1',
       status: 'active',
       expiresAt: new Date(NOW.getTime() - 60 * 1000),
-      membershipPlan: { id: 'plan-1', name: 'Unlimited', classTypes: ['ct-1'] },
+      autoRoll: false,
+      membershipPlan: {
+        id: 'plan-1',
+        name: 'Unlimited',
+        classTypes: ['ct-1'],
+        billingCycle: 'monthly',
+      },
     });
     getClassesByGym.mockResolvedValue([buildClass()]);
 
     await expect(
       service.getClassScheduleForAthlete('gym-1', 'user-1'),
     ).rejects.toThrow(ForbiddenException);
+  });
+
+  /**
+   * The between-ticks hole. MembershipRenewalScheduler only rolls hourly, so an
+   * auto-roll member sits on a stale past expiresAt for up to an hour once per
+   * billing cycle. Judging the request against the stored value 403s a
+   * fully-paid, auto-renewing member off the ENTIRE schedule for that window —
+   * and the athlete app renders any non-2xx as an error screen, not as the
+   * graceful cutoff note. The expiry is derived here instead.
+   */
+  describe('auto-roll plan the hourly scheduler has not reached yet', () => {
+    const lapsedAutoRollPlan = (expiresAt: Date) => ({
+      id: 'amp-1',
+      status: 'active',
+      expiresAt,
+      autoRoll: true,
+      membershipPlan: {
+        id: 'plan-1',
+        name: 'Unlimited',
+        classTypes: ['ct-1'],
+        billingCycle: 'monthly',
+      },
+    });
+
+    it('serves the schedule and reports the ROLLED cutoff, not the stale one', async () => {
+      getActivePlanByGymMembership.mockResolvedValue(
+        // 2026-08-11 09:59 EDT — one minute ago.
+        lapsedAutoRollPlan(new Date(NOW.getTime() - 60 * 1000)),
+      );
+      getClassesByGym.mockResolvedValue([
+        buildClass({ id: 'inside-next-cycle', scheduledDate: nyDate(2026, 8, 12) }),
+        buildClass({ id: 'past-next-cycle', scheduledDate: nyDate(2026, 9, 20) }),
+      ]);
+
+      const result = await service.getClassScheduleForAthlete('gym-1', 'user-1');
+
+      expect(result.planExpiresAt).toBe('2026-09-11');
+      expect(result.classes.map((cls) => cls.id)).toEqual(['inside-next-cycle']);
+    });
+
+    it('derives the first FUTURE cycle for a plan overdue by several cycles', async () => {
+      getActivePlanByGymMembership.mockResolvedValue(
+        // Three cycles stale: 2026-05-11 09:59 EDT.
+        lapsedAutoRollPlan(
+          new Date(NOW.getTime() - 60 * 1000 - 92 * 24 * 60 * 60 * 1000),
+        ),
+      );
+      getClassesByGym.mockResolvedValue([buildClass()]);
+
+      const result = await service.getClassScheduleForAthlete('gym-1', 'user-1');
+
+      // 2026-06-11 would be one cycle past the stale date and still in the past.
+      expect(result.planExpiresAt).toBe('2026-09-11');
+    });
+
+    it('still refuses a plan too far overdue to catch up', async () => {
+      getActivePlanByGymMembership.mockResolvedValue(
+        lapsedAutoRollPlan(new Date('2000-01-01T00:00:00.000Z')),
+      );
+      getClassesByGym.mockResolvedValue([buildClass()]);
+
+      await expect(
+        service.getClassScheduleForAthlete('gym-1', 'user-1'),
+      ).rejects.toThrow('Athlete membership plan has expired');
+    });
   });
 
   it('still hides a disallowed class type that falls inside coverage', async () => {

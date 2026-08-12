@@ -5,6 +5,7 @@ import { GymMembershipRepository } from '../../repositories/gym-membership.repos
 import { AthleteMembershipPlanRepository } from '../../repositories/athlete-membership-plan.repository';
 import { GymStaffService } from '../../domain/gym-staff/gym-staff.service';
 import { GymService } from '../../domain/gym/gym.service';
+import { effectiveExpiresAt } from '../../domain/athlete-membership-plan/billing-cycle';
 import { ClassScheduleItemDto } from './dto/class-schedule-item.dto';
 import { GetClassScheduleResponseDto } from './dto/get-class-schedule-response.dto';
 import { CoachClassItemDto } from './dto/coach-class-item.dto';
@@ -78,10 +79,25 @@ export class ClassScheduleService {
     // The row can still read 'active' between MembershipRenewalScheduler ticks,
     // so compare expiresAt to now rather than trusting status.
     // A null expiresAt means unlimited: never expired, never a cutoff.
-    const planExpiresAt =
-      activePlan.expiresAt != null ? new Date(activePlan.expiresAt) : null;
+    //
+    // The staleness cuts both ways, so the expiry is DERIVED rather than read:
+    // an auto-roll plan whose stored expiry has passed but which the hourly
+    // scheduler has not reached yet is still covered through its next cycle.
+    // Without this, a fully-paid auto-renewing member is 403'd off the entire
+    // schedule for up to an hour once per billing cycle. Derivation only —
+    // this read path never writes the rolled date back.
+    const now = new Date();
+    const planExpiresAt = effectiveExpiresAt(
+      {
+        expiresAt:
+          activePlan.expiresAt != null ? new Date(activePlan.expiresAt) : null,
+        autoRoll: activePlan.autoRoll,
+        billingCycle: activePlan.membershipPlan.billingCycle,
+      },
+      now,
+    );
 
-    if (planExpiresAt && planExpiresAt.getTime() <= Date.now()) {
+    if (planExpiresAt && planExpiresAt.getTime() <= now.getTime()) {
       throw new ForbiddenException('Athlete membership plan has expired');
     }
 

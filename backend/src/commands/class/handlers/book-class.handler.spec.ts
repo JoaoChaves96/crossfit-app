@@ -49,8 +49,13 @@ describe('BookClassHandler', () => {
     id: 'plan-123',
     gymMembershipId: mockGymMembershipId,
     status: 'active',
+    // autoRoll true is the production default. Cases that need a genuinely
+    // expired plan override it to false — with auto-roll on, a lapsed expiry is
+    // derived forward rather than refused (see the auto-roll describe below).
+    autoRoll: true,
     membershipPlan: {
       classTypes: [mockClassTypeId],
+      billingCycle: 'monthly',
     },
   };
 
@@ -331,6 +336,7 @@ describe('BookClassHandler', () => {
         jest.spyOn(athleteMembershipPlanRepository, 'getActivePlanByGymMembership').mockResolvedValue({
           ...mockActiveMembershipPlan,
           expiresAt: nyDate(2026, 8, 1, 10),
+          autoRoll: false,
         } as any);
 
         await expect(handler.execute(command)).rejects.toThrow(
@@ -342,18 +348,98 @@ describe('BookClassHandler', () => {
       it('403s when the plan has lapsed but the row still reads active', async () => {
         // The state most likely to be hit in production: the hourly scheduler
         // has not ticked yet, so status is stale by a minute and expiresAt is not.
+        // autoRoll is off, so there is nothing to derive — expired is expired.
         const command = new BookClassCommand(mockUserId, mockClassId, mockGymId, 'athlete');
 
         jest.spyOn(athleteMembershipPlanRepository, 'getActivePlanByGymMembership').mockResolvedValue({
           ...mockActiveMembershipPlan,
           status: 'active',
           expiresAt: new Date(NOW.getTime() - 60 * 1000),
+          autoRoll: false,
         } as any);
 
         await expect(handler.execute(command)).rejects.toThrow(
           'Athlete membership plan has expired',
         );
         expect(bookingRepository.save).not.toHaveBeenCalled();
+      });
+
+      /**
+       * The inverse leak. The hourly scheduler is a convenience, not the
+       * boundary: an auto-roll member whose stored expiry has just passed is
+       * fully paid and was never expiring, so booking must not be refused for
+       * the rest of the hour. Derived at request time — the booking path still
+       * writes nothing back to the plan row.
+       */
+      describe('auto-roll plan the hourly scheduler has not reached yet', () => {
+        const lapsedAutoRollPlan = (expiresAt: Date) => ({
+          ...mockActiveMembershipPlan,
+          status: 'active',
+          expiresAt,
+          autoRoll: true,
+        });
+
+        it('books a class inside the derived next cycle', async () => {
+          const command = new BookClassCommand(mockUserId, mockClassId, mockGymId, 'athlete');
+
+          jest.spyOn(athleteMembershipPlanRepository, 'getActivePlanByGymMembership').mockResolvedValue(
+            lapsedAutoRollPlan(new Date(NOW.getTime() - 60 * 1000)) as any,
+          );
+          jest.spyOn(classRepository, 'getClassById').mockResolvedValue({
+            ...mockPublishedClass,
+            scheduledDate: nyDate(2026, 9, 5),
+          } as any);
+
+          const result = await handler.execute(command);
+
+          expect(result.status).toBe('booked');
+        });
+
+        it('still refuses a class beyond the derived next cycle', async () => {
+          const command = new BookClassCommand(mockUserId, mockClassId, mockGymId, 'athlete');
+
+          jest.spyOn(athleteMembershipPlanRepository, 'getActivePlanByGymMembership').mockResolvedValue(
+            lapsedAutoRollPlan(new Date(NOW.getTime() - 60 * 1000)) as any,
+          );
+          jest.spyOn(classRepository, 'getClassById').mockResolvedValue({
+            ...mockPublishedClass,
+            scheduledDate: nyDate(2026, 9, 20),
+          } as any);
+
+          await expect(handler.execute(command)).rejects.toThrow(
+            'Class is scheduled after the athlete membership plan expires',
+          );
+          expect(bookingRepository.save).not.toHaveBeenCalled();
+        });
+
+        it('derives the first FUTURE cycle for a plan overdue by several cycles', async () => {
+          const command = new BookClassCommand(mockUserId, mockClassId, mockGymId, 'athlete');
+
+          // Three cycles stale: 2026-05-11 09:59 EDT. One cycle past that is
+          // 2026-06-11, still in the past, so a 2026-08-12 class would 403.
+          jest.spyOn(athleteMembershipPlanRepository, 'getActivePlanByGymMembership').mockResolvedValue(
+            lapsedAutoRollPlan(
+              new Date(NOW.getTime() - 60 * 1000 - 92 * 24 * 60 * 60 * 1000),
+            ) as any,
+          );
+
+          const result = await handler.execute(command);
+
+          expect(result.status).toBe('booked');
+        });
+
+        it('refuses a plan too far overdue to catch up', async () => {
+          const command = new BookClassCommand(mockUserId, mockClassId, mockGymId, 'athlete');
+
+          jest.spyOn(athleteMembershipPlanRepository, 'getActivePlanByGymMembership').mockResolvedValue(
+            lapsedAutoRollPlan(new Date('2000-01-01T00:00:00.000Z')) as any,
+          );
+
+          await expect(handler.execute(command)).rejects.toThrow(
+            'Athlete membership plan has expired',
+          );
+          expect(bookingRepository.save).not.toHaveBeenCalled();
+        });
       });
 
       it('403s with the cutoff message when the class is after the plan expiry', async () => {
