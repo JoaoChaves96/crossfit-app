@@ -58,9 +58,23 @@ export function membershipChipProps(status: MembershipStatus) {
   return MEMBERSHIP_CHIP[status] ?? MEMBERSHIP_CHIP.expired;
 }
 
+// Deliberately does NOT delegate to formatJoinedDate. expiresAt marks the
+// last day a plan covers, and reading it with local-time getters would shift
+// that day depending on the viewer's timezone (and disagree with the exact
+// date the owner set — see ExtendMembershipRequestDto, whose own Swagger
+// example is midnight UTC). Reading it in UTC is deterministic for every
+// viewer and always echoes back the date that was set. formatJoinedDate
+// covers a different field (joinedAt) with different semantics and is left
+// as-is on purpose — do not merge these into a shared helper.
 function formatExpiry(isoDate: string | null): string {
   if (!isoDate) return 'No expiry';
-  return formatJoinedDate(isoDate);
+  const date = new Date(isoDate);
+  return date.toLocaleDateString('en-US', {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+    timeZone: 'UTC',
+  });
 }
 
 // ─── Table Header Row ─────────────────────────────────────────────────────────

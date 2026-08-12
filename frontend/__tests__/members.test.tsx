@@ -19,6 +19,34 @@ jest.mock('@/hooks/useGym', () => ({ useGym: () => ({ currentGymId: 'gym-abc' })
 
 import MembersScreen from '@/app/members';
 
+// expiresAt marks the last day a plan covers, and per the product ruling the
+// screen renders it in UTC so every viewer sees the same day the owner set
+// (see formatExpiry's comment in members.tsx). Deriving a midnight-UTC
+// instant from Date.now() — rather than delegating to formatJoinedDate's
+// local-time formatting the way a naive fixture would — is what actually
+// exercises that: a local-time read of a midnight-UTC timestamp renders the
+// previous day for any viewer west of Greenwich, so this fixture would have
+// caught that regression instead of dodging it.
+function daysFromNowAtUtcMidnight(days: number): Date {
+  const date = new Date();
+  date.setUTCHours(0, 0, 0, 0);
+  date.setUTCDate(date.getUTCDate() + days);
+  return date;
+}
+
+function formatUtcLabel(date: Date): string {
+  return date.toLocaleDateString('en-US', {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+    timeZone: 'UTC',
+  });
+}
+
+const EXPIRY_DATE = daysFromNowAtUtcMidnight(45);
+const EXPIRY_ISO = EXPIRY_DATE.toISOString();
+const EXPIRY_LABEL = formatUtcLabel(EXPIRY_DATE);
+
 function buildMember(overrides = {}) {
   return {
     id: 'gm-1',
@@ -29,10 +57,7 @@ function buildMember(overrides = {}) {
     joinedAt: '2026-01-15T10:00:00.000Z',
     planId: 'plan-1',
     planName: 'Unlimited',
-    // Midday, not UTC midnight: the screen formats in local time, so a midnight
-    // timestamp renders as the previous day for anyone west of Greenwich and the
-    // assertions below would fail on their machine but pass in CI.
-    expiresAt: '2026-09-01T12:00:00.000Z',
+    expiresAt: EXPIRY_ISO,
     membershipStatus: 'active',
     autoRoll: true,
     autoRollCount: 2,
@@ -53,7 +78,9 @@ describe('MembersScreen', () => {
 
     expect(await screen.findByText('Jane Doe')).toBeTruthy();
     expect(screen.getByText('Unlimited')).toBeTruthy();
-    expect(screen.getByText('Sep 1, 2026')).toBeTruthy();
+    // EXPIRY_DATE is midnight UTC: rendering it in local time (the bug this
+    // ruling fixes) would show the previous day for anyone west of Greenwich.
+    expect(screen.getByText(EXPIRY_LABEL)).toBeTruthy();
   });
 
   it('renders each derived membership status with its own chip label', async () => {
@@ -177,7 +204,7 @@ describe('MembersScreen', () => {
     render(<MembersScreen />);
 
     expect(await screen.findByText('Jane Doe')).toBeTruthy();
-    expect(screen.getByText('Unlimited · Expires Sep 1, 2026')).toBeTruthy();
+    expect(screen.getByText(`Unlimited · Expires ${EXPIRY_LABEL}`)).toBeTruthy();
   });
 
   it('filters the mobile card list by search and updates the count badge', async () => {
