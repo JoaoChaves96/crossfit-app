@@ -176,8 +176,11 @@ The model enforces:
 
 **Rules:**
 - Only one active plan per GymMembership (enforced by unique constraint on gym_membership_id, status = active)
-- Expiration is timestamp-based; athlete loses class visibility when status transitions to `expired`
-- Athlete can purchase or upgrade to a different plan, creating a new active record and expiring the old one
+- Coverage is decided by comparing `expires_at` to the class date at request time, never by reading
+  `status` — a row left stale between scheduler ticks must not grant access (see DECISIONS.md,
+  "Membership Plan Expiry")
+- An owner assigns or changes a member's plan, creating a new active record and expiring the old one
+  in the same transaction; athlete-side purchase is out of scope for the MVP
 
 ---
 
@@ -582,7 +585,7 @@ All entities except `User`, `Gym`, and `GymStaff` are **scoped to a gym**. This 
 | **GymStaff** | Coaches List, Invite Coach | Staff assignment |
 | **ClassType** | Gym Settings (Create/Edit), Membership Plans | Class configuration |
 | **MembershipPlan** | Membership Plans (List, Create/Edit) | Access control & pricing |
-| **AthleteMembershipPlan** | Active Membership Status, Membership Plans (Purchase) | Athlete subscription |
+| **AthleteMembershipPlan** | Active Membership Status, Member Details (owner assigns) | Athlete subscription |
 | **Space** | Gym Settings (Create/Edit) | Physical location |
 | **Class** | Schedule Dashboard, Create/Edit Class, Class Management, Class Details, My Assigned Classes, Class Programming & Details | Core scheduling |
 | **Programming** | Class Details (athlete), Class Programming & Details (coach), Add Programming | Workout content |
