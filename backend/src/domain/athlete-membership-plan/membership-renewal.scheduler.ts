@@ -2,13 +2,10 @@ import { Injectable, Logger } from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { AthleteMembershipPlanRepository } from '../../repositories/athlete-membership-plan.repository';
 import { AthleteMembershipPlanEntity } from './entities/athlete-membership-plan.entity';
-
-/**
- * Safety valve for the catch-up loop. A plan more than this many cycles
- * overdue (240 monthly cycles = 20 years) is corrupt/abandoned data, not a
- * member owed two decades of renewals — see advanceToFutureCycle.
- */
-const MAX_CATCH_UP_CYCLES = 240;
+import {
+  MAX_CATCH_UP_CYCLES,
+  advanceToFutureCycle,
+} from './billing-cycle';
 
 /**
  * MembershipRenewalScheduler: sweeps athlete membership plans whose expiry has
@@ -27,13 +24,15 @@ const MAX_CATCH_UP_CYCLES = 240;
  *
  * Two independent time bases coexist here by design: the expiresAt-vs-now
  * comparison above is server-local (per the paragraph above), while the
- * cycle arithmetic in addCycle is computed on the UTC calendar so a billing
- * cycle advances identically on any host regardless of DST. Both are
- * deliberate; see addCycle for why.
+ * cycle arithmetic in billing-cycle.ts is computed on the UTC calendar so a
+ * billing cycle advances identically on any host regardless of DST. Both are
+ * deliberate; see addCycle there for why.
  *
- * This scheduler is a convenience, not the enforcement boundary: the read-time
- * guards in class-schedule.service.ts and book-class.handler.ts mean a stale
- * row can never leak a bookable class between ticks.
+ * This scheduler is a convenience, not the enforcement boundary in either
+ * direction. The read-time guards in class-schedule.service.ts and
+ * book-class.handler.ts mean a stale row can never leak a bookable class
+ * between ticks; and because those guards derive an effective expiry via
+ * effectiveExpiresAt, a not-yet-rolled auto-roll row cannot deny one either.
  */
 @Injectable()
 export class MembershipRenewalScheduler {
@@ -56,7 +55,7 @@ export class MembershipRenewalScheduler {
     for (const row of due) {
       try {
         if (row.autoRoll) {
-          const outcome = this.advanceToFutureCycle(row, now);
+          const outcome = this.rollRow(row, now);
           if (outcome === 'capped') {
             row.status = 'expired';
             expired += 1;
@@ -85,90 +84,38 @@ export class MembershipRenewalScheduler {
   }
 
   /**
-   * Push expiresAt forward whole billing cycles until it is in the future,
-   * counting each consumed cycle. Advancing from the old expiry (rather than
-   * from now) keeps renewals from drifting cycle over cycle — though the day
-   * of month can still ratchet down permanently when a cycle crosses a short
-   * month (see addCycle).
+   * Roll the row forward onto its first future cycle, or report that it is too
+   * far overdue to be worth rolling.
    *
-   * If the row is still overdue after MAX_CATCH_UP_CYCLES, it is corrupt or
-   * abandoned data rather than a real renewal backlog: returns 'capped' and
-   * leaves expiresAt/autoRollCount untouched so the caller can expire the
-   * row instead of saving a still-overdue "active" plan that would just come
-   * right back — and grow autoRollCount — on every subsequent tick.
+   * The arithmetic lives in billing-cycle.ts, shared with the request-time
+   * guards and the plan-assignment handlers. This wrapper owns the entity
+   * mutation and the operator-facing warning: on 'capped' it leaves
+   * expiresAt/autoRollCount untouched so the caller can expire the row instead
+   * of saving a still-overdue "active" plan that would just come right back —
+   * and grow autoRollCount — on every subsequent tick.
    */
-  private advanceToFutureCycle(
+  private rollRow(
     row: AthleteMembershipPlanEntity,
     now: Date,
   ): 'rolled' | 'capped' {
     if (row.expiresAt === null) return 'rolled'; // finder excludes nulls; guard only
 
+    // Unreachable in practice: findDueForRenewal loads the membershipPlan
+    // relation and billingCycle is a non-null two-value union. Kept narrow so
+    // the fallback cannot be reached from any other caller.
     const cycle = row.membershipPlan?.billingCycle ?? 'monthly';
-    let next = row.expiresAt;
-    let cycles = 0;
 
-    while (next.getTime() <= now.getTime() && cycles < MAX_CATCH_UP_CYCLES) {
-      next = this.addCycle(next, cycle);
-      cycles += 1;
-    }
+    const advance = advanceToFutureCycle(row.expiresAt, now, cycle);
 
-    if (next.getTime() <= now.getTime()) {
+    if (advance.outcome === 'capped') {
       this.logger.warn(
         `[MembershipRenewal] plan ${row.id} is still overdue after the ${MAX_CATCH_UP_CYCLES}-cycle catch-up cap — expiring instead of rolling`,
       );
       return 'capped';
     }
 
-    row.expiresAt = next;
-    row.autoRollCount += cycles;
+    row.expiresAt = advance.next;
+    row.autoRollCount += advance.cycles;
     return 'rolled';
-  }
-
-  /**
-   * Advances by one whole calendar month/year on the UTC calendar, clamped
-   * to the last valid day of the target month (Jan 31 -> Feb 28, or Feb 29
-   * in a leap year). Without clamping, Date's setUTCMonth/setUTCFullYear
-   * silently overflow on short months — Jan 31 plus one month lands on
-   * Mar 2/3, skipping February entirely — which both shifts the renewal day
-   * and quietly drops a cycle. Clamping guarantees every roll lands on a
-   * real date and no month is ever skipped; the day ratcheting down
-   * permanently for a 29th-31st expiry is accepted (no anchor-day column
-   * exists to restore the original billing day).
-   *
-   * Using the UTC calendar rather than local-time components also makes this
-   * arithmetic deterministic regardless of the host's timezone/DST rules —
-   * see the class doc comment for how that coexists with the server-local
-   * expiresAt comparison elsewhere in this file.
-   */
-  private addCycle(from: Date, billingCycle: 'monthly' | 'annual'): Date {
-    let targetYear = from.getUTCFullYear();
-    let targetMonth = from.getUTCMonth();
-
-    if (billingCycle === 'annual') {
-      targetYear += 1;
-    } else {
-      targetMonth += 1;
-      if (targetMonth > 11) {
-        targetMonth = 0;
-        targetYear += 1;
-      }
-    }
-
-    const lastDayOfTargetMonth = new Date(
-      Date.UTC(targetYear, targetMonth + 1, 0),
-    ).getUTCDate();
-    const day = Math.min(from.getUTCDate(), lastDayOfTargetMonth);
-
-    return new Date(
-      Date.UTC(
-        targetYear,
-        targetMonth,
-        day,
-        from.getUTCHours(),
-        from.getUTCMinutes(),
-        from.getUTCSeconds(),
-        from.getUTCMilliseconds(),
-      ),
-    );
   }
 }

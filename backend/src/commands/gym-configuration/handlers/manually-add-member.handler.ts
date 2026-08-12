@@ -14,6 +14,7 @@ import { Repository, DataSource } from 'typeorm';
 import { GymMembershipEntity } from '../../../domain/gym-membership/entities/gym-membership.entity';
 import { AthleteMembershipPlanEntity } from '../../../domain/athlete-membership-plan/entities/athlete-membership-plan.entity';
 import { MembershipPlanEntity } from '../../../domain/membership-plan/entities/membership-plan.entity';
+import { addCycle } from '../../../domain/athlete-membership-plan/billing-cycle';
 import { v4 as uuid } from 'uuid';
 
 /**
@@ -125,9 +126,12 @@ export class ManuallyAddMemberHandler implements ICommandHandler<ManuallyAddMemb
         athletePlan.status = 'active';
         athletePlan.startedAt = new Date();
 
-        // Calculate expiresAt based on billing cycle
-        const expiresAt = this.calculateExpirationDate(plan.billingCycle);
-        athletePlan.expiresAt = expiresAt;
+        // One billing cycle out, via the shared clamped UTC arithmetic (a local
+        // unclamped copy here used to skip February for a month-end signup).
+        athletePlan.expiresAt = addCycle(
+          athletePlan.startedAt,
+          plan.billingCycle,
+        );
 
         // Persist within transaction
         const savedAthleteP = await manager.save(
@@ -147,15 +151,6 @@ export class ManuallyAddMemberHandler implements ICommandHandler<ManuallyAddMemb
     );
   }
 
-  private calculateExpirationDate(billingCycle: 'monthly' | 'annual'): Date {
-    const now = new Date();
-    if (billingCycle === 'monthly') {
-      now.setMonth(now.getMonth() + 1);
-    } else if (billingCycle === 'annual') {
-      now.setFullYear(now.getFullYear() + 1);
-    }
-    return now;
-  }
 
   private mapToResponseDto(
     gymMembership: GymMembershipEntity,

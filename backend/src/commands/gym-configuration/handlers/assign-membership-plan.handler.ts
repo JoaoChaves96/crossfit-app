@@ -8,6 +8,7 @@ import { GymStaffService } from '../../../domain/gym-staff/gym-staff.service';
 import { GymMembershipEntity } from '../../../domain/gym-membership/entities/gym-membership.entity';
 import { MembershipPlanEntity } from '../../../domain/membership-plan/entities/membership-plan.entity';
 import { AthleteMembershipPlanEntity } from '../../../domain/athlete-membership-plan/entities/athlete-membership-plan.entity';
+import { addCycle } from '../../../domain/athlete-membership-plan/billing-cycle';
 import { AthleteMembershipResponseDto } from '../dto/athlete-membership-response.dto';
 
 /**
@@ -17,6 +18,9 @@ import { AthleteMembershipResponseDto } from '../dto/athlete-membership-response
  *
  * Archived plans are rejected: existing subscribers keep theirs, but an
  * archived plan cannot be newly assigned.
+ *
+ * The first expiry comes from the shared clamped `addCycle` — a local
+ * unclamped copy here used to advance Jan 31 to Mar 3, skipping February.
  */
 @CommandHandler(AssignMembershipPlanCommand)
 export class AssignMembershipPlanHandler
@@ -82,10 +86,7 @@ export class AssignMembershipPlanHandler
       athletePlan.membershipPlanId = plan.id;
       athletePlan.status = 'active';
       athletePlan.startedAt = startedAt;
-      athletePlan.expiresAt = this.calculateExpirationDate(
-        startedAt,
-        plan.billingCycle,
-      );
+      athletePlan.expiresAt = addCycle(startedAt, plan.billingCycle);
       athletePlan.autoRoll = true;
       athletePlan.autoRollCount = 0;
 
@@ -103,20 +104,5 @@ export class AssignMembershipPlanHandler
       autoRoll: saved.autoRoll,
       autoRollCount: saved.autoRollCount,
     };
-  }
-
-  private calculateExpirationDate(
-    from: Date,
-    billingCycle: 'monthly' | 'annual',
-  ): Date {
-    const expiresAt = new Date(from);
-
-    if (billingCycle === 'annual') {
-      expiresAt.setUTCFullYear(expiresAt.getUTCFullYear() + 1);
-    } else {
-      expiresAt.setUTCMonth(expiresAt.getUTCMonth() + 1);
-    }
-
-    return expiresAt;
   }
 }

@@ -125,6 +125,54 @@ describe('AssignMembershipPlanHandler', () => {
     expect(result.expiresAt).toEqual(new Date('2027-08-11T10:00:00.000Z'));
   });
 
+  /**
+   * RULING B: adding a cycle to a month-end date clamps to the last day of the
+   * shorter month; it never overflows into the month after. An unclamped
+   * setUTCMonth(+1) here advanced 2027-01-31 to 2027-03-03 — February skipped
+   * outright and the billing day permanently moved to the 3rd. Exact dates, not
+   * `> someDate`, precisely because a loose bound cannot see a skipped month.
+   */
+  describe('month-end clamping (RULING B)', () => {
+    it('clamps a Jan 31 assignment to Feb 28, not into March', async () => {
+      jest.setSystemTime(new Date('2027-01-31T10:00:00.000Z'));
+
+      const result = await handler.execute(command);
+
+      expect(result.expiresAt).toEqual(new Date('2027-02-28T10:00:00.000Z'));
+    });
+
+    it('clamps a Jan 31 assignment to Feb 29 in a leap year', async () => {
+      jest.setSystemTime(new Date('2028-01-31T10:00:00.000Z'));
+
+      const result = await handler.execute(command);
+
+      expect(result.expiresAt).toEqual(new Date('2028-02-29T10:00:00.000Z'));
+    });
+
+    it('clamps an Aug 31 assignment to Sep 30, not into October', async () => {
+      jest.setSystemTime(new Date('2027-08-31T10:00:00.000Z'));
+
+      const result = await handler.execute(command);
+
+      expect(result.expiresAt).toEqual(new Date('2027-09-30T10:00:00.000Z'));
+    });
+
+    it('clamps an annual Feb 29 assignment to Feb 28 of the common year', async () => {
+      planFindOne.mockResolvedValue({
+        id: 'plan-1',
+        gymId: 'gym-1',
+        name: 'Annual',
+        billingCycle: 'annual',
+        status: 'active',
+      } as MembershipPlanEntity);
+      jest.setSystemTime(new Date('2028-02-29T10:00:00.000Z'));
+
+      const result = await handler.execute(command);
+
+      expect(result.expiresAt).toEqual(new Date('2029-02-28T10:00:00.000Z'));
+    });
+  });
+
   it('403s when the caller is not an owner of the gym', async () => {
     isGymOwner.mockResolvedValue(false);
 
