@@ -1,17 +1,21 @@
 import { expect, Page } from '@playwright/test';
 
-const TEST_CREDENTIALS: Record<'owner' | 'coach' | 'athlete', { email: string; password: string }> = {
-  owner: { email: 'owner@example.com', password: 'password123' },
-  coach: { email: 'coach@example.com', password: 'password123' },
-  athlete: { email: 'athlete@example.com', password: 'password123' },
-};
+/** Anyone `seedGym()` created: owner, coach or athlete. */
+export interface Credentials {
+  email: string;
+  password: string;
+}
 
 /**
- * Logs in as the given role by navigating to /login, filling credentials,
+ * Logs in as a seeded user by navigating to /login, filling credentials,
  * submitting, and waiting for the post-login redirect to settle.
+ *
+ * Takes the user rather than a role name on purpose. Fixed global accounts
+ * (`owner@example.com`) forced one shared gym, which is what made the previous
+ * suite order-dependent; every actor now belongs to exactly one journey's gym.
  */
-export async function loginAs(page: Page, role: 'owner' | 'coach' | 'athlete'): Promise<void> {
-  const { email, password } = TEST_CREDENTIALS[role];
+export async function loginAs(page: Page, user: Credentials): Promise<void> {
+  const { email, password } = user;
 
   await page.goto('/login');
 
@@ -33,12 +37,18 @@ export async function loginAs(page: Page, role: 'owner' | 'coach' | 'athlete'): 
 }
 
 /**
- * Resolves a bottom-tab-bar button by its testID, pinned to the VISIBLE copy.
+ * Resolves a navigation tab by its testID, pinned to the VISIBLE copy.
  *
- * expo-router's <Tabs> renders the tab bar twice on web (an active and an
- * inactive layer), so `getByTestId('tab-*')` matches two elements and trips
- * Playwright strict mode. Only one copy is actually visible; filtering by
- * visibility yields the single interactable tab.
+ * Two reasons the visibility filter is load-bearing, not defensive:
+ *
+ *  - expo-router's <Tabs> renders the tab bar twice on web (an active and an
+ *    inactive layer), so `getByTestId('tab-*')` matches two elements and trips
+ *    Playwright strict mode.
+ *  - The athlete has two navigation bars sharing one testID namespace: the
+ *    bottom tab bar, which `(tabs)/_layout.tsx` sets to `display: none` on
+ *    desktop, and DesktopTopNav, which is absent on mobile. At the 1280px
+ *    viewport this suite runs at, only the top nav is real — clicking the hidden
+ *    bottom tab hangs until the test times out rather than failing fast.
  */
 export function tab(page: Page, name: string) {
   return page.getByTestId(name).filter({ visible: true });
