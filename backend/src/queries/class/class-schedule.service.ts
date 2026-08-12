@@ -74,6 +74,18 @@ export class ClassScheduleService {
       );
     }
 
+    // Step 2b: Refuse the schedule outright once the plan has lapsed.
+    // The row can still read 'active' between MembershipRenewalScheduler ticks,
+    // so compare expiresAt to now rather than trusting status.
+    // A null expiresAt means unlimited: never expired, never a cutoff.
+    const planExpiresAt = activePlan.expiresAt
+      ? new Date(activePlan.expiresAt)
+      : null;
+
+    if (planExpiresAt && planExpiresAt.getTime() <= Date.now()) {
+      throw new ForbiddenException('Athlete membership plan has expired');
+    }
+
     // Step 3: Extract the list of class type IDs the athlete can access
     // MembershipPlan.classTypes is a simple-array column: string[]
     const allowedClassTypeIds = activePlan.membershipPlan.classTypes || [];
@@ -81,12 +93,14 @@ export class ClassScheduleService {
     // Step 4: Fetch all non-archived classes in the gym
     const allClasses = await this.classRepository.getClassesByGym(gymId);
 
-    // Step 5: Filter classes to only include non-archived ones with matching class types
-    // Classes in 'archived' state should not be shown
+    // Step 5: Filter to non-archived classes of an allowed type that also fall
+    // within the plan's coverage. A class after the cutoff is HIDDEN, not merely
+    // unbookable.
     const eligibleClasses = allClasses.filter(
       (cls) =>
         cls.state !== 'archived' &&
-        allowedClassTypeIds.includes(cls.classTypeId),
+        allowedClassTypeIds.includes(cls.classTypeId) &&
+        this.isWithinPlanCoverage(cls.scheduledDate, planExpiresAt),
     );
 
     // Step 6: Aggregate booking data and map to DTOs
@@ -126,6 +140,7 @@ export class ClassScheduleService {
 
     return {
       gymName: gym?.name ?? '',
+      planExpiresAt: planExpiresAt ? this.formatDate(planExpiresAt) : null,
       classes: classItems,
     };
   }
@@ -181,6 +196,7 @@ export class ClassScheduleService {
 
     return {
       gymName: gym?.name ?? '',
+      planExpiresAt: null,
       classes: classItems,
     };
   }
@@ -272,6 +288,21 @@ export class ClassScheduleService {
       bookedCount,
       state: cls.state,
     };
+  }
+
+  /**
+   * A class is covered when the plan is unlimited, or when the class falls on or
+   * before the plan's expiry date. Compared date-to-date (not instant-to-instant)
+   * on the server-local calendar — the same calendar formatDate emits — so a
+   * class later in the day on the expiry date still counts as covered.
+   */
+  private isWithinPlanCoverage(
+    scheduledDate: Date | string | number,
+    planExpiresAt: Date | null,
+  ): boolean {
+    if (!planExpiresAt) return true;
+
+    return this.formatDate(scheduledDate) <= this.formatDate(planExpiresAt);
   }
 
   /**

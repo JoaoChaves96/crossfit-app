@@ -15,6 +15,15 @@ export class GetClassScheduleResponseDto {
   gymName: string;
 
   @ApiProperty({
+    type: String,
+    example: '2026-08-20',
+    description:
+      'Last date the athlete’s membership plan covers (YYYY-MM-DD, server-local calendar). Null when the plan is unlimited or the caller is not an athlete. Classes after this date are omitted from the list.',
+    nullable: true,
+  })
+  planExpiresAt: string | null;
+
+  @ApiProperty({
     type: [ClassScheduleItemDto],
     description: 'List of classes the athlete is eligible to see and book',
   })

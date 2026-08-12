@@ -281,6 +281,132 @@ describe('BookClassHandler', () => {
       });
     });
 
+    /**
+     * Plan coverage is compared on the SERVER-LOCAL calendar (see
+     * BookClassHandler.toDayString), so these fixtures build dates from local
+     * components rather than `...Z` literals — the assertions then hold on any
+     * host timezone.
+     */
+    describe('plan expiry', () => {
+      const NOW = new Date(2026, 7, 11, 10, 0, 0); // 2026-08-11 10:00 local
+
+      beforeEach(() => {
+        jest.useFakeTimers();
+        jest.setSystemTime(NOW);
+
+        jest.spyOn(gymService, 'getGymById').mockResolvedValue(mockActiveGym as any);
+        jest.spyOn(gymMembershipRepository, 'getActiveGymMembershipByUserAndGym').mockResolvedValue(mockActiveGymMembership as any);
+        jest.spyOn(classRepository, 'getClassById').mockResolvedValue({
+          ...mockPublishedClass,
+          scheduledDate: new Date(2026, 7, 12, 9, 0, 0),
+        } as any);
+
+        bookingRepository.findOne.mockResolvedValue(null);
+        bookingRepository.count.mockResolvedValue(0);
+        bookingRepository.save.mockImplementation((booking: BookingEntity) => Promise.resolve(booking));
+      });
+
+      afterEach(() => {
+        jest.useRealTimers();
+      });
+
+      it('403s with the expiry message when the plan has lapsed', async () => {
+        const command = new BookClassCommand(mockUserId, mockClassId, mockGymId, 'athlete');
+
+        jest.spyOn(athleteMembershipPlanRepository, 'getActivePlanByGymMembership').mockResolvedValue({
+          ...mockActiveMembershipPlan,
+          expiresAt: new Date(2026, 7, 1, 10, 0, 0),
+        } as any);
+
+        await expect(handler.execute(command)).rejects.toThrow(
+          'Athlete membership plan has expired',
+        );
+        expect(bookingRepository.save).not.toHaveBeenCalled();
+      });
+
+      it('403s with the cutoff message when the class is after the plan expiry', async () => {
+        const command = new BookClassCommand(mockUserId, mockClassId, mockGymId, 'athlete');
+
+        jest.spyOn(athleteMembershipPlanRepository, 'getActivePlanByGymMembership').mockResolvedValue({
+          ...mockActiveMembershipPlan,
+          expiresAt: new Date(2026, 7, 15, 10, 0, 0),
+        } as any);
+        jest.spyOn(classRepository, 'getClassById').mockResolvedValue({
+          ...mockPublishedClass,
+          scheduledDate: new Date(2026, 7, 20, 9, 0, 0),
+        } as any);
+
+        await expect(handler.execute(command)).rejects.toThrow(
+          'Class is scheduled after the athlete membership plan expires',
+        );
+        expect(bookingRepository.save).not.toHaveBeenCalled();
+      });
+
+      it('books a class falling on the plan expiry date', async () => {
+        const command = new BookClassCommand(mockUserId, mockClassId, mockGymId, 'athlete');
+
+        // Class is later in the day than the expiry instant, but on the same
+        // calendar day: the member keeps their whole final day.
+        jest.spyOn(athleteMembershipPlanRepository, 'getActivePlanByGymMembership').mockResolvedValue({
+          ...mockActiveMembershipPlan,
+          expiresAt: new Date(2026, 7, 15, 10, 0, 0),
+        } as any);
+        jest.spyOn(classRepository, 'getClassById').mockResolvedValue({
+          ...mockPublishedClass,
+          scheduledDate: new Date(2026, 7, 15, 19, 0, 0),
+        } as any);
+
+        const result = await handler.execute(command);
+
+        expect(result.status).toBe('booked');
+      });
+
+      it('books any class when the plan is unlimited', async () => {
+        const command = new BookClassCommand(mockUserId, mockClassId, mockGymId, 'athlete');
+
+        jest.spyOn(athleteMembershipPlanRepository, 'getActivePlanByGymMembership').mockResolvedValue({
+          ...mockActiveMembershipPlan,
+          expiresAt: null,
+        } as any);
+        jest.spyOn(classRepository, 'getClassById').mockResolvedValue({
+          ...mockPublishedClass,
+          scheduledDate: new Date(2027, 0, 1, 9, 0, 0),
+        } as any);
+
+        const result = await handler.execute(command);
+
+        expect(result.status).toBe('booked');
+      });
+
+      it('lets a coach book a class beyond any plan expiry', async () => {
+        const command = new BookClassCommand(mockUserId, mockClassId, mockGymId, 'coach');
+
+        jest.spyOn(classRepository, 'getClassById').mockResolvedValue({
+          ...mockPublishedClass,
+          scheduledDate: new Date(2027, 0, 1, 9, 0, 0),
+        } as any);
+
+        const result = await handler.execute(command);
+
+        expect(result.status).toBe('booked');
+        expect(athleteMembershipPlanRepository.getActivePlanByGymMembership).not.toHaveBeenCalled();
+      });
+
+      it('lets an owner book a class beyond any plan expiry', async () => {
+        const command = new BookClassCommand(mockUserId, mockClassId, mockGymId, 'owner');
+
+        jest.spyOn(classRepository, 'getClassById').mockResolvedValue({
+          ...mockPublishedClass,
+          scheduledDate: new Date(2027, 0, 1, 9, 0, 0),
+        } as any);
+
+        const result = await handler.execute(command);
+
+        expect(result.status).toBe('booked');
+        expect(athleteMembershipPlanRepository.getActivePlanByGymMembership).not.toHaveBeenCalled();
+      });
+    });
+
     describe('happy path: available class', () => {
       it('should create a confirmed booking when class has capacity', async () => {
         const command = new BookClassCommand(mockUserId, mockClassId, mockGymId, 'athlete');

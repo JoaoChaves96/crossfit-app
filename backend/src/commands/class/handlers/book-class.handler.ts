@@ -94,6 +94,30 @@ export class BookClassHandler implements ICommandHandler<BookClassCommand> {
       if (!plan.classTypes.includes(classEntity.classTypeId)) {
         throw forbidden('Athlete membership plan does not include this class type');
       }
+
+      // Precondition 5b: the plan must not have lapsed. The row can still read
+      // 'active' between MembershipRenewalScheduler ticks, so check the date.
+      // A null expiresAt means unlimited: never expired, never a cutoff.
+      const planExpiresAt = activePlan.expiresAt
+        ? new Date(activePlan.expiresAt)
+        : null;
+
+      if (planExpiresAt && planExpiresAt.getTime() <= Date.now()) {
+        throw forbidden('Athlete membership plan has expired');
+      }
+
+      // Precondition 5c: the class must fall within the plan's coverage.
+      // Compared date-to-date so a class on the expiry day still counts.
+      if (planExpiresAt) {
+        const classDay = this.toDayString(classEntity.scheduledDate);
+        const cutoffDay = this.toDayString(planExpiresAt);
+
+        if (classDay > cutoffDay) {
+          throw forbidden(
+            'Class is scheduled after the athlete membership plan expires',
+          );
+        }
+      }
     }
 
     // Precondition 6: Verify user does not already have an active booking for this class
@@ -166,6 +190,22 @@ export class BookClassHandler implements ICommandHandler<BookClassCommand> {
 
     // Map to response DTO
     return this.mapToResponseDto(savedBooking);
+  }
+
+  /**
+   * Reduce a date value to YYYY-MM-DD on the server-local calendar so plan
+   * coverage is compared by day rather than by instant. Local (not UTC) to match
+   * the expiresAt-vs-now comparison in MembershipRenewalScheduler and the dates
+   * the athlete schedule renders.
+   */
+  private toDayString(value: Date | string | number): string {
+    const date = value instanceof Date ? value : new Date(value);
+
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+
+    return `${year}-${month}-${day}`;
   }
 
   private mapToResponseDto(booking: BookingEntity): BookClassResponseDto {
