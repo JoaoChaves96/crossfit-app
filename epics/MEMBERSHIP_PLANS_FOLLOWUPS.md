@@ -78,7 +78,31 @@ review, never executed. Recommended as the first follow-up.
   widened by the dedup — the shared functions require a `billingCycle`, so it still has exactly one
   call site. Throwing would be safer.
 
-## 5. Parked design questions — need a device and the user's eyes
+## 5. Bulk membership operations — not decided, never scoped
+
+Raised 2026-08-12 while testing a 40-member roster on a device. There is **no ruling either
+way**: the only "no bulk edits" line in Tier 1 (`docs/DECISIONS.md:16`) sits under
+`## Class Recurrence` and is about classes, and the epic's `Excluded (Future Work)` list does
+not mention member operations. So this is open, not declined.
+
+The real owner tasks it serves: "price rise — move everyone off Basic onto Basic v2", and
+"turn auto-renew off for these five who stopped paying". Both are one-at-a-time today.
+
+- **Frontend** — selection state on the members list (checkbox column desktop / long-press
+  mobile), a selection action bar, and a confirm step naming the exact row count. The action
+  bar's primary is the view's one accent; per-row controls stay `quiet`.
+- **Backend** — the loop is the easy half. Each of `plan` / `expiry` / `auto-roll` validates and
+  writes a single membership. Bulk needs a **decided failure policy**: all-or-nothing in a
+  transaction, or per-row isolation with a report of which rows failed and why. The
+  recurring-classes epic set a precedent for the second shape ("skip past occurrences and
+  report"), and expiry has a genuine per-row failure mode in the must-be-in-the-future guard.
+- **Scope trap, and the reason this needs a product decision first** — assigning a plan resets
+  the expiry from the billing cycle, so a naive bulk plan change silently rewrites every
+  selected member's paid-up date. Whether bulk plan change preserves expiry is a product call.
+
+Sized as its own small epic rather than an addition to the closed Membership Plans one.
+
+## 6. Parked design questions — need a device and the user's eyes
 
 - **No amber token**: `expiring` and `inactive` both render `StatusChip tone="neutral"`, so they
   are distinguishable by label but not by colour.

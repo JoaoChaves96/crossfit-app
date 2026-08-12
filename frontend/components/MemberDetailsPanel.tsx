@@ -217,14 +217,20 @@ export function MemberDetailsPanel({ member, onClose, onChanged }: MemberDetails
       if (autoRollChanged) {
         await client.patch(`${base}/membership/auto-roll`, { autoRoll });
       }
-      setSavedAt(true);
+      // A save that wrote something is finished with this member: dismiss, and
+      // let the refreshed row in the list behind be the confirmation. Staying
+      // open left the owner holding a panel they had to close by hand, and on
+      // mobile the sheet covers the very row that just changed. The quiet
+      // "Saved" meta text stays for the nothing-to-write press above, which has
+      // no updated row to show.
       onChanged();
+      onClose();
     } catch (err) {
       setError(errorMessage(err));
     } finally {
       setIsSaving(false);
     }
-  }, [token, currentGymId, member, expiryInput, planId, autoRoll, onChanged]);
+  }, [token, currentGymId, member, expiryInput, planId, autoRoll, onChanged, onClose]);
 
   const handleStatus = useCallback(
     async (next: 'active' | 'inactive') => {
@@ -301,7 +307,16 @@ export function MemberDetailsPanel({ member, onClose, onChanged }: MemberDetails
                 disabled={isSaving || !currentPlan}
                 onPress={() =>
                   currentPlan &&
-                  setExpiryInput(nextCycleDate(member.expiresAt, currentPlan.billingCycle))
+                  setExpiryInput((draft) =>
+                    // Advance from the DRAFT, not from member.expiresAt: the
+                    // owner presses this to add cycles, so a second press must
+                    // add a second cycle. Reading the server value here made
+                    // every press after the first a no-op.
+                    nextCycleDate(
+                      DATE_SHAPE.test(draft) ? `${draft}T00:00:00.000Z` : member.expiresAt,
+                      currentPlan.billingCycle,
+                    ),
+                  )
                 }
               />
             </View>

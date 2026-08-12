@@ -208,6 +208,36 @@ describe('MemberDetailsPanel', () => {
     });
   });
 
+  /**
+   * Pressing the button twice must add two cycles. It read member.expiresAt —
+   * the server value, which does not change until the save round-trips — so
+   * every press after the first recomputed the same date and the button
+   * appeared to work only once. Asserting the exact two-cycle date, because
+   * the one-cycle result is precisely the bug.
+   */
+  it('adds a second cycle when +1 cycle is pressed twice', async () => {
+    mockApiClient.patch.mockResolvedValue({ id: 'amp-1' });
+    renderPanel();
+
+    await screen.findByText('Jane Doe');
+    await screen.findByText('Unlimited');
+    fireEvent.press(screen.getByTestId('member-add-cycle-btn'));
+    fireEvent.press(screen.getByTestId('member-add-cycle-btn'));
+    fireEvent.press(screen.getByTestId('member-save-btn'));
+
+    // The draft after the first press is a bare YYYY-MM-DD, so the second
+    // press advances from UTC midnight on that day.
+    const afterFirst = oneMonthAfter(FUTURE_EXPIRY);
+    const afterSecond = oneMonthAfter(new Date(`${afterFirst}T00:00:00.000Z`));
+
+    await waitFor(() => {
+      expect(mockApiClient.patch).toHaveBeenCalledWith(
+        '/api/gyms/gym-abc/members/gm-1/membership/expiry',
+        { expiresAt: afterSecond },
+      );
+    });
+  });
+
   it('rejects a malformed expiry date without calling the API', async () => {
     renderPanel();
 
@@ -299,15 +329,29 @@ describe('MemberDetailsPanel', () => {
     expect(mockApiClient.put).not.toHaveBeenCalled();
   });
 
-  it('surfaces a backend error message', async () => {
+  it('dismisses after a save that wrote something', async () => {
+    mockApiClient.patch.mockResolvedValue({ id: 'amp-1' });
+    const { onClose } = renderPanel();
+
+    await screen.findByText('Jane Doe');
+    fireEvent.changeText(screen.getByTestId('member-expiry-input'), '2030-12-31');
+    fireEvent.press(screen.getByTestId('member-save-btn'));
+
+    await waitFor(() => {
+      expect(onClose).toHaveBeenCalled();
+    });
+  });
+
+  it('stays open when the save fails, so the error is readable', async () => {
     mockApiClient.patch.mockRejectedValue(new Error('Membership expiry must be in the future'));
-    renderPanel();
+    const { onClose } = renderPanel();
 
     await screen.findByText('Jane Doe');
     fireEvent.changeText(screen.getByTestId('member-expiry-input'), '2020-01-01');
     fireEvent.press(screen.getByTestId('member-save-btn'));
 
     expect(await screen.findByText('Membership expiry must be in the future')).toBeTruthy();
+    expect(onClose).not.toHaveBeenCalled();
   });
 
   it('hides the plan and expiry controls for a member with no plan', async () => {
