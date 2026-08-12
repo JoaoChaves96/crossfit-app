@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useState } from 'react';
 import {
   ActivityIndicator,
   ScrollView,
+  TextInput,
   TouchableOpacity,
   View,
 } from 'react-native';
@@ -11,7 +12,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { useGym } from '@/hooks/useGym';
 import { useResponsiveLayout } from '@/hooks/useResponsiveLayout';
 import { SafeScreen } from '@/components/SafeScreen';
-import { Text, Icon, StatusChip } from '@/components/cleanink';
+import { Text, Icon, StatusChip, type ChipTone } from '@/components/cleanink';
 import { Ink, Status, Space } from '@/constants/design';
 import { createApiClient } from '@/utils/api-client';
 import { components } from '@/types/api.gen';
@@ -42,6 +43,26 @@ function formatJoinedDate(isoDate: string): string {
   });
 }
 
+type MembershipStatus = GymMember['membershipStatus'];
+
+const MEMBERSHIP_CHIP: Record<MembershipStatus, { tone: ChipTone; label: string }> = {
+  // No amber token exists in Clean Ink, so 'expiring' shares 'neutral' with
+  // 'inactive'. Status.open green stays reserved for genuinely open status.
+  active: { tone: 'open', label: 'Active' },
+  expiring: { tone: 'neutral', label: 'Expiring' },
+  expired: { tone: 'danger', label: 'Expired' },
+  inactive: { tone: 'neutral', label: 'Suspended' },
+};
+
+export function membershipChipProps(status: MembershipStatus) {
+  return MEMBERSHIP_CHIP[status] ?? MEMBERSHIP_CHIP.expired;
+}
+
+function formatExpiry(isoDate: string | null): string {
+  if (!isoDate) return 'No expiry';
+  return formatJoinedDate(isoDate);
+}
+
 // ─── Table Header Row ─────────────────────────────────────────────────────────
 
 function TableHeaderRow() {
@@ -52,6 +73,12 @@ function TableHeaderRow() {
       </View>
       <View style={styles.colEmail}>
         <Text size="label" weight="semibold" tone="muted" upper>EMAIL</Text>
+      </View>
+      <View style={styles.colPlan}>
+        <Text size="label" weight="semibold" tone="muted" upper>PLAN</Text>
+      </View>
+      <View style={styles.colExpires}>
+        <Text size="label" weight="semibold" tone="muted" upper>EXPIRES</Text>
       </View>
       <View style={styles.colJoined}>
         <Text size="label" weight="semibold" tone="muted" upper>JOINED</Text>
@@ -68,11 +95,16 @@ function TableHeaderRow() {
 interface MemberRowProps {
   member: GymMember;
   isAlternate: boolean;
+  onPress: () => void;
 }
 
-function MemberRow({ member, isAlternate }: MemberRowProps) {
+function MemberRow({ member, isAlternate, onPress }: MemberRowProps) {
   return (
-    <View style={[styles.drow, isAlternate && styles.drowAlt]}>
+    <TouchableOpacity
+      testID={`member-row-${member.id}`}
+      style={[styles.drow, isAlternate && styles.drowAlt]}
+      onPress={onPress}
+      activeOpacity={0.7}>
       <View style={[styles.colName, styles.colNameRow]}>
         <View style={styles.avatar}>
           <Text size="meta" weight="bold" tone="muted">{getInitials(member.name)}</Text>
@@ -86,13 +118,29 @@ function MemberRow({ member, isAlternate }: MemberRowProps) {
           {member.email}
         </Text>
       </View>
+      <View style={styles.colPlan}>
+        <View style={styles.colPlanRow}>
+          <Text size="body" tone="muted" numberOfLines={1}>{member.planName ?? '—'}</Text>
+          {member.autoRollCount > 0 && (
+            <Text
+              size="meta"
+              tone="faint"
+              testID={`member-autoroll-${member.id}`}>
+              {`↻ ${member.autoRollCount}`}
+            </Text>
+          )}
+        </View>
+      </View>
+      <View style={styles.colExpires}>
+        <Text size="body" tone="muted">{member.planName ? formatExpiry(member.expiresAt) : '—'}</Text>
+      </View>
       <View style={styles.colJoined}>
         <Text size="body" tone="muted">{formatJoinedDate(member.joinedAt)}</Text>
       </View>
       <View style={styles.colStatus}>
-        <StatusChip tone="open" label="Active" />
+        <StatusChip {...membershipChipProps(member.membershipStatus)} />
       </View>
-    </View>
+    </TouchableOpacity>
   );
 }
 
@@ -100,11 +148,16 @@ function MemberRow({ member, isAlternate }: MemberRowProps) {
 
 interface MemberCardProps {
   member: GymMember;
+  onPress: () => void;
 }
 
-function MemberCard({ member }: MemberCardProps) {
+function MemberCard({ member, onPress }: MemberCardProps) {
   return (
-    <View style={styles.memberCard}>
+    <TouchableOpacity
+      testID={`member-card-${member.id}`}
+      style={styles.memberCard}
+      onPress={onPress}
+      activeOpacity={0.7}>
       <View style={styles.memberCardTop}>
         <View style={styles.avatar}>
           <Text size="meta" weight="bold" tone="muted">{getInitials(member.name)}</Text>
@@ -113,10 +166,15 @@ function MemberCard({ member }: MemberCardProps) {
           <Text size="body" weight="semibold" tone="strong" numberOfLines={1}>{member.name}</Text>
           <Text size="meta" tone="muted" numberOfLines={1}>{member.email}</Text>
         </View>
-        <StatusChip tone="open" label="Active" />
+        <StatusChip {...membershipChipProps(member.membershipStatus)} />
       </View>
       <Text size="meta" tone="muted" style={styles.memberCardJoined}>Joined {formatJoinedDate(member.joinedAt)}</Text>
-    </View>
+      <Text size="meta" tone="muted" style={styles.memberCardPlan}>
+        {member.planName
+          ? `${member.planName} · ${member.expiresAt ? `Expires ${formatExpiry(member.expiresAt)}` : 'No expiry'}`
+          : 'No plan'}
+      </Text>
+    </TouchableOpacity>
   );
 }
 
@@ -146,6 +204,7 @@ export default function MembersScreen() {
   const [members, setMembers] = useState<GymMember[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [search, setSearch] = useState('');
 
   const fetchMembers = useCallback(async () => {
     if (!token || !currentGymId) return;
@@ -177,6 +236,15 @@ export default function MembersScreen() {
     if (target?.route) router.push(target.route as never);
   }
 
+  const query = search.trim().toLowerCase();
+  const visibleMembers = query
+    ? members.filter(
+        (member) =>
+          member.name.toLowerCase().includes(query) ||
+          member.email.toLowerCase().includes(query),
+      )
+    : members;
+
   return (
     <View style={styles.root}>
       {!isMobile && <OwnerSidebar activeItem="members" onNavigate={handleNavigate} />}
@@ -202,9 +270,23 @@ export default function MembersScreen() {
           <Text size="screen" weight="bold" tone="strong">Members</Text>
           <View style={styles.countBadge}>
             <Text size="meta" weight="medium" tone="muted">
-              {isLoading ? '…' : `${members.length} members`}
+              {isLoading
+                ? '…'
+                : `${visibleMembers.length} ${visibleMembers.length === 1 ? 'member' : 'members'}`}
             </Text>
           </View>
+        </View>
+
+        <View style={styles.searchRow}>
+          <TextInput
+            testID="members-search-input"
+            style={styles.searchInput}
+            placeholder="Search by name or email"
+            placeholderTextColor={Ink.faint}
+            value={search}
+            onChangeText={setSearch}
+            autoCorrect={false}
+          />
         </View>
 
         {/* Content */}
@@ -219,21 +301,21 @@ export default function MembersScreen() {
               <Text size="body" tone="strong">Retry</Text>
             </TouchableOpacity>
           </View>
-        ) : members.length === 0 ? (
+        ) : visibleMembers.length === 0 ? (
           <EmptyState />
         ) : isMobile ? (
           /* Mobile: card-based list */
           <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.memberCardList}>
-            {members.map((member) => (
-              <MemberCard key={member.id} member={member} />
+            {visibleMembers.map((member) => (
+              <MemberCard key={member.id} member={member} onPress={() => {}} />
             ))}
           </ScrollView>
         ) : (
           <View style={styles.tableCard}>
             <TableHeaderRow />
             <ScrollView showsVerticalScrollIndicator={false}>
-              {members.map((member, idx) => (
-                <MemberRow key={member.id} member={member} isAlternate={idx === 0} />
+              {visibleMembers.map((member, idx) => (
+                <MemberRow key={member.id} member={member} isAlternate={idx === 0} onPress={() => {}} />
               ))}
             </ScrollView>
           </View>

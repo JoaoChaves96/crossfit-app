@@ -1,5 +1,5 @@
 import { StyleSheet } from 'react-native';
-import { Ground, Line, Radius, Space, Elevation } from '@/constants/design';
+import { Ground, Ink, Line, Radius, Space, Elevation } from '@/constants/design';
 
 export const styles = StyleSheet.create({
   root: {
@@ -29,6 +29,23 @@ export const styles = StyleSheet.create({
     paddingVertical: Space.xs,
   },
 
+  // Search
+  searchRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Space.md,
+  },
+  searchInput: {
+    flex: 1,
+    borderRadius: Radius.control,
+    borderWidth: 1,
+    borderColor: Line.divider,
+    backgroundColor: Ground.surface,
+    paddingHorizontal: Space.base,
+    paddingVertical: Space.sm,
+    color: Ink.strong,
+  },
+
   // Table card
   tableCard: {
     flex: 1,
@@ -53,6 +70,21 @@ export const styles = StyleSheet.create({
   },
   colEmail: {
     width: 200,
+    height: '100%',
+    justifyContent: 'center',
+  },
+  colPlan: {
+    width: 140,
+    height: '100%',
+    justifyContent: 'center',
+  },
+  colPlanRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Space.xs,
+  },
+  colExpires: {
+    width: 120,
     height: '100%',
     justifyContent: 'center',
   },
@@ -193,5 +225,8 @@ export const styles = StyleSheet.create({
   },
   memberCardJoined: {
     paddingLeft: Space.jumbo,
+  },
+  memberCardPlan: {
+    marginTop: Space.hair,
   },
 });
