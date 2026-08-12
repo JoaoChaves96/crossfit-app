@@ -319,6 +319,12 @@ describe('BookClassHandler', () => {
         jest.useRealTimers();
       });
 
+      it('runs under the pinned timezone the coverage assertions depend on', () => {
+        // Guards the assertions below: if this offset ever reads 0, local and UTC
+        // truncation coincide and the boundary cases stop discriminating.
+        expect(NOW.getTimezoneOffset()).toBe(240);
+      });
+
       it('403s with the expiry message when the plan has lapsed', async () => {
         const command = new BookClassCommand(mockUserId, mockClassId, mockGymId, 'athlete');
 
