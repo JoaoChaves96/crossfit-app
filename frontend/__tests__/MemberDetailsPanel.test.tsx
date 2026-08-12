@@ -78,19 +78,28 @@ const plansResponse = {
 describe('nextCycleDate (UTC vs local-time discrimination)', () => {
   /**
    * A fixture picked to disagree between a UTC-safe implementation and a
-   * local-time one on any host with a non-zero offset in the right
-   * direction — not just to happen to pass under both, which would prove
-   * nothing. 23:30 UTC on the last day of August: a positive-offset host
-   * (this dev machine is UTC+1/WEST) reads that instant as September 1st
-   * locally, so `getMonth`/`setMonth` would advance from September instead
-   * of August, landing one calendar month later than the UTC-correct
-   * answer. Confirmed by temporarily swapping the implementation's UTC
-   * accessors back to their local counterparts and re-running this test: it
-   * fails (produces '2027-10-01' instead of '2027-09-30').
+   * local-time one — not just to happen to pass under both, which would prove
+   * nothing. 23:30 UTC on the last day of June: a positive-offset host (this
+   * dev machine is UTC+1/WEST in July) reads that instant as July 1st locally,
+   * so a `getMonth`-based implementation advances July→August and keeps day 1,
+   * landing on '2027-07-31'; the UTC-correct answer advances June→July and
+   * keeps day 30. Verified by rewriting the implementation with the local
+   * accessors and re-running: it fails exactly that way.
+   *
+   * The earlier fixture here (Aug 31, expecting the unclamped '2027-10-01')
+   * stopped discriminating once clamping arrived: with the day clamped, the UTC
+   * and local paths land on the very same instant. The two only diverge when
+   * the source month is SHORTER than the target month, which is why this
+   * fixture is a 30-day month rolling into a 31-day one.
+   *
+   * Like the backend's TZ pin, this can only discriminate on a host whose
+   * offset is positive at the fixture instant; under UTC the two
+   * implementations coincide by construction. Nothing pins the zone for the
+   * frontend suite, so treat a pass here as evidence only on such a host.
    */
   it('advances from the UTC calendar date, not the local one', () => {
-    const expiresAt = '2027-08-31T23:30:00.000Z';
-    expect(nextCycleDate(expiresAt, 'monthly')).toBe('2027-09-30');
+    const expiresAt = '2027-06-30T23:30:00.000Z';
+    expect(nextCycleDate(expiresAt, 'monthly')).toBe('2027-07-30');
   });
 
   /**

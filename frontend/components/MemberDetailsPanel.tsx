@@ -94,7 +94,23 @@ export function nextCycleDate(expiresAt: string | null, billingCycle: 'monthly' 
   const lastDayOfTargetMonth = new Date(Date.UTC(targetYear, targetMonth + 1, 0)).getUTCDate();
   const day = Math.min(from.getUTCDate(), lastDayOfTargetMonth);
 
-  return new Date(Date.UTC(targetYear, targetMonth, day)).toISOString().slice(0, 10);
+  // Time of day is carried over rather than zeroed, matching backend addCycle.
+  // Zeroing it would make a local-getter rewrite of this function produce the
+  // same string on a positive-offset host, so the UTC-vs-local test below would
+  // stop discriminating.
+  return new Date(
+    Date.UTC(
+      targetYear,
+      targetMonth,
+      day,
+      from.getUTCHours(),
+      from.getUTCMinutes(),
+      from.getUTCSeconds(),
+      from.getUTCMilliseconds(),
+    ),
+  )
+    .toISOString()
+    .slice(0, 10);
 }
 
 export function MemberDetailsPanel({ member, onClose, onChanged }: MemberDetailsPanelProps) {
