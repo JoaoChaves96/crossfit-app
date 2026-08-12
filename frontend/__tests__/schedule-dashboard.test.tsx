@@ -25,6 +25,30 @@ jest.mock('@/hooks/useNotifications', () => ({
   }),
 }));
 
+// The expo-router global mock (jest-setup.ts) omits useFocusEffect, which the
+// dashboard uses to refetch when the owner returns from create/edit-class.
+// Override here to include it, invoking the callback via useEffect so async
+// state updates land after mount — the real hook's timing.
+jest.mock('expo-router', () => ({
+  useRouter: jest.fn(() => ({
+    push: jest.fn(),
+    replace: jest.fn(),
+    back: jest.fn(),
+    navigate: jest.fn(),
+  })),
+  useLocalSearchParams: jest.fn(() => ({})),
+  useSegments: jest.fn(() => []),
+  usePathname: jest.fn(() => '/schedule-dashboard'),
+  useFocusEffect: jest.fn((cb: () => void) => {
+    // eslint-disable-next-line react-hooks/rules-of-hooks
+    require('react').useEffect(cb, []);
+  }),
+  Link: jest.fn(({ children }: { children: unknown }) => children),
+  Redirect: jest.fn(() => null),
+  Stack: { Screen: jest.fn(() => null) },
+  Tabs: { Screen: jest.fn(() => null) },
+}));
+
 import { createApiClient } from '@/utils/api-client';
 
 // The week grid, its day columns, and the desktop class card only exist in the

@@ -6,11 +6,15 @@ import { Accent, Ground, Line, Space } from '@/constants/design';
 import { NotificationBell } from '@/components/NotificationBell';
 import { GymMenu } from '@/components/GymMenu';
 
+// testIDs deliberately match the bottom tab bar's `tabBarButtonTestID`s. The two
+// bars are the same destination in different layouts — one is hidden on desktop,
+// the other on mobile — so a single namespace lets a caller (a test, or anything
+// else) address "the Schedule tab" without knowing which bar is on screen.
 const NAV_ITEMS = [
-  { label: 'Schedule', path: '/(tabs)/schedule' },
-  { label: 'My Bookings', path: '/(tabs)/my-bookings' },
-  { label: 'Training History', path: '/(tabs)/training-history' },
-  { label: 'Profile', path: '/(tabs)/profile' },
+  { label: 'Schedule', path: '/(tabs)/schedule', testID: 'tab-schedule' },
+  { label: 'My Bookings', path: '/(tabs)/my-bookings', testID: 'tab-my-bookings' },
+  { label: 'Training History', path: '/(tabs)/training-history', testID: 'tab-training-history' },
+  { label: 'Profile', path: '/(tabs)/profile', testID: 'tab-profile' },
 ];
 
 interface DesktopTopNavProps {
@@ -38,6 +42,7 @@ export function DesktopTopNav({ gymName = 'My Gym' }: DesktopTopNavProps) {
           return (
             <Pressable
               key={item.path}
+              testID={item.testID}
               onPress={() => router.push(item.path as never)}
             >
               {/* Clean Ink: the one accent marks the active nav item; the rest is quiet ink. */}

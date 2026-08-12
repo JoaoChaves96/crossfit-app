@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useState } from 'react';
 import {
   ActivityIndicator,
   ScrollView,
@@ -6,7 +6,8 @@ import {
   View,
 } from 'react-native';
 import { styles } from './schedule-dashboard.styles';
-import { useRouter } from 'expo-router';
+import { useFocusEffect, useRouter } from 'expo-router';
+import { useRefreshOnAppActive } from '@/hooks/useRefreshOnAppActive';
 import { useAuth } from '@/hooks/useAuth';
 import { useGym } from '@/hooks/useGym';
 import { useResponsiveLayout } from '@/hooks/useResponsiveLayout';
@@ -58,12 +59,26 @@ function formatTime(timeString: string): string {
   return `${displayHour}:${String(minute).padStart(2, '0')} ${period}`;
 }
 
-function isSameDay(a: Date, b: Date): boolean {
-  return (
-    a.getFullYear() === b.getFullYear() &&
-    a.getMonth() === b.getMonth() &&
-    a.getDate() === b.getDate()
-  );
+/**
+ * A local calendar day as `YYYY-MM-DD`, built from local getters.
+ *
+ * Not `toISOString().slice(0, 10)`: that converts to UTC first, so a local
+ * midnight east of UTC reports the previous day.
+ */
+function toDayKey(date: Date): string {
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+}
+
+/**
+ * The calendar day a class is scheduled on, as `YYYY-MM-DD`.
+ *
+ * `scheduledDate` is a calendar day with no instant, so it is compared as a
+ * string and never parsed. `new Date('2026-08-15')` is UTC midnight, and reading
+ * that with local getters returns the 14th anywhere west of UTC — which put
+ * classes in the previous day's column. Same reasoning as utils/datetime.ts.
+ */
+function classDayKey(scheduledDate: string): string {
+  return scheduledDate.slice(0, 10);
 }
 
 const DAY_LABELS = ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN'];
@@ -78,7 +93,11 @@ interface ClassCardProps {
 function ClassCard({ gymClass, onPress }: ClassCardProps) {
   const isFull = gymClass.bookedCount >= gymClass.capacity;
   return (
-    <TouchableOpacity activeOpacity={0.75} onPress={onPress} style={styles.classCard}>
+    <TouchableOpacity
+      testID={`class-card-${gymClass.id}`}
+      activeOpacity={0.75}
+      onPress={onPress}
+      style={styles.classCard}>
       <Text size="meta" weight="semibold" tone="strong">
         {formatTime(gymClass.scheduledTime)}
       </Text>
@@ -86,7 +105,7 @@ function ClassCard({ gymClass, onPress }: ClassCardProps) {
       {gymClass.coachName ? (
         <Text size="label" tone="muted">Coach: {gymClass.coachName}</Text>
       ) : null}
-      <Text size="label" tone={isFull ? Status.danger : 'muted'}>
+      <Text testID={`class-card-${gymClass.id}-spots`} size="label" tone={isFull ? Status.danger : 'muted'}>
         {gymClass.bookedCount}/{gymClass.capacity} spots
       </Text>
     </TouchableOpacity>
@@ -98,13 +117,15 @@ function ClassCard({ gymClass, onPress }: ClassCardProps) {
 interface DayColumnProps {
   dayLabel: string;
   dayDate: number;
+  /** The column's calendar day, `YYYY-MM-DD`. Identifies the column to tests. */
+  dayKey: string;
   classes: GymClass[];
   onClassPress: (classId: string) => void;
 }
 
-function DayColumn({ dayLabel, dayDate, classes, onClassPress }: DayColumnProps) {
+function DayColumn({ dayLabel, dayDate, dayKey, classes, onClassPress }: DayColumnProps) {
   return (
-    <View style={styles.dayColumn}>
+    <View testID={`day-column-${dayKey}`} style={styles.dayColumn}>
       <View style={styles.dayHeader}>
         <Text size="label" weight="semibold" tone="faint" upper>{dayLabel}</Text>
         <Text size="title" weight="bold" tone="strong">{dayDate}</Text>
@@ -246,28 +267,39 @@ export default function ScheduleDashboard() {
     }
   }, [token, currentGymId]);
 
-  useEffect(() => {
-    fetchClasses();
-  }, [fetchClasses]);
+  // On focus, not on mount. Create/edit-class return here with `router.back()`,
+  // which leaves this screen mounted — a mount-only effect meant the owner came
+  // back to a schedule that did not contain the class they had just created.
+  useFocusEffect(
+    useCallback(() => {
+      fetchClasses();
+    }, [fetchClasses])
+  );
+
+  useRefreshOnAppActive(fetchClasses);
 
   const weekDays = Array.from({ length: 7 }, (_, i) => addDays(weekStart, i));
 
-  // Group classes by day within the current week
-  const classesByDay: GymClass[][] = weekDays.map((day) =>
-    classes
-      .filter((cls) => isSameDay(new Date(cls.scheduledDate), day))
-      .sort((a, b) => a.scheduledTime.localeCompare(b.scheduledTime))
-  );
+  // Group classes by day within the current week. Day keys are compared as
+  // strings on both sides, so no calendar day is ever routed through an instant.
+  const classesByDay: GymClass[][] = weekDays.map((day) => {
+    const key = toDayKey(day);
+    return classes
+      .filter((cls) => classDayKey(cls.scheduledDate) === key)
+      .sort((a, b) => a.scheduledTime.localeCompare(b.scheduledTime));
+  });
 
-  // Sorted list for list view (current week only)
-  const weekEnd = addDays(weekStart, 7);
+  // Sorted list for list view (current week only). `YYYY-MM-DD` sorts and
+  // compares lexicographically, which is why no parsing is needed here either.
+  const firstDayKey = toDayKey(weekStart);
+  const lastDayKey = toDayKey(addDays(weekStart, 6));
   const weekClasses = classes
     .filter((cls) => {
-      const t = new Date(cls.scheduledDate).getTime();
-      return t >= weekStart.getTime() && t < weekEnd.getTime();
+      const key = classDayKey(cls.scheduledDate);
+      return key >= firstDayKey && key <= lastDayKey;
     })
     .sort((a, b) => {
-      const dateCompare = new Date(a.scheduledDate).getTime() - new Date(b.scheduledDate).getTime();
+      const dateCompare = classDayKey(a.scheduledDate).localeCompare(classDayKey(b.scheduledDate));
       return dateCompare !== 0 ? dateCompare : a.scheduledTime.localeCompare(b.scheduledTime);
     });
 
@@ -351,10 +383,11 @@ export default function ScheduleDashboard() {
         showsHorizontalScrollIndicator={false}
         contentContainerStyle={styles.gridContainer}>
         {weekDays.map((day, dayIdx) => {
-          const dayKey = day.toISOString().slice(0, 10);
+          const dayKey = toDayKey(day);
           return (
             <DayColumn
               key={dayKey}
+              dayKey={dayKey}
               dayLabel={DAY_LABELS[dayIdx]}
               dayDate={day.getDate()}
               classes={classesByDay[dayIdx]}

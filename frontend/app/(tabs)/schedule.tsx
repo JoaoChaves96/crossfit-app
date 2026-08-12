@@ -240,7 +240,7 @@ function ClassCard({ item, onPress, onCancel, isCancelling }: ClassCardProps) {
   const spotsText = isFull ? 'Full · Waitlist open' : getSpotsText(item.bookedCount, item.capacity);
 
   return (
-    <Pressable style={styles.card} onPress={onPress}>
+    <Pressable testID={`athlete-class-card-${item.id}`} style={styles.card} onPress={onPress}>
       {/* Top row: time + class type on the left, status chip on the right */}
       <View style={styles.cardTop}>
         <View style={{ gap: Space.hair, flex: 1 }}>
@@ -555,7 +555,7 @@ export default function ScheduleScreen() {
 
   // ── Date separator ─────────────────────────────────────────────────────────
   const renderDateSeparator = (iso: string) => (
-    <View style={styles.dateSep}>
+    <View testID={`day-section-${iso}`} style={styles.dateSep}>
       <Text size="meta" weight="semibold" tone={Ink.strong} upper tracking="wide">
         {formatDateLabel(iso)}
       </Text>
