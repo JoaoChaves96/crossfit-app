@@ -78,9 +78,8 @@ export class ClassScheduleService {
     // The row can still read 'active' between MembershipRenewalScheduler ticks,
     // so compare expiresAt to now rather than trusting status.
     // A null expiresAt means unlimited: never expired, never a cutoff.
-    const planExpiresAt = activePlan.expiresAt
-      ? new Date(activePlan.expiresAt)
-      : null;
+    const planExpiresAt =
+      activePlan.expiresAt != null ? new Date(activePlan.expiresAt) : null;
 
     if (planExpiresAt && planExpiresAt.getTime() <= Date.now()) {
       throw new ForbiddenException('Athlete membership plan has expired');
@@ -294,7 +293,11 @@ export class ClassScheduleService {
    * A class is covered when the plan is unlimited, or when the class falls on or
    * before the plan's expiry date. Compared date-to-date (not instant-to-instant)
    * on the server-local calendar — the same calendar formatDate emits — so a
-   * class later in the day on the expiry date still counts as covered.
+   * class later in the day on the expiry date is still covered.
+   *
+   * Coverage is day-granular but the lapse check above is instant-granular, and
+   * the stricter of the two governs: once the expiry time-of-day passes, the
+   * whole schedule is refused regardless of this filter.
    */
   private isWithinPlanCoverage(
     scheduledDate: Date | string | number,

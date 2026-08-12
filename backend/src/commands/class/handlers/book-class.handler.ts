@@ -98,16 +98,16 @@ export class BookClassHandler implements ICommandHandler<BookClassCommand> {
       // Precondition 5b: the plan must not have lapsed. The row can still read
       // 'active' between MembershipRenewalScheduler ticks, so check the date.
       // A null expiresAt means unlimited: never expired, never a cutoff.
-      const planExpiresAt = activePlan.expiresAt
-        ? new Date(activePlan.expiresAt)
-        : null;
+      const planExpiresAt =
+        activePlan.expiresAt != null ? new Date(activePlan.expiresAt) : null;
 
       if (planExpiresAt && planExpiresAt.getTime() <= Date.now()) {
         throw forbidden('Athlete membership plan has expired');
       }
 
       // Precondition 5c: the class must fall within the plan's coverage.
-      // Compared date-to-date so a class on the expiry day still counts.
+      // Compared date-to-date so a class on the expiry day is still bookable;
+      // 5b above is instant-granular, and the stricter of the two governs.
       if (planExpiresAt) {
         const classDay = this.toDayString(classEntity.scheduledDate);
         const cutoffDay = this.toDayString(planExpiresAt);
