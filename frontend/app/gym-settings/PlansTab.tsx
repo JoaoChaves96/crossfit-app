@@ -260,7 +260,7 @@ interface PlanFormProps {
 
 function PlanForm({ mode, initialPlan, classTypes, isSaving, onSave, onCancel }: PlanFormProps) {
   const [name, setName] = useState(initialPlan?.name ?? '');
-  const [price, setPrice] = useState(initialPlan ? (initialPlan.pricing / 100).toString() : '');
+  const [price, setPrice] = useState(initialPlan ? (initialPlan.pricing / 100).toFixed(2) : '');
   const [billingCycle, setBillingCycle] = useState<'monthly' | 'annual'>(
     initialPlan?.billingCycle ?? 'monthly',
   );
