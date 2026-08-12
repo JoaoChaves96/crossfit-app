@@ -300,11 +300,19 @@ describe('MemberDetailsPanel — mobile register', () => {
     const { onClose } = renderPanel();
 
     await screen.findByText('Jane Doe');
-    // The sheet body's onPress calls e.stopPropagation() — fireEvent.press
-    // doesn't synthesize a real event object, so it's supplied here the same
-    // way a real bubbled touch event would provide one.
-    fireEvent.press(screen.getByTestId('member-sheet-body'), { stopPropagation: jest.fn() });
+    // RNTL's fireEvent.press calls the target's own onPress directly — it
+    // never simulates real event bubbling, so it cannot exercise what
+    // stopPropagation is actually for (stopping a press from reaching the
+    // backdrop underneath). This asserts the handler's contract instead:
+    // given an event, MemberDetailsSheet's body onPress must call
+    // stopPropagation on it. That's weaker than a genuine bubbling test, but
+    // it fails if the `e.stopPropagation()` call is ever removed — do not
+    // "simplify" this back into a plain fireEvent.press with no event arg,
+    // that would pass whether or not the guard exists.
+    const stopPropagation = jest.fn();
+    fireEvent.press(screen.getByTestId('member-sheet-body'), { stopPropagation });
 
+    expect(stopPropagation).toHaveBeenCalled();
     expect(onClose).not.toHaveBeenCalled();
   });
 });
