@@ -137,6 +137,38 @@ export const styles = StyleSheet.create({
     gap: Space.sm,
   },
 
+  // Plans table columns
+  colPrice: {
+    width: 110,
+  },
+  colCycle: {
+    width: 110,
+  },
+  colClassTypes: {
+    flex: 1,
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: Space.xs,
+  },
+  colSubscribers: {
+    width: 110,
+  },
+  planCardList: {
+    gap: Space.md,
+  },
+  planCardMetaRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: Space.md,
+  },
+  planClassTypeTag: {
+    borderRadius: Radius.control,
+    borderWidth: 1,
+    borderColor: Line.divider,
+    paddingHorizontal: Space.sm,
+    paddingVertical: Space.hair,
+  },
+
   // Class Types table columns
   colLoggable: {
     width: 100,

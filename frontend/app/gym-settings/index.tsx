@@ -13,6 +13,7 @@ import { SettingsSidebar } from './SettingsSidebar';
 import { SettingsTabBar, ActiveTab } from './SettingsTabBar';
 import { SpacesTab } from './SpacesTab';
 import { ClassTypesTab } from './ClassTypesTab';
+import { PlansTab } from './PlansTab';
 import { ProfileTab } from './ProfileTab';
 
 function PlaceholderTab({ label }: { label: string }) {
@@ -77,6 +78,12 @@ export default function GymSettings() {
           ) : activeTab === 'class-types' && token && currentGymId ? (
             <ClassTypesTab gymId={currentGymId} token={token} isMobile={isMobile} />
           ) : activeTab === 'class-types' ? (
+            <View style={styles.feedbackContainer}>
+              <ActivityIndicator size="large" color={Ink.strong} />
+            </View>
+          ) : activeTab === 'plans' && token && currentGymId ? (
+            <PlansTab gymId={currentGymId} token={token} isMobile={isMobile} />
+          ) : activeTab === 'plans' ? (
             <View style={styles.feedbackContainer}>
               <ActivityIndicator size="large" color={Ink.strong} />
             </View>
