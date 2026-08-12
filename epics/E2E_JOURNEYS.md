@@ -38,7 +38,7 @@ dropped — user's call, 2026-08-12.
 
 ## Tier 1 — the spine
 
-### 1. Owner creates a class → athlete books it → owner sees the count rise
+### 1. Owner creates a class → athlete books it → owner sees the count rise — ✅ DONE (`ed21ff0`)
 
 Owner fills the create form for a specific date → the card appears **on that weekday column** →
 athlete logs in, sees the class **on the same date**, books it → owner reloads, booking count
@@ -142,6 +142,22 @@ negative-offset zone so a UTC-vs-local defect is visible.
 ---
 
 ## Status
+
+**Harness: ✅ built and proven (`ed21ff0`).** `e2e/env.ts` (isolation + the `NODE_ENV`
+reasoning), `e2e/global-setup.ts` (loud truncate), `e2e/fixtures.ts` (the API origin pin),
+and `e2e/helpers/{dates,seed,auth,actions,assert}.ts`. Journey 1 passes in ~7s and was
+mutation-proved. The helper layer is **frozen**: a journey that needs a new capability
+reports it rather than adding one, so five journeys cannot grow five spellings of "log in".
+
+**It earned its keep on the first run**, finding two owner-dashboard defects no unit test
+could see (`7e605e4`): the dashboard never refetched after `create-class` returned via
+`router.back()`, and it rendered classes a weekday early west of UTC — the frontend half of
+the `8829f75` seam. Journey 1's failure named the seam explicitly, which is what the
+assertion helpers exist for. Note that jest's positive-offset TZ pin (`414876c`) means the
+existing day-column unit test passed both before and after that fix.
+
+**Tier 1 remaining:** journeys 2–5, in progress. **Tier 2 (6–11):** after a shape review of
+Tier 1.
 
 The five existing specs (`e2e/{smoke,owner,coach,athlete,cross-role}.spec.ts`, ~1,450 lines,
 ~35 tests) are **discarded** — user's call, 2026-08-12: they assert presence rather than
