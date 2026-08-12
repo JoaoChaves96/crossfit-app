@@ -33,6 +33,7 @@ import { CoachesQueryService } from '../../queries/gym-configuration/coaches.ser
 import { ClassTypesQueryService } from '../../queries/gym-configuration/class-types.service';
 import { SpacesQueryService } from '../../queries/gym-configuration/spaces.service';
 import { GymMembersQueryService } from '../../queries/gym-configuration/gym-members.service';
+import { MembershipPlansQueryService } from '../../queries/gym-configuration/membership-plans.service';
 
 /**
  * GymConfigurationModule: Wires gym configuration and monetization commands
@@ -85,6 +86,7 @@ import { GymMembersQueryService } from '../../queries/gym-configuration/gym-memb
     ClassTypesQueryService,
     SpacesQueryService,
     GymMembersQueryService,
+    MembershipPlansQueryService,
   ],
   exports: [
     GymStaffService,
@@ -95,6 +97,7 @@ import { GymMembersQueryService } from '../../queries/gym-configuration/gym-memb
     ClassTypesQueryService,
     SpacesQueryService,
     GymMembersQueryService,
+    MembershipPlansQueryService,
   ],
 })
 export class GymConfigurationModule {}

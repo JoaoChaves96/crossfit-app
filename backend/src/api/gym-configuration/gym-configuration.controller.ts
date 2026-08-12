@@ -77,6 +77,10 @@ import { GetClassTypesResponseDto } from '../../queries/gym-configuration/dto/ge
 import { SpacesQueryService } from '../../queries/gym-configuration/spaces.service';
 import { GetSpacesResponseDto } from '../../queries/gym-configuration/dto/get-spaces-response.dto';
 
+// Membership Plans Query
+import { MembershipPlansQueryService } from '../../queries/gym-configuration/membership-plans.service';
+import { GetMembershipPlansResponseDto } from '../../queries/gym-configuration/dto/get-membership-plans-response.dto';
+
 @Controller('/api/gyms/:gymId/configuration')
 @ApiTags('Gym Configuration')
 @ApiBearerAuth()
@@ -87,6 +91,7 @@ export class GymConfigurationController {
     private readonly coachesQueryService: CoachesQueryService,
     private readonly classTypesQueryService: ClassTypesQueryService,
     private readonly spacesQueryService: SpacesQueryService,
+    private readonly membershipPlansQueryService: MembershipPlansQueryService,
   ) {}
 
   // ============= SPACES =============
@@ -325,6 +330,37 @@ export class GymConfigurationController {
   }
 
   // ============= MEMBERSHIP PLANS =============
+
+  /**
+   * List all membership plans for a gym (Gym Owner only)
+   *
+   * **Preconditions:**
+   * - User must be authenticated as a gym owner
+   *
+   * **Postconditions:**
+   * - Returns every plan for the gym, archived included, each with its current
+   *   active subscriber count
+   */
+  @Get('/membership-plans')
+  @Role('owner')
+  @ApiOperation({
+    summary: 'List membership plans',
+    description:
+      'Returns every membership plan for the gym (including archived ones) with active subscriber counts. Gym owners only.',
+  })
+  @ApiParam({ name: 'gymId', description: 'Gym ID' })
+  @ApiResponse({
+    status: 200,
+    description: 'Membership plans list returned',
+    type: GetMembershipPlansResponseDto,
+  })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiResponse({ status: 403, description: 'Forbidden - Owner role required' })
+  async getMembershipPlans(
+    @Param('gymId') gymId: string,
+  ): Promise<GetMembershipPlansResponseDto> {
+    return this.membershipPlansQueryService.getPlansByGym(gymId);
+  }
 
   /**
    * Create a membership plan (Gym Owner only)
