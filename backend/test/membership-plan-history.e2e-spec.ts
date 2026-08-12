@@ -49,9 +49,13 @@ describe('Membership plan history (e2e)', () => {
     handler = moduleFixture.get(AssignMembershipPlanHandler);
     planRepository = moduleFixture.get(AthleteMembershipPlanRepository);
 
-    if (dataSource && dataSource.isInitialized) {
-      await setupTestData();
+    if (!dataSource || !dataSource.isInitialized) {
+      throw new Error(
+        'DataSource not initialized — is the dev database reachable?',
+      );
     }
+
+    await setupTestData();
   }, 30000);
 
   afterAll(async () => {
@@ -159,15 +163,26 @@ describe('Membership plan history (e2e)', () => {
     }
   }
 
-  it('has no UNIQUE constraint on gymMembershipId', async () => {
-    const constraints = await dataSource!.query(`
+  it('has no old OneToOne-generated UNIQUE constraint, and does have the partial one-active-row index', async () => {
+    const oldConstraint = await dataSource!.query(`
       SELECT conname
       FROM pg_constraint
       WHERE conrelid = 'athlete_membership_plans'::regclass
-        AND contype = 'u'
+        AND conname = 'REL_160876fc498111a4b78a6e08bc'
     `);
+    expect(oldConstraint).toEqual([]);
 
-    expect(constraints).toEqual([]);
+    const partialIndex = await dataSource!.query(`
+      SELECT indexdef
+      FROM pg_indexes
+      WHERE tablename = 'athlete_membership_plans'
+        AND indexname = 'IDX_athlete_membership_plans_one_active'
+    `);
+    expect(partialIndex).toHaveLength(1);
+    expect(partialIndex[0].indexdef).toContain('UNIQUE');
+    expect(partialIndex[0].indexdef).toContain(
+      "WHERE ((status)::text = 'active'::text)",
+    );
   });
 
   it('assigns a new plan to a member who already has one, expiring the old row', async () => {
@@ -197,8 +212,9 @@ describe('Membership plan history (e2e)', () => {
 
     // Two rows now coexist for one membership — impossible before this fix.
     expect(rows).toHaveLength(2);
-    expect(rows.filter((row: { status: string }) => row.status === 'active'))
-      .toHaveLength(1);
+    expect(
+      rows.filter((row: { status: string }) => row.status === 'active'),
+    ).toHaveLength(1);
 
     const seeded = rows.find(
       (row: { id: string }) => row.id === seededAthletePlanId,
@@ -207,6 +223,17 @@ describe('Membership plan history (e2e)', () => {
   });
 
   it('reads the active row as the current plan, never the expired one', async () => {
+    // Stand-alone: assigns its own second plan rather than depending on the
+    // row created by the previous test.
+    await handler.execute(
+      new AssignMembershipPlanCommand(
+        ownerUserId,
+        gymId,
+        gymMembershipId,
+        secondPlanId,
+      ),
+    );
+
     const current =
       await planRepository.getActivePlanByGymMembership(gymMembershipId);
 
@@ -218,13 +245,22 @@ describe('Membership plan history (e2e)', () => {
   });
 
   it('keeps the whole history readable, expired rows included', async () => {
+    // Stand-alone: assigns its own second plan rather than depending on rows
+    // created by earlier tests.
+    await handler.execute(
+      new AssignMembershipPlanCommand(
+        ownerUserId,
+        gymId,
+        gymMembershipId,
+        secondPlanId,
+      ),
+    );
+
     const history =
       await planRepository.getAllPlansByGymMembership(gymMembershipId);
 
-    expect(history).toHaveLength(2);
-    expect(history.map((row) => row.status).sort()).toEqual([
-      'active',
-      'expired',
-    ]);
+    expect(history.length).toBeGreaterThanOrEqual(2);
+    expect(history.some((row) => row.status === 'active')).toBe(true);
+    expect(history.some((row) => row.status === 'expired')).toBe(true);
   });
 });
