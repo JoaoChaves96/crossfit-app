@@ -48,7 +48,7 @@ The "same date on both sides" assertion is the point: it is the one check that w
 the `@Column('date')` write seam fixed in `8829f75`, which stored classes a day early west of
 UTC and which no unit test on either side could see.
 
-### 2. Plan class-types gate visibility
+### 2. Plan class-types gate visibility — ✅ DONE
 
 Owner assigns the athlete a plan **excluding** "Strength" → the athlete's schedule shows
 CrossFit and **not** Strength → owner switches them to a plan including it → the athlete now
@@ -58,22 +58,24 @@ This is the Visibility Rule from `CLAUDE.md` — an athlete may see a class only
 the gym and their plan includes the class type. It is the most important invariant in the
 product and has no browser-level coverage today.
 
-### 3. Expired plan blocks booking
+### 3. Expired plan blocks booking — ✅ DONE
 
 Member whose expiry is in the past → athlete opens an otherwise-eligible class → booking is
 refused and the cutoff is stated.
 
-Guards the accidental one-day grace period removed in `8829f75`. Deferred only to keep the
-first harness change small; it is next, not optional.
+Guards the accidental one-day grace period removed in `8829f75`. The fixture must lapse the
+plan **earlier today** — past as an instant, current as a calendar day. Any longer lapse
+reads as expired under both the correct and the regressed comparison, so it proves nothing;
+see Status.
 
-### 4. Extend a plan
+### 4. Extend a plan — ✅ DONE
 
 Owner → members → member → `+1 cycle` → save → the panel **dismisses**, the row's expiry shows
 the new date, and it survives a reload. A second press adds a second cycle.
 
 Covers both fixes in `7fb4c79`. Absorbs the auto-renew toggle rather than giving it a journey.
 
-### 5. Waitlist promotion
+### 5. Waitlist promotion — ✅ DONE
 
 Capacity-1 class, athlete A booked, athlete B waitlisted → A cancels → B flips to confirmed
 **and** B receives the notification.
@@ -156,8 +158,36 @@ the `8829f75` seam. Journey 1's failure named the seam explicitly, which is what
 assertion helpers exist for. Note that jest's positive-offset TZ pin (`414876c`) means the
 existing day-column unit test passed both before and after that fix.
 
-**Tier 1 remaining:** journeys 2–5, in progress. **Tier 2 (6–11):** after a shape review of
-Tier 1.
+**Tier 1: ✅ COMPLETE.** All five journeys pass in ~37s total, and each was mutation-proved —
+a deliberate defect reintroduced into production code, the journey confirmed red, the defect
+reverted. Journey 2 by disabling the Visibility Rule filter; 3 by restoring the day-granular
+lapse check; 4 by reverting `+1 cycle` to read the server value; 5 by skipping the promotion
+on cancel.
+
+**Mutation testing paid for itself on journey 3**, which passed with the grace period back in
+place. Its fixture expired the plan by exactly 24 hours — and "yesterday, same time" reads as
+expired under both an instant comparison and the day-granular one that regressed, so the
+journey never sat on the boundary it claimed to guard. Fixed by lapsing the plan one second
+after midnight today. The lesson generalises: a journey named after a boundary has to be run
+against the defect, or it is only asserting that the feature works at all.
+
+**Two harness lessons from journeys 2–5:**
+
+- `helpers/auth.ts` now exports `visibleTestId()` (with `tab()` delegating to it). On Expo Web
+  a testID is routinely in the DOM more than once and the spare copies are *hidden, not
+  absent*, so `.first()` picks a node no user can see and Playwright waits on it until the
+  test times out. A pushed detail route leaves the tabs screen underneath mounted, which is
+  what hid journey 5's notification bell.
+- `DesktopTopNav` now carries the same `tab-*` testIDs as the bottom bar. The two bars are one
+  destination in two layouts, and only one is real at any viewport.
+
+**Helper additions**, all consolidating something two journeys had hand-rolled:
+`openOwnerSection()` and `openMemberPanel()` in `actions.ts`; `setPlanAutoRoll()` and
+`readActivePlan()` in `seed.ts`. `setPlanAutoRoll` is load-bearing rather than convenient —
+`effectiveExpiresAt` rolls a lapsed auto-roll plan forward, so `setPlanExpiry` alone cannot
+make an athlete expired.
+
+**Next: Tier 2 (6–11)**, after a shape review of Tier 1.
 
 The five existing specs (`e2e/{smoke,owner,coach,athlete,cross-role}.spec.ts`, ~1,450 lines,
 ~35 tests) are **discarded** — user's call, 2026-08-12: they assert presence rather than
