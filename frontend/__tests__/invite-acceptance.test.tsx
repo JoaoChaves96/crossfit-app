@@ -7,6 +7,7 @@ const mockPush = jest.fn();
 const mockGet = jest.fn();
 const mockPost = jest.fn();
 const mockLogin = jest.fn();
+const mockSetCurrentGymId = jest.fn();
 
 jest.mock('expo-router', () => ({
   useRouter: () => ({ replace: mockReplace, push: mockPush }),
@@ -24,16 +25,25 @@ jest.mock('@/utils/api-client', () => ({
   },
 }));
 
-// The screen reads AuthContext via useContext, so render inside a real
-// provider rather than mocking React itself.
+// The screen reads AuthContext and GymContext via useContext, so render inside
+// real providers rather than mocking React itself.
 import { AuthContext, AuthContextType } from '@/context/AuthContext';
+import { GymContext, GymContextType } from '@/context/GymContext';
 
 let authValue: AuthContextType;
+
+const gymValue: GymContextType = {
+  currentGymId: null,
+  isLoading: false,
+  setCurrentGymId: mockSetCurrentGymId,
+};
 
 function renderScreen() {
   return render(
     <AuthContext.Provider value={authValue}>
-      <InviteAcceptanceScreen />
+      <GymContext.Provider value={gymValue}>
+        <InviteAcceptanceScreen />
+      </GymContext.Provider>
     </AuthContext.Provider>,
   );
 }
@@ -93,6 +103,15 @@ describe('invite acceptance — coach invites', () => {
 
     await waitFor(() => expect(mockLogin).toHaveBeenCalledWith('new.jwt.token'));
     expect(mockReplace).toHaveBeenCalledWith('/coach-classes');
+
+    // The token is not enough on its own: /coach-classes issues no request at
+    // all while GymContext is empty, so an accepted coach saw an empty screen
+    // until they logged out and back in. Set from the server's gym, and set
+    // before we navigate, so the destination has context on mount.
+    expect(mockSetCurrentGymId).toHaveBeenCalledWith('gym-1');
+    expect(mockSetCurrentGymId.mock.invocationCallOrder[0]).toBeLessThan(
+      mockReplace.mock.invocationCallOrder[0],
+    );
   });
 
   it('sends an unauthenticated coach invitee to register with the token', async () => {
@@ -127,5 +146,9 @@ describe('invite acceptance — coach invites', () => {
     fireEvent.press(screen.getByTestId('invite-join-btn'));
 
     await waitFor(() => expect(mockReplace).toHaveBeenCalledWith('/(tabs)/schedule'));
+
+    // The athlete branch had the same missing gym context and no e2e journey
+    // covers athlete acceptance any more, so this is its only guard.
+    expect(mockSetCurrentGymId).toHaveBeenCalledWith('gym-1');
   });
 });
