@@ -144,9 +144,11 @@ function CoachRow({ coach, isSelected, onSelect }: CoachRowProps) {
   );
 }
 
-// ─── Pending Invite Row ───────────────────────────────────────────────────────
+// ─── Pending Invite Row (Desktop) ─────────────────────────────────────────────
 // Per the One Accent Rule the crimson stays on the header CTA, so both row
 // actions here are quiet and revoke is Status.danger — a different red.
+// There is no name yet — the invitee hasn't accepted — so NAME stays blank
+// and the email lands under its own header, same as CoachRow.
 
 interface PendingInviteRowProps {
   invite: CoachInvite;
@@ -166,6 +168,9 @@ function PendingInviteRow({
   return (
     <View testID={`pending-invite-row-${invite.inviteToken}`} style={styles.pendingRow}>
       <View style={styles.colName}>
+        <Text size="body" tone="faint">—</Text>
+      </View>
+      <View style={styles.colEmail}>
         <Text size="body" weight="semibold" numberOfLines={1}>
           {invite.inviteeEmail}
         </Text>
@@ -178,12 +183,12 @@ function PendingInviteRow({
           {`Expires ${new Date(invite.expiresAt).toLocaleDateString()}`}
         </Text>
       </View>
-      <View style={styles.pendingActions}>
+      <View style={styles.colActions}>
         <TouchableOpacity
           testID={`copy-invite-link-${invite.inviteToken}`}
           onPress={() => onCopy(invite)}
           activeOpacity={0.7}>
-          <Text size="body" weight="medium" tone="muted">
+          <Text size="meta" weight="medium" tone="muted">
             {copiedToken === invite.inviteToken ? 'Copied!' : 'Copy link'}
           </Text>
         </TouchableOpacity>
@@ -191,11 +196,60 @@ function PendingInviteRow({
           testID={`revoke-invite-${invite.inviteToken}`}
           onPress={() => onRevoke(invite)}
           disabled={isRevoking}
-          activeOpacity={0.7}>
-          <Text size="body" weight="medium" tone={Status.danger}>
+          activeOpacity={0.7}
+          style={styles.pendingRevokeBtn}>
+          <Text size="meta" weight="medium" tone={Status.danger}>
             Revoke
           </Text>
         </TouchableOpacity>
+      </View>
+    </View>
+  );
+}
+
+// ─── Pending Invite Card (Mobile) ─────────────────────────────────────────────
+// Follows CoachCard's shape so a pending invite reads as the same list as an
+// active coach, rather than a bare table row dropped above rounded cards.
+
+function PendingInviteCard({
+  invite,
+  onCopy,
+  onRevoke,
+  copiedToken,
+  isRevoking,
+}: PendingInviteRowProps) {
+  return (
+    <View testID={`pending-invite-row-${invite.inviteToken}`} style={styles.pendingCard}>
+      <View style={styles.pendingCardTop}>
+        <View style={styles.coachAvatar}>
+          <Icon name="mail" size={18} tone="faint" />
+        </View>
+        <View style={styles.pendingCardInfo}>
+          <Text size="body" weight="semibold" numberOfLines={1}>{invite.inviteeEmail}</Text>
+          <Text size="meta" tone="muted" numberOfLines={1}>
+            {`Expires ${new Date(invite.expiresAt).toLocaleDateString()}`}
+          </Text>
+        </View>
+        <StatusChip tone="neutral" label="Pending" />
+      </View>
+      <View style={styles.pendingCardActions}>
+        <View style={styles.pendingCardActionBtn}>
+          <Button
+            testID={`copy-invite-link-${invite.inviteToken}`}
+            label={copiedToken === invite.inviteToken ? 'Copied!' : 'Copy link'}
+            variant="quiet"
+            onPress={() => onCopy(invite)}
+          />
+        </View>
+        <View style={styles.pendingCardActionBtn}>
+          <Button
+            testID={`revoke-invite-${invite.inviteToken}`}
+            label="Revoke"
+            variant="danger"
+            onPress={() => onRevoke(invite)}
+            disabled={isRevoking}
+          />
+        </View>
       </View>
     </View>
   );
@@ -669,7 +723,7 @@ export default function CoachesScreen() {
           /* Mobile: card-based layout */
           <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.coachCardList}>
             {pendingInvites.map((invite) => (
-              <PendingInviteRow
+              <PendingInviteCard
                 key={invite.inviteToken}
                 invite={invite}
                 onCopy={handleCopyInviteLink}

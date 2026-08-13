@@ -129,4 +129,28 @@ describe('CoachesScreen — pending invites', () => {
     await waitFor(() => expect(screen.getByTestId('coach-invite-link-text')).toBeTruthy());
     expect(screen.getByText('http://localhost:8081/invite/tok-new')).toBeTruthy();
   });
+
+  // The desktop register uses a table row (PendingInviteRow); mobile uses its
+  // own card (PendingInviteCard) so it doesn't inherit fixed table-column
+  // widths into a 390px viewport. Same testIDs, different component — pin
+  // this register explicitly so both stay covered.
+  it('renders and operates the pending invite as a card on the mobile register', async () => {
+    mockIsMobile = true;
+    mockGet.mockImplementation((url: string) =>
+      url.includes('/invites') ? Promise.resolve([pendingInvite]) : Promise.resolve({ coaches: [] }),
+    );
+    mockDelete.mockResolvedValue({ message: 'Invite revoked' });
+
+    render(<CoachesScreen />);
+
+    await waitFor(() => expect(screen.getByTestId('pending-invite-row-tok-abc')).toBeTruthy());
+    expect(screen.getByText('dana@example.com')).toBeTruthy();
+    expect(screen.getByText('Pending')).toBeTruthy();
+
+    fireEvent.press(screen.getByTestId('revoke-invite-tok-abc'));
+
+    await waitFor(() =>
+      expect(mockDelete).toHaveBeenCalledWith('/api/gyms/gym-1/invites/tok-abc'),
+    );
+  });
 });

@@ -167,7 +167,8 @@ export const styles = StyleSheet.create({
     flex: 1,
   },
 
-  // Pending invite row — mirrors coachRow so it reads as the same list.
+  // Pending invite row (desktop) — same column skeleton as coachRow (no
+  // row-level gap, same fixed widths) so cells land under their own header.
   pendingRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -175,13 +176,11 @@ export const styles = StyleSheet.create({
     paddingVertical: Space.md,
     borderBottomWidth: 1,
     borderBottomColor: Line.hairline,
-    gap: Space.md,
   },
-  pendingActions: {
-    width: 140,
-    flexDirection: 'row',
-    justifyContent: 'flex-end',
-    gap: Space.md,
+  // colActions is a column (default flexDirection), so the two quiet actions
+  // stack rather than needing width beyond the Actions header's 80px.
+  pendingRevokeBtn: {
+    marginTop: Space.xs,
   },
 
   // View button (desktop actions)
@@ -336,5 +335,33 @@ export const styles = StyleSheet.create({
   },
   coachCardActionBtn: {
     minWidth: 140,
+  },
+
+  // Pending invite card (mobile) — same shape as coachCard so the two read
+  // as one list rather than two different registers stacked together.
+  pendingCard: {
+    backgroundColor: Ground.surface,
+    borderWidth: 1,
+    borderColor: Line.hairline,
+    borderRadius: Radius.card,
+    padding: Space.base,
+    gap: Space.md,
+    ...Elevation.card,
+  },
+  pendingCardTop: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Space.md,
+  },
+  pendingCardInfo: {
+    flex: 1,
+    gap: Space.hair,
+  },
+  pendingCardActions: {
+    flexDirection: 'row',
+    gap: Space.md,
+  },
+  pendingCardActionBtn: {
+    flex: 1,
   },
 });
