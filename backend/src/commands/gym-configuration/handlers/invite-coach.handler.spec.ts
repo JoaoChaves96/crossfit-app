@@ -1,207 +1,94 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { BadRequestException, ForbiddenException, NotFoundException } from '@nestjs/common';
-import { getDataSourceToken } from '@nestjs/typeorm';
+import { BadRequestException, ConflictException, ForbiddenException, NotFoundException } from '@nestjs/common';
 import { InviteCoachHandler } from './invite-coach.handler';
 import { InviteCoachCommand } from '../invite-coach.command';
 import { GymService } from '../../../domain/gym/gym.service';
 import { GymStaffService } from '../../../domain/gym-staff/gym-staff.service';
-import { GymStaffEntity } from '../../../domain/gym-staff/entities/gym-staff.entity';
-import { UserEntity } from '../../../domain/user/entities/user.entity';
+import { InviteService } from '../../../domain/invite/invite.service';
+import { CoachAlreadyStaffError, CoachInvitePendingError } from '../../../domain/invite/invite.errors';
 
 describe('InviteCoachHandler', () => {
   let handler: InviteCoachHandler;
-  let gymService: GymService;
-  let gymStaffService: GymStaffService;
+  let gymService: { getGymById: jest.Mock };
+  let gymStaffService: { isGymOwner: jest.Mock };
+  let inviteService: { createInvite: jest.Mock };
 
-  const mockOwnerId = 'owner-user-123';
-  const mockGymId = 'gym-123';
-  const mockCoachEmail = 'newcoach@example.com';
+  const OWNER_ID = 'owner-user-123';
+  const GYM_ID = 'gym-123';
+  const COACH_EMAIL = 'newcoach@example.com';
+  const command = new InviteCoachCommand(OWNER_ID, GYM_ID, COACH_EMAIL);
 
-  const baseCommand = new InviteCoachCommand(mockOwnerId, mockGymId, mockCoachEmail);
+  const activeGym = { id: GYM_ID, status: 'active' };
+  const createdInvite = {
+    inviteToken: 'tok-abc',
+    inviteLink: 'http://localhost:8081/invite/tok-abc',
+    expiresAt: '2026-08-20T00:00:00.000Z',
+    inviteeEmail: COACH_EMAIL,
+    role: 'coach' as const,
+  };
 
-  const activeGym = { id: mockGymId, status: 'active' };
+  beforeEach(async () => {
+    gymService = { getGymById: jest.fn().mockResolvedValue(activeGym) };
+    gymStaffService = { isGymOwner: jest.fn().mockResolvedValue(true) };
+    inviteService = { createInvite: jest.fn().mockResolvedValue(createdInvite) };
 
-  // Helpers to build mocked EntityManager repositories
-  function buildMockManager(overrides: {
-    userFindOne?: jest.Mock;
-    userSave?: jest.Mock;
-    gymStaffFindOne?: jest.Mock;
-    gymStaffSave?: jest.Mock;
-  }) {
-    const userFindOne = overrides.userFindOne ?? jest.fn().mockResolvedValue(null);
-    const userSave = overrides.userSave ?? jest.fn().mockImplementation((e) => Promise.resolve({ ...e, id: 'new-user-id' }));
-    const gymStaffFindOne = overrides.gymStaffFindOne ?? jest.fn().mockResolvedValue(null);
-    const gymStaffSave =
-      overrides.gymStaffSave ??
-      jest.fn().mockImplementation((e: GymStaffEntity) =>
-        Promise.resolve({ ...e, id: e.id ?? 'new-staff-id', assignedAt: new Date() }),
-      );
-
-    return {
-      getRepository: jest.fn((entity) => {
-        if (entity === UserEntity) {
-          return { findOne: userFindOne, save: userSave };
-        }
-        if (entity === GymStaffEntity) {
-          return { findOne: gymStaffFindOne, save: gymStaffSave };
-        }
-        throw new Error(`Unexpected entity: ${String(entity)}`);
-      }),
-    };
-  }
-
-  function setupDataSource(managerOverrides: Parameters<typeof buildMockManager>[0]) {
-    const mockManager = buildMockManager(managerOverrides);
-    return {
-      transaction: jest.fn().mockImplementation((cb: (manager: typeof mockManager) => Promise<unknown>) =>
-        cb(mockManager as any),
-      ),
-    };
-  }
-
-  async function buildModule(dataSourceValue: object): Promise<void> {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         InviteCoachHandler,
-        {
-          provide: GymService,
-          useValue: { getGymById: jest.fn() },
-        },
-        {
-          provide: GymStaffService,
-          useValue: { isGymOwner: jest.fn() },
-        },
-        {
-          provide: getDataSourceToken(),
-          useValue: dataSourceValue,
-        },
+        { provide: GymService, useValue: gymService },
+        { provide: GymStaffService, useValue: gymStaffService },
+        { provide: InviteService, useValue: inviteService },
       ],
     }).compile();
 
-    handler = module.get<InviteCoachHandler>(InviteCoachHandler);
-    gymService = module.get<GymService>(GymService);
-    gymStaffService = module.get<GymStaffService>(GymStaffService);
-  }
+    handler = module.get(InviteCoachHandler);
+  });
 
-  describe('execute', () => {
-    it('should throw ForbiddenException when caller is not a gym owner', async () => {
-      const dataSource = setupDataSource({});
-      await buildModule(dataSource);
+  it('creates a coach-role invite and returns the link', async () => {
+    const result = await handler.execute(command);
 
-      jest.spyOn(gymStaffService, 'isGymOwner').mockResolvedValue(false);
-      jest.spyOn(gymService, 'getGymById').mockResolvedValue(activeGym as any);
+    expect(inviteService.createInvite).toHaveBeenCalledWith(GYM_ID, OWNER_ID, COACH_EMAIL, 'coach');
+    expect(result).toEqual(createdInvite);
+  });
 
-      await expect(handler.execute(baseCommand)).rejects.toThrow(ForbiddenException);
-    });
+  it('throws ForbiddenException when the caller is not the gym owner', async () => {
+    gymStaffService.isGymOwner.mockResolvedValue(false);
 
-    it('should throw NotFoundException when gym does not exist', async () => {
-      const dataSource = setupDataSource({});
-      await buildModule(dataSource);
+    await expect(handler.execute(command)).rejects.toThrow(ForbiddenException);
+    expect(inviteService.createInvite).not.toHaveBeenCalled();
+  });
 
-      jest.spyOn(gymStaffService, 'isGymOwner').mockResolvedValue(true);
-      jest.spyOn(gymService, 'getGymById').mockResolvedValue(null);
+  it('throws NotFoundException when the gym does not exist', async () => {
+    gymService.getGymById.mockResolvedValue(null);
 
-      await expect(handler.execute(baseCommand)).rejects.toThrow(NotFoundException);
-    });
+    await expect(handler.execute(command)).rejects.toThrow(NotFoundException);
+    expect(inviteService.createInvite).not.toHaveBeenCalled();
+  });
 
-    it('should throw BadRequestException when gym is not active', async () => {
-      const dataSource = setupDataSource({});
-      await buildModule(dataSource);
+  it('throws BadRequestException when the gym is not active', async () => {
+    gymService.getGymById.mockResolvedValue({ id: GYM_ID, status: 'suspended' });
 
-      jest.spyOn(gymStaffService, 'isGymOwner').mockResolvedValue(true);
-      jest.spyOn(gymService, 'getGymById').mockResolvedValue({ id: mockGymId, status: 'suspended' } as any);
+    await expect(handler.execute(command)).rejects.toThrow(BadRequestException);
+    expect(inviteService.createInvite).not.toHaveBeenCalled();
+  });
 
-      await expect(handler.execute(baseCommand)).rejects.toThrow(BadRequestException);
-    });
+  it('maps CoachAlreadyStaffError to ConflictException', async () => {
+    inviteService.createInvite.mockRejectedValue(new CoachAlreadyStaffError(GYM_ID));
 
-    it('should throw BadRequestException when email already has a gym staff record in this gym', async () => {
-      const existingUser: Partial<UserEntity> = {
-        id: 'existing-user-id',
-        email: mockCoachEmail,
-        status: 'active',
-      };
+    await expect(handler.execute(command)).rejects.toThrow(ConflictException);
+  });
 
-      const existingStaff: Partial<GymStaffEntity> = {
-        id: 'existing-staff-id',
-        userId: 'existing-user-id',
-        gymId: mockGymId,
-        role: 'coach',
-        status: 'active',
-      };
+  it('maps CoachInvitePendingError to ConflictException', async () => {
+    inviteService.createInvite.mockRejectedValue(new CoachInvitePendingError(COACH_EMAIL));
 
-      const dataSource = setupDataSource({
-        userFindOne: jest.fn().mockResolvedValue(existingUser),
-        gymStaffFindOne: jest.fn().mockResolvedValue(existingStaff),
-      });
-      await buildModule(dataSource);
+    await expect(handler.execute(command)).rejects.toThrow(ConflictException);
+  });
 
-      jest.spyOn(gymStaffService, 'isGymOwner').mockResolvedValue(true);
-      jest.spyOn(gymService, 'getGymById').mockResolvedValue(activeGym as any);
+  it('never creates a user or a gym_staff row itself', async () => {
+    await handler.execute(command);
 
-      await expect(handler.execute(baseCommand)).rejects.toThrow(BadRequestException);
-    });
-
-    it('should create membership without creating a new user when email belongs to an existing user', async () => {
-      const existingUser: Partial<UserEntity> = {
-        id: 'existing-user-id',
-        email: mockCoachEmail,
-        status: 'active',
-      };
-
-      const userFindOne = jest.fn().mockResolvedValue(existingUser);
-      const userSave = jest.fn();
-      const gymStaffFindOne = jest.fn().mockResolvedValue(null);
-      const gymStaffSave = jest.fn().mockImplementation((e: GymStaffEntity) =>
-        Promise.resolve({ ...e, id: e.id, assignedAt: new Date() }),
-      );
-
-      const dataSource = setupDataSource({ userFindOne, userSave, gymStaffFindOne, gymStaffSave });
-      await buildModule(dataSource);
-
-      jest.spyOn(gymStaffService, 'isGymOwner').mockResolvedValue(true);
-      jest.spyOn(gymService, 'getGymById').mockResolvedValue(activeGym as any);
-
-      const result = await handler.execute(baseCommand);
-
-      expect(userSave).not.toHaveBeenCalled();
-      expect(gymStaffSave).toHaveBeenCalledTimes(1);
-      expect(result).toBeDefined();
-      expect(result.gymId).toBe(mockGymId);
-      expect(result.userId).toBe('existing-user-id');
-      expect(result.role).toBe('coach');
-      expect(result.status).toBe('active');
-    });
-
-    it('should create a new user and membership when email is brand new', async () => {
-      const userFindOne = jest.fn().mockResolvedValue(null);
-      const userSave = jest.fn().mockImplementation((e: Partial<UserEntity>) =>
-        Promise.resolve({ ...e, id: 'brand-new-user-id' }),
-      );
-      const gymStaffFindOne = jest.fn().mockResolvedValue(null);
-      const gymStaffSave = jest.fn().mockImplementation((e: GymStaffEntity) =>
-        Promise.resolve({ ...e, id: e.id, assignedAt: new Date() }),
-      );
-
-      const dataSource = setupDataSource({ userFindOne, userSave, gymStaffFindOne, gymStaffSave });
-      await buildModule(dataSource);
-
-      jest.spyOn(gymStaffService, 'isGymOwner').mockResolvedValue(true);
-      jest.spyOn(gymService, 'getGymById').mockResolvedValue(activeGym as any);
-
-      const result = await handler.execute(baseCommand);
-
-      expect(userSave).toHaveBeenCalledTimes(1);
-      const createdUser = userSave.mock.calls[0][0] as UserEntity;
-      expect(createdUser.email).toBe(mockCoachEmail);
-      expect(createdUser.status).toBe('pending');
-      expect(createdUser.passwordHash).toBeTruthy();
-
-      expect(gymStaffSave).toHaveBeenCalledTimes(1);
-      expect(result).toBeDefined();
-      expect(result.gymId).toBe(mockGymId);
-      expect(result.userId).toBe('brand-new-user-id');
-      expect(result.role).toBe('coach');
-      expect(result.status).toBe('active');
-    });
+    // The handler has no DataSource dependency at all any more — constructing
+    // it above without one is the assertion. This test documents why.
+    expect(Object.keys(handler)).not.toContain('dataSource');
   });
 });

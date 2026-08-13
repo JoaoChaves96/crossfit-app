@@ -1,21 +1,35 @@
 import { ApiProperty } from '@nestjs/swagger';
 
 export class InviteCoachResponseDto {
-  @ApiProperty({ example: 'uuid-gym-staff-id' })
-  id: string;
+  @ApiProperty({
+    description: 'Opaque token identifying the invite',
+    example: 'AbC123...',
+  })
+  inviteToken: string;
 
-  @ApiProperty({ example: 'uuid-gym-id' })
-  gymId: string;
+  @ApiProperty({
+    description:
+      'Full acceptance URL. Email delivery is not implemented, so the owner copies this and sends it themselves.',
+    example: 'https://app.crossfitbox.com/invite/AbC123...',
+  })
+  inviteLink: string;
 
-  @ApiProperty({ example: 'uuid-coach-user-id' })
-  userId: string;
+  @ApiProperty({
+    description: 'ISO timestamp when the invite expires (7 days out)',
+    example: '2026-08-20T10:00:00.000Z',
+  })
+  expiresAt: string;
 
-  @ApiProperty({ enum: ['owner', 'coach'], example: 'coach' })
-  role: 'owner' | 'coach';
+  @ApiProperty({
+    description: 'Email address the invite was created for',
+    example: 'coach@example.com',
+  })
+  inviteeEmail: string;
 
-  @ApiProperty({ enum: ['active', 'inactive'], example: 'active' })
-  status: 'active' | 'inactive';
-
-  @ApiProperty({ example: '2024-01-01T00:00:00.000Z' })
-  assignedAt: Date;
+  @ApiProperty({
+    description: 'What accepting this invite makes the invitee',
+    enum: ['coach'],
+    example: 'coach',
+  })
+  role: 'coach';
 }

@@ -658,15 +658,14 @@ export class GymConfigurationController {
    * - Coach must not already be assigned to gym
    *
    * **Postconditions:**
-   * - GymStaff entry created with role = coach
-   * - Invitation email sent (async; implementation-specific)
+   * - Pending coach-role invite created; no gym_staff row until acceptance
    */
   @Post('/coaches')
   @Role('owner')
   @ApiOperation({
     summary: 'Invite a coach',
     description:
-      'Send an invitation to a user to become a coach. Gym owners only.',
+      'Creates a pending coach invite and returns the acceptance link. The invitee accepts it to become staff. Gym owners only.',
   })
   @ApiParam({ name: 'gymId', description: 'Gym ID' })
   @ApiBody({ type: InviteCoachDto })
@@ -677,6 +676,11 @@ export class GymConfigurationController {
   })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   @ApiResponse({ status: 403, description: 'Forbidden - Owner role required' })
+  @ApiResponse({
+    status: 409,
+    description:
+      'Already staff at this gym, or a coach invite for this email is already pending',
+  })
   async inviteCoach(
     @Param('gymId') gymId: string,
     @Body(ValidationPipe) inviteCoachDto: InviteCoachDto,

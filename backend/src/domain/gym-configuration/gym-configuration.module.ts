@@ -11,6 +11,7 @@ import { UserEntity } from '../user/entities/user.entity';
 import { ClassEntity } from '../class/entities/class.entity';
 import { BookingEntity } from '../booking/entities/booking.entity';
 import { GymModule } from '../gym/gym.module';
+import { InviteModule } from '../../api/invite/invite.module';
 import { GymStaffService } from '../gym-staff/gym-staff.service';
 import { SpaceService } from '../space/space.service';
 import { ClassTypeService } from '../class-type/class-type.service';
@@ -52,6 +53,7 @@ import { MembershipPlansQueryService } from '../../queries/gym-configuration/mem
   imports: [
     CqrsModule,
     GymModule,
+    InviteModule,
     TypeOrmModule.forFeature([
       SpaceEntity,
       ClassTypeEntity,
