@@ -259,9 +259,26 @@ MVP scope. Coach desktop has NO duplicate-header bug). Discovery/triage only; fi
   the coach's class screen finally renders the transition badge — until now no coach
   screen led to it at all. Journey 7 rewritten to drive the coach UI. BE 424/424,
   FE 358/358, 15/15 e2e; live-verified at 1280×832 and 390×844.
-  Still open from that batch: the coach invite (no invite token in the schema; an
-  invited coach with no account cannot log in) — decided 2026-08-13 to build a real
-  invite with an acceptance step, not yet designed.
+  The rest of that batch — the coach invite — is closed by the entry below.
+- ✅ **Coach invites require acceptance (2026-08-13)** — closes the remaining two coach-side
+  gaps the journeys recorded: there was no coach-role invite token in the schema, and an
+  invited coach with no account could never log in (the handler minted a `pending` user
+  with a random 32-byte password nobody held). `InviteCoachHandler` now creates a
+  **pending coach-role invite** and no `gym_staff` row; acceptance writes the staff row and
+  returns a re-signed token, so the new coach operates without re-logging in. `invites`
+  rows carry a `role`; coach creation is owner-only while the generic invite route stays
+  owner-or-coach and always creates an athlete. An invitee with no account registers
+  through the link and is returned to it. Owners see, copy and revoke pending coach
+  invites on `/coaches`. See `docs/DECISIONS.md` → **Coach Invites Require Acceptance**
+  and the design at
+  `docs/superpowers/specs/2026-08-13-coach-invite-and-gym-context-design.md`.
+  BE 437/437 unit + invite e2e specs rewritten, FE 368/368, `tsc` clean.
+  **Not done yet:** the Playwright journey 11 rewrite (its coach test still asserts the
+  removed instant-active behaviour, so it is expected red), and the gym-context switching
+  half of that design (`POST /api/auth/gym-context`, `GET /api/me/gyms`) — the
+  `DECISIONS.md` entry forward-references it, but neither endpoint exists.
+  **Still open, now sharper:** no email is ever sent. The owner copying the invite link is
+  the whole delivery mechanism — recorded as `epics/EMAIL_SERVICE_EPIC.md`.
 
 ## Previous Phase (2026-05-23)
 

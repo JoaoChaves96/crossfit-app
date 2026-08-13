@@ -143,8 +143,17 @@ a never-promoted waitlist row (see Findings).
 
 ### 11. Invites bring people in — ✅ DONE (as two tests)
 
+**Superseded 2026-08-13, not yet rewritten.** The product now has the flow the epic's wording
+described — coach invites require acceptance (`DECISIONS.md`, and
+`docs/superpowers/specs/2026-08-13-coach-invite-and-gym-context-design.md`) — so the reason this
+journey was split no longer holds. Collapsing it into a **single** test (owner invites a
+brand-new email → invitee registers through the link → accepts → works in the gym) is planned and
+**pending**. The two tests below are what is still in the spec file, and the coach one asserts
+the behaviour that was just removed — an invited coach going active without accepting — so it is
+expected red until the rewrite lands.
+
 The epic's wording — "coach opens the invite link and accepts" — describes a flow the product
-does not have; the two real mechanisms are disjoint (see Findings). Each got the test the
+did not have; the two real mechanisms were disjoint (see Findings). Each got the test the
 journey was after:
 
 - **The coach invite** — owner invites an existing account by email → active immediately → the
@@ -171,8 +180,19 @@ journey was after:
   `published` permanently, so the button's only possible outcome was an error toast. Journeys 6
   and 7.
 
-**Fixed after the epic closed** (2026-08-13, the first of the coach-side gaps):
+**Fixed after the epic closed** (2026-08-13 — all three coach-side gaps):
 
+- ✅ **The coach invite is now an invite, and an account-less coach can get in.** Both of the
+  invite gaps closed together, designed in
+  `docs/superpowers/specs/2026-08-13-coach-invite-and-gym-context-design.md` and recorded as a
+  Tier 1 ruling in `DECISIONS.md` → "Coach Invites Require Acceptance". `invites` rows carry a
+  `role`, so a coach-role invite token now exists in the schema; `InviteCoachHandler` creates a
+  **pending** invite instead of an active `gym_staff` row, and acceptance is what writes the
+  staff row and re-signs the caller's JWT into their new gym and role. The random-password
+  `pending` user is gone — an invitee with no account registers through the link and is returned
+  to it. The owner sees, copies and revokes pending coach invites on `/coaches`.
+  Journey 11 can now invite a brand-new email end to end; collapsing its two tests into the one
+  the epic originally asked for is the next step and has **not** landed yet.
 - ✅ **The transition control had no coach route, and 403'd for the owner.** Both halves closed.
   `manually-transition-class-state.handler` now accepts the assigned coach *or* an active owner of
   the gym, recorded as a Tier 1 ruling in `DECISIONS.md` → "Owners May Transition Any Class"; and
@@ -194,14 +214,11 @@ journey was after:
 - **A waitlist row is invisible once the class is past `published`.** Nothing on any screen
   distinguishes "still waitlisted" from "promoted" at `completed`, which is why journey 9's
   "absence does not promote" assertion has to read the database.
-- **The coach invite is not an invite.** `InviteCoachHandler` writes an active `gym_staff` row
-  immediately — no token, no acceptance, and the email is a `TODO`. The token-in-URL flow
-  (`InviteService`) creates a `gym_membership`, i.e. an athlete; **no coach-role invite token
-  exists in the schema.** The epic's journey 11 assumed one.
-- **An invited coach with no account cannot get in.** `InviteCoachHandler` creates a `pending`
-  user with a random 32-byte password nobody holds, and there is no set-password or
-  complete-profile path — so inviting a brand-new coach produces a staff row its owner can never
-  log into. Journey 11 invites a pre-registered account for this reason.
+- **Invite emails are still not sent.** Closing the two coach-invite gaps did not close this one,
+  and made it matter more: an invite that requires acceptance has to reach someone who may have no
+  account. `InviteService.sendInviteEmail` logs in development and `console.warn`s in production,
+  no provider is wired anywhere, and the owner copying the link is the whole delivery mechanism.
+  Recorded as its own epic — see `epics/EMAIL_SERVICE_EPIC.md`.
 
 **Harness lesson:** reaching the owner dashboard *through the sidebar* leaves the previous
 instance of the screen mounted but hidden, so `create-class-btn` resolves twice and `.first()`

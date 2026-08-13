@@ -168,6 +168,13 @@ client's point of view; it must store the new token in place of the old one.
 There is deliberately no general `/api/auth/refresh` endpoint in MVP. If another
 mid-session role change appears (e.g. accepting a coach invite), revisit this.
 
+**Revisited 2026-08-13.** Accepting a coach invite is that second case. It is
+handled the same way — the accept response carries a freshly signed token the
+client stores in place of the old one — and gym context switching adds one
+narrow re-signing endpoint (`POST /api/auth/gym-context`). There is still no
+general refresh endpoint: both paths re-sign only for a gym the caller is
+provably attached to.
+
 ## One Gym Per Owner
 
 A user may own **at most one** gym. `POST /api/gyms` rejects a second attempt
@@ -400,3 +407,29 @@ owner can line up a plan for someone returning from suspension.
 Rationale: the assignment grants nothing while the member is suspended — both access paths
 (schedule visibility and booking) independently require an active `GymMembership` — so
 refusing it would block a useful workflow to prevent an effect that cannot occur.
+
+## Coach Invites Require Acceptance
+
+An owner cannot make someone staff unilaterally. `POST /api/gyms/:gymId/configuration/coaches`
+creates a **pending coach-role invite**; a `gym_staff` row exists only once the
+invitee accepts it.
+
+Rationale: the previous handler wrote an active `gym_staff` row immediately and,
+for an unknown email, a `pending` user with a random 32-byte password nobody
+held — so an invited coach who had no account could never log in, and a
+registered user could be made staff without consenting.
+
+Rules:
+
+- Coach invites live in the same `invites` table as athlete invites, separated by
+  `role`. Same 7-day expiry, same revocation, same public acceptance screen.
+- Creating a coach invite is **owner-only**. The generic
+  `POST /api/gyms/:gymId/invites` route stays owner-or-coach and always creates
+  an **athlete** invite: a coach cannot create a coach.
+- An invitee with no account registers through the link and is returned to it;
+  there is no separate set-password path.
+- Any existing `gym_staff` row at that gym blocks a new invite, in any status —
+  a deactivated coach is reactivated, not re-invited.
+- A live pending coach invite for the same gym and email blocks a second one.
+  An expired one does not.
+- Acceptance re-signs the JWT (see *Gym Context Is Switchable*).
