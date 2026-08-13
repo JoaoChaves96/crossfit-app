@@ -92,7 +92,9 @@ test('a plan excluding a class type hides it from the athlete until the owner sw
     await openAthleteSchedule(athleteActor.page);
 
     await expectClassOnAthleteDay(athleteActor.page, crossfitClass.id, day);
-    await expectClassNotVisibleToAthlete(athleteActor.page, strengthClass.id);
+    await expectClassNotVisibleToAthlete(athleteActor.page, strengthClass.id, {
+      visibleClassId: crossfitClass.id,
+    });
 
     // A second, independent reading of the same fact. The type-filter rail is
     // built from the class types present in the fetched payload plus a canonical

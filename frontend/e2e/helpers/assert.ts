@@ -79,8 +79,38 @@ export async function expectClassOnAthleteDay(
   await expect(section).toBeVisible();
 }
 
-/** The athlete cannot see this class at all — the negative of the visibility rule. */
-export async function expectClassNotVisibleToAthlete(page: Page, classId: string): Promise<void> {
+/**
+ * Proof that the screen an absence is about is actually on screen.
+ *
+ * Either another class the athlete IS allowed to see, or a testID that says the
+ * screen reached a settled state of its own (`schedule-error` when the whole
+ * schedule was refused).
+ */
+export type AbsenceAnchor = { visibleClassId: string } | { testId: string };
+
+/**
+ * The athlete cannot see this class at all — the negative of the visibility rule.
+ *
+ * The anchor is REQUIRED, and it is the whole point of the helper. `toHaveCount(0)`
+ * is satisfied just as well by a schedule that has not rendered yet as by one that
+ * correctly withheld the class, so an unanchored absence is a test that passes on
+ * an empty DOM. Both current callers happened to assert a positive first; making
+ * it a parameter means the next journey cannot forget, and Tier 2 is almost
+ * entirely absences.
+ */
+export async function expectClassNotVisibleToAthlete(
+  page: Page,
+  classId: string,
+  anchor: AbsenceAnchor,
+): Promise<void> {
+  if ('visibleClassId' in anchor) {
+    await expect(page.getByTestId(`athlete-class-card-${anchor.visibleClassId}`)).toBeVisible({
+      timeout: 15_000,
+    });
+  } else {
+    await expect(page.getByTestId(anchor.testId)).toBeVisible({ timeout: 15_000 });
+  }
+
   await expect(page.getByTestId(`athlete-class-card-${classId}`)).toHaveCount(0);
 }
 

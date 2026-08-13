@@ -34,23 +34,21 @@ import { E2E_ALLOWED_API_ORIGIN } from './env';
  *    scenarios no script can rebuild.
  *
  * Only cross-origin `/api` calls are intercepted; Metro's bundle traffic is
- * untouched. Rewrites are recorded so `apiRewrites` can report them.
+ * untouched. A rewrite is deliberately SILENT and does not fail the test: the
+ * bundle's base URL varies by machine (`.env.local`), so a rewrite is the normal
+ * case here rather than a signal. What must never happen is a request REACHING
+ * another origin, and that is what this makes impossible.
  */
-function pinApiOrigin(page: Page): { rewrites: string[] } {
-  const rewrites: string[] = [];
-
+function pinApiOrigin(page: Page): void {
   void page.route(
     (url) => url.pathname.startsWith('/api') && url.origin !== E2E_ALLOWED_API_ORIGIN,
     (route) => {
       const original = new URL(route.request().url());
-      rewrites.push(original.origin);
       return route.continue({
         url: `${E2E_ALLOWED_API_ORIGIN}${original.pathname}${original.search}`,
       });
     },
   );
-
-  return { rewrites };
 }
 
 export const test = base.extend<{ page: Page }>({

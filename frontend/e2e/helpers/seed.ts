@@ -145,6 +145,22 @@ async function registerUser(name: string, email: string, password: string): Prom
   return { id, name, email, password };
 }
 
+/**
+ * Registers a user who belongs to no gym yet.
+ *
+ * The invite journeys need exactly this: a real account, with a real password
+ * they can log in with, that the gym does not know about. `seedGym` cannot
+ * supply one — every user it makes is already staff or a member, which is the
+ * state an invite exists to create.
+ *
+ * `label` distinguishes the user in the database and in a failure message
+ * (`coach-<label>-<pid>-<n>@e2e.test`).
+ */
+export async function seedUser(label: string, displayName: string): Promise<SeededUser> {
+  const suffix = uniqueSuffix(label);
+  return registerUser(`${displayName} ${suffix}`, `${label}-${suffix}@e2e.test`, 'password123');
+}
+
 /** Decodes the `sub` claim from a JWT. The payload is the base64url middle segment. */
 function userIdFromToken(token: string): string | undefined {
   const payload = token.split('.')[1];

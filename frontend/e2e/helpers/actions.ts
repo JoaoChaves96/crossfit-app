@@ -11,7 +11,7 @@
  * points at the journey's own claim.
  */
 import { expect, type Locator, type Page } from '@playwright/test';
-import { fillStable, tab } from './auth';
+import { fillStable, tab, visibleTestId } from './auth';
 import type { CalendarDay } from './dates';
 
 // ── Primitives ───────────────────────────────────────────────────────────────
@@ -85,7 +85,10 @@ export interface CreateClassInput {
 export async function createClassViaForm(page: Page, input: CreateClassInput): Promise<void> {
   const { date, time = '09:00', classTypeName, coachName, spaceName, capacity } = input;
 
-  await page.getByTestId('create-class-btn').first().click();
+  // Pinned to the VISIBLE copy: reaching the dashboard through the sidebar
+  // pushes a second instance of the screen, leaving the earlier one mounted but
+  // hidden — and `.first()` would then wait forever on a button nobody can press.
+  await visibleTestId(page, 'create-class-btn').click();
   await expect(page.getByTestId('create-class-save-btn')).toBeVisible();
 
   // Single-class mode is the default, but a recurring series writes different
@@ -108,16 +111,32 @@ export async function createClassViaForm(page: Page, input: CreateClassInput): P
 
   // The form leaves on success. Waiting for the dashboard's own control — rather
   // than for the form to vanish — also proves the navigation completed.
-  await expect(page.getByTestId('create-class-btn').first()).toBeVisible({ timeout: 20_000 });
+  await expect(visibleTestId(page, 'create-class-btn')).toBeVisible({ timeout: 20_000 });
+}
+
+/** The calendar days the owner dashboard currently has columns for. */
+async function renderedWeekDays(page: Page): Promise<CalendarDay[]> {
+  const columns = await page.getByTestId(/^day-column-/).all();
+  const testIds = await Promise.all(columns.map((c) => c.getAttribute('data-testid')));
+  return testIds
+    .map((id) => id?.replace('day-column-', ''))
+    .filter((d): d is CalendarDay => !!d)
+    .sort();
 }
 
 /**
- * Scrolls the owner dashboard's week view to the week containing `day`.
+ * Moves the owner dashboard's week view to the week containing `day`.
  *
- * The dashboard opens on the current week, and fixtures are dated a few days
- * out, so the target is often one week forward. This walks forward a bounded
- * number of weeks and fails with the days it did see — never silently gives up,
- * which is the behaviour that let the old suite skip itself.
+ * The dashboard opens on the current week and walks in whichever direction the
+ * target lies — forward for a bookable class a few days out, BACKWARD for the
+ * completed classes the attendance and result journeys need. A one-directional
+ * walk would simply never reach a `pastDay()` fixture, and would blame the date.
+ *
+ * Direction is read off the grid rather than computed here: Node keeps the
+ * machine's zone while the browser is pinned elsewhere, so "which week is the
+ * dashboard on" is a question only the dashboard can answer. Bounded either way,
+ * and it fails with the days it did see — never silently gives up, which is the
+ * behaviour that let the old suite skip itself.
  *
  * "Is the target week on screen?" must be a RETRYING question, not a reading. A
  * bare `count()` returns 0 both when the week is elsewhere and when the grid has
@@ -128,31 +147,48 @@ export async function createClassViaForm(page: Page, input: CreateClassInput): P
  * weeks past a column that was already there and blamed the fixture's date.
  *
  * So each week gets its own bounded wait for the column to APPEAR, and only a
- * week that genuinely does not contain the day advances the view.
+ * week that genuinely does not contain the day moves the view.
  */
 export async function showWeekContaining(page: Page, day: CalendarDay): Promise<Locator> {
   const column = page.getByTestId(`day-column-${day}`);
+  const MAX_STEPS = 3;
+  const seen: CalendarDay[] = [];
 
-  for (let attempt = 0; attempt < 3; attempt += 1) {
+  for (let step = 0; step <= MAX_STEPS; step += 1) {
     try {
       await expect(column).toHaveCount(1, { timeout: 8_000 });
       await expect(column).toBeVisible();
       return column;
     } catch {
       // Not this week — or not yet rendered, which the wait above has now ruled
-      // out. Advancing is safe.
+      // out. Moving the view is safe.
     }
-    await page.getByTestId('week-nav-next-btn').first().click();
+
+    if (step === MAX_STEPS) break;
+
+    const rendered = await renderedWeekDays(page);
+    seen.push(...rendered);
+
+    // An empty grid says nothing about direction; assume the common case
+    // (a fixture dated forwards) rather than stalling.
+    const forwards = rendered.length === 0 || day > rendered[rendered.length - 1];
+    if (!forwards && day > rendered[0]) {
+      throw new Error(
+        `The owner dashboard is showing the week that contains ${day} ` +
+          `(${rendered[0]}–${rendered[rendered.length - 1]}) but has no column for it. ` +
+          `That is a missing column, not a navigation problem.`,
+      );
+    }
+
+    await visibleTestId(page, forwards ? 'week-nav-next-btn' : 'week-nav-prev-btn').click();
     await page.waitForTimeout(250);
   }
 
-  const visibleColumns = await page.getByTestId(/^day-column-/).all();
-  const labels = await Promise.all(
-    visibleColumns.map((c) => c.getAttribute('data-testid')),
-  );
+  const rendered = await renderedWeekDays(page);
   throw new Error(
-    `Could not reach the week containing ${day} on the owner dashboard after 3 forward steps. ` +
-      `Columns visible: ${labels.join(', ') || '(none)'}.`,
+    `Could not reach the week containing ${day} on the owner dashboard within ${MAX_STEPS} steps. ` +
+      `Columns now visible: ${rendered.join(', ') || '(none)'}. ` +
+      `Columns seen along the way: ${seen.join(', ') || '(none)'}.`,
   );
 }
 
@@ -164,7 +200,7 @@ export async function showWeekContaining(page: Page, day: CalendarDay): Promise<
  * fails here loudly rather than in whichever journey happened to use it.
  */
 export async function openOwnerSection(page: Page, key: string): Promise<void> {
-  await page.getByTestId(`nav-${key}`).click();
+  await visibleTestId(page, `nav-${key}`).click();
   await expect(page).toHaveURL(new RegExp(key));
 }
 

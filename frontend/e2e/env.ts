@@ -48,8 +48,9 @@ export const E2E_WEB_URL = `http://localhost:${E2E_WEB_PORT}`;
  * system environment (`@expo/env` loadEnvFiles), so exporting our own value
  * wins — but a bundler cache or a stray port could still land the app on the
  * dev API, where writes would reach the dev database through HTTP and slip
- * straight past the SQL-level guard below. `guardApiOrigin()` in fixtures.ts
- * fails any test whose page talks to a host that is not the e2e API.
+ * straight past the SQL-level guard below. `pinApiOrigin()` in fixtures.ts
+ * closes that by REWRITING every `/api` request whose origin is not this one, so
+ * no page in the suite can reach a host other than the e2e API.
  */
 export const E2E_ALLOWED_API_ORIGIN = E2E_API_URL;
 

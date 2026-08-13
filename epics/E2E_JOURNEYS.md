@@ -26,6 +26,28 @@ Corollaries, each of which is a lesson from the suite this replaces:
 - **Do not re-test the API.** 15 backend supertest specs already cover authz and gym scoping.
   Playwright is for the frontend↔backend contract, state surviving navigation, auth/token races,
   and multi-role sequences where one actor acts and another sees the consequence.
+- **Every absence needs an anchor.** `toHaveCount(0)` is satisfied by an empty DOM, so an
+  absence is only meaningful next to a positive that proves the screen rendered.
+  `expectClassNotVisibleToAthlete` takes that anchor as a required argument for this reason.
+
+## Locators: when `visibleTestId()` is mandatory
+
+On Expo Web a testID is routinely in the DOM more than once and the spare copies are **hidden,
+not absent** — so `.first()` picks a node no user can see and Playwright waits it out to a
+timeout instead of failing fast. The rule, by kind of control:
+
+- **Shared chrome — always `visibleTestId()`.** Anything rendered by a navigator or a layout:
+  `tab-*` (`<Tabs>` renders the bar twice on web), `nav-*`, the week-nav arrows (mobile and
+  desktop toolbars), the notification bell and its badge. `tab()` already delegates.
+- **Anything a pushed route shares with the tab screen underneath — always `visibleTestId()`.**
+  A pushed detail route leaves the tabs screen MOUNTED but hidden, which is what hid journey 5's
+  bell.
+- **Controls that exist on exactly one screen — bare `getByTestId()` is correct**, and preferred:
+  `book-btn`, `cancel-booking-btn`, `member-save-btn`. If it resolves to two nodes, that is a
+  real duplicate-testID defect and strict mode should say so rather than being filtered away.
+
+Never `.first()` on a testID to escape strict mode. Either the node is unique, or the right
+answer is `visibleTestId()`.
 
 ---
 
@@ -84,19 +106,101 @@ The most complex state transition in the app, and to date only ever verified by 
 
 ---
 
-## Tier 2 — lifecycle and role boundaries
+## Tier 2 — lifecycle and role boundaries — ✅ COMPLETE
 
-6. **Cancel frees the spot** — athlete cancels → count decrements, class bookable again.
-7. **Lifecycle drives the athlete's view** — owner walks `published → booking_closed →
-   in_progress → completed`; at each step, assert what the athlete can and cannot do.
-8. **Coach programming reaches the athlete** — coach saves a WOD → the booked athlete sees that
-   text on the class.
-9. **Attendance gates result logging** — coach marks A present, B absent → A can log a result, B
-   **cannot**. Also pins "absence does not promote".
-10. **Result lands in training history** — athlete logs → appears in history → coach sees it.
-11. **Invite a coach end-to-end** — owner invites → coach opens the invite link and accepts →
-    appears active → is assignable as coach on a new class. A token-in-URL flow no unit test can
-    reach.
+### 6. Cancel frees the spot — ✅ DONE
+
+Athlete cancels → count decrements, class bookable again.
+
+### 7. Lifecycle drives the athlete's view — ✅ DONE
+
+The class is walked `published → booking_closed → in_progress → completed` and at each step the
+athlete's own screens are checked, for both a booked athlete and a non-booked one.
+
+**Driven by the coach, not the owner.** `ManuallyTransitionClassState` requires
+`classEntity.coachUserId === command.userId`, so the assigned coach is the only actor who can
+walk it — see Findings.
+
+### 8. Coach programming reaches the athlete — ✅ DONE
+
+Coach saves a multi-line WOD from their own class screen → the booked athlete reads every line
+on `class-details` → the coach **edits** it → the athlete sees the new text and no longer the
+old. The overwrite half is the load-bearing one.
+
+### 9 + 10. Attendance gates result logging, and the result reaches history and the coach — ✅ DONE (merged)
+
+Merged on the user's call: they are one chain over one expensive precondition (a `completed`
+class with real attendance on it). A and B are identical except the single toggle the coach
+flipped, so anything separating them separates on attendance alone.
+
+Coach walks the class to `in_progress`, marks B absent (everyone starts present), submits →
+`completed`. A logs `225` seconds → `03:45` in Training History; the coach's Results panel shows
+A's name and `03:45 min`, and not B's. B is refused on save and has **no** history entry.
+"Absence does not promote" is pinned in the database — at `completed` the UI cannot distinguish
+a never-promoted waitlist row (see Findings).
+
+### 11. Invites bring people in — ✅ DONE (as two tests)
+
+The epic's wording — "coach opens the invite link and accepts" — describes a flow the product
+does not have; the two real mechanisms are disjoint (see Findings). Each got the test the
+journey was after:
+
+- **The coach invite** — owner invites an existing account by email → active immediately → the
+  class form's coach picker offers them → the class the owner assigns them shows up on **their
+  own** Coach Classes screen and opens with the coach-only programming form.
+- **The athlete invite link** — owner generates the invite; the token is taken from **the link
+  the UI displayed**, not from the database, because that string travelling correctly is the seam
+  under test. The invitee opens `/invite/<token>`, reads who invited them, joins, is a member on
+  the owner's list — and the token is then spent (re-opening reports "already accepted").
+
+---
+
+## Findings from Tier 2
+
+**Fixed while writing the journeys** (each now mutation-proved by the journey that found it):
+
+- **`class-details` derived its actions from stale data after a cancel** — the screen updated the
+  booking but re-derived nothing, so a cancelled booking still offered Cancel. Journey 6.
+- **The lifecycle confirm was dead on web** — `Alert.alert` is a no-op in React Native Web, so
+  the coach's transition button did nothing at all on the platform the app ships on. Now
+  `showConfirm`. Journey 7.
+- **Cancel was offered past `published`, on two screens** — `class-details` and, separately,
+  `my-bookings` (which hid it only at `in_progress`). `CancelBooking` refuses every state past
+  `published` permanently, so the button's only possible outcome was an error toast. Journeys 6
+  and 7.
+
+**Recorded, not fixed** — real gaps the journeys documented rather than invented around:
+
+- **The transition control is assigned-coach-only, but the owner can see it.** The controller
+  allows `['coach','owner']` while `manually-transition-class-state.handler` requires
+  `coachUserId === userId`, so an owner pressing it gets a 403. And there is **no coach-side
+  navigation to it at all** — journey 7 reaches `/class-management?classId=…` by URL because the
+  coach's own screens offer no route to the control they are the only ones allowed to use.
+- **Attendance never reaches the athlete.** No attendance flag exists on
+  `UserBookingItemDto`, `ClassScheduleItemDto` or `TrainingHistoryItemDto`, so `my-bookings`
+  derives "You attended" and the LOG RESULT button from `state === 'completed'` alone. An athlete
+  marked absent is *offered* the action and refused only on submit.
+- **…and the refusal does not say why.** `api-client` deliberately replaces server messages by
+  status, so `LogResult`'s "Athlete was not marked present for this class" reaches the athlete as
+  "You do not have permission to do that." Correct as a leak policy, useless as an explanation;
+  the screen is the place to say it.
+- **A waitlist row is invisible once the class is past `published`.** Nothing on any screen
+  distinguishes "still waitlisted" from "promoted" at `completed`, which is why journey 9's
+  "absence does not promote" assertion has to read the database.
+- **The coach invite is not an invite.** `InviteCoachHandler` writes an active `gym_staff` row
+  immediately — no token, no acceptance, and the email is a `TODO`. The token-in-URL flow
+  (`InviteService`) creates a `gym_membership`, i.e. an athlete; **no coach-role invite token
+  exists in the schema.** The epic's journey 11 assumed one.
+- **An invited coach with no account cannot get in.** `InviteCoachHandler` creates a `pending`
+  user with a random 32-byte password nobody holds, and there is no set-password or
+  complete-profile path — so inviting a brand-new coach produces a staff row its owner can never
+  log into. Journey 11 invites a pre-registered account for this reason.
+
+**Harness lesson:** reaching the owner dashboard *through the sidebar* leaves the previous
+instance of the screen mounted but hidden, so `create-class-btn` resolves twice and `.first()`
+picks the dead one — the same trap as journey 5's bell. `createClassViaForm` now uses
+`visibleTestId()`. The rule in *Locators* is not about shared chrome only: it is about any screen
+that can be arrived at twice.
 
 ---
 
@@ -137,6 +241,13 @@ disabled and tests drive transitions explicitly; the scheduler is tested separat
 **Pin the browser timezone.** `playwright.config.ts` sets no `timezoneId`, so date assertions
 are tautological on a UTC machine — exactly how the write-side date bug survived. Pin a
 negative-offset zone so a UTC-vs-local defect is visible.
+
+**One viewport, and it is desktop.** The suite runs a single 1280×832 chromium project, so only
+the desktop layout is ever exercised: `DesktopTopNav` is real and the bottom tab bar is
+`display: none`. Known consequence — journey 4 pins a fix (`7fb4c79`) whose second half was a
+*mobile* symptom (the member sheet covering the row it had just changed), and it pins it as a
+desktop panel. Accepted deliberately: a second project doubles both the run and every server
+boot. Mobile layout stays a jest-with-pinned-register and live-screenshot concern.
 
 **Seed failures must be loud.** The old `globalSetup` swallowed an unreachable database with a
 `console.warn` and carried on, which is what fed the skip cascade.
@@ -187,7 +298,24 @@ against the defect, or it is only asserting that the feature works at all.
 `effectiveExpiresAt` rolls a lapsed auto-roll plan forward, so `setPlanExpiry` alone cannot
 make an athlete expired.
 
-**Next: Tier 2 (6–11)**, after a shape review of Tier 1.
+**Tier 2: ✅ COMPLETE.** Journeys 6, 7, 8, 9+10 (merged) and 11 (two tests) all pass; the whole
+suite is **11 tests in ~3.2 minutes** serially. Every journey was mutation-proved, most against
+more than one defect: journey 9 against removing the attendance gate in `LogResult`, against
+`TrainingHistoryService` dropping the result, and against `MarkAttendance` promoting the waitlist
+on an absence; journey 11 against a coach invited `inactive`, against a truncated token in the
+generated link, and against an accept that leaves the invite `pending`.
+
+**Helper additions in Tier 2:** `seedUser()` in `seed.ts` — a registered account belonging to no
+gym, which `seedGym` cannot produce and the invite journeys require. New testIDs, all on
+surfaces a journey had no way to address: `class-details-title`, `log-results-error`,
+`booking-card-*` / `booking-cancel-btn-*` / `log-result-btn-*` on `my-bookings`, `results-panel`
+(the coach's Results, which sits beside the Bookings roster on desktop and shares its names), and
+`create-invite-btn` / `invite-email-input` / `invite-send-btn` / `invite-link-text` /
+`invite-join-btn` on the invite flow.
+
+**Next:** Tier 3 (12–15) is still parked. Now that Tier 2 is green serially, the open harness
+question is whether to lift `workers: 1` — each journey seeds its own gym, so the blocker is
+server capacity rather than data collisions.
 
 The five existing specs (`e2e/{smoke,owner,coach,athlete,cross-role}.spec.ts`, ~1,450 lines,
 ~35 tests) are **discarded** — user's call, 2026-08-12: they assert presence rather than

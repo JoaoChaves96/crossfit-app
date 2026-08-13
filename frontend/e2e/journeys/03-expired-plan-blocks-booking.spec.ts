@@ -91,7 +91,9 @@ test('an athlete whose plan lapsed earlier today cannot book, and can once it is
   await expect(page.getByTestId('schedule-error')).toHaveText(REFUSAL_COPY, {
     timeout: 20_000,
   });
-  await expectClassNotVisibleToAthlete(page, cls.id);
+  // Anchored on the refusal the athlete was just shown: this screen has no class
+  // the athlete may see, so the error IS the proof that it rendered.
+  await expectClassNotVisibleToAthlete(page, cls.id, { testId: 'schedule-error' });
 
   // Opening the class directly, as a deep link or a stale card would: there is
   // no booking control on any route, not just no card to press.

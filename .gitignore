@@ -16,3 +16,6 @@ skills-lock.json
 /.impeccable/
 **/.impeccable/shots/
 **/.impeccable/hook.cache.json
+# Playwright artefacts, if a run is started from the repo root rather than frontend/
+test-results/
+playwright-report/
