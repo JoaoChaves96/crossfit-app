@@ -104,7 +104,11 @@ describe('invite acceptance — coach invites', () => {
 
     fireEvent.press(screen.getByTestId('invite-join-btn'));
 
-    await waitFor(() => expect(mockLogin).toHaveBeenCalledWith('new.jwt.token'));
+    // Explicit budget: RNTL's 1 s default lost to machine contention when other
+    // suites ran in parallel, which read as a defect in this screen.
+    await waitFor(() => expect(mockLogin).toHaveBeenCalledWith('new.jwt.token'), {
+      timeout: 5000,
+    });
     expect(mockReplace).toHaveBeenCalledWith('/coach-classes');
 
     // The token is not enough on its own: /coach-classes issues no request at

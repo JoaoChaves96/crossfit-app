@@ -153,12 +153,17 @@ export default function InviteAcceptanceScreen() {
       // committed the staff/membership row, so a storage failure here must not
       // route the user into the error state. That state offers "Try Again",
       // which re-posts accept and now answers 400 — telling someone who really
-      // is a coach, twice, that they are not. Log in again is the recovery.
+      // is a coach, twice, that they are not.
+      //
+      // The provider sets the in-memory gym before it awaits the write, so what
+      // a rejection here costs is persistence, not this session: the next screen
+      // still loads, and the gym is re-read from the token's claims on the next
+      // login. Nothing to tell the user about.
       try {
         await gym.setCurrentGymId(result.gym.id);
       } catch {
-        console.warn(
-          '[invite] accepted, but storing gym context failed; the next screen may be empty until re-login',
+        console.error(
+          '[invite] accepted, but persisting gym context failed; this session works, a restart will not',
         );
       }
 

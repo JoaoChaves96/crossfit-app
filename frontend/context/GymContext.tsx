@@ -20,7 +20,11 @@ export function GymProvider({ children }: { children: ReactNode }) {
     (async () => {
       try {
         const storedGymId = await storage.getItem(CURRENT_GYM_ID_KEY);
-        setCurrentGymIdState(storedGymId);
+        // Do not clobber a gym set while this read was in flight. The read is
+        // several microtasks long, so a caller that sets a gym early — an
+        // invite accepted on a cold start — would otherwise have it replaced by
+        // whatever storage held before, usually null.
+        setCurrentGymIdState((current) => current ?? storedGymId);
       } catch (error) {
         console.error('Failed to load gym context from storage:', error);
       } finally {
@@ -30,8 +34,14 @@ export function GymProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const setCurrentGymId = async (gymId: string) => {
-    await storage.setItem(CURRENT_GYM_ID_KEY, gymId);
+    // In-memory first, persistence second. Awaiting the write before setting
+    // state meant a storage failure cost the caller the gym entirely, not just
+    // its survival across a restart — and a screen with no gym issues no
+    // requests at all, which reads to the user as an empty gym. This order
+    // makes a failed write cost only persistence. The rejection still
+    // propagates so callers can decide what to say about it.
     setCurrentGymIdState(gymId);
+    await storage.setItem(CURRENT_GYM_ID_KEY, gymId);
   };
 
   return (
