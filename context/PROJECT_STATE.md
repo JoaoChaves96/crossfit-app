@@ -248,6 +248,20 @@ MVP scope. Coach desktop has NO duplicate-header bug). Discovery/triage only; fi
   per-member auto-renew, and suspend/resume a membership; an hourly scheduler rolls
   or expires plans; the athlete schedule and booking path enforce expiry, live-proved
   end to end. See `epics/MEMBERSHIP_PLANS_EPIC.md` for the full task breakdown.
+- ✅ **E2E journeys suite (2026-08-13)** — 15 Playwright journeys covering all three
+  roles, each mutation-proved, ~3.3 min serially. The suite owns `crossfit_box_e2e` and
+  never touches the dev database. `workers: 1` is settled and measured — see
+  `epics/E2E_JOURNEYS.md` and the reasoning in `playwright.config.ts`.
+- ✅ **Coach lifecycle control reachable (2026-08-13)** — first of the three coach-side
+  gaps the journeys recorded. A manual class transition now accepts the assigned coach
+  **or** an active owner of the gym (`docs/DECISIONS.md` → **Owners May Transition Any
+  Class**; the owner previously got a 403 from a control their own screen offered), and
+  the coach's class screen finally renders the transition badge — until now no coach
+  screen led to it at all. Journey 7 rewritten to drive the coach UI. BE 424/424,
+  FE 358/358, 15/15 e2e; live-verified at 1280×832 and 390×844.
+  Still open from that batch: the coach invite (no invite token in the schema; an
+  invited coach with no account cannot log in) — decided 2026-08-13 to build a real
+  invite with an acceptance step, not yet designed.
 
 ## Previous Phase (2026-05-23)
 

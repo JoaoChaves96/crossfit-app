@@ -33,7 +33,13 @@ interface StateBadgeProps {
   onPress: () => void;
 }
 
-function StateBadge({ state, isTransitioning, onPress }: StateBadgeProps) {
+/**
+ * The lifecycle chip doubling as the advance-state control. Shared with the
+ * coach's own class screen so both actors get the same affordance — the coach is
+ * the primary actor on a lifecycle transition, the owner the fallback
+ * (DECISIONS.md → "Owners May Transition Any Class").
+ */
+export function StateBadge({ state, isTransitioning, onPress }: StateBadgeProps) {
   const nextState = STATE_NEXT_MAP[state];
   const isTerminal = nextState === null;
 

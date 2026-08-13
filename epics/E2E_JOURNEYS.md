@@ -171,13 +171,18 @@ journey was after:
   `published` permanently, so the button's only possible outcome was an error toast. Journeys 6
   and 7.
 
+**Fixed after the epic closed** (2026-08-13, the first of the coach-side gaps):
+
+- ✅ **The transition control had no coach route, and 403'd for the owner.** Both halves closed.
+  `manually-transition-class-state.handler` now accepts the assigned coach *or* an active owner of
+  the gym, recorded as a Tier 1 ruling in `DECISIONS.md` → "Owners May Transition Any Class"; and
+  the coach's own class screen (`coach-class-details`) now renders the shared `StateBadge`, so the
+  primary actor finally has a route to it. Journey 7 was rewritten to drive the coach UI
+  (My Classes → the class → its chip) instead of reaching `/class-management?classId=…` by URL, and
+  mutation-proved: removing the coach badge takes the journey red.
+
 **Recorded, not fixed** — real gaps the journeys documented rather than invented around:
 
-- **The transition control is assigned-coach-only, but the owner can see it.** The controller
-  allows `['coach','owner']` while `manually-transition-class-state.handler` requires
-  `coachUserId === userId`, so an owner pressing it gets a 403. And there is **no coach-side
-  navigation to it at all** — journey 7 reaches `/class-management?classId=…` by URL because the
-  coach's own screens offer no route to the control they are the only ones allowed to use.
 - **Attendance never reaches the athlete.** No attendance flag exists on
   `UserBookingItemDto`, `ClassScheduleItemDto` or `TrainingHistoryItemDto`, so `my-bookings`
   derives "You attended" and the LOG RESULT button from `state === 'completed'` alone. An athlete

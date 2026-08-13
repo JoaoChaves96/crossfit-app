@@ -6,13 +6,13 @@
  * step. The claim is not that a chip label changed: it is that a state stored on
  * the class in one session removes an ACTION from two other people's screens.
  *
- * Who drives it, and why it is the coach: the manual transition endpoint accepts
- * the `coach` and `owner` roles, but the handler then requires
- * `classEntity.coachUserId === userId` — so the only actor who can advance a
- * class is the coach assigned to it. The owner sees the same control and gets a
- * 403 from it (recorded in the epic; not this journey's subject). The automatic
- * `published → booking_closed` path is the lifecycle scheduler, which the e2e
- * backend runs with disabled precisely so a test can own the state.
+ * Who drives it, and why it is the coach: the assigned coach is the primary actor
+ * on a manual transition, and reaches the control from their own class screen. An
+ * owner may also advance any class in their gym (DECISIONS.md → "Owners May
+ * Transition Any Class") from Class Management; that second path is not this
+ * journey's subject. The automatic `published → booking_closed` path is the
+ * lifecycle scheduler, which the e2e backend runs with disabled precisely so a
+ * test can own the state.
  *
  * The two-sided shape at every step, because "the athlete can't act" is only
  * meaningful against an athlete who could a moment ago:
@@ -92,11 +92,17 @@ test('the class lifecycle removes the athlete’s actions one state at a time', 
   // advances.
   await seedBooking(cls, athleteA);
 
-  // The coach drives the lifecycle. `class-management` is reached by URL because
-  // the transition control lives only on that screen and the coach's own
-  // navigation does not lead to it — see the epic's note on that gap.
+  // The coach drives the lifecycle, and gets there the way a coach actually
+  // would: My Classes → the class → its state chip. Driven through the UI rather
+  // than by URL on purpose — the control used to exist on the owner's screen only,
+  // with no coach route to it at all, so the navigation IS part of what this
+  // journey holds in place.
   await loginAs(page, gym.coach);
-  await page.goto(`/class-management?classId=${cls.id}`);
+  await page.goto('/coach-classes');
+  const coachRow = page.getByTestId(`coach-class-view-btn-${cls.id}`);
+  await expect(coachRow).toBeVisible({ timeout: 20_000 });
+  await coachRow.click();
+
   const transitionBtn = page.getByTestId('class-transition-btn');
   await expect(transitionBtn).toHaveText(/Published/i, { timeout: 20_000 });
 

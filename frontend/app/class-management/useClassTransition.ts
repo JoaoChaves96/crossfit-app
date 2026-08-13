@@ -2,14 +2,18 @@ import { useCallback, useState } from 'react';
 import { showConfirm, showError } from '@/utils/alert';
 import { createApiClient } from '@/utils/api-client';
 import { components } from '@/types/api.gen';
-import { STATE_NEXT_MAP, STATE_LABEL } from './classStates';
+import { STATE_NEXT_MAP, STATE_LABEL, type ClassState } from './classStates';
 
-type ClassDetail = components['schemas']['ClassScheduleItemDto'];
 type ManuallyTransitionDto = components['schemas']['ManuallyTransitionClassStateDto'];
 type ManuallyTransitionResponse = components['schemas']['ManuallyTransitionClassStateResponseDto'];
 
 interface UseClassTransitionParams {
-  classDetail: ClassDetail | null;
+  /**
+   * Current lifecycle state, or null while it is unknown. Deliberately the state
+   * alone rather than a whole class DTO: the coach screen is driven by route
+   * params and never holds one, and the state is all the transition needs.
+   */
+  state: ClassState | null;
   token: string | null;
   currentGymId: string | null;
   classId: string | undefined;
@@ -22,7 +26,7 @@ interface UseClassTransitionResult {
 }
 
 export function useClassTransition({
-  classDetail,
+  state,
   token,
   currentGymId,
   classId,
@@ -31,8 +35,8 @@ export function useClassTransition({
   const [isTransitioning, setIsTransitioning] = useState(false);
 
   const handleTransition = useCallback(() => {
-    if (!classDetail || !token || !currentGymId || !classId) return;
-    const nextState = STATE_NEXT_MAP[classDetail.state];
+    if (!state || !token || !currentGymId || !classId) return;
+    const nextState = STATE_NEXT_MAP[state];
     if (!nextState) return;
 
     // `showConfirm`, never `Alert.alert`: react-native-web's Alert is a literal
@@ -71,7 +75,7 @@ export function useClassTransition({
         },
       ]
     );
-  }, [classDetail, token, currentGymId, classId, onTransitionSuccess]);
+  }, [state, token, currentGymId, classId, onTransitionSuccess]);
 
   return { isTransitioning, handleTransition };
 }

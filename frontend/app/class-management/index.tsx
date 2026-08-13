@@ -124,7 +124,7 @@ export default function ClassManagement() {
   }, [fetchClassDetail, fetchBookings, fetchResults]);
 
   const { isTransitioning, handleTransition } = useClassTransition({
-    classDetail,
+    state: classDetail?.state ?? null,
     token,
     currentGymId,
     classId,

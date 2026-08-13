@@ -37,26 +37,11 @@ function getAlertButton(buttonText: string): AlertButton {
   return button;
 }
 
-function buildClassDetail(overrides?: Partial<{ state: string }>) {
-  return {
-    id: 'class-123',
-    state: 'published',
-    gymId: 'gym-abc',
-    name: 'Morning WOD',
-    coachId: 'coach-1',
-    classTypeId: 'ct-1',
-    scheduledAt: '2026-05-06T08:00:00Z',
-    capacity: 10,
-    bookedCount: 2,
-    ...overrides,
-  } as Parameters<typeof useClassTransition>[0]['classDetail'];
-}
-
 function buildParams(
   overrides?: Partial<Parameters<typeof useClassTransition>[0]>
 ): Parameters<typeof useClassTransition>[0] {
   return {
-    classDetail: buildClassDetail(),
+    state: 'published',
     token: 'test-token',
     currentGymId: 'gym-abc',
     classId: 'class-123',
@@ -288,9 +273,9 @@ describe('useClassTransition', () => {
   });
 
   describe('guard conditions', () => {
-    it('does not open an alert when classDetail is null', () => {
+    it('does not open an alert when the state is not yet known', () => {
       // Arrange
-      const params = buildParams({ classDetail: null });
+      const params = buildParams({ state: null });
       const { result } = renderHook(() => useClassTransition(params));
 
       // Act
@@ -318,7 +303,7 @@ describe('useClassTransition', () => {
 
     it('does not open an alert for an archived class (no next state)', () => {
       // Arrange
-      const params = buildParams({ classDetail: buildClassDetail({ state: 'archived' }) });
+      const params = buildParams({ state: 'archived' });
       const { result } = renderHook(() => useClassTransition(params));
 
       // Act

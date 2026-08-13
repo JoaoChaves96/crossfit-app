@@ -21,10 +21,12 @@ import { components } from '@/types/api.gen';
 import { formatDayMonth, formatTimeRange } from '@/utils/datetime';
 import {
   STATE_LABEL,
-  STATE_CHIP_TONE,
+  STATE_NEXT_MAP,
   isProgrammingEditable,
   type ClassState,
 } from './class-management/classStates';
+import { StateBadge } from './class-management/ClassHeader';
+import { useClassTransition } from './class-management/useClassTransition';
 import { styles, mobileStyles } from './coach-class-details.styles';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -102,7 +104,11 @@ export default function CoachClassDetailsScreen() {
 
   const capacityNum = capacity ? parseInt(capacity, 10) : 0;
   const bookedCountNum = bookedCount ? parseInt(bookedCount, 10) : 0;
-  const classState: ClassState = state ?? 'published';
+
+  // The route param is a snapshot taken when the coach opened the class; a
+  // transition performed here advances it, which also re-locks the programming
+  // form below without needing a re-navigation.
+  const [classState, setClassState] = useState<ClassState>(state ?? 'published');
   const canEditProgramming = isProgrammingEditable(classState);
 
   // Programming form state — a single `content` string, held verbatim
@@ -187,6 +193,19 @@ export default function CoachClassDetailsScreen() {
       setIsSubmitting(false);
     }
   };
+
+  // The lifecycle control. The assigned coach is the actor the backend expects
+  // here, and until now no coach screen offered a way to reach it at all.
+  const { isTransitioning, handleTransition } = useClassTransition({
+    state: classState,
+    token,
+    currentGymId,
+    classId,
+    onTransitionSuccess: () => {
+      const next = STATE_NEXT_MAP[classState];
+      if (next) setClassState(next);
+    },
+  });
 
   const handleMarkAttendance = () => {
     router.push({
@@ -379,7 +398,11 @@ export default function CoachClassDetailsScreen() {
                   <Icon name="back" size={18} tone="muted" />
                   <Text size="body" tone="muted">Back</Text>
                 </Pressable>
-                <StatusChip tone={STATE_CHIP_TONE[classState]} label={STATE_LABEL[classState]} />
+                <StateBadge
+                  state={classState}
+                  isTransitioning={isTransitioning}
+                  onPress={handleTransition}
+                />
               </View>
               <Text size="lead" weight="bold" numberOfLines={2}>{headerTitle}</Text>
             </View>
@@ -448,7 +471,11 @@ export default function CoachClassDetailsScreen() {
             <Text size="meta" tone="muted">Back to My Classes</Text>
           </Pressable>
           <Text size="screen" weight="bold" style={styles.headerTitle} numberOfLines={1}>{headerTitle}</Text>
-          <StatusChip tone={STATE_CHIP_TONE[classState]} label={STATE_LABEL[classState]} />
+          <StateBadge
+            state={classState}
+            isTransitioning={isTransitioning}
+            onPress={handleTransition}
+          />
         </View>
 
         {/* Content Row */}
