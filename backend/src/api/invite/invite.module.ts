@@ -5,11 +5,13 @@ import { GymMembershipEntity } from '../../domain/gym-membership/entities/gym-me
 import { GymStaffModule } from '../../domain/gym-staff/gym-staff.module';
 import { GymMembershipRepository } from '../../repositories/gym-membership.repository';
 import { InviteService } from '../../domain/invite/invite.service';
+import { AuthModule } from '../auth/auth.module';
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([InviteEntity, GymMembershipEntity]),
     GymStaffModule,
+    AuthModule,
   ],
   providers: [
     InviteService,

@@ -13,14 +13,15 @@ import { InviteListItemDto } from '../../api/invite/dto/invite-list-item.dto';
 import { RevokeInviteResponseDto } from '../../api/invite/dto/revoke-invite-response.dto';
 import { ValidateInviteResponseDto } from '../../api/invite/dto/validate-invite-response.dto';
 import { AcceptInviteResponseDto } from '../../api/invite/dto/accept-invite-response.dto';
+import { AuthService } from '../auth/auth.service';
 import {
   AthleteAlreadyMemberError,
-  AthleteNotRegisteredError,
   CoachAlreadyStaffError,
   CoachInvitePendingError,
   GymNotFoundError,
   InviteAlreadyAcceptedError,
   InviteAlreadyRevokedError,
+  InviteeNotRegisteredError,
   InviteExpiredError,
   InviteNotFoundError,
   InviteRevokedError,
@@ -37,6 +38,7 @@ export class InviteService {
     @InjectRepository(GymMembershipEntity)
     private readonly gymMembershipRepository: Repository<GymMembershipEntity>,
     private readonly dataSource: DataSource,
+    private readonly authService: AuthService,
   ) {}
 
   async createInvite(
@@ -165,6 +167,7 @@ export class InviteService {
       inviteeEmail: invite.inviteeEmail,
       inviterName: inviter?.name || 'A gym staff member',
       inviterRole: inviterStaff?.role || 'owner',
+      role: invite.role,
       expiresAt: invite.expiresAt.toISOString(),
       status: resolvedStatus,
     };
@@ -197,27 +200,39 @@ export class InviteService {
       throw new InviteAlreadyAcceptedError(inviteToken);
     }
 
-    let athlete: UserEntity | null = null;
+    let invitee: UserEntity | null = null;
 
     if (currentUserId) {
-      athlete = await this.dataSource.manager.findOne(UserEntity, {
+      invitee = await this.dataSource.manager.findOne(UserEntity, {
         where: { id: currentUserId },
       });
     } else {
-      athlete = await this.dataSource.manager.findOne(UserEntity, {
+      invitee = await this.dataSource.manager.findOne(UserEntity, {
         where: { email: invite.inviteeEmail },
       });
     }
 
-    if (!athlete) {
-      throw new AthleteNotRegisteredError(invite.inviteeEmail);
+    if (!invitee) {
+      throw new InviteeNotRegisteredError(invite.inviteeEmail);
     }
 
-    const existingMembership = await this.gymMembershipRepository.findOne({
-      where: { gymId: invite.gymId, userId: athlete.id },
-    });
-    if (existingMembership) {
-      throw new AthleteAlreadyMemberError(invite.gymId);
+    // Each role has its own "already attached" shape: a coach collides on
+    // gym_staff, an athlete on gym_membership. Checking the wrong one would
+    // let a coach be added twice.
+    if (invite.role === 'coach') {
+      const existingStaff = await this.dataSource
+        .getRepository(GymStaffEntity)
+        .findOne({ where: { gymId: invite.gymId, userId: invitee.id } });
+      if (existingStaff) {
+        throw new CoachAlreadyStaffError(invite.gymId);
+      }
+    } else {
+      const existingMembership = await this.gymMembershipRepository.findOne({
+        where: { gymId: invite.gymId, userId: invitee.id },
+      });
+      if (existingMembership) {
+        throw new AthleteAlreadyMemberError(invite.gymId);
+      }
     }
 
     const gym = await this.dataSource.getRepository(GymEntity).findOne({
@@ -225,31 +240,57 @@ export class InviteService {
     });
 
     await this.dataSource.transaction(async (manager) => {
-      const membership = new GymMembershipEntity();
-      membership.id = uuid();
-      membership.gymId = invite.gymId;
-      membership.userId = athlete!.id;
-      membership.status = 'active';
+      if (invite.role === 'coach') {
+        const staff = new GymStaffEntity();
+        staff.id = uuid();
+        staff.gymId = invite.gymId;
+        staff.userId = invitee!.id;
+        staff.role = 'coach';
+        staff.status = 'active';
+        staff.assignedAt = new Date();
 
-      await manager.save(GymMembershipEntity, membership);
+        await manager.save(GymStaffEntity, staff);
+      } else {
+        const membership = new GymMembershipEntity();
+        membership.id = uuid();
+        membership.gymId = invite.gymId;
+        membership.userId = invitee!.id;
+        membership.status = 'active';
+
+        await manager.save(GymMembershipEntity, membership);
+      }
 
       await manager.update(InviteEntity, invite.id, {
         status: 'accepted',
         acceptedAt: new Date(),
-        acceptedByUserId: athlete!.id,
+        acceptedByUserId: invitee!.id,
       });
     });
 
+    // The JWT carries gymId and role as claims fixed at sign time, so without
+    // this the invitee keeps whatever context they had — `gymId: null` for a
+    // fresh registration — and every gym-scoped request 403s until they log in
+    // again. Same reason CreateGymHandler re-issues.
+    const token = await this.authService.issueTokenForUser(invitee.id);
+
     return {
       gym: { id: gym?.id ?? invite.gymId, name: gym?.name ?? '' },
-      athlete: { id: athlete.id, email: athlete.email },
-      message: 'Successfully joined gym',
+      user: { id: invitee.id, email: invitee.email },
+      role: invite.role,
+      token,
+      message:
+        invite.role === 'coach'
+          ? 'Successfully joined gym as coach'
+          : 'Successfully joined gym',
     };
   }
 
-  async listInvites(gymId: string): Promise<InviteListItemDto[]> {
+  async listInvites(
+    gymId: string,
+    role?: InviteRole,
+  ): Promise<InviteListItemDto[]> {
     const invites = await this.inviteRepository.find({
-      where: { gymId },
+      where: role ? { gymId, role } : { gymId },
       order: { createdAt: 'DESC' },
     });
 
@@ -257,6 +298,7 @@ export class InviteService {
       id: invite.id,
       inviteeEmail: invite.inviteeEmail,
       inviteToken: invite.inviteToken,
+      role: invite.role,
       status: invite.status,
       createdAt: invite.createdAt.toISOString(),
       expiresAt: invite.expiresAt.toISOString(),

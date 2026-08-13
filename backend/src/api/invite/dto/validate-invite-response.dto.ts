@@ -1,4 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
+import type { InviteRole } from '../../../domain/invite/entities/invite.entity';
 
 export class ValidateInviteResponseDto {
   @ApiProperty({
@@ -37,6 +38,13 @@ export class ValidateInviteResponseDto {
     example: 'coach',
   })
   inviterRole: 'owner' | 'coach';
+
+  @ApiProperty({
+    description: 'What accepting this invite makes the invitee',
+    enum: ['athlete', 'coach'],
+    example: 'coach',
+  })
+  role: InviteRole;
 
   @ApiProperty({
     description: 'ISO timestamp when the invite expires',

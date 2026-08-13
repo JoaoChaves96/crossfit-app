@@ -5,6 +5,7 @@ import {
   Delete,
   Body,
   Param,
+  Query,
   Req,
   UseGuards,
   ValidationPipe,
@@ -21,6 +22,7 @@ import {
   ApiOperation,
   ApiResponse,
   ApiParam,
+  ApiQuery,
   ApiBody,
 } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
@@ -28,6 +30,7 @@ import { RolesGuard } from '../../auth/guards/roles.guard';
 import { Role } from '../../auth/decorators/role.decorator';
 import { CurrentUser } from '../../auth/decorators/current-user.decorator';
 import { InviteService } from '../../domain/invite/invite.service';
+import { InviteRole } from '../../domain/invite/entities/invite.entity';
 import { CreateInviteDto } from './dto/create-invite.dto';
 import { InviteResponseDto } from './dto/invite-response.dto';
 import { InviteListItemDto } from './dto/invite-list-item.dto';
@@ -37,10 +40,11 @@ import { AcceptInviteRequestDto } from './dto/accept-invite-request.dto';
 import { AcceptInviteResponseDto } from './dto/accept-invite-response.dto';
 import {
   AthleteAlreadyMemberError,
-  AthleteNotRegisteredError,
+  CoachAlreadyStaffError,
   GymNotFoundError,
   InviteAlreadyAcceptedError,
   InviteAlreadyRevokedError,
+  InviteeNotRegisteredError,
   InviteExpiredError,
   InviteNotFoundError,
   InviteRevokedError,
@@ -122,6 +126,12 @@ export class InviteController {
     description: 'The ID of the gym',
     example: 'uuid-gym-id',
   })
+  @ApiQuery({
+    name: 'role',
+    required: false,
+    enum: ['athlete', 'coach'],
+    description: 'Filter to invites of one role',
+  })
   @ApiResponse({
     status: 200,
     description: 'List of invites',
@@ -134,8 +144,12 @@ export class InviteController {
   })
   async listInvites(
     @Param('gymId') gymId: string,
+    @Query('role') role?: string,
   ): Promise<InviteListItemDto[]> {
-    return await this.inviteService.listInvites(gymId);
+    if (role !== undefined && role !== 'athlete' && role !== 'coach') {
+      throw new BadRequestException('role must be "athlete" or "coach"');
+    }
+    return await this.inviteService.listInvites(gymId, role as InviteRole | undefined);
   }
 
   /**
@@ -240,7 +254,7 @@ export class InviteController {
   @ApiOperation({
     summary: 'Accept an invite',
     description:
-      'Accepts an invite and creates a GymMembership for the athlete. If the request includes a valid JWT the authenticated user is used; otherwise the athlete is resolved by the invite email. The athlete must already be registered.',
+      'Accepts an invite and, depending on the invite\'s role, creates a GymMembership (athlete) or a gym_staff row (coach). Returns a freshly signed JWT carrying the new gym context. If the request includes a valid JWT the authenticated user is used; otherwise the invitee is resolved by the invite email. The invitee must already be registered.',
   })
   @ApiParam({
     name: 'inviteToken',
@@ -250,18 +264,20 @@ export class InviteController {
   @ApiBody({ type: AcceptInviteRequestDto, required: false })
   @ApiResponse({
     status: 200,
-    description: 'Invite accepted and gym membership created',
+    description:
+      'Invite accepted; gym membership or staff row created, and a re-signed token returned',
     type: AcceptInviteResponseDto,
   })
   @ApiResponse({
     status: 400,
     description:
-      'Token expired, revoked, already accepted, or athlete not registered',
+      'Token expired, revoked, already accepted, or invitee not registered',
   })
   @ApiResponse({ status: 404, description: 'Invite not found' })
   @ApiResponse({
     status: 409,
-    description: 'Athlete is already a member of this gym',
+    description:
+      'Invitee is already a member (athlete) or already staff (coach) at this gym',
   })
   async acceptInvite(
     @Param('inviteToken') inviteToken: string,
@@ -279,11 +295,14 @@ export class InviteController {
         err instanceof InviteExpiredError ||
         err instanceof InviteRevokedError ||
         err instanceof InviteAlreadyAcceptedError ||
-        err instanceof AthleteNotRegisteredError
+        err instanceof InviteeNotRegisteredError
       ) {
         throw new BadRequestException(err.message);
       }
-      if (err instanceof AthleteAlreadyMemberError) {
+      if (
+        err instanceof AthleteAlreadyMemberError ||
+        err instanceof CoachAlreadyStaffError
+      ) {
         throw new ConflictException(err.message);
       }
       throw err;

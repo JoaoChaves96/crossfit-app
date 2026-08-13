@@ -1,4 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
+import type { InviteRole } from '../../../domain/invite/entities/invite.entity';
 export class InviteListItemDto {
   @ApiProperty({
     description: 'Unique identifier of the invite',
@@ -17,6 +18,13 @@ export class InviteListItemDto {
     example: 'abc123xyz...',
   })
   inviteToken!: string;
+
+  @ApiProperty({
+    description: 'What accepting this invite makes the invitee',
+    enum: ['athlete', 'coach'],
+    example: 'coach',
+  })
+  role!: InviteRole;
 
   @ApiProperty({
     description: 'Current status of the invite',

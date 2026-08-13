@@ -26,12 +26,10 @@ export class InviteAlreadyAcceptedError extends Error {
   }
 }
 
-export class AthleteNotRegisteredError extends Error {
+export class InviteeNotRegisteredError extends Error {
   constructor(email: string) {
-    super(
-      `Athlete with email ${email} is not registered. Please register first.`,
-    );
-    this.name = 'AthleteNotRegisteredError';
+    super(`No account exists for ${email}. Please register first.`);
+    this.name = 'InviteeNotRegisteredError';
   }
 }
 
