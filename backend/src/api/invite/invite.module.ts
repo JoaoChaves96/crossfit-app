@@ -4,7 +4,7 @@ import { InviteEntity } from '../../domain/invite/entities/invite.entity';
 import { GymMembershipEntity } from '../../domain/gym-membership/entities/gym-membership.entity';
 import { GymStaffModule } from '../../domain/gym-staff/gym-staff.module';
 import { GymMembershipRepository } from '../../repositories/gym-membership.repository';
-import { InviteService } from './invite.service';
+import { InviteService } from '../../domain/invite/invite.service';
 
 @Module({
   imports: [

@@ -27,7 +27,7 @@ import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../../auth/guards/roles.guard';
 import { Role } from '../../auth/decorators/role.decorator';
 import { CurrentUser } from '../../auth/decorators/current-user.decorator';
-import { InviteService } from './invite.service';
+import { InviteService } from '../../domain/invite/invite.service';
 import { CreateInviteDto } from './dto/create-invite.dto';
 import { InviteResponseDto } from './dto/invite-response.dto';
 import { InviteListItemDto } from './dto/invite-list-item.dto';
@@ -44,7 +44,7 @@ import {
   InviteExpiredError,
   InviteNotFoundError,
   InviteRevokedError,
-} from './invite.errors';
+} from '../../domain/invite/invite.errors';
 
 @ApiTags('Invites')
 @Controller('/api')

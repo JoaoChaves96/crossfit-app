@@ -3,16 +3,16 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { DataSource, Repository } from 'typeorm';
 import { randomBytes } from 'crypto';
 import { v4 as uuid } from 'uuid';
-import { InviteEntity } from '../../domain/invite/entities/invite.entity';
+import { InviteEntity } from './entities/invite.entity';
 import { GymEntity } from '../../domain/gym/entities/gym.entity';
 import { UserEntity } from '../../domain/user/entities/user.entity';
 import { GymMembershipEntity } from '../../domain/gym-membership/entities/gym-membership.entity';
 import { GymStaffEntity } from '../../domain/gym-staff/entities/gym-staff.entity';
-import { InviteResponseDto } from './dto/invite-response.dto';
-import { InviteListItemDto } from './dto/invite-list-item.dto';
-import { RevokeInviteResponseDto } from './dto/revoke-invite-response.dto';
-import { ValidateInviteResponseDto } from './dto/validate-invite-response.dto';
-import { AcceptInviteResponseDto } from './dto/accept-invite-response.dto';
+import { InviteResponseDto } from '../../api/invite/dto/invite-response.dto';
+import { InviteListItemDto } from '../../api/invite/dto/invite-list-item.dto';
+import { RevokeInviteResponseDto } from '../../api/invite/dto/revoke-invite-response.dto';
+import { ValidateInviteResponseDto } from '../../api/invite/dto/validate-invite-response.dto';
+import { AcceptInviteResponseDto } from '../../api/invite/dto/accept-invite-response.dto';
 import {
   AthleteAlreadyMemberError,
   AthleteNotRegisteredError,
