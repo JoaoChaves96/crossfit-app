@@ -11,8 +11,7 @@
     "test": "jest",
     "lint": "expo lint",
     "generate:api-types": "openapi-typescript http://localhost:3000/api-docs-json -o types/api.gen.ts",
-    "test:e2e": "playwright test",
-    "test:e2e:smoke": "playwright test e2e/smoke.spec.ts"
+    "test:e2e": "playwright test"
   },
   "dependencies": {
     "@expo-google-fonts/hanken-grotesk": "^0.4.3",
