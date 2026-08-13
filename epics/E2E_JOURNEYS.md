@@ -147,8 +147,12 @@ Owner invites an email with **no account** → a Pending row appears and the ros
 coach → the invitee opens `/invite/<token>` signed out, is sent to `/register` with the invited
 address locked, registers, is returned to acceptance, accepts → lands on `/coach-classes` → the
 owner's roster shows them as an active coach under the id the server assigned → the owner assigns
-them a class → it appears on **their own** list and opens with the coach-only programming form →
+them a class → it appears on **their own** list, named by id, and they **save its programming** →
 the token is spent.
+
+The save, not the sight of the form, is what proves the re-signed token: the coach's list is
+authorized from the database, while the programming POST compares the token's own `gymId` claim.
+See *Findings*.
 
 **No login step anywhere in the test.** That absence is the point: the account is created and used
 in one pass. The token is taken from **the link the UI displayed**, not from the database, because
@@ -360,22 +364,37 @@ belongs to journeys 1 and 5.
   at the landing URL: every assertion up to and including `toHaveURL(/coach-classes/)` passed with
   the defect in place.
 
-**Recorded, not fixed:**
+- **Reading an accepted coach's class list never needed the re-signed token; writing does.** The
+  design's promise — "acceptance re-signs the JWT so no re-login is needed", now Tier 1 in
+  `DECISIONS.md` → *Coach Invites Require Acceptance* — was only half-kept until the gym-context fix
+  above, and it is worth knowing which half each piece buys:
+  - `RolesGuard` resolves `coach` from the **`gym_staff` table**, not from the JWT's `role` claim,
+    and `CoachClassesController` (`/api/gyms/:gymId/coach/classes`) mounts no `GymOwnershipGuard`.
+    So the coach's class list works with a stale pre-acceptance token; deleting
+    `await auth?.login(result.token)` left the journey green as long as it only *read*.
+  - `ClassProgrammingController` (`/api/gyms/:gymId/classes/:classId/programming`) **does** mount
+    `GymOwnershipGuard`, which 403s unless the route's `gymId` equals the token's own `gymId` claim
+    — and a token minted at registration carries `gymId: null, role: null`, because
+    `AuthService.resolveGymContext` finds neither a `gym_staff` nor a `gym_membership` row yet.
+  So journey 11 now has the coach **save** programming rather than merely see the input, which is
+  what makes the re-sign observable. A related trap: with a stale token the programming GET fails
+  too, and `coach-class-details` swallows it (`.catch(() => {})`), rendering "No programming added
+  yet." — so the input being visible never proved anything about authorization.
 
-- **The re-signed token is not what makes an accepted coach work.** Deleting
-  `await auth?.login(result.token)` from the acceptance screen leaves the journey **green**, so it
-  was discarded as non-observable rather than counted as a proof. `RolesGuard` resolves the role
-  from the `gym_staff` table, not from the JWT's `role` claim, and the coach routes
-  (`/api/gyms/:gymId/coach/classes`, the class-scoped programming routes) carry no
-  `GymOwnershipGuard` — so nothing on this path compares the token's `gymId`. The gym comes from the
-  URL, which comes from `GymContext`. The re-sign still matters (owner-scoped routes do compare the
-  claim, and Phase 2 switching is built on it), but the claim in the design that it is what buys
-  "no re-login" is only half the story: the `setCurrentGymId` above is the load-bearing half.
+**Mutation proof, for the record.**
 
-**Mutation proof, for the record.** Coach acceptance writing a `gym_membership` instead of a
-`gym_staff` row → red on `coach-view-<userId>`, the owner's roster never gaining the coach.
-`setCurrentGymId` removed from acceptance → red on the coach's own class row. The token re-sign
-removed → green, discarded with the reasoning above.
+- Coach acceptance writing a `gym_membership` instead of a `gym_staff` row → **red** on
+  `coach-view-<userId>`, the owner's roster never gaining the coach.
+- `setCurrentGymId` removed from acceptance → **red** on the coach's own class row.
+- The token re-sign removed → **green** against the read-only version of the journey; the journey was
+  then strengthened with the programming save, and the same mutation is now **red** on the `Saved`
+  marker, with the app showing "You do not have permission to do that."
+
+**One flake, bisected rather than retried.** The coach-class-row assertion was observed red once in
+fifteen runs and never reproduced. Because a single assertion carried both "the form never created
+the class" and "the coach cannot reach it", the red was unreadable — so the journey now reads the
+assigned class id from the database between the two, and names the class in the row assertion. A
+recurrence will say which half broke. No retry was added and `workers: 1` is unchanged.
 
 ---
 

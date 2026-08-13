@@ -66,6 +66,33 @@ async function readUserIdByEmail(email: string): Promise<string> {
   });
 }
 
+/**
+ * The class the owner just assigned to this coach.
+ *
+ * Read between creating the class and asserting the coach can see it, so the two
+ * causes of an empty coach list are told apart: the form never wrote a row, or it
+ * wrote one the coach cannot reach. Without this split, one assertion carries the
+ * blame for both — which is what made an observed intermittent failure here
+ * impossible to read.
+ */
+async function readAssignedClassId(gymId: string, coachUserId: string): Promise<string> {
+  return withDb(async (db) => {
+    const res = await db.query<{ id: string }>(
+      `SELECT id FROM classes
+       WHERE "gymId" = $1 AND "coachUserId" = $2 AND "deletedAt" IS NULL`,
+      [gymId, coachUserId],
+    );
+    if (res.rowCount !== 1) {
+      throw new Error(
+        `[j11] Expected exactly one class assigned to the new coach, found ${res.rowCount}. ` +
+          `The owner's create-class form is what writes it, so this failing means creation ` +
+          `did not happen — not that the coach cannot see their class.`,
+      );
+    }
+    return res.rows[0].id;
+  });
+}
+
 test('an invited stranger registers, accepts, and works as a coach', async ({ page, browser }) => {
   const gym = await seedGym('j11-invite-coach');
   const inviteeEmail = unregisteredEmail();
@@ -170,15 +197,37 @@ test('an invited stranger registers, accepts, and works as a coach', async ({ pa
     });
 
     // ── …and the assignment reaches them ────────────────────────────────
+    // Creation is confirmed before switching browsers, so an empty list below is
+    // unambiguously the coach's side of it.
+    const classId = await readAssignedClassId(gym.id, inviteeUserId);
+
     await coach.goto('/coach-classes');
-    const row = coach.getByTestId(/^coach-class-row-/);
-    await expect(row).toHaveCount(1, { timeout: 20_000 });
+    // Named by id, so this asserts the coach sees THAT class and not merely some
+    // row; the regex count then rules out extras.
+    const row = coach.getByTestId(`coach-class-row-${classId}`);
+    await expect(row).toBeVisible({ timeout: 20_000 });
+    await expect(coach.getByTestId(/^coach-class-row-/)).toHaveCount(1);
     await expect(row).toContainText(gym.classTypes.crossfit.name);
 
-    await coach.getByTestId(/^coach-class-view-btn-/).click();
+    await coach.getByTestId(`coach-class-view-btn-${classId}`).click();
     // Programming is a coach-only surface, so its presence is the permission
     // check: they are not merely listed, they are operating as this class's coach.
     await expect(coach.getByTestId('programming-wod-input')).toBeVisible({ timeout: 20_000 });
+
+    // …and they can actually WRITE, which is the part that needs the re-signed
+    // token. Seeing the form proves nothing about the claims: the coach class
+    // list is authorized from `gym_staff` in the database and mounts no
+    // GymOwnershipGuard, so it works with the stale registration token too.
+    // Saving posts to /api/gyms/:gymId/classes/:classId/programming, which does
+    // mount that guard and compares the route's gym against the token's own
+    // `gymId` claim — null on a token minted before acceptance. Without the
+    // re-sign this is a 403 and the `Saved` marker never appears.
+    // `fillStable` rather than `.fill()`: the input is controlled and a DOM-only
+    // value never reaches React state, so the save would post the previous
+    // content and pass while proving nothing (journey 8 hit exactly that).
+    await fillStable(coach.getByTestId('programming-wod-input'), '21-15-9 thrusters');
+    await coach.getByTestId('programming-save-btn').click();
+    await expect(coach.getByText('Saved')).toBeVisible({ timeout: 20_000 });
 
     // ── The token is spent ──────────────────────────────────────────────
     // An acceptance link that still works after acceptance is a link that can be
