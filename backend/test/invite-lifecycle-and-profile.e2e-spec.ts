@@ -4,6 +4,7 @@ import request from 'supertest';
 import { AppModule } from '../src/app.module';
 import { DataSource } from 'typeorm';
 import { v4 as uuidv4 } from 'uuid';
+import { randomUUID } from 'crypto';
 import { generateTestToken } from './helpers/jwt.helper';
 
 /**
@@ -32,6 +33,11 @@ describe('Invite Lifecycle and Profile Endpoints (e2e)', () => {
   const athleteUserId = uuidv4();
   const athleteEmail = `athlete-profile-${uuidv4()}@test.local`;
 
+  // Registered user who has not accepted anything yet — used for the
+  // coach-invite acceptance test
+  const newCoachUserId = uuidv4();
+  const newCoachEmail = `coach-new-lifecycle-${uuidv4()}@test.local`;
+
   // Reused across invite tests
   let pendingInviteToken: string;
 
@@ -52,6 +58,13 @@ describe('Invite Lifecycle and Profile Endpoints (e2e)', () => {
   const athleteToken = generateTestToken({
     id: athleteUserId,
     email: athleteEmail,
+    gymId,
+    role: 'athlete',
+  });
+
+  const newCoachToken = generateTestToken({
+    id: newCoachUserId,
+    email: newCoachEmail,
     gymId,
     role: 'athlete',
   });
@@ -90,7 +103,8 @@ describe('Invite Lifecycle and Profile Endpoints (e2e)', () => {
       VALUES
         ($1, $2, 'Lifecycle Owner',  'active', NOW()),
         ($3, $4, 'Other Gym Owner',  'active', NOW()),
-        ($5, $6, 'Athlete User',     'active', NOW())
+        ($5, $6, 'Athlete User',     'active', NOW()),
+        ($7, $8, 'New Coach User',   'active', NOW())
       `,
       [
         ownerUserId,
@@ -99,6 +113,8 @@ describe('Invite Lifecycle and Profile Endpoints (e2e)', () => {
         `owner-other-lifecycle-${uuidv4()}@test.local`,
         athleteUserId,
         athleteEmail,
+        newCoachUserId,
+        newCoachEmail,
       ],
     );
 
@@ -164,7 +180,7 @@ describe('Invite Lifecycle and Profile Endpoints (e2e)', () => {
       await dataSource.query('DELETE FROM gym_memberships WHERE "gymId" IN ($1, $2)', [gymId, otherGymId]);
       await dataSource.query('DELETE FROM gym_staff WHERE "gymId" IN ($1, $2)', [gymId, otherGymId]);
       await dataSource.query('DELETE FROM gyms WHERE id IN ($1, $2)', [gymId, otherGymId]);
-      await dataSource.query('DELETE FROM users WHERE id IN ($1, $2, $3)', [ownerUserId, otherOwnerUserId, athleteUserId]);
+      await dataSource.query('DELETE FROM users WHERE id IN ($1, $2, $3, $4)', [ownerUserId, otherOwnerUserId, athleteUserId, newCoachUserId]);
     } catch {
       // silently ignore cleanup errors
     }
@@ -299,15 +315,19 @@ describe('Invite Lifecycle and Profile Endpoints (e2e)', () => {
       const body = response.body as Record<string, unknown>;
       expect(body).toHaveProperty('message', 'Successfully joined gym');
       expect(body).toHaveProperty('gym');
-      expect(body).toHaveProperty('athlete');
+      expect(body).toHaveProperty('role', 'athlete');
+      expect(typeof body.token).toBe('string');
+      expect((body.token as string).split('.')).toHaveLength(3);
+      expect(body).toHaveProperty('user');
+      expect(body).not.toHaveProperty('athlete');
 
       const gym = body.gym as Record<string, unknown>;
       expect(gym).toHaveProperty('id', gymId);
       expect(gym).toHaveProperty('name', 'Lifecycle Test Gym');
 
-      const athlete = body.athlete as Record<string, unknown>;
-      expect(athlete).toHaveProperty('id', athleteUserId);
-      expect(athlete).toHaveProperty('email', athleteEmail);
+      const user = body.user as Record<string, unknown>;
+      expect(user).toHaveProperty('id', athleteUserId);
+      expect(user).toHaveProperty('email', athleteEmail);
 
       // Restore membership for subsequent tests
       await dataSource!.query(
@@ -336,6 +356,38 @@ describe('Invite Lifecycle and Profile Endpoints (e2e)', () => {
         .expect(409);
 
       await dataSource!.query('DELETE FROM invites WHERE id = $1', [duplicateInviteId]);
+    });
+
+    it('accepting a coach invite creates active staff and returns a coach token', async () => {
+      const token = `coach-invite-token-e2e-${uuidv4().replace(/-/g, '')}`.slice(0, 43);
+      await dataSource!.query(
+        `INSERT INTO invites (id, "gymId", "createdByUserId", "inviteeEmail", "inviteToken", "expiresAt", status, role)
+         VALUES ($1, $2, $3, $4, $5, NOW() + INTERVAL '7 days', 'pending', 'coach')`,
+        [randomUUID(), gymId, ownerUserId, newCoachEmail, token],
+      );
+
+      const res = await request(app.getHttpServer())
+        .post(`/api/invites/${token}/accept`)
+        .set('Authorization', `Bearer ${newCoachToken}`)
+        .expect(200);
+
+      expect(res.body.role).toBe('coach');
+      expect(typeof res.body.token).toBe('string');
+      expect(res.body.user).toHaveProperty('id', newCoachUserId);
+
+      const staff = await dataSource!.query(
+        `SELECT * FROM gym_staff WHERE "gymId" = $1 AND "userId" = $2`,
+        [gymId, newCoachUserId],
+      );
+      expect(staff).toHaveLength(1);
+      expect(staff[0].role).toBe('coach');
+      expect(staff[0].status).toBe('active');
+
+      const claims = JSON.parse(
+        Buffer.from(res.body.token.split('.')[1], 'base64').toString('utf8'),
+      );
+      expect(claims.gymId).toBe(gymId);
+      expect(claims.role).toBe('coach');
     });
   });
 
@@ -383,6 +435,45 @@ describe('Invite Lifecycle and Profile Endpoints (e2e)', () => {
         .get(`/api/gyms/${gymId}/invites`)
         .set('Authorization', `Bearer ${otherOwnerToken}`)
         .expect(403);
+    });
+
+    it('?role=coach → only coach invites', async () => {
+      const response = await request(app.getHttpServer())
+        .get(`/api/gyms/${gymId}/invites?role=coach`)
+        .set('Authorization', `Bearer ${ownerToken}`)
+        .expect(200);
+
+      const body = response.body as Array<Record<string, unknown>>;
+      expect(body.length).toBeGreaterThan(0);
+      expect(body.some((item) => item.inviteeEmail === newCoachEmail)).toBe(
+        true,
+      );
+      for (const item of body) {
+        expect(item).toHaveProperty('role', 'coach');
+      }
+    });
+
+    it('?role=athlete → only athlete invites', async () => {
+      const response = await request(app.getHttpServer())
+        .get(`/api/gyms/${gymId}/invites?role=athlete`)
+        .set('Authorization', `Bearer ${ownerToken}`)
+        .expect(200);
+
+      const body = response.body as Array<Record<string, unknown>>;
+      expect(body.length).toBeGreaterThan(0);
+      expect(
+        body.some((item) => item.inviteToken === pendingInviteToken),
+      ).toBe(true);
+      for (const item of body) {
+        expect(item).toHaveProperty('role', 'athlete');
+      }
+    });
+
+    it('?role=bogus → 400', async () => {
+      await request(app.getHttpServer())
+        .get(`/api/gyms/${gymId}/invites?role=bogus`)
+        .set('Authorization', `Bearer ${ownerToken}`)
+        .expect(400);
     });
   });
 
