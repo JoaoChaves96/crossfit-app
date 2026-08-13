@@ -3,7 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { DataSource, Repository } from 'typeorm';
 import { randomBytes } from 'crypto';
 import { v4 as uuid } from 'uuid';
-import { InviteEntity } from './entities/invite.entity';
+import { InviteEntity, InviteRole } from './entities/invite.entity';
 import { GymEntity } from '../../domain/gym/entities/gym.entity';
 import { UserEntity } from '../../domain/user/entities/user.entity';
 import { GymMembershipEntity } from '../../domain/gym-membership/entities/gym-membership.entity';
@@ -16,6 +16,8 @@ import { AcceptInviteResponseDto } from '../../api/invite/dto/accept-invite-resp
 import {
   AthleteAlreadyMemberError,
   AthleteNotRegisteredError,
+  CoachAlreadyStaffError,
+  CoachInvitePendingError,
   GymNotFoundError,
   InviteAlreadyAcceptedError,
   InviteAlreadyRevokedError,
@@ -41,6 +43,7 @@ export class InviteService {
     gymId: string,
     createdByUserId: string,
     inviteeEmail: string,
+    role: InviteRole = 'athlete',
   ): Promise<InviteResponseDto> {
     // Verify gym exists
     const gym = await this.dataSource.getRepository(GymEntity).findOne({
@@ -48,6 +51,10 @@ export class InviteService {
     });
     if (!gym) {
       throw new GymNotFoundError(gymId);
+    }
+
+    if (role === 'coach') {
+      await this.assertCoachInvitable(gymId, inviteeEmail);
     }
 
     const inviteToken = randomBytes(TOKEN_BYTE_LENGTH)
@@ -67,6 +74,7 @@ export class InviteService {
     invite.status = 'pending';
     invite.acceptedAt = null;
     invite.acceptedByUserId = null;
+    invite.role = role;
 
     await this.inviteRepository.save(invite);
 
@@ -81,7 +89,44 @@ export class InviteService {
       inviteLink,
       expiresAt: expiresAt.toISOString(),
       inviteeEmail,
+      role,
     };
+  }
+
+  /**
+   * Coach-specific preconditions.
+   *
+   * Any gym_staff row blocks, not just an active one: a deactivated coach is
+   * brought back through the coach-status endpoint, not re-invited, and
+   * re-inviting them would collide on acceptance anyway.
+   *
+   * A live pending invite also blocks, so an impatient owner cannot mint a
+   * second link; they revoke the first or copy it from the invite list. An
+   * expired pending row does not block — that is the legitimate re-invite.
+   */
+  private async assertCoachInvitable(
+    gymId: string,
+    inviteeEmail: string,
+  ): Promise<void> {
+    const existingUser = await this.dataSource
+      .getRepository(UserEntity)
+      .findOne({ where: { email: inviteeEmail } });
+
+    if (existingUser) {
+      const existingStaff = await this.dataSource
+        .getRepository(GymStaffEntity)
+        .findOne({ where: { gymId, userId: existingUser.id } });
+      if (existingStaff) {
+        throw new CoachAlreadyStaffError(gymId);
+      }
+    }
+
+    const pending = await this.inviteRepository.findOne({
+      where: { gymId, inviteeEmail, role: 'coach', status: 'pending' },
+    });
+    if (pending && new Date() <= pending.expiresAt) {
+      throw new CoachInvitePendingError(inviteeEmail);
+    }
   }
 
   async validateInvite(inviteToken: string): Promise<ValidateInviteResponseDto> {

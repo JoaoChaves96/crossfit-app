@@ -55,3 +55,17 @@ export class InviteAlreadyRevokedError extends Error {
     this.name = 'InviteAlreadyRevokedError';
   }
 }
+
+export class CoachAlreadyStaffError extends Error {
+  constructor(gymId: string) {
+    super(`This person is already staff at gym: ${gymId}`);
+    this.name = 'CoachAlreadyStaffError';
+  }
+}
+
+export class CoachInvitePendingError extends Error {
+  constructor(email: string) {
+    super(`A coach invite for ${email} is already pending at this gym`);
+    this.name = 'CoachInvitePendingError';
+  }
+}

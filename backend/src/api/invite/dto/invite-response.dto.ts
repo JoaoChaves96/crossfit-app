@@ -1,4 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
+import type { InviteRole } from '../../../domain/invite/entities/invite.entity';
 
 export class InviteResponseDto {
   @ApiProperty({
@@ -24,4 +25,11 @@ export class InviteResponseDto {
     example: 'athlete@example.com',
   })
   inviteeEmail: string;
+
+  @ApiProperty({
+    description: 'What accepting this invite makes the invitee',
+    enum: ['athlete', 'coach'],
+    example: 'coach',
+  })
+  role: InviteRole;
 }

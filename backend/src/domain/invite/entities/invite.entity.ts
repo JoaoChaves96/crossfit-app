@@ -8,6 +8,7 @@ import {
 } from 'typeorm';
 
 export type InviteStatus = 'pending' | 'accepted' | 'expired' | 'revoked';
+export type InviteRole = 'athlete' | 'coach';
 
 @Entity('invites')
 @Index(['inviteToken'], { unique: true })
@@ -43,6 +44,20 @@ export class InviteEntity {
     default: 'pending',
   })
   status: InviteStatus;
+
+  /**
+   * What accepting this invite makes the invitee.
+   *
+   * 'athlete' creates a gym_membership; 'coach' creates a gym_staff row.
+   * Defaults to 'athlete' so every pre-existing row is correct without a
+   * backfill — coach invites did not exist before this column.
+   */
+  @Column({
+    type: 'varchar',
+    enum: ['athlete', 'coach'],
+    default: 'athlete',
+  })
+  role: InviteRole;
 
   @CreateDateColumn()
   createdAt: Date;
