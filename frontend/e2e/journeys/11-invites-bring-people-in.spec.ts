@@ -17,6 +17,9 @@ import { createClassViaForm, openOwnerSection } from '../helpers/actions';
 import { bookableDay } from '../helpers/dates';
 import { seedGym, withDb } from '../helpers/seed';
 
+/** The WOD the new coach writes; asserted back after a reload, so it is shared. */
+const WOD = '21-15-9 thrusters';
+
 /**
  * The token out of a generated invite link.
  *
@@ -210,8 +213,9 @@ test('an invited stranger registers, accepts, and works as a coach', async ({ pa
     await expect(row).toContainText(gym.classTypes.crossfit.name);
 
     await coach.getByTestId(`coach-class-view-btn-${classId}`).click();
-    // Programming is a coach-only surface, so its presence is the permission
-    // check: they are not merely listed, they are operating as this class's coach.
+    // Only that the editor opened — the input's visibility is decided client-side
+    // from a route param and says nothing about authorization, so it is a
+    // precondition for the next step, not a claim of its own.
     await expect(coach.getByTestId('programming-wod-input')).toBeVisible({ timeout: 20_000 });
 
     // …and they can actually WRITE, which is the part that needs the re-signed
@@ -225,9 +229,19 @@ test('an invited stranger registers, accepts, and works as a coach', async ({ pa
     // `fillStable` rather than `.fill()`: the input is controlled and a DOM-only
     // value never reaches React state, so the save would post the previous
     // content and pass while proving nothing (journey 8 hit exactly that).
-    await fillStable(coach.getByTestId('programming-wod-input'), '21-15-9 thrusters');
+    await fillStable(coach.getByTestId('programming-wod-input'), WOD);
     await coach.getByTestId('programming-save-btn').click();
     await expect(coach.getByText('Saved')).toBeVisible({ timeout: 20_000 });
+
+    // Reloaded and read back, per the epic's rule for anything that writes.
+    // `Saved` is set from the POST's own response, so it proves the write; this
+    // proves the server kept it, and it closes the same hole from the other
+    // side — the GET is behind the same guard and the screen swallows its
+    // failure into an empty form, so an unauthorized reload shows no WOD.
+    await coach.reload();
+    await expect(coach.getByTestId('programming-wod-input')).toHaveValue(WOD, {
+      timeout: 20_000,
+    });
 
     // ── The token is spent ──────────────────────────────────────────────
     // An acceptance link that still works after acceptance is a link that can be

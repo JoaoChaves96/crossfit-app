@@ -160,8 +160,9 @@ the owner copying that string is the whole delivery mechanism until an email ser
 
 The two-test split this replaces existed because the epic's wording described a flow the product
 did not have (coach invites went active with no token and no acceptance). That gap is closed — see
-Findings — so the journey the epic originally asked for is now writable, and the athlete-invite
-half is covered by the same code path with `role = 'athlete'`.
+Findings — so the journey the epic originally asked for is now writable. Merging the two tests was
+the brief's instruction, but it **cost the athlete-invite half its only e2e coverage**; see *Parked,
+with reasons*.
 
 **It found a real defect on its first green attempt**, and it is the reason the chain is asserted
 to the end rather than to the landing URL: see *Findings from the journey 11 rewrite*.
@@ -376,19 +377,26 @@ belongs to journeys 1 and 5.
     `GymOwnershipGuard`, which 403s unless the route's `gymId` equals the token's own `gymId` claim
     — and a token minted at registration carries `gymId: null, role: null`, because
     `AuthService.resolveGymContext` finds neither a `gym_staff` nor a `gym_membership` row yet.
-  So journey 11 now has the coach **save** programming rather than merely see the input, which is
-  what makes the re-sign observable. A related trap: with a stale token the programming GET fails
-  too, and `coach-class-details` swallows it (`.catch(() => {})`), rendering "No programming added
-  yet." — so the input being visible never proved anything about authorization.
+  - **Every athlete surface compares the claim**, so the nuance is narrow: it is the coach *list*,
+    one screen, that survives a stale token. One click deeper, and on the whole athlete side, the
+    re-sign is load-bearing. `DECISIONS.md` is right as written.
+  So journey 11 now has the coach **save** programming and then **reload and read it back**, rather
+  than merely see the input, which is what makes the re-sign observable. A related trap, and the
+  reason the first pass mistook this for non-observable rather than merely unobserved: the input's
+  visibility is decided client-side from a route param, and with a stale token the programming GET
+  fails too and `coach-class-details` swallows it (`.catch(() => {})`), rendering "No programming
+  added yet." Identical DOM either way. A presence assertion could not have seen this.
 
 **Mutation proof, for the record.**
 
 - Coach acceptance writing a `gym_membership` instead of a `gym_staff` row → **red** on
   `coach-view-<userId>`, the owner's roster never gaining the coach.
 - `setCurrentGymId` removed from acceptance → **red** on the coach's own class row.
-- The token re-sign removed → **green** against the read-only version of the journey; the journey was
-  then strengthened with the programming save, and the same mutation is now **red** on the `Saved`
-  marker, with the app showing "You do not have permission to do that."
+- The token re-sign removed → **red** on the `Saved` marker, with the app showing "You do not have
+  permission to do that." It was **green** against the first, read-only version of the journey, which
+  asserted only that the programming input was visible — the mutation was never non-observable, it
+  was unobserved, and the presence assertion was the reason. Recorded as the cautionary case for the
+  "No presence-only assertions" rule at the top of this document.
 
 **One flake, bisected rather than retried.** The coach-class-row assertion was observed red once in
 fifteen runs and never reproduced. Because a single assertion carried both "the form never created
@@ -404,6 +412,14 @@ recurrence will say which half broke. No retry was added and `workers: 1` is unc
   harness is proven.
 - **Payments / invoices, announcements, notification preferences, platform admin** — no
   controllers exist (`docs/COMMAND_STATUS.md` Phase 4 is unstarted). Out of scope until they do.
+- **The athlete invite, end to end** — lost when journey 11 merged its two tests into one, which
+  the rewrite brief asked for. It is a real loss, not a wash: the deleted test was the only thing
+  exercising `create-invite-btn`, `invite-link-text` and the invitee turning up on the members
+  list. "The same code path with `role = 'athlete'`" is true of `InviteService` and false of the
+  owner's `/invites` screen and of an athlete joining through a link — different screens, different
+  landing route, and the athlete's own read surfaces are behind `GymOwnershipGuard`, so they depend
+  on the re-signed claim everywhere rather than one screen deep. Worth a journey of its own; until
+  then the jest assertions on acceptance are what hold it.
 
 ---
 
