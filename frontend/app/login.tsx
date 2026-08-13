@@ -10,6 +10,7 @@ import { AuthContext } from '@/context/AuthContext';
 import { GymContext } from '@/context/GymContext';
 import { useKeyboardAwareScroll } from '@/hooks/useKeyboardAwareScroll';
 import { createApiClient, ApiError } from '@/utils/api-client';
+import { routeForRole } from '@/utils/routeForRole';
 import { Ink, Status } from '@/constants/design';
 import { Text, Icon, Button } from '@/components/cleanink';
 import { styles } from './login.styles';
@@ -179,20 +180,6 @@ export default function LoginScreen() {
 }
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
-
-// Send the user to their role's home screen. Shared by the post-login flow and
-// the already-authenticated redirect guard so both stay in sync.
-function routeForRole(router: ReturnType<typeof useRouter>, role: string | null): void {
-  if (role === 'owner') {
-    router.replace('/schedule-dashboard' as never);
-  } else if (role === 'coach') {
-    router.replace('/coach-classes' as never);
-  } else if (role === 'athlete') {
-    router.replace('/(tabs)/schedule' as never);
-  } else {
-    router.replace('/no-gym' as never);
-  }
-}
 
 function getRoleFromToken(token: string): string | null {
   try {

@@ -1,0 +1,131 @@
+import React from 'react';
+import { render, screen, waitFor, fireEvent } from '@testing-library/react-native';
+import InviteAcceptanceScreen from '@/app/invite/[inviteToken]';
+
+const mockReplace = jest.fn();
+const mockPush = jest.fn();
+const mockGet = jest.fn();
+const mockPost = jest.fn();
+const mockLogin = jest.fn();
+
+jest.mock('expo-router', () => ({
+  useRouter: () => ({ replace: mockReplace, push: mockPush }),
+  useLocalSearchParams: () => ({ inviteToken: 'tok-abc' }),
+}));
+
+jest.mock('@/utils/api-client', () => ({
+  createApiClient: () => ({ get: mockGet, post: mockPost }),
+  ApiError: class ApiError extends Error {
+    status: number;
+    constructor(status: number) {
+      super('api error');
+      this.status = status;
+    }
+  },
+}));
+
+// The screen reads AuthContext via useContext, so render inside a real
+// provider rather than mocking React itself.
+import { AuthContext, AuthContextType } from '@/context/AuthContext';
+
+let authValue: AuthContextType;
+
+function renderScreen() {
+  return render(
+    <AuthContext.Provider value={authValue}>
+      <InviteAcceptanceScreen />
+    </AuthContext.Provider>,
+  );
+}
+
+const coachInvite = {
+  gymId: 'gym-1',
+  gymName: 'Box One',
+  gymLocation: 'Lisbon',
+  inviteeEmail: 'dana@example.com',
+  inviterName: 'Olivia Owner',
+  inviterRole: 'owner',
+  expiresAt: '2026-08-20T00:00:00.000Z',
+  status: 'pending',
+  role: 'coach',
+};
+
+describe('invite acceptance — coach invites', () => {
+  const authenticated: AuthContextType = {
+    user: { id: 'user-7', email: 'dana@example.com', role: null, gymId: null },
+    token: 'old.jwt.token',
+    isAuthenticated: true,
+    isLoading: false,
+    login: mockLogin,
+    logout: jest.fn(),
+  };
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+    authValue = authenticated;
+  });
+
+  it('announces a coaching invite, not a membership', async () => {
+    mockGet.mockResolvedValue(coachInvite);
+
+    renderScreen();
+
+    await waitFor(() => {
+      expect(screen.getByText(`Coach at ${coachInvite.gymName} on CrossFit Box`)).toBeTruthy();
+    });
+    expect(screen.getByText('Accept & Join as Coach')).toBeTruthy();
+  });
+
+  it('stores the re-signed token and lands the new coach on their classes', async () => {
+    mockGet.mockResolvedValue(coachInvite);
+    mockPost.mockResolvedValue({
+      gym: { id: 'gym-1', name: 'Box One' },
+      user: { id: 'user-7', email: 'dana@example.com' },
+      role: 'coach',
+      token: 'new.jwt.token',
+      message: 'Successfully joined gym as coach',
+    });
+
+    renderScreen();
+    await waitFor(() => expect(screen.getByTestId('invite-join-btn')).toBeTruthy());
+
+    fireEvent.press(screen.getByTestId('invite-join-btn'));
+
+    await waitFor(() => expect(mockLogin).toHaveBeenCalledWith('new.jwt.token'));
+    expect(mockReplace).toHaveBeenCalledWith('/coach-classes');
+  });
+
+  it('sends an unauthenticated coach invitee to register with the token', async () => {
+    authValue = { ...authenticated, user: null, token: null, isAuthenticated: false };
+    mockGet.mockResolvedValue(coachInvite);
+
+    renderScreen();
+    await waitFor(() => expect(screen.getByTestId('invite-join-btn')).toBeTruthy());
+
+    fireEvent.press(screen.getByTestId('invite-join-btn'));
+
+    expect(mockPush).toHaveBeenCalledWith({
+      pathname: '/register',
+      params: { inviteToken: 'tok-abc', email: 'dana@example.com' },
+    });
+    expect(mockPost).not.toHaveBeenCalled();
+  });
+
+  it('keeps athlete copy and routing for an athlete invite', async () => {
+    mockGet.mockResolvedValue({ ...coachInvite, role: 'athlete' });
+    mockPost.mockResolvedValue({
+      gym: { id: 'gym-1', name: 'Box One' },
+      user: { id: 'user-7', email: 'dana@example.com' },
+      role: 'athlete',
+      token: 'new.jwt.token',
+      message: 'Successfully joined gym',
+    });
+
+    renderScreen();
+    await waitFor(() => expect(screen.getByText('Join Box One on CrossFit Box')).toBeTruthy());
+
+    fireEvent.press(screen.getByTestId('invite-join-btn'));
+
+    await waitFor(() => expect(mockReplace).toHaveBeenCalledWith('/(tabs)/schedule'));
+  });
+});

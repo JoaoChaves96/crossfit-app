@@ -10,6 +10,7 @@ import { styles } from './[inviteToken].styles';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { AuthContext } from '@/context/AuthContext';
 import { createApiClient, ApiError } from '@/utils/api-client';
+import { routeForRole } from '@/utils/routeForRole';
 import { Ink, Status } from '@/constants/design';
 import { Text, Icon, Button } from '@/components/cleanink';
 import type { components } from '@/types/api.gen';
@@ -17,6 +18,7 @@ import type { components } from '@/types/api.gen';
 // ─── Generated API types ──────────────────────────────────────────────────────
 
 type ValidateInviteResponse = components['schemas']['ValidateInviteResponseDto'];
+type AcceptInviteResponse = components['schemas']['AcceptInviteResponseDto'];
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -64,7 +66,7 @@ type ScreenState =
   | { phase: 'error-fetch'; message: string }
   | { phase: 'invalid'; kind: string; invite: ValidateInviteResponse }
   | { phase: 'ready'; invite: ValidateInviteResponse }
-  | { phase: 'accepting' }
+  | { phase: 'accepting'; invite: ValidateInviteResponse }
   | { phase: 'error-accept'; message: string; invite: ValidateInviteResponse };
 
 export default function InviteAcceptanceScreen() {
@@ -127,12 +129,19 @@ export default function InviteAcceptanceScreen() {
       return;
     }
 
-    setState({ phase: 'accepting' });
+    setState({ phase: 'accepting', invite });
 
     try {
       const client = createApiClient({ token: auth?.token });
-      await client.post(`/api/invites/${inviteToken}/accept`);
-      router.replace('/(tabs)/schedule' as never);
+      const result = await client.post<AcceptInviteResponse>(
+        `/api/invites/${inviteToken}/accept`,
+      );
+
+      // The token we arrived with predates this acceptance: its gymId/role
+      // claims are stale (null for a fresh registration), and every gym-scoped
+      // request would 403. Replacing it is what makes the next screen work.
+      await auth?.login(result.token);
+      routeForRole(router, result.role);
     } catch (err) {
       let message = 'Something went wrong. Please try again.';
       if (err instanceof ApiError) {
@@ -178,11 +187,19 @@ export default function InviteAcceptanceScreen() {
 
   if (state.phase === 'error-accept') {
     const { message, invite } = state;
+    const isCoachInvite = invite.role === 'coach';
     return (
       <SafeAreaView style={styles.root}>
         <ScrollView contentContainerStyle={styles.scroll}>
           <View style={styles.contentWrap}>
-            <HeroSection subtitle={`Join ${invite.gymName} on CrossFit Box`} />
+            <HeroSection
+              title={isCoachInvite ? "You've been invited to coach" : undefined}
+              subtitle={
+                isCoachInvite
+                  ? `Coach at ${invite.gymName} on CrossFit Box`
+                  : `Join ${invite.gymName} on CrossFit Box`
+              }
+            />
             <GymCard invite={invite} />
           </View>
           <View style={styles.ctaSection}>
@@ -218,11 +235,14 @@ export default function InviteAcceptanceScreen() {
   // ─── Accepting in progress ────────────────────────────────────────────────
 
   if (state.phase === 'accepting') {
+    const isCoachInvite = state.invite.role === 'coach';
     return (
       <SafeAreaView style={styles.root}>
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color={Ink.strong} />
-          <Text size="body" tone={Ink.muted} style={styles.acceptingText}>Joining gym...</Text>
+          <Text size="body" tone={Ink.muted} style={styles.acceptingText}>
+            {isCoachInvite ? 'Setting you up as coach...' : 'Joining gym...'}
+          </Text>
         </View>
       </SafeAreaView>
     );
@@ -231,16 +251,27 @@ export default function InviteAcceptanceScreen() {
   // ─── Ready ────────────────────────────────────────────────────────────────
 
   const { invite } = state;
+  const isCoachInvite = invite.role === 'coach';
 
   return (
     <SafeAreaView style={styles.root}>
       <ScrollView contentContainerStyle={styles.scroll}>
         <View style={styles.contentWrap}>
-          <HeroSection subtitle={`Join ${invite.gymName} on CrossFit Box`} />
+          <HeroSection
+            title={isCoachInvite ? "You've been invited to coach" : undefined}
+            subtitle={
+              isCoachInvite
+                ? `Coach at ${invite.gymName} on CrossFit Box`
+                : `Join ${invite.gymName} on CrossFit Box`
+            }
+          />
           <GymCard invite={invite} />
         </View>
         <View style={styles.ctaSection}>
-          <JoinButton onPress={() => void handleJoin(invite)} label="Join Gym" />
+          <JoinButton
+            onPress={() => void handleJoin(invite)}
+            label={isCoachInvite ? 'Accept & Join as Coach' : 'Join Gym'}
+          />
           <DeclineButton onPress={handleDecline} />
         </View>
       </ScrollView>
@@ -301,6 +332,12 @@ function GymCard({ invite }: { invite: ValidateInviteResponse }) {
           <Text size="meta" tone={Ink.muted}>Invited by</Text>
           <Text size="meta" weight="medium" style={styles.metaValue}>
             {`${invite.inviterName} (${formatRole(invite.inviterRole)})`}
+          </Text>
+        </View>
+        <View style={styles.metaRow}>
+          <Text size="meta" tone={Ink.muted}>Role</Text>
+          <Text size="meta" weight="medium" style={styles.metaValue}>
+            {invite.role === 'coach' ? 'Coach' : 'Athlete'}
           </Text>
         </View>
         <View style={styles.metaRow}>

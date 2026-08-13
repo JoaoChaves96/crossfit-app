@@ -175,7 +175,7 @@ export interface paths {
         put?: never;
         /**
          * Manually transition class state
-         * @description Move a class to the next state in the lifecycle (published → booking_closed → in_progress → completed → archived). Coaches or gym owners. State transitions are unidirectional.
+         * @description Move a class to the next state in the lifecycle (published → booking_closed → in_progress → completed → archived). The assigned coach, or any active owner of the gym. State transitions are unidirectional.
          */
         post: operations["ClassProgrammingController_manuallyTransitionClassState"];
         delete?: never;
@@ -479,7 +479,7 @@ export interface paths {
         put?: never;
         /**
          * Invite a coach
-         * @description Send an invitation to a user to become a coach. Gym owners only.
+         * @description Creates a pending coach invite and returns the acceptance link. The invitee accepts it to become staff. Gym owners only.
          */
         post: operations["GymConfigurationController_inviteCoach"];
         delete?: never;
@@ -916,7 +916,7 @@ export interface paths {
         put?: never;
         /**
          * Accept an invite
-         * @description Accepts an invite and creates a GymMembership for the athlete. If the request includes a valid JWT the authenticated user is used; otherwise the athlete is resolved by the invite email. The athlete must already be registered.
+         * @description Accepts an invite and, depending on the invite's role, creates a GymMembership (athlete) or a gym_staff row (coach). Returns a freshly signed JWT carrying the new gym context. If the request includes a valid JWT the authenticated user is used; otherwise the invitee is resolved by the invite email. The invitee must already be registered.
          */
         post: operations["InviteController_acceptInvite"];
         delete?: never;
@@ -2173,27 +2173,32 @@ export interface components {
             coachEmail: string;
         };
         InviteCoachResponseDto: {
-            /** @example uuid-gym-staff-id */
-            id: string;
-            /** @example uuid-gym-id */
-            gymId: string;
-            /** @example uuid-coach-user-id */
-            userId: string;
             /**
+             * @description Opaque token identifying the invite
+             * @example AbC123...
+             */
+            inviteToken: string;
+            /**
+             * @description Full acceptance URL. Email delivery is not implemented, so the owner copies this and sends it themselves.
+             * @example https://app.crossfitbox.com/invite/AbC123...
+             */
+            inviteLink: string;
+            /**
+             * @description ISO timestamp when the invite expires (7 days out)
+             * @example 2026-08-20T10:00:00.000Z
+             */
+            expiresAt: string;
+            /**
+             * @description Email address the invite was created for
+             * @example coach@example.com
+             */
+            inviteeEmail: string;
+            /**
+             * @description What accepting this invite makes the invitee
              * @example coach
              * @enum {string}
              */
-            role: "owner" | "coach";
-            /**
-             * @example active
-             * @enum {string}
-             */
-            status: "active" | "inactive";
-            /**
-             * Format: date-time
-             * @example 2024-01-01T00:00:00.000Z
-             */
-            assignedAt: string;
+            role: "coach";
         };
         ChangeCoachStatusResponseDto: {
             /** @example uuid-gym-staff-id */
@@ -2736,6 +2741,12 @@ export interface components {
              * @example athlete@example.com
              */
             inviteeEmail: string;
+            /**
+             * @description What accepting this invite makes the invitee
+             * @example coach
+             * @enum {string}
+             */
+            role: "athlete" | "coach";
         };
         InviteListItemDto: {
             /**
@@ -2753,6 +2764,12 @@ export interface components {
              * @example abc123xyz...
              */
             inviteToken: string;
+            /**
+             * @description What accepting this invite makes the invitee
+             * @example coach
+             * @enum {string}
+             */
+            role: "athlete" | "coach";
             /**
              * @description Current status of the invite
              * @example pending
@@ -2815,6 +2832,12 @@ export interface components {
              */
             inviterRole: "owner" | "coach";
             /**
+             * @description What accepting this invite makes the invitee
+             * @example coach
+             * @enum {string}
+             */
+            role: "athlete" | "coach";
+            /**
              * @description ISO timestamp when the invite expires
              * @example 2026-05-10T12:00:00.000Z
              */
@@ -2839,14 +2862,14 @@ export interface components {
              */
             name: string;
         };
-        AcceptInviteAthleteDto: {
+        AcceptInviteUserDto: {
             /**
-             * @description Athlete user ID
+             * @description User ID
              * @example uuid-user-id
              */
             id: string;
             /**
-             * @description Athlete email address
+             * @description User email address
              * @example athlete@example.com
              */
             email: string;
@@ -2854,11 +2877,22 @@ export interface components {
         AcceptInviteResponseDto: {
             /** @description Gym details */
             gym: components["schemas"]["AcceptInviteGymDto"];
-            /** @description Athlete details */
-            athlete: components["schemas"]["AcceptInviteAthleteDto"];
+            /** @description The accepting user */
+            user: components["schemas"]["AcceptInviteUserDto"];
+            /**
+             * @description What the invitee became at this gym
+             * @example coach
+             * @enum {string}
+             */
+            role: "athlete" | "coach";
+            /**
+             * @description Freshly signed JWT carrying the new gym context. The client MUST replace its stored token with this one.
+             * @example eyJhbGciOi...
+             */
+            token: string;
             /**
              * @description Confirmation message
-             * @example Successfully joined gym
+             * @example Successfully joined gym as coach
              */
             message: string;
         };
@@ -3507,7 +3541,7 @@ export interface operations {
                 };
                 content?: never;
             };
-            /** @description Forbidden - Coach or owner role required */
+            /** @description Forbidden - caller is neither the assigned coach nor an active owner of the gym */
             403: {
                 headers: {
                     [name: string]: unknown;
@@ -4341,6 +4375,13 @@ export interface operations {
                 };
                 content?: never;
             };
+            /** @description Already staff at this gym, or a coach invite for this email is already pending */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
         };
     };
     GymConfigurationController_changeCoachStatus: {
@@ -5146,7 +5187,10 @@ export interface operations {
     };
     InviteController_listInvites: {
         parameters: {
-            query?: never;
+            query?: {
+                /** @description Filter to invites of one role */
+                role?: "athlete" | "coach";
+            };
             header?: never;
             path: {
                 /** @description The ID of the gym */
@@ -5328,7 +5372,7 @@ export interface operations {
             };
         };
         responses: {
-            /** @description Invite accepted and gym membership created */
+            /** @description Invite accepted; gym membership or staff row created, and a re-signed token returned */
             200: {
                 headers: {
                     [name: string]: unknown;
@@ -5337,7 +5381,7 @@ export interface operations {
                     "application/json": components["schemas"]["AcceptInviteResponseDto"];
                 };
             };
-            /** @description Token expired, revoked, already accepted, or athlete not registered */
+            /** @description Token expired, revoked, already accepted, or invitee not registered */
             400: {
                 headers: {
                     [name: string]: unknown;
@@ -5351,7 +5395,7 @@ export interface operations {
                 };
                 content?: never;
             };
-            /** @description Athlete is already a member of this gym */
+            /** @description Invitee is already a member (athlete) or already staff (coach) at this gym */
             409: {
                 headers: {
                     [name: string]: unknown;
