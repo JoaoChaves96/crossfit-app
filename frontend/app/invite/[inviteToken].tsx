@@ -9,7 +9,7 @@ import {
 import { styles } from './[inviteToken].styles';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { AuthContext } from '@/context/AuthContext';
-import { GymContext } from '@/context/GymContext';
+import { useGym } from '@/hooks/useGym';
 import { createApiClient, ApiError } from '@/utils/api-client';
 import { routeForRole } from '@/utils/routeForRole';
 import { Ink, Status } from '@/constants/design';
@@ -73,7 +73,7 @@ type ScreenState =
 export default function InviteAcceptanceScreen() {
   const router = useRouter();
   const auth = useContext(AuthContext);
-  const gym = useContext(GymContext);
+  const gym = useGym();
   const { inviteToken } = useLocalSearchParams<{ inviteToken: string }>();
 
   const [state, setState] = useState<ScreenState>({ phase: 'loading' });
@@ -148,7 +148,19 @@ export default function InviteAcceptanceScreen() {
       // GymContext, not from the token, and nothing else writes it on this
       // path. Without this an accepted coach lands on a screen that never
       // issues a request until they log out and back in. Same for an athlete.
-      await gym?.setCurrentGymId(result.gym.id);
+      //
+      // Guarded separately from the accept call: by this point the server has
+      // committed the staff/membership row, so a storage failure here must not
+      // route the user into the error state. That state offers "Try Again",
+      // which re-posts accept and now answers 400 — telling someone who really
+      // is a coach, twice, that they are not. Log in again is the recovery.
+      try {
+        await gym.setCurrentGymId(result.gym.id);
+      } catch {
+        console.warn(
+          '[invite] accepted, but storing gym context failed; the next screen may be empty until re-login',
+        );
+      }
 
       routeForRole(router, result.role);
     } catch (err) {

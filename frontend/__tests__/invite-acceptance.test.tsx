@@ -72,6 +72,9 @@ describe('invite acceptance — coach invites', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
+    // clearAllMocks clears calls, not implementations — without this the
+    // rejection set by the storage-failure test leaks into every test after it.
+    mockSetCurrentGymId.mockResolvedValue(undefined);
     authValue = authenticated;
   });
 
@@ -112,6 +115,29 @@ describe('invite acceptance — coach invites', () => {
     expect(mockSetCurrentGymId.mock.invocationCallOrder[0]).toBeLessThan(
       mockReplace.mock.invocationCallOrder[0],
     );
+  });
+
+  it('still lands an accepted coach when storing gym context fails', async () => {
+    mockGet.mockResolvedValue(coachInvite);
+    mockPost.mockResolvedValue({
+      gym: { id: 'gym-1', name: 'Box One' },
+      user: { id: 'user-7', email: 'dana@example.com' },
+      role: 'coach',
+      token: 'new.jwt.token',
+      message: 'Successfully joined gym as coach',
+    });
+    mockSetCurrentGymId.mockRejectedValue(new Error('storage unavailable'));
+
+    renderScreen();
+    await waitFor(() => expect(screen.getByTestId('invite-join-btn')).toBeTruthy());
+
+    fireEvent.press(screen.getByTestId('invite-join-btn'));
+
+    // The server already committed the staff row. Showing the accept error here
+    // would offer "Try Again", which re-posts accept and answers 400 — so a
+    // real coach would be told twice that they are not one.
+    await waitFor(() => expect(mockReplace).toHaveBeenCalledWith('/coach-classes'));
+    expect(screen.queryByText('Something went wrong. Please try again.')).toBeNull();
   });
 
   it('sends an unauthenticated coach invitee to register with the token', async () => {
