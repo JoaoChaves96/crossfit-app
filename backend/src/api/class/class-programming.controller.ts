@@ -176,7 +176,7 @@ export class ClassProgrammingController {
   @ApiOperation({
     summary: 'Manually transition class state',
     description:
-      'Move a class to the next state in the lifecycle (published → booking_closed → in_progress → completed → archived). Coaches or gym owners. State transitions are unidirectional.',
+      'Move a class to the next state in the lifecycle (published → booking_closed → in_progress → completed → archived). The assigned coach, or any active owner of the gym. State transitions are unidirectional.',
   })
   @ApiParam({ name: 'gymId', description: 'Gym ID' })
   @ApiParam({ name: 'classId', description: 'Class ID' })
@@ -189,7 +189,8 @@ export class ClassProgrammingController {
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   @ApiResponse({
     status: 403,
-    description: 'Forbidden - Coach or owner role required',
+    description:
+      'Forbidden - caller is neither the assigned coach nor an active owner of the gym',
   })
   async manuallyTransitionClassState(
     @Param('gymId') gymId: string,

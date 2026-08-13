@@ -11,7 +11,7 @@ import { notFound, forbidden, invalidState } from '../../../http/exceptions';
  * ManuallyTransitionClassStateHandler: Orchestrates class state transitions
  *
  * Responsibilities:
- * - Enforce preconditions (coach assigned to class)
+ * - Enforce preconditions (assigned coach, or an owner of the gym)
  * - Validate target state is next valid state (unidirectional progression)
  * - Update class state and timestamp
  * - Persist via repository
@@ -45,19 +45,33 @@ export class ManuallyTransitionClassStateHandler implements ICommandHandler<Manu
       throw forbidden('Class does not belong to the specified gym');
     }
 
-    // Precondition 2: Verify coach is assigned to the class
-    if (classEntity.coachUserId !== command.userId) {
-      throw forbidden('Coach is not assigned to this class');
-    }
-
-    // Verify coach is active in the gym
-    const isCoachActive = await this.gymStaffService.isCoachAssignedToClass(
-      command.userId,
-      command.classId,
-      classEntity.gymId,
-    );
-    if (!isCoachActive) {
-      throw forbidden('Coach is not active for this gym');
+    // Precondition 2: the caller is the assigned coach, or an owner of the gym.
+    //
+    // The owner branch exists because a class whose coach never advanced it
+    // would otherwise be stuck: DECISIONS.md → "Owners May Transition Any
+    // Class" gives the owner the same fill-a-gap authority they already have
+    // over programming. It is deliberately NOT gated on coach staffing — an
+    // owner holds an `owner` gym_staff row, never a `coach` one
+    // (DECISIONS.md → "Owners as Coaches").
+    if (classEntity.coachUserId === command.userId) {
+      const isCoachActive = await this.gymStaffService.isCoachAssignedToClass(
+        command.userId,
+        command.classId,
+        classEntity.gymId,
+      );
+      if (!isCoachActive) {
+        throw forbidden('Coach is not active for this gym');
+      }
+    } else {
+      const isOwner = await this.gymStaffService.isGymOwner(
+        command.userId,
+        classEntity.gymId,
+      );
+      if (!isOwner) {
+        throw forbidden(
+          'Only the assigned coach or a gym owner may transition this class',
+        );
+      }
     }
 
     // Precondition 3: Verify target state is valid progression (unidirectional)

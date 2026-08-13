@@ -106,6 +106,27 @@ The owner's programming surface is the Class Management screen, per
 `MVP_SCREENS.md`. Create/Edit Class remains scoped to class metadata and does not
 carry programming fields.
 
+## Owners May Transition Any Class
+
+A manual class lifecycle transition may be performed by the **assigned coach or
+any active owner of the gym** — not the assigned coach alone.
+
+This extends "Programming Authorship" from programming to the lifecycle itself,
+for the same reason: the owner is accountable for the schedule, and a class whose
+coach never advanced it would otherwise be stuck out of the owner's reach. The
+owner's Class Management screen already presents the lifecycle control, so the
+alternative was to take a shipped affordance away.
+
+Rules:
+
+- An owner may transition any class in their own gym.
+- A coach may transition only a class they are assigned to (unchanged), and must
+  still hold an active `coach` staff row.
+- The owner check is **not** gated on coach staffing: an owner holds an `owner`
+  gym_staff row and never a `coach` one (see "Owners as Coaches").
+- The state machine is unchanged and still unidirectional — this decision governs
+  *who* may advance a class, never *where* it may advance to.
+
 ## Programming Content Shape
 
 Programming is a single `content` text field. There is no separate structured

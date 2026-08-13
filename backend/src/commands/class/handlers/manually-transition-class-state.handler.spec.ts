@@ -55,6 +55,7 @@ describe('ManuallyTransitionClassStateHandler', () => {
           provide: GymStaffService,
           useValue: {
             isCoachAssignedToClass: jest.fn(),
+            isGymOwner: jest.fn(),
           },
         },
       ],
@@ -219,12 +220,13 @@ describe('ManuallyTransitionClassStateHandler', () => {
   });
 
   describe('authorization guards', () => {
-    it('should throw ForbiddenException when userId does not match coachUserId on the class', async () => {
+    it('should throw ForbiddenException when the caller is neither the assigned coach nor an owner', async () => {
       const classEntity = buildClassEntity('published');
       classEntity.coachUserId = 'different-coach';
       jest
         .spyOn(classRepository, 'getClassById')
         .mockResolvedValue(classEntity);
+      jest.spyOn(gymStaffService, 'isGymOwner').mockResolvedValue(false);
 
       const command = new ManuallyTransitionClassStateCommand(
         mockUserId,
@@ -234,6 +236,38 @@ describe('ManuallyTransitionClassStateHandler', () => {
       );
 
       await expect(handler.execute(command)).rejects.toThrow(ForbiddenException);
+    });
+
+    // DECISIONS.md → "Owners May Transition Any Class": the owner must be able
+    // to advance a class their coach left behind, exactly as they may program it.
+    it('should allow an owner who is not the assigned coach to transition', async () => {
+      const classEntity = buildClassEntity('published');
+      classEntity.coachUserId = 'different-coach';
+      jest
+        .spyOn(classRepository, 'getClassById')
+        .mockResolvedValue(classEntity);
+      jest.spyOn(gymStaffService, 'isGymOwner').mockResolvedValue(true);
+      const saveSpy = jest
+        .spyOn(classRepository, 'save')
+        .mockResolvedValue({
+          ...classEntity,
+          state: 'booking_closed',
+        } as ClassEntity);
+
+      const command = new ManuallyTransitionClassStateCommand(
+        mockUserId,
+        mockClassId,
+        mockGymId,
+        'booking_closed',
+      );
+
+      const result = await handler.execute(command);
+
+      expect(result.state).toBe('booking_closed');
+      expect(saveSpy).toHaveBeenCalledTimes(1);
+      // The owner path must not be gated on coach staffing — an owner has no
+      // `role = 'coach'` row (DECISIONS.md → "Owners as Coaches").
+      expect(gymStaffService.isCoachAssignedToClass).not.toHaveBeenCalled();
     });
 
     it('should throw ForbiddenException when coach is not active in the gym', async () => {
