@@ -141,7 +141,7 @@ A's name and `03:45 min`, and not B's. B is refused on save and has **no** histo
 "Absence does not promote" is pinned in the database — at `completed` the UI cannot distinguish
 a never-promoted waitlist row (see Findings).
 
-### 11. Invites bring people in — ✅ DONE (as two tests)
+### 11. Invites bring people in — ⚠️ SUPERSEDED 2026-08-13 (rewrite pending)
 
 **Superseded 2026-08-13, not yet rewritten.** The product now has the flow the epic's wording
 described — coach invites require acceptance (`DECISIONS.md`, and

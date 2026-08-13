@@ -43,7 +43,8 @@ What a real email would replace:
 - `frontend/app/coaches.tsx` — the created-invite modal stays open after a successful invite
   purely so the owner can copy the link, and each pending row (desktop and mobile) carries its
   own **Copy link** button.
-- `frontend/app/invites.tsx` — the same shape for athlete invites.
+- `frontend/app/invites.tsx` — the same created-invite modal for athlete invites. Its rows offer
+  revoke only, with no per-row **Copy link** button, so there is less to retire there.
 - `inviteLinkFor()` in `coaches.tsx`, which **rebuilds** the link from `window.location.origin`
   and the token because the list endpoint returns the token only. The backend builds its own
   link from `FRONTEND_URL`, so the two can disagree about the origin. That whole helper exists
