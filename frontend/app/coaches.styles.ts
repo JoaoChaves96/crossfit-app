@@ -167,6 +167,23 @@ export const styles = StyleSheet.create({
     flex: 1,
   },
 
+  // Pending invite row — mirrors coachRow so it reads as the same list.
+  pendingRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: Space.lg,
+    paddingVertical: Space.md,
+    borderBottomWidth: 1,
+    borderBottomColor: Line.hairline,
+    gap: Space.md,
+  },
+  pendingActions: {
+    width: 140,
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    gap: Space.md,
+  },
+
   // View button (desktop actions)
   viewBtn: {
     paddingHorizontal: Space.md,
@@ -241,6 +258,25 @@ export const styles = StyleSheet.create({
   // Inline error
   inlineError: {
     marginTop: -Space.xs,
+  },
+
+  // Invite-created link box — quiet meta, no success-role color per DESIGN.md.
+  linkBox: {
+    borderRadius: Radius.control,
+    backgroundColor: Ground.sunken,
+    borderWidth: 1,
+    borderColor: Line.hairline,
+    padding: Space.md,
+    gap: Space.sm,
+  },
+  linkRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: Space.sm,
+  },
+  linkText: {
+    flex: 1,
   },
 
   // Modal actions

@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
+  Clipboard,
   Modal,
   ScrollView,
   TextInput,
@@ -14,7 +15,7 @@ import { useGym } from '@/hooks/useGym';
 import { useResponsiveLayout } from '@/hooks/useResponsiveLayout';
 import { SafeScreen } from '@/components/SafeScreen';
 import { Text, Icon, Button, StatusChip } from '@/components/cleanink';
-import { Ink, Accent, Space } from '@/constants/design';
+import { Ink, Accent, Space, Status } from '@/constants/design';
 import { createApiClient } from '@/utils/api-client';
 import { components } from '@/types/api.gen';
 import { OwnerSidebar, OWNER_NAV_ITEMS } from '@/components/OwnerSidebar';
@@ -30,8 +31,20 @@ type CoachListItem = components['schemas']['CoachListItemDto'];
 type CoachesListResponse = components['schemas']['GetCoachesResponseDto'];
 type ChangeCoachStatusResponse = components['schemas']['ChangeCoachStatusResponseDto'];
 type CoachStatus = 'active' | 'inactive';
+type CoachInvite = components['schemas']['InviteListItemDto'];
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
+
+function inviteLinkFor(inviteToken: string): string {
+  // The list endpoint returns the token, not the link the backend built, so
+  // rebuild it against this origin. Email delivery does not exist yet, so
+  // this string is the whole delivery mechanism.
+  const origin =
+    typeof window !== 'undefined' && window.location
+      ? window.location.origin
+      : '';
+  return `${origin}/invite/${inviteToken}`;
+}
 
 function confirmDeactivate(displayName: string, onConfirm: () => void) {
   Alert.alert(
@@ -131,6 +144,63 @@ function CoachRow({ coach, isSelected, onSelect }: CoachRowProps) {
   );
 }
 
+// ─── Pending Invite Row ───────────────────────────────────────────────────────
+// Per the One Accent Rule the crimson stays on the header CTA, so both row
+// actions here are quiet and revoke is Status.danger — a different red.
+
+interface PendingInviteRowProps {
+  invite: CoachInvite;
+  onCopy: (invite: CoachInvite) => void;
+  onRevoke: (invite: CoachInvite) => void;
+  copiedToken: string | null;
+  isRevoking: boolean;
+}
+
+function PendingInviteRow({
+  invite,
+  onCopy,
+  onRevoke,
+  copiedToken,
+  isRevoking,
+}: PendingInviteRowProps) {
+  return (
+    <View testID={`pending-invite-row-${invite.inviteToken}`} style={styles.pendingRow}>
+      <View style={styles.colName}>
+        <Text size="body" weight="semibold" numberOfLines={1}>
+          {invite.inviteeEmail}
+        </Text>
+      </View>
+      <View style={styles.colStatus}>
+        <StatusChip tone="neutral" label="Pending" />
+      </View>
+      <View style={styles.colClasses}>
+        <Text size="meta" tone="muted">
+          {`Expires ${new Date(invite.expiresAt).toLocaleDateString()}`}
+        </Text>
+      </View>
+      <View style={styles.pendingActions}>
+        <TouchableOpacity
+          testID={`copy-invite-link-${invite.inviteToken}`}
+          onPress={() => onCopy(invite)}
+          activeOpacity={0.7}>
+          <Text size="body" weight="medium" tone="muted">
+            {copiedToken === invite.inviteToken ? 'Copied!' : 'Copy link'}
+          </Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          testID={`revoke-invite-${invite.inviteToken}`}
+          onPress={() => onRevoke(invite)}
+          disabled={isRevoking}
+          activeOpacity={0.7}>
+          <Text size="body" weight="medium" tone={Status.danger}>
+            Revoke
+          </Text>
+        </TouchableOpacity>
+      </View>
+    </View>
+  );
+}
+
 // ─── Coach Detail Panel (Desktop) ───────────────────────────────────────────────
 
 interface CoachDetailPanelProps {
@@ -219,11 +289,15 @@ function InviteModal({ visible, onClose, onSuccess, gymId, token }: InviteModalP
   const [email, setEmail] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [created, setCreated] = useState<InviteCoachResponse | null>(null);
+  const [copyLabel, setCopyLabel] = useState('Copy');
 
   function handleClose() {
     setEmail('');
     setError(null);
     setIsSubmitting(false);
+    setCreated(null);
+    setCopyLabel('Copy');
     onClose();
   }
 
@@ -240,11 +314,13 @@ function InviteModal({ visible, onClose, onSuccess, gymId, token }: InviteModalP
     try {
       const client = createApiClient({ token });
       const body: InviteCoachRequest = { coachEmail: trimmedEmail };
-      await client.post<InviteCoachResponse>(
+      const response = await client.post<InviteCoachResponse>(
         `/api/gyms/${gymId}/configuration/coaches`,
         body as Record<string, unknown>,
       );
-      setEmail('');
+      setCreated(response);
+      // The invite is created and pending — refetch the list behind the
+      // modal, but keep the modal open so the owner can copy the link.
       onSuccess();
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'Failed to invite coach.';
@@ -252,6 +328,12 @@ function InviteModal({ visible, onClose, onSuccess, gymId, token }: InviteModalP
     } finally {
       setIsSubmitting(false);
     }
+  }
+
+  function handleCopyCreatedLink(invite: InviteCoachResponse) {
+    Clipboard.setString(invite.inviteLink);
+    setCopyLabel('Copied!');
+    setTimeout(() => setCopyLabel('Copy'), 2000);
   }
 
   return (
@@ -283,13 +365,29 @@ function InviteModal({ visible, onClose, onSuccess, gymId, token }: InviteModalP
                 keyboardType="email-address"
                 autoCapitalize="none"
                 autoCorrect={false}
-                editable={!isSubmitting}
+                editable={!isSubmitting && created === null}
               />
             </View>
           </View>
 
           {error !== null ? (
             <Text size="meta" tone={Ink.strong} style={styles.inlineError}>{error}</Text>
+          ) : null}
+
+          {created !== null ? (
+            <View style={styles.linkBox}>
+              <Text size="meta" tone="muted">
+                Invite created. Send this link to the coach — email delivery is not set up yet.
+              </Text>
+              <View style={styles.linkRow}>
+                <Text testID="coach-invite-link-text" size="meta" numberOfLines={1} style={styles.linkText}>
+                  {created.inviteLink}
+                </Text>
+                <TouchableOpacity onPress={() => handleCopyCreatedLink(created)} activeOpacity={0.7}>
+                  <Text size="meta" weight="semibold">{copyLabel}</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
           ) : null}
 
           <View style={styles.modalActions}>
@@ -305,9 +403,9 @@ function InviteModal({ visible, onClose, onSuccess, gymId, token }: InviteModalP
             <View style={styles.modalActionBtn}>
               <Button
                 testID="modal-confirm-btn"
-                label="Send Invite"
+                label={created !== null ? 'Done' : 'Send Invite'}
                 variant="primary"
-                onPress={handleSubmit}
+                onPress={created !== null ? handleClose : handleSubmit}
                 loading={isSubmitting}
               />
             </View>
@@ -393,6 +491,9 @@ export default function CoachesScreen() {
   const [changingStatusId, setChangingStatusId] = useState<string | null>(null);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [selectedCoachUserId, setSelectedCoachUserId] = useState<string | null>(null);
+  const [pendingInvites, setPendingInvites] = useState<CoachInvite[]>([]);
+  const [copiedToken, setCopiedToken] = useState<string | null>(null);
+  const [revokingToken, setRevokingToken] = useState<string | null>(null);
 
   const selectedCoach =
     coaches.find((c) => c.userId === selectedCoachUserId) ?? null;
@@ -417,9 +518,25 @@ export default function CoachesScreen() {
     }
   }, [token, currentGymId]);
 
+  const fetchPendingInvites = useCallback(async () => {
+    if (!token || !currentGymId) return;
+    try {
+      const client = createApiClient({ token });
+      const invites = await client.get<CoachInvite[]>(
+        `/api/gyms/${currentGymId}/invites?role=coach`,
+      );
+      setPendingInvites(invites.filter((i) => i.status === 'pending'));
+    } catch {
+      // A failed invite fetch must not blank the coach list — the roster is
+      // the screen's primary job and it has its own error state.
+      setPendingInvites([]);
+    }
+  }, [token, currentGymId]);
+
   useEffect(() => {
     fetchCoaches();
-  }, [fetchCoaches]);
+    fetchPendingInvites();
+  }, [fetchCoaches, fetchPendingInvites]);
 
   async function handleChangeStatus(coachUserId: string, status: CoachStatus) {
     if (!token || !currentGymId) return;
@@ -442,8 +559,29 @@ export default function CoachesScreen() {
   }
 
   function handleInviteSuccess() {
-    setModalVisible(false);
     fetchCoaches();
+    fetchPendingInvites();
+  }
+
+  function handleCopyInviteLink(invite: CoachInvite) {
+    Clipboard.setString(inviteLinkFor(invite.inviteToken));
+    setCopiedToken(invite.inviteToken);
+    setTimeout(() => setCopiedToken(null), 2000);
+  }
+
+  async function handleRevokeInvite(invite: CoachInvite) {
+    if (!token || !currentGymId) return;
+    setRevokingToken(invite.inviteToken);
+    try {
+      const client = createApiClient({ token });
+      await client.delete(`/api/gyms/${currentGymId}/invites/${invite.inviteToken}`);
+      await fetchPendingInvites();
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : 'Failed to revoke invite.';
+      Alert.alert('Error', msg);
+    } finally {
+      setRevokingToken(null);
+    }
   }
 
   const handleSidebarNav = (key: string) => {
@@ -514,7 +652,7 @@ export default function CoachesScreen() {
               <Text size="body" weight="medium">Retry</Text>
             </TouchableOpacity>
           </View>
-        ) : coaches.length === 0 ? (
+        ) : coaches.length === 0 && pendingInvites.length === 0 ? (
           <View style={styles.emptyState}>
             <View style={styles.emptyIconCircle}>
               <Icon name="coach" size={28} tone="faint" />
@@ -530,6 +668,16 @@ export default function CoachesScreen() {
         ) : isMobile ? (
           /* Mobile: card-based layout */
           <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.coachCardList}>
+            {pendingInvites.map((invite) => (
+              <PendingInviteRow
+                key={invite.inviteToken}
+                invite={invite}
+                onCopy={handleCopyInviteLink}
+                onRevoke={handleRevokeInvite}
+                copiedToken={copiedToken}
+                isRevoking={revokingToken === invite.inviteToken}
+              />
+            ))}
             {coaches.map((coach) => (
               <CoachCard
                 key={coach.id}
@@ -560,6 +708,16 @@ export default function CoachesScreen() {
               </View>
 
               <ScrollView showsVerticalScrollIndicator={false}>
+                {pendingInvites.map((invite) => (
+                  <PendingInviteRow
+                    key={invite.inviteToken}
+                    invite={invite}
+                    onCopy={handleCopyInviteLink}
+                    onRevoke={handleRevokeInvite}
+                    copiedToken={copiedToken}
+                    isRevoking={revokingToken === invite.inviteToken}
+                  />
+                ))}
                 {coaches.map((coach) => (
                   <CoachRow
                     key={coach.id}
