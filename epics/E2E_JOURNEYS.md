@@ -141,28 +141,26 @@ A's name and `03:45 min`, and not B's. B is refused on save and has **no** histo
 "Absence does not promote" is pinned in the database — at `completed` the UI cannot distinguish
 a never-promoted waitlist row (see Findings).
 
-### 11. Invites bring people in — ⚠️ SUPERSEDED 2026-08-13 (rewrite pending)
+### 11. Invites bring people in — ✅ DONE, rewritten as ONE journey 2026-08-13
 
-**Superseded 2026-08-13, not yet rewritten.** The product now has the flow the epic's wording
-described — coach invites require acceptance (`DECISIONS.md`, and
-`docs/superpowers/specs/2026-08-13-coach-invite-and-gym-context-design.md`) — so the reason this
-journey was split no longer holds. Collapsing it into a **single** test (owner invites a
-brand-new email → invitee registers through the link → accepts → works in the gym) is planned and
-**pending**. The two tests below are what is still in the spec file, and the coach one asserts
-the behaviour that was just removed — an invited coach going active without accepting — so it is
-expected red until the rewrite lands.
+Owner invites an email with **no account** → a Pending row appears and the roster still holds one
+coach → the invitee opens `/invite/<token>` signed out, is sent to `/register` with the invited
+address locked, registers, is returned to acceptance, accepts → lands on `/coach-classes` → the
+owner's roster shows them as an active coach under the id the server assigned → the owner assigns
+them a class → it appears on **their own** list and opens with the coach-only programming form →
+the token is spent.
 
-The epic's wording — "coach opens the invite link and accepts" — describes a flow the product
-did not have; the two real mechanisms were disjoint (see Findings). Each got the test the
-journey was after:
+**No login step anywhere in the test.** That absence is the point: the account is created and used
+in one pass. The token is taken from **the link the UI displayed**, not from the database, because
+the owner copying that string is the whole delivery mechanism until an email service exists.
 
-- **The coach invite** — owner invites an existing account by email → active immediately → the
-  class form's coach picker offers them → the class the owner assigns them shows up on **their
-  own** Coach Classes screen and opens with the coach-only programming form.
-- **The athlete invite link** — owner generates the invite; the token is taken from **the link
-  the UI displayed**, not from the database, because that string travelling correctly is the seam
-  under test. The invitee opens `/invite/<token>`, reads who invited them, joins, is a member on
-  the owner's list — and the token is then spent (re-opening reports "already accepted").
+The two-test split this replaces existed because the epic's wording described a flow the product
+did not have (coach invites went active with no token and no acceptance). That gap is closed — see
+Findings — so the journey the epic originally asked for is now writable, and the athlete-invite
+half is covered by the same code path with `role = 'athlete'`.
+
+**It found a real defect on its first green attempt**, and it is the reason the chain is asserted
+to the end rather than to the landing URL: see *Findings from the journey 11 rewrite*.
 
 ---
 
@@ -191,8 +189,7 @@ journey was after:
   staff row and re-signs the caller's JWT into their new gym and role. The random-password
   `pending` user is gone — an invitee with no account registers through the link and is returned
   to it. The owner sees, copies and revokes pending coach invites on `/coaches`.
-  Journey 11 can now invite a brand-new email end to end; collapsing its two tests into the one
-  the epic originally asked for is the next step and has **not** landed yet.
+  Journey 11 is now the single end-to-end journey the epic originally asked for.
 - ✅ **The transition control had no coach route, and 403'd for the owner.** Both halves closed.
   `manually-transition-class-state.handler` now accepts the assigned coach *or* an active owner of
   the gym, recorded as a Tier 1 ruling in `DECISIONS.md` → "Owners May Transition Any Class"; and
@@ -233,7 +230,8 @@ that can be arrived at twice.
 Built in the order **13 → 15 → 12 → 14**, each mutation-proved before being called done. Both of
 the "weaker pair" earned their place and were kept: 12 pins the space's capacity reaching a class
 that never states one, and 14 pins the only lever in the MVP that revokes access to a gym the
-athlete still belongs to. The suite is now **15 tests, ~3.0 min**.
+athlete still belongs to. The suite was **15 tests, ~3.0 min** at the end of Tier 3, and is
+**14 tests, ~2.8 min** since journey 11's two tests became one.
 
 ### 13. Recurring series — N classes on the *correct* N dates — ✅ DONE
 
@@ -344,6 +342,43 @@ belongs to journeys 1 and 5.
 
 ---
 
+## Findings from the journey 11 rewrite (2026-08-13)
+
+**Fixed because the journey found it:**
+
+- **Invite acceptance re-signed the token and left the app with no gym.** `GymContext` is written
+  from storage only, and its sole writers were `login.tsx`, `gym-setup.tsx` and `dev-bootstrap.tsx`
+  — so an accepted coach held a perfectly good re-signed JWT while `currentGymId` stayed `null`, and
+  `coach-classes.tsx`'s `if (!token || !currentGymId) return;` meant the screen **issued no request
+  at all**. Not an error state: "No upcoming classes assigned", indistinguishable from an empty gym,
+  until the coach logged out and back in. Fixed by writing `result.gym.id` into `GymContext` beside
+  the `auth.login(result.token)` in `app/invite/[inviteToken].tsx`. The athlete branch had the same
+  hole, and the old journey never saw it because it asserted the tab was visible rather than
+  anything the tab had to load.
+
+  This is why the journey follows the chain to a class on the coach's own screen instead of stopping
+  at the landing URL: every assertion up to and including `toHaveURL(/coach-classes/)` passed with
+  the defect in place.
+
+**Recorded, not fixed:**
+
+- **The re-signed token is not what makes an accepted coach work.** Deleting
+  `await auth?.login(result.token)` from the acceptance screen leaves the journey **green**, so it
+  was discarded as non-observable rather than counted as a proof. `RolesGuard` resolves the role
+  from the `gym_staff` table, not from the JWT's `role` claim, and the coach routes
+  (`/api/gyms/:gymId/coach/classes`, the class-scoped programming routes) carry no
+  `GymOwnershipGuard` — so nothing on this path compares the token's `gymId`. The gym comes from the
+  URL, which comes from `GymContext`. The re-sign still matters (owner-scoped routes do compare the
+  claim, and Phase 2 switching is built on it), but the claim in the design that it is what buys
+  "no re-login" is only half the story: the `setCurrentGymId` above is the load-bearing half.
+
+**Mutation proof, for the record.** Coach acceptance writing a `gym_membership` instead of a
+`gym_staff` row → red on `coach-view-<userId>`, the owner's roster never gaining the coach.
+`setCurrentGymId` removed from acceptance → red on the coach's own class row. The token re-sign
+removed → green, discarded with the reasoning above.
+
+---
+
 ## Parked, with reasons
 
 - **Multi-gym switching** — real per `PRODUCT.md` § 5.1, but needs a two-gym seed. Add once the
@@ -441,8 +476,8 @@ surfaces a journey had no way to address: `class-details-title`, `log-results-er
 `invite-join-btn` on the invite flow.
 
 **Tier 3: ✅ COMPLETE (2026-08-13).** Journeys 12, 13, 14 and 15 all pass; the whole suite is
-**15 tests in ~3.0 minutes** serially. Every journey was mutation-proved against three defects
-each — listed in *Findings from Tier 3*, along with the one attempt discarded as invalid because it
+**14 tests in ~2.8 minutes** serially — 15 until journey 11's two tests became one. Every journey
+was mutation-proved against three defects each — listed in *Findings from Tier 3*, along with the one attempt discarded as invalid because it
 changed no observable behaviour. Two of the twelve reds were only reachable after the assertion was
 strengthened: journey 15's token-race claim needed the navigation history rather than a URL (the
 race is self-healing), and its logout claim needed `expectSignedOut` after every logout rather than

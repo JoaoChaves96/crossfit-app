@@ -1,42 +1,21 @@
 /**
  * Journey 11 — an invite turns an outsider into someone who can work in the gym.
  *
- * The epic asks for one journey: "owner invites → coach opens the invite link
- * and accepts → appears active → is assignable as coach on a new class". Reading
- * the product, that sentence spans TWO mechanisms that do not meet:
+ * The whole chain in one test, because the value is in the chain: the owner
+ * invites an address that has NO ACCOUNT, the link the UI showed is the link
+ * that works, registering through it lands the invitee back on acceptance, and
+ * accepting makes them a coach who can immediately operate — no re-login, which
+ * is the part the re-signed token buys.
  *
- *  - **Inviting a coach** (`InviteCoachHandler`, owner's Coaches screen) has no
- *    token, no link and no acceptance step at all. It writes a `gym_staff` row
- *    with `status = 'active'` immediately; the email is a TODO in the handler.
- *  - **The token-in-URL flow** (`InviteService` → `/invite/<token>` → accept)
- *    creates a `gym_membership` — an ATHLETE. There is no coach-role invite
- *    token anywhere in the schema.
- *
- * So a single test matching the epic's wording could only be written by
- * inventing behaviour. Instead each real mechanism gets the test the epic wanted
- * it to have, and the mismatch is recorded in the epic as a finding.
- *
- *  1. **The coach invite** — owner invites an existing account by email; that
- *     person becomes an active coach, is offered by the class form's coach
- *     picker, and — the part no unit test reaches — can then open the class from
- *     their own Coach Classes screen. "Assignable" is only worth asserting if
- *     the assignment actually reaches the assignee.
- *  2. **The athlete invite link** — owner generates the link, and the token is
- *     taken from the LINK THE UI SHOWED, not from the database, because the
- *     token travelling correctly through that string is the seam under test.
- *     The invitee opens the URL, reads who invited them, joins, and shows up in
- *     the owner's member list.
- *
- * Both invitees are pre-registered accounts (`seedUser`). That is deliberate for
- * the coach case: inviting an address with no account creates a `pending` user
- * with a random 32-byte password nobody holds, so a brand-new coach cannot log
- * in — a gap recorded in the epic rather than papered over here.
+ * The token is read off the screen rather than out of the database: that string
+ * is the owner's only delivery mechanism until an email service exists, so it
+ * is the seam worth testing.
  */
 import { expect, newActorPage, test } from '../fixtures';
 import { loginAs, fillStable, visibleTestId } from '../helpers/auth';
 import { createClassViaForm, openOwnerSection } from '../helpers/actions';
 import { bookableDay } from '../helpers/dates';
-import { seedGym, seedUser } from '../helpers/seed';
+import { seedGym, withDb } from '../helpers/seed';
 
 /**
  * The token out of a generated invite link.
@@ -54,139 +33,161 @@ function tokenFromLink(link: string): string {
   return token;
 }
 
-test('an invited coach becomes assignable, and the class reaches them', async ({
-  page,
-  browser,
-}) => {
+/**
+ * An address no account exists for.
+ *
+ * `seedUser` cannot supply this — it registers the account, which is precisely
+ * the state this journey needs to NOT exist. The pid and the timestamp keep two
+ * runs against the same database from colliding on the users table's unique
+ * email once the invitee registers.
+ */
+function unregisteredEmail(): string {
+  return `newcoach-${process.pid}-${Date.now()}@e2e.test`;
+}
+
+/**
+ * The user id behind an email, once that email has an account.
+ *
+ * Read from the database because the id only comes into existence when the
+ * invitee registers — mid-test, through the UI — and the owner's roster
+ * addresses its rows by it (`coach-view-<userId>`). Matching the row on text
+ * instead would need a `.first()` on an email the pending row also carried.
+ */
+async function readUserIdByEmail(email: string): Promise<string> {
+  return withDb(async (db) => {
+    const res = await db.query<{ id: string }>(`SELECT id FROM users WHERE email = $1`, [email]);
+    if (res.rowCount !== 1) {
+      throw new Error(
+        `[j11] Expected exactly one user for ${email}, found ${res.rowCount}. ` +
+          `Registering through the invite link is what creates it.`,
+      );
+    }
+    return res.rows[0].id;
+  });
+}
+
+test('an invited stranger registers, accepts, and works as a coach', async ({ page, browser }) => {
   const gym = await seedGym('j11-invite-coach');
-  // A real account the gym has never heard of — the state an invite exists to
-  // change. Their name is what the coach picker will have to offer.
-  const newCoach = await seedUser('newcoach', 'Dana Reyes');
+  const inviteeEmail = unregisteredEmail();
+  const inviteeName = `Nia Ferreira ${process.pid}`;
 
   await loginAs(page, gym.owner);
   await openOwnerSection(page, 'coaches');
 
-  // The gym starts with exactly one coach, and it is not Dana. Asserted before
-  // the invite so the row appearing later is the invite's doing.
+  // The gym starts with exactly one coach, and the invited address is nowhere on
+  // the screen. Asserted before the invite so everything that follows is the
+  // invite's doing rather than the fixture's.
   await expect(page.getByText(gym.coach.email)).toBeVisible({ timeout: 20_000 });
-  await expect(page.getByText(newCoach.email)).toHaveCount(0);
+  await expect(page.getByText(inviteeEmail)).toHaveCount(0);
 
-  // ── The owner invites them by email ───────────────────────────────────────
+  // ── The owner invites an address with no account ──────────────────────────
   await page.getByTestId('invite-coach-btn').click();
-  await fillStable(page.getByTestId('invite-coach-email-input'), newCoach.email);
+  await fillStable(page.getByTestId('invite-coach-email-input'), inviteeEmail);
   await page.getByTestId('modal-confirm-btn').click();
 
-  // Active immediately: there is no pending state for a coach invite. The row
-  // carries the *existing* account's name, which is how we know the handler
-  // matched the email to Dana instead of creating a second placeholder user.
-  const coachRow = page.getByTestId(`coach-view-${newCoach.id}`);
-  await expect(coachRow).toBeVisible({ timeout: 20_000 });
-  await expect(page.getByText(newCoach.email)).toBeVisible();
-  await expect(page.getByText(newCoach.name)).toBeVisible();
-  await coachRow.click();
-  await expect(page.getByText('Disable')).toBeVisible();
+  // The link the owner would send, read off the screen — no email is delivered,
+  // so this string is the whole mechanism. Taking the token from the database
+  // instead would skip it.
+  const linkText = page.getByTestId('coach-invite-link-text');
+  await expect(linkText).toBeVisible({ timeout: 20_000 });
+  const inviteToken = tokenFromLink((await linkText.innerText()) ?? '');
 
-  // ── …and can now put them on a class ─────────────────────────────────────
-  // The picker only offers active coaches of this gym, so choosing Dana by name
-  // is itself the assignability claim — `selectOption` fails if she is not there.
-  const day = bookableDay();
-  // Sidebar key, not route: the Schedule item points at `/schedule-dashboard`.
-  await openOwnerSection(page, 'schedule');
-  await createClassViaForm(page, {
-    date: day,
-    time: '06:30',
-    classTypeName: gym.classTypes.crossfit.name,
-    coachName: newCoach.name,
-    spaceName: gym.space.name,
-    capacity: 6,
+  // The confirm button is now 'Done'; closing the modal uncovers the roster.
+  await page.getByTestId('modal-confirm-btn').click();
+  await expect(linkText).toHaveCount(0);
+
+  // ── Nobody is a coach yet ─────────────────────────────────────────────────
+  // A pending row for this token is the positive anchor; the roster still
+  // holding exactly one coach row is the absence that matters. An owner cannot
+  // make someone staff unilaterally any more.
+  await expect(page.getByTestId(`pending-invite-row-${inviteToken}`)).toBeVisible({
+    timeout: 20_000,
   });
+  await expect(page.getByTestId(/^coach-view-/)).toHaveCount(1);
 
-  // ── …and the assignment reaches Dana herself ─────────────────────────────
-  // A separate session, a separate role, a separate screen: the class the owner
-  // just created is on the new coach's own list, and she can open it. This is
-  // the half that proves the invite produced a working coach and not just a row.
-  const coachActor = await newActorPage(browser);
+  const inviteeActor = await newActorPage(browser);
   try {
-    const coach = coachActor.page;
-    await loginAs(coach, newCoach);
-    await coach.goto('/coach-classes');
+    const coach = inviteeActor.page;
 
+    // ── The invitee opens the link, signed out and account-less ─────────────
+    await coach.goto(`/invite/${inviteToken}`);
+
+    // Both facts came from the token alone: nothing else told this browser which
+    // gym, which role, or which address.
+    await expect(coach.getByText(`Coach at ${gym.name} on CrossFit Box`)).toBeVisible({
+      timeout: 20_000,
+    });
+    await expect(coach.getByText(inviteeEmail)).toBeVisible();
+
+    // ── …is sent to register, with the invited address fixed ───────────────
+    await coach.getByTestId('invite-join-btn').click();
+    await expect(coach).toHaveURL(/register/, { timeout: 20_000 });
+    // Prefilled from the invite, not typed: an invite accepted by a different
+    // address than it was issued to would be a different person joining.
+    await expect(coach.getByTestId('register-email-input')).toHaveValue(inviteeEmail);
+
+    await fillStable(coach.getByTestId('register-name-input'), inviteeName);
+    await fillStable(coach.getByTestId('register-password-input'), 'password123');
+    await coach.getByTestId('register-submit-btn').click();
+
+    // ── …and is returned to acceptance to finish the job ───────────────────
+    // Pinned to the visible copy: registering was a pushed route over the
+    // acceptance screen, so the first instance is still mounted underneath.
+    await expect(coach).toHaveURL(new RegExp(`invite/${inviteToken}`), { timeout: 20_000 });
+    const joinBtn = visibleTestId(coach, 'invite-join-btn');
+    await expect(joinBtn).toBeVisible({ timeout: 20_000 });
+    await joinBtn.click();
+
+    // The coach's own home, reached with NO login step anywhere in this test.
+    // That absence is the re-signed token under test: the token this browser
+    // arrived with carried no gym and no role.
+    await expect(coach).toHaveURL(/coach-classes/, { timeout: 20_000 });
+
+    // ── The owner now has a coach, not an invitee ─────────────────────────
+    // Reloaded rather than re-navigated through the sidebar: the sidebar pushes
+    // a second copy of the screen and leaves the first mounted, so the stale
+    // pending row would satisfy the very assertion that says it is gone.
+    await page.reload();
+    const inviteeUserId = await readUserIdByEmail(inviteeEmail);
+    const coachRow = page.getByTestId(`coach-view-${inviteeUserId}`);
+    await expect(coachRow).toBeVisible({ timeout: 20_000 });
+    await expect(page.getByText(inviteeName)).toBeVisible();
+    await expect(page.getByTestId(`pending-invite-row-${inviteToken}`)).toHaveCount(0);
+
+    // ── …and can put them on a class ─────────────────────────────────────
+    // The picker only offers active coaches of this gym, so choosing them by the
+    // name they registered under is itself the assignability claim.
+    const day = bookableDay();
+    // Sidebar key, not route: the Schedule item points at `/schedule-dashboard`.
+    await openOwnerSection(page, 'schedule');
+    await createClassViaForm(page, {
+      date: day,
+      time: '06:30',
+      classTypeName: gym.classTypes.crossfit.name,
+      coachName: inviteeName,
+      spaceName: gym.space.name,
+      capacity: 6,
+    });
+
+    // ── …and the assignment reaches them ────────────────────────────────
+    await coach.goto('/coach-classes');
     const row = coach.getByTestId(/^coach-class-row-/);
     await expect(row).toHaveCount(1, { timeout: 20_000 });
     await expect(row).toContainText(gym.classTypes.crossfit.name);
 
     await coach.getByTestId(/^coach-class-view-btn-/).click();
     // Programming is a coach-only surface, so its presence is the permission
-    // check: Dana is not merely listed, she is operating as this class's coach.
+    // check: they are not merely listed, they are operating as this class's coach.
     await expect(coach.getByTestId('programming-wod-input')).toBeVisible({ timeout: 20_000 });
-  } finally {
-    await coachActor.close();
-  }
-});
 
-test('the invite link the owner generates is the link that joins the gym', async ({
-  page,
-  browser,
-}) => {
-  const gym = await seedGym('j11-invite-athlete');
-  const invitee = await seedUser('invitee', 'Sam Okafor');
-
-  await loginAs(page, gym.owner);
-  await openOwnerSection(page, 'invites');
-
-  await page.getByTestId('create-invite-btn').click();
-  await fillStable(page.getByTestId('invite-email-input'), invitee.email);
-  await page.getByTestId('invite-send-btn').click();
-
-  // The link is read off the screen — the owner's only way to pass it on, since
-  // the invite email is not implemented. Reading it from the database instead
-  // would skip the string the owner would actually send.
-  const linkText = page.getByTestId('invite-link-text');
-  await expect(linkText).toBeVisible({ timeout: 20_000 });
-  const inviteToken = tokenFromLink((await linkText.innerText()) ?? '');
-
-  const inviteeActor = await newActorPage(browser);
-  try {
-    const s = inviteeActor.page;
-    await loginAs(s, invitee);
-
-    // ── The invitee opens the link ──────────────────────────────────────────
-    await s.goto(`/invite/${inviteToken}`);
-
-    // The screen states who is inviting whom before offering the action, and
-    // those facts came from the token alone — nothing else identified the gym.
-    await expect(s.getByText("You've been invited!")).toBeVisible({ timeout: 20_000 });
-    await expect(s.getByText(`Join ${gym.name} on CrossFit Box`)).toBeVisible();
-    await expect(s.getByText(invitee.email)).toBeVisible();
-    await expect(s.getByText(`${gym.owner.name} (Gym Owner)`)).toBeVisible();
-
-    // ── …and joins ─────────────────────────────────────────────────────────
-    await s.getByTestId('invite-join-btn').click();
-    // Accepting lands them inside the app as a member of that gym; the schedule
-    // tab is the app's own confirmation that they now have a gym context at all.
-    await expect(s).toHaveURL(/schedule/, { timeout: 20_000 });
-    await expect(visibleTestId(s, 'tab-schedule')).toBeVisible();
-
-    // ── The token is spent ─────────────────────────────────────────────────
-    // A join link that still works after joining is a join link that can be
-    // shared. Re-opening it now reports the invite as used, by name.
-    await s.goto(`/invite/${inviteToken}`);
-    await expect(s.getByText('This invite has already been accepted')).toBeVisible({
+    // ── The token is spent ──────────────────────────────────────────────
+    // An acceptance link that still works after acceptance is a link that can be
+    // passed on. Re-opening it now reports the invite as used, by name.
+    await coach.goto(`/invite/${inviteToken}`);
+    await expect(coach.getByText('This invite has already been accepted')).toBeVisible({
       timeout: 20_000,
     });
-    await expect(s.getByTestId('invite-join-btn')).toHaveCount(0);
-
-    // ── And the owner sees a member, not an invitee ─────────────────────────
-    await openOwnerSection(page, 'members');
-    await fillStable(page.getByTestId('members-search-input'), invitee.email);
-    // The list, filtered to the search, holds exactly one person and it is Sam.
-    // Addressed by row rather than by text: the mobile card and the desktop row
-    // are both mounted, so a bare email lookup matches twice and says nothing
-    // about which list it found them in.
-    const memberRow = page.getByTestId(/^member-row-[0-9a-f-]{36}$/);
-    await expect(memberRow).toHaveCount(1, { timeout: 20_000 });
-    await expect(memberRow).toContainText(invitee.name);
-    await expect(memberRow).toContainText(invitee.email);
+    await expect(coach.getByTestId('invite-join-btn')).toHaveCount(0);
   } finally {
     await inviteeActor.close();
   }
