@@ -1,5 +1,5 @@
 import { useCallback, useState } from 'react';
-import { Alert } from 'react-native';
+import { showConfirm, showError } from '@/utils/alert';
 import { createApiClient } from '@/utils/api-client';
 import { components } from '@/types/api.gen';
 import { STATE_NEXT_MAP, STATE_LABEL } from './classStates';
@@ -35,13 +35,19 @@ export function useClassTransition({
     const nextState = STATE_NEXT_MAP[classDetail.state];
     if (!nextState) return;
 
-    Alert.alert(
+    // `showConfirm`, never `Alert.alert`: react-native-web's Alert is a literal
+    // no-op (`static alert() {}`), so the owner's lifecycle control did nothing
+    // whatsoever on web — no dialog, no request, no error. The confirm button
+    // carries an explicit `default` style because that is what showConfirm's web
+    // branch looks for when choosing which handler window.confirm runs.
+    showConfirm(
       'Advance State',
       `Move class to "${STATE_LABEL[nextState]}"?`,
       [
-        { text: 'Cancel', style: 'cancel' },
+        { text: 'Cancel', style: 'cancel', onPress: () => {} },
         {
           text: 'Confirm',
+          style: 'default',
           onPress: async () => {
             setIsTransitioning(true);
             try {
@@ -57,7 +63,7 @@ export function useClassTransition({
               onTransitionSuccess();
             } catch (err) {
               const msg = err instanceof Error ? err.message : 'Transition failed';
-              Alert.alert('Error', msg);
+              showError('Error', msg);
             } finally {
               setIsTransitioning(false);
             }

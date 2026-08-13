@@ -362,19 +362,16 @@ export default function ClassDetailsScreen() {
           try {
             const client = createApiClient({ token });
             await client.delete(`/api/gyms/${currentGymId}/classes/bookings/${bookingId}`);
-            const bookingsRes = await client.get<GetUserBookingsResponse>('/api/me/bookings');
-            const booking = bookingsRes.bookings.find((b) => b.classId === classId);
-            if (booking) {
-              setBookingStatus(booking.status);
-              setBookingId(booking.id);
-              setWaitlistPosition(booking.waitlistPosition ?? null);
-            } else {
-              setBookingId(null);
-              setWaitlistPosition(null);
-              setBookingStatus(
-                classData && classData.bookedCount >= classData.capacity ? 'full' : 'open',
-              );
-            }
+
+            // Re-read the class from the server rather than re-deriving from
+            // what is held here. The seat this athlete just gave up is one of
+            // the seats the open/full decision is made from, and `classData`
+            // still carries the pre-cancellation `bookedCount` — so deriving
+            // locally told the athlete who had just freed the last spot that
+            // the class was FULL, and offered them its waitlist. `loadAll`
+            // refetches the schedule and /api/me/bookings together, which is
+            // the same path mount and foreground-resume take.
+            loadAll();
           } catch (err) {
             const msg = err instanceof Error ? err.message : 'Failed to cancel booking';
             setMutationError(msg);
@@ -400,7 +397,16 @@ export default function ClassDetailsScreen() {
   const isClassPublished = classData.state === 'published';
   const canBook = isClassPublished && bookingStatus === 'open';
   const canJoinWaitlist = isClassPublished && bookingStatus === 'full';
-  const canCancel = bookingStatus === 'booked' || bookingStatus === 'waitlisted';
+  // Cancelling and leaving the waitlist are gated on the lifecycle state too,
+  // not just on holding a booking. USER_JOURNEYS.md § Step 4 is explicit — at
+  // Booking Closed the "athlete can no longer book or cancel" — and
+  // cancel-booking.handler refuses any class past `published` outright. Offering
+  // the control anyway produced a button whose only possible outcome was an
+  // error, and it is the same reasoning classStates.ts already applies to
+  // programming: the backend refuses permanently, so the UI must not offer the
+  // action at all rather than imply a temporary lock.
+  const canCancel =
+    isClassPublished && (bookingStatus === 'booked' || bookingStatus === 'waitlisted');
 
   const formattedDate = `${formatShortDate(classData.scheduledDate)} · ${formatTimeRange(classData.scheduledTime, classData.duration)}`;
   const coachLabel = `Coach: ${classData.coachName}`;
@@ -410,7 +416,7 @@ export default function ClassDetailsScreen() {
   // danger cancel, quiet waitlist. Labels/testIDs are preserved verbatim.
   const actionButtons = (
     <View style={isDesktop ? desktopStyles.actionContainer : styles.actionContainer}>
-      {bookingStatus === 'waitlisted' && (
+      {canCancel && bookingStatus === 'waitlisted' && (
         <Button
           testID="leave-waitlist-btn"
           variant="quiet"
@@ -420,7 +426,7 @@ export default function ClassDetailsScreen() {
         />
       )}
 
-      {bookingStatus === 'booked' && (
+      {canCancel && bookingStatus === 'booked' && (
         <Button
           testID="cancel-booking-btn"
           variant="danger"
@@ -467,7 +473,7 @@ export default function ClassDetailsScreen() {
             </Pressable>
 
             {/* Class name */}
-            <Text size="display" weight="bold" tracking="tight">{classData.classTypeName}</Text>
+            <Text testID="class-details-title" size="display" weight="bold" tracking="tight">{classData.classTypeName}</Text>
 
             {/* Meta info */}
             <View style={styles.metaGroup}>
@@ -531,7 +537,7 @@ export default function ClassDetailsScreen() {
         showsVerticalScrollIndicator={false}>
 
         {/* Class name */}
-        <Text size="screen" weight="bold" tracking="tight">{classData.classTypeName}</Text>
+        <Text testID="class-details-title" size="screen" weight="bold" tracking="tight">{classData.classTypeName}</Text>
 
         {/* Meta info */}
         <View style={styles.metaGroup}>

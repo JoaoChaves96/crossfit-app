@@ -1,5 +1,5 @@
 import { renderHook, act } from '@testing-library/react-native';
-import { Alert } from 'react-native';
+import { showConfirm, showError } from '@/utils/alert';
 import { useClassTransition } from '@/app/class-management/useClassTransition';
 import { createMockApiClient } from '@/test-utils/mock-api-client';
 
@@ -10,15 +10,21 @@ jest.mock('@/utils/api-client', () => ({
   createApiClient: jest.fn(() => mockApiClient),
 }));
 
-// Capture Alert.alert calls so we can programmatically trigger button handlers
-jest.spyOn(Alert, 'alert');
+// Asserted against the app's own cross-platform wrapper, NOT react-native's
+// Alert. react-native-web implements Alert as `static alert() {}` — a literal
+// no-op — so a hook that called it directly did nothing at all on web while a
+// test spying on Alert.alert stayed green. The wrapper is the contract.
+jest.mock('@/utils/alert', () => ({
+  showConfirm: jest.fn(),
+  showError: jest.fn(),
+}));
 
 type AlertButton = { text?: string; onPress?: () => void | Promise<void>; style?: string };
 
 function getAlertButton(buttonText: string): AlertButton {
-  const calls = (Alert.alert as jest.Mock).mock.calls;
+  const calls = (showConfirm as jest.Mock).mock.calls;
   if (calls.length === 0) {
-    throw new Error(`Alert.alert was never called`);
+    throw new Error(`showConfirm was never called`);
   }
   const lastCall = calls[calls.length - 1];
   const buttons: AlertButton[] = lastCall[2] ?? [];
@@ -66,7 +72,7 @@ beforeEach(() => {
 
 describe('useClassTransition', () => {
   describe('handleTransition — confirmation alert', () => {
-    it('shows an Alert.alert before any API call when handleTransition is called', () => {
+    it('shows a confirmation before any API call when handleTransition is called', () => {
       // Arrange
       const params = buildParams();
       const { result } = renderHook(() => useClassTransition(params));
@@ -77,7 +83,7 @@ describe('useClassTransition', () => {
       });
 
       // Assert
-      expect(Alert.alert).toHaveBeenCalledTimes(1);
+      expect(showConfirm).toHaveBeenCalledTimes(1);
       expect(mockApiClient.post).not.toHaveBeenCalled();
     });
 
@@ -92,10 +98,17 @@ describe('useClassTransition', () => {
       });
 
       // Assert
-      const buttons: AlertButton[] = (Alert.alert as jest.Mock).mock.calls[0][2];
+      const buttons: AlertButton[] = (showConfirm as jest.Mock).mock.calls[0][2];
       const texts = buttons.map((b) => b.text);
       expect(texts).toContain('Cancel');
       expect(texts).toContain('Confirm');
+
+      // The web branch of showConfirm picks the handler to run by STYLE — it
+      // looks for 'destructive' or 'default' and silently does nothing if
+      // neither is present. An unstyled Confirm is therefore a dead button on
+      // web, which is exactly the shape of the bug this file used to miss.
+      expect(buttons.find((b) => b.text === 'Confirm')?.style).toBe('default');
+      expect(buttons.find((b) => b.text === 'Cancel')?.style).toBe('cancel');
     });
   });
 
@@ -211,7 +224,7 @@ describe('useClassTransition', () => {
   });
 
   describe('on API error', () => {
-    it('shows an error Alert when the API call rejects', async () => {
+    it('shows an error when the API call rejects', async () => {
       // Arrange
       mockApiClient.post.mockRejectedValueOnce(new Error('Network failure'));
       const params = buildParams();
@@ -226,9 +239,10 @@ describe('useClassTransition', () => {
         await confirmButton.onPress?.();
       });
 
-      // Assert — Alert.alert called a second time for the error
-      expect(Alert.alert).toHaveBeenCalledTimes(2);
-      const [errorTitle, errorMessage] = (Alert.alert as jest.Mock).mock.calls[1];
+      // Assert — the failure is surfaced, and through showError so it is visible
+      // on web too rather than swallowed by the no-op Alert.
+      expect(showError).toHaveBeenCalledTimes(1);
+      const [errorTitle, errorMessage] = (showError as jest.Mock).mock.calls[0];
       expect(errorTitle).toBe('Error');
       expect(errorMessage).toBe('Network failure');
     });
@@ -285,7 +299,7 @@ describe('useClassTransition', () => {
       });
 
       // Assert
-      expect(Alert.alert).not.toHaveBeenCalled();
+      expect(showConfirm).not.toHaveBeenCalled();
     });
 
     it('does not open an alert when token is null', () => {
@@ -299,7 +313,7 @@ describe('useClassTransition', () => {
       });
 
       // Assert
-      expect(Alert.alert).not.toHaveBeenCalled();
+      expect(showConfirm).not.toHaveBeenCalled();
     });
 
     it('does not open an alert for an archived class (no next state)', () => {
@@ -313,7 +327,7 @@ describe('useClassTransition', () => {
       });
 
       // Assert
-      expect(Alert.alert).not.toHaveBeenCalled();
+      expect(showConfirm).not.toHaveBeenCalled();
     });
   });
 });

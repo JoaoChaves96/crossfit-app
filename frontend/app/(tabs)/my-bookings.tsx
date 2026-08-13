@@ -119,11 +119,18 @@ interface UpcomingCardProps {
 
 function UpcomingCard({ item, isCancelling, onViewDetails, onCancel }: UpcomingCardProps) {
   const chipConfig = getUpcomingChipConfig(item.bookingStatus, item.state, item.waitlistPosition);
-  const isInProgress = item.state === 'in_progress';
   const isWaitlisted = item.bookingStatus === 'waitlisted';
 
+  // Cancelling is a `published`-only action, not merely a not-in-progress one.
+  // `CancelBooking` rejects any class past `published` permanently (see
+  // DECISIONS.md → the waitlist is inert from `booking_closed` on, and
+  // USER_JOURNEYS.md Step 4: "athlete can no longer book or cancel"), so a
+  // Cancel offered at `booking_closed` is a button whose only outcome is an
+  // error toast. Don't offer what the backend will always refuse.
+  const canCancel = item.state === 'published';
+
   return (
-    <View style={styles.card}>
+    <View style={styles.card} testID={`booking-card-${item.id}`}>
       <View style={styles.cardTop}>
         <View style={styles.cardTitleWrap}>
           <Text size="title" weight="semibold" tracking="snug">{item.classTypeName}</Text>
@@ -137,9 +144,10 @@ function UpcomingCard({ item, isCancelling, onViewDetails, onCancel }: UpcomingC
         <View style={styles.actionItem}>
           <Button variant="quiet" label="View Details" onPress={onViewDetails} />
         </View>
-        {!isInProgress && (
+        {canCancel && (
           <View style={styles.actionItem}>
             <Button
+              testID={`booking-cancel-btn-${item.id}`}
               variant={isWaitlisted ? 'quiet' : 'danger'}
               label={isWaitlisted ? 'Leave Waitlist' : 'Cancel'}
               loading={isCancelling}
@@ -166,7 +174,10 @@ function PastCard({ item, onViewDetails, onLogResult }: PastCardProps) {
   const isCancelledCard = !attended;
 
   return (
-    <View style={[styles.card, isCancelledCard && styles.cardCancelled]}>
+    <View
+      style={[styles.card, isCancelledCard && styles.cardCancelled]}
+      testID={`booking-card-${item.id}`}
+    >
       <View style={styles.cardTop}>
         <View style={styles.cardTitleWrap}>
           <Text
@@ -201,7 +212,12 @@ function PastCard({ item, onViewDetails, onLogResult }: PastCardProps) {
           </View>
           {item.state === 'completed' && (
             <View style={styles.actionItem}>
-              <Button variant="primary" label="LOG RESULT" onPress={onLogResult} />
+              <Button
+              testID={`log-result-btn-${item.id}`}
+              variant="primary"
+              label="LOG RESULT"
+              onPress={onLogResult}
+            />
             </View>
           )}
         </View>
