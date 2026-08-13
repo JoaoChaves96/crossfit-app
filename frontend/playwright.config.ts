@@ -29,8 +29,15 @@ export default defineConfig({
   // over. Revisit only with a specific reason.
   retries: 0,
 
-  // Serial for now. Per-journey fixtures make parallelism safe in principle,
-  // and this is the knob to turn once that is demonstrated rather than assumed.
+  // Serial, and measured rather than assumed. Per-journey fixtures do make
+  // parallelism safe as far as DATA goes — every journey seeds its own gym, so
+  // there are no rows to collide over. The stack is what cannot take it: all
+  // workers share one Expo dev server, which bundles routes on demand, and one
+  // backend. Run at `--workers=4 --fully-parallel`, the suite took 13.7 min
+  // against 3.0 min serially and 14 of 45 tests failed — individual journeys
+  // inflating from 20s to 1.6m, then timing out and taking their contexts with
+  // them. Slower AND flaky, so there is nothing to trade. Revisit only with a
+  // per-worker Expo server, not by turning this number up.
   workers: 1,
   fullyParallel: false,
 

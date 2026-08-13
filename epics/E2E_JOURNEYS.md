@@ -433,10 +433,19 @@ readers exist because the alternative was a banned text `.first()`: "on these da
 other**" needs the whole set, and a server-assigned id is the only way to assert a settings list
 re-read what it wrote. No new testIDs were needed — Tier 3's surfaces were already addressable.
 
-**Next:** every journey the epic scoped is built. The open harness question is whether to lift
-`workers: 1` — each journey seeds its own gym, so the blocker is server capacity rather than data
-collisions. Parked journeys (multi-gym switching, payments, announcements) still wait on a two-gym
-seed and on controllers that do not exist.
+**`workers: 1` stays — settled 2026-08-13, by measurement.** Data was never the risk: each journey
+seeds its own gym, so there are no rows to collide over. The shared stack is. At
+`--workers=4 --fully-parallel --repeat-each=3` the suite took **13.7 min against 3.0 min serially,
+and 14 of 45 tests failed** — journeys inflating from 20s to 1.6m, then hitting the 90s timeout and
+taking their browser contexts down with them (`browserContext.close: Target page, context or
+browser has been closed` on most of the failures). One Expo dev server bundling routes on demand
+for four browsers is the bottleneck. Parallelism was slower *and* flaky, so there was no trade to
+make; revisit only with a per-worker Expo server, never by raising the number alone. The reasoning
+is recorded in `playwright.config.ts` beside the knob.
+
+**Next:** every journey the epic scoped is built, and the harness question is closed. Parked
+journeys (multi-gym switching, payments, announcements) still wait on a two-gym seed and on
+controllers that do not exist.
 
 The five existing specs (`e2e/{smoke,owner,coach,athlete,cross-role}.spec.ts`, ~1,450 lines,
 ~35 tests) are **discarded** — user's call, 2026-08-12: they assert presence rather than
