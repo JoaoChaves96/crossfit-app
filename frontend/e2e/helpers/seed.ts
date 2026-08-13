@@ -521,6 +521,85 @@ export async function readStoredClassDate(cls: SeededClass): Promise<string> {
 }
 
 /**
+ * A space the OWNER created through the UI, by name.
+ *
+ * A reader rather than a seeder, and the ids are the reason: a row created in the
+ * app is keyed by an id only the server knows, and the journey needs it to address
+ * that row's controls (`space-edit-btn-<id>`). Matching on text instead would mean
+ * a `.first()` on a name that also appears in the form that just created it.
+ *
+ * Returns the stored capacity too, so "the form wrote what was typed" is a claim
+ * the journey can make rather than infer from behaviour further downstream.
+ */
+export async function readSpaceByName(
+  gym: SeededGym,
+  name: string,
+): Promise<{ id: string; baseCapacity: number }> {
+  return withDb(async (db) => {
+    const res = await db.query<{ id: string; baseCapacity: number }>(
+      `SELECT id, "baseCapacity" FROM spaces WHERE "gymId" = $1 AND name = $2`,
+      [gym.id, name],
+    );
+    if (res.rowCount !== 1) {
+      const all = await db.query<{ name: string }>(
+        `SELECT name FROM spaces WHERE "gymId" = $1`,
+        [gym.id],
+      );
+      throw new Error(
+        `[seed] Expected exactly one space named "${name}" in gym ${gym.id}, found ${res.rowCount}. ` +
+          `Spaces present: ${all.rows.map((r) => r.name).join(', ') || '(none)'}.`,
+      );
+    }
+    return res.rows[0];
+  });
+}
+
+/** A class type the owner created through the UI, by name. See `readSpaceByName`. */
+export async function readClassTypeByName(
+  gym: SeededGym,
+  name: string,
+): Promise<{ id: string }> {
+  return withDb(async (db) => {
+    const res = await db.query<{ id: string }>(
+      `SELECT id FROM class_types WHERE "gymId" = $1 AND name = $2`,
+      [gym.id, name],
+    );
+    if (res.rowCount !== 1) {
+      const all = await db.query<{ name: string }>(
+        `SELECT name FROM class_types WHERE "gymId" = $1`,
+        [gym.id],
+      );
+      throw new Error(
+        `[seed] Expected exactly one class type named "${name}" in gym ${gym.id}, found ${res.rowCount}. ` +
+          `Class types present: ${all.rows.map((r) => r.name).join(', ') || '(none)'}.`,
+      );
+    }
+    return res.rows[0];
+  });
+}
+
+/**
+ * Every calendar day the gym has a live class on, ascending, with duplicates kept.
+ *
+ * `findClassByDate` can say "there is a class on this day"; only this can say
+ * "and on no other day". A recurring series is exactly the case where the second
+ * claim carries the weight: four occurrences on the right days is a different
+ * outcome from four on the right days plus a fifth the rule should not have
+ * produced, and the first assertion alone cannot tell them apart.
+ */
+export async function readGymClassDays(gym: SeededGym): Promise<CalendarDay[]> {
+  return withDb(async (db) => {
+    const res = await db.query<{ day: string }>(
+      `SELECT to_char("scheduledDate", 'YYYY-MM-DD') AS day
+       FROM classes WHERE "gymId" = $1 AND "deletedAt" IS NULL
+       ORDER BY "scheduledDate"`,
+      [gym.id],
+    );
+    return res.rows.map((r) => r.day);
+  });
+}
+
+/**
  * Finds the single class the gym has, by date, and fails loudly otherwise.
  *
  * For journeys where the OWNER creates the class through the UI and the test

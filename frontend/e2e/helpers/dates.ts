@@ -66,6 +66,21 @@ export function weekdayShort(day: CalendarDay): string {
   }).format(new Date(Date.UTC(y, m - 1, d)));
 }
 
+/**
+ * The day-of-week number for a calendar day, in the encoding the product uses
+ * everywhere: `0` = Sunday … `6` = Saturday.
+ *
+ * That is `Date.getUTCDay()`'s encoding, and deliberately so — the recurrence
+ * rule is expanded by `expandOccurrences`, which steps day-by-day in UTC, and
+ * the weekday chips in create-class carry the same numbers. Parsed as UTC for
+ * the same reason `weekdayShort` is: a local parse would name the previous day
+ * west of UTC, which is the seam this suite exists to catch rather than commit.
+ */
+export function weekdayNumber(day: CalendarDay): number {
+  const [y, m, d] = day.split('-').map(Number);
+  return new Date(Date.UTC(y, m - 1, d)).getUTCDay();
+}
+
 /** Day-of-month without a leading zero, as most date UIs render it. */
 export function dayOfMonth(day: CalendarDay): string {
   return String(Number(day.split('-')[2]));

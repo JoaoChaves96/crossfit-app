@@ -53,8 +53,10 @@ answer is `visibleTestId()`.
 
 ## Scope
 
-**Tier 1 and Tier 2 (journeys 1–11) are the agreed build.** Tier 3 (12–15) is parked but not
-dropped — user's call, 2026-08-12.
+**All three tiers (journeys 1–15) are built.** Tier 1 and Tier 2 (1–11) were the agreed build;
+Tier 3 (12–15) was parked on 2026-08-12, taken up on 2026-08-13 in the order **13 → 15 → 12 → 14**
+(highest value first, so stopping early would still have got the good ones), and all four were
+kept.
 
 ---
 
@@ -204,16 +206,119 @@ that can be arrived at twice.
 
 ---
 
-## Tier 3 — configuration and context — ⏭️ PARKED, not dropped
+## Tier 3 — configuration and context — ✅ COMPLETE (2026-08-13)
 
-12. **Config → consequence** — owner adds a space and a class type → both become selectable in
-    create-class, and the new space's capacity is enforced.
-13. **Recurring series** — owner creates a weekly series → N classes on the **correct** N dates.
-    The date seam landed exactly here.
-14. **Suspend / resume a member** — owner suspends → the athlete's access reflects it → resume
-    restores it.
-15. **Login lands each role on its own home; logout clears the session** — one journey, three
-    roles, plus the token-race guard.
+Built in the order **13 → 15 → 12 → 14**, each mutation-proved before being called done. Both of
+the "weaker pair" earned their place and were kept: 12 pins the space's capacity reaching a class
+that never states one, and 14 pins the only lever in the MVP that revokes access to a gym the
+athlete still belongs to. The suite is now **15 tests, ~3.0 min**.
+
+### 13. Recurring series — N classes on the *correct* N dates — ✅ DONE
+
+Owner → create-class → **Recurring** → start `+3d`, end `+10d`, the two weekdays of `+3d` and
+`+5d`, 09:00 → Create Series. Then **four** classes exist on the four expected calendar days
+(read as `to_char` days), the dashboard renders a card on each of those `day-column-<day>`
+columns **across the two weeks the series spans**, and the notice reports the count.
+
+Both halves are load-bearing and neither is redundant: the stored days catch the write seam, the
+rendered columns catch the read seam, and the week boundary is deliberate — a series that renders
+correctly only in the current week proves little.
+
+**As built, the count is asserted on a re-submission rather than on success.** The recurring notice
+is rendered only when `created === 0`; a successful create calls `router.back()`, so the count is
+never on screen in the happy path. The third claim became the case that matters more anyway:
+submitting the **identical rule again** creates nothing, reports `4 skipped (already scheduled)`,
+keeps the owner on the form, and leaves `readGymClassDays` unchanged — an owner who repeats a
+series must not silently double every class.
+
+### 15. Login lands each role on its own home; logout clears the session — ✅ DONE
+
+Three logins in one spec: owner → `/schedule-dashboard`, coach → `/coach-classes`, athlete →
+`/(tabs)/schedule`, each asserted by URL **and** a role-only anchor, because a URL alone passes on
+a screen that rendered an error. Then logout — `nav-logout` in `OwnerSidebar` / `CoachSidebar`,
+`profile-logout-btn` on the athlete's profile — lands on `/login`, and a **reload** still shows
+login: that is what proves storage was cleared rather than only the route changed. The token-race
+guard reloads a protected screen and asserts it does *not* bounce to `/login` while the token
+rehydrates.
+
+**The token-race half needed the navigation history, not a URL check.** With the `auth.isLoading`
+guard in `app/_layout.tsx` deleted the journey stayed **green**: the root guard bounces the
+apparently-signed-out visitor to `/login`, login's own already-authenticated guard bounces them
+straight back, and `toHaveURL` retries into a pass. The race is self-healing at the URL level and
+visible only as a login flash. `expectReloadKeepsSession` therefore records main-frame
+`framenavigated` paths across the reload and asserts none of them is `/login`. Likewise
+`expectSignedOut` runs after **every** logout: a token left in storage otherwise surfaces as
+"could not type into the email field" on the *next* login, which reads as a hydration flake and
+names nothing.
+
+### 12. Config → consequence — ✅ DONE
+
+Owner → gym-settings → Spaces → add **Annex** with capacity **1** → Class Types → add
+**Gymnastics** → create-class offers both in its pickers. Then the enforcement half: a
+**CrossFit** class in Annex created with the capacity field **left empty** → athlete A books it →
+athlete B is **waitlisted**, not booked.
+
+The empty capacity field is the whole point. `create-class.handler.ts` resolves
+`command.capacity ?? space.baseCapacity`, so an omitted capacity is the only way the *space's*
+capacity is under test rather than the form's. It is also why the new class type cannot carry the
+enforcement half: a brand-new type belongs to no membership plan, so the Visibility Rule hides it
+from every athlete. The type's claim stops at "selectable".
+
+Each write is followed to where it is supposed to matter, and the space's row is asserted under the
+id the **server** assigned it — proof the list refetched rather than replaying what was typed. The
+pickers are opened and closed by pressing their own trigger: the desktop menu is an absolutely
+positioned overlay with no Escape handler, so one left open swallows the next field's click.
+
+### 14. Suspend / resume a member — ✅ DONE
+
+Athlete sees a class → owner → members → panel → **Suspend membership** (`member-suspend-btn`) →
+the athlete reloads and can no longer see it → owner resumes → the class is back and bookable.
+The absence assertion carries a positive anchor on the same screen, per the rule above.
+
+Note the mechanism before writing it: suspension sets `gym_memberships.status = 'inactive'`, and
+both athlete read paths go through `getActiveGymMembershipByUserAndGym`, which filters
+`status: 'active'` — so the schedule **403s** rather than returning an empty list. If the athlete
+sees something indistinguishable from "no classes", that is a Finding to record, not a screen to
+invent.
+
+As built, the owner drives both directions through the panel while a **second browser context**
+holds the athlete's own live session, so nothing is asserted from the seed. The reverse direction
+is what makes it a journey: a suspension that also destroyed the membership, the plan, or the
+eligibility that plan carries looks identical while suspended, so the third claim is a **booking**,
+not a sighting.
+
+---
+
+## Findings from Tier 3
+
+**Recorded, not fixed:**
+
+- **A suspended athlete is told nothing about being suspended.** The read path 403s, and
+  `api-client` maps every 403 to "You do not have permission to do that." — the same line an
+  expired plan produces. The athlete cannot tell suspension from a lapsed plan from a bug, and the
+  owner has no indication of what their member now sees. This is the gap the design flagged; the
+  journey anchors its absence assertion on that copy rather than inventing a screen.
+- **Access revocation is guarded in three places, and any one of them alone is enough.**
+  `getActiveGymMembershipByUserAndGym`, `getActiveGymMembershipsByUser` and
+  `hasActiveMembershipInGym` all filter `status: 'active'`; removing the filter from any single one
+  leaves the journey green, because another still refuses. Not a defect — worth knowing before
+  anyone assumes a single check is load-bearing, and the reason journey 14's mutation proof had to
+  remove all three at once.
+
+**Harness lesson (journey 12):** the sidebar's *dashboard* entry pushes a second copy of the
+dashboard rather than returning to the one login landed on, so `day-column-<day>` is in the DOM
+twice and `showWeekContaining`'s `toHaveCount(1)` can never settle. A `page.reload()` collapses the
+stack. This is the same mounted-twice trap as the Tier 2 lesson, arriving through the grid instead
+of a button.
+
+**Mutation proof, for the record.** 13: the weekday encoding shifted, the duplicate-skip predicate
+disabled, the notice suppressed. 15: logout not clearing storage, the athlete's home anchor
+removed, the `auth.isLoading` guard deleted. 12: `capacity ?? space.baseCapacity` replaced with a
+constant, the settings list not refetching after a save, the newest class type dropped before the
+picker. 14: all three membership status gates removed, suspension also expiring the athlete's plan,
+the suspend button sending `active`. One mutation attempt was discarded as invalid rather than
+counted — an off-by-one in the booking capacity check, which changes nothing at capacity 8 and
+belongs to journeys 1 and 5.
 
 ---
 
@@ -313,9 +418,25 @@ surfaces a journey had no way to address: `class-details-title`, `log-results-er
 `create-invite-btn` / `invite-email-input` / `invite-send-btn` / `invite-link-text` /
 `invite-join-btn` on the invite flow.
 
-**Next:** Tier 3 (12–15) is still parked. Now that Tier 2 is green serially, the open harness
-question is whether to lift `workers: 1` — each journey seeds its own gym, so the blocker is
-server capacity rather than data collisions.
+**Tier 3: ✅ COMPLETE (2026-08-13).** Journeys 12, 13, 14 and 15 all pass; the whole suite is
+**15 tests in ~3.0 minutes** serially. Every journey was mutation-proved against three defects
+each — listed in *Findings from Tier 3*, along with the one attempt discarded as invalid because it
+changed no observable behaviour. Two of the twelve reds were only reachable after the assertion was
+strengthened: journey 15's token-race claim needed the navigation history rather than a URL (the
+race is self-healing), and its logout claim needed `expectSignedOut` after every logout rather than
+once at the end.
+
+**Helper additions in Tier 3:** `weekdayNumber()` in `dates.ts` (the `0 = Sun` encoding shared by
+`expandOccurrences` and the weekday chips, parsed as UTC for the same reason `weekdayShort` is);
+`readGymClassDays()`, `readSpaceByName()` and `readClassTypeByName()` in `seed.ts`. The three
+readers exist because the alternative was a banned text `.first()`: "on these days **and no
+other**" needs the whole set, and a server-assigned id is the only way to assert a settings list
+re-read what it wrote. No new testIDs were needed — Tier 3's surfaces were already addressable.
+
+**Next:** every journey the epic scoped is built. The open harness question is whether to lift
+`workers: 1` — each journey seeds its own gym, so the blocker is server capacity rather than data
+collisions. Parked journeys (multi-gym switching, payments, announcements) still wait on a two-gym
+seed and on controllers that do not exist.
 
 The five existing specs (`e2e/{smoke,owner,coach,athlete,cross-role}.spec.ts`, ~1,450 lines,
 ~35 tests) are **discarded** — user's call, 2026-08-12: they assert presence rather than
