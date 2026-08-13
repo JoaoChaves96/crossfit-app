@@ -179,7 +179,7 @@ function PendingInviteRow({
         <StatusChip tone="neutral" label="Pending" />
       </View>
       <View style={styles.colClasses}>
-        <Text size="meta" tone="muted">
+        <Text size="meta" tone="muted" numberOfLines={1}>
           {`Expires ${new Date(invite.expiresAt).toLocaleDateString()}`}
         </Text>
       </View>
