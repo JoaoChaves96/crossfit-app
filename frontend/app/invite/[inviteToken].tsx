@@ -9,6 +9,7 @@ import {
 import { styles } from './[inviteToken].styles';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { AuthContext } from '@/context/AuthContext';
+import { GymContext } from '@/context/GymContext';
 import { createApiClient, ApiError } from '@/utils/api-client';
 import { routeForRole } from '@/utils/routeForRole';
 import { Ink, Status } from '@/constants/design';
@@ -72,6 +73,7 @@ type ScreenState =
 export default function InviteAcceptanceScreen() {
   const router = useRouter();
   const auth = useContext(AuthContext);
+  const gym = useContext(GymContext);
   const { inviteToken } = useLocalSearchParams<{ inviteToken: string }>();
 
   const [state, setState] = useState<ScreenState>({ phase: 'loading' });
@@ -141,6 +143,13 @@ export default function InviteAcceptanceScreen() {
       // claims are stale (null for a fresh registration), and every gym-scoped
       // request would 403. Replacing it is what makes the next screen work.
       await auth?.login(result.token);
+
+      // The token alone is not enough: gym-scoped screens read the gym from
+      // GymContext, not from the token, and nothing else writes it on this
+      // path. Without this an accepted coach lands on a screen that never
+      // issues a request until they log out and back in. Same for an athlete.
+      await gym?.setCurrentGymId(result.gym.id);
+
       routeForRole(router, result.role);
     } catch (err) {
       let message = 'Something went wrong. Please try again.';
