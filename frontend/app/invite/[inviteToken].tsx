@@ -317,7 +317,7 @@ function GymCard({ invite }: { invite: ValidateInviteResponse }) {
 }
 
 function JoinButton({ onPress, label }: { onPress: () => void; label: string }) {
-  return <Button variant="primary" label={label} onPress={onPress} />;
+  return <Button testID="invite-join-btn" variant="primary" label={label} onPress={onPress} />;
 }
 
 function DeclineButton({ onPress }: { onPress: () => void }) {

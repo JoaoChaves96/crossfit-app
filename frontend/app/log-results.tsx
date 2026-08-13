@@ -428,7 +428,7 @@ export default function LogResultsScreen() {
         {/* Submit error */}
         {submitError !== null && (
           <View style={styles.errorCard}>
-            <Text size="body" weight="medium" tone={Status.danger}>
+            <Text testID="log-results-error" size="body" weight="medium" tone={Status.danger}>
               {submitError}
             </Text>
           </View>

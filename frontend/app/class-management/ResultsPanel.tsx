@@ -188,7 +188,10 @@ export function ResultsPanel({ results }: ResultsPanelProps) {
   const { isMobile } = useResponsiveLayout();
 
   return (
-    <View style={[styles.listSection, isMobile && styles.sectionStackedMobile]}>
+    <View
+      testID="results-panel"
+      style={[styles.listSection, isMobile && styles.sectionStackedMobile]}
+    >
       <View style={styles.listHeader}>
         <Text size="title" weight="semibold">Results</Text>
         <StatusChip tone="neutral" label={`${results.length} logged`} />

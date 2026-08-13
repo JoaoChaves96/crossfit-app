@@ -221,6 +221,7 @@ function CreateInviteModal({ visible, gymId, token, prefillEmail = '', onClose, 
             <View style={styles.fieldGroup}>
               <Text size="label" weight="semibold" tone="faint" upper>Email address</Text>
               <TextInput
+                testID="invite-email-input"
                 style={styles.fieldInput}
                 placeholder="athlete@example.com"
                 placeholderTextColor={Ink.faint}
@@ -239,7 +240,7 @@ function CreateInviteModal({ visible, gymId, token, prefillEmail = '', onClose, 
                 <Text size="meta" weight="semibold" tone={Status.open}>Invite link generated</Text>
                 <View style={styles.linkRow}>
                   <View style={styles.linkTextBox}>
-                    <Text size="meta" tone="muted" numberOfLines={1}>
+                    <Text testID="invite-link-text" size="meta" tone="muted" numberOfLines={1}>
                       {createdInvite.inviteLink}
                     </Text>
                   </View>
@@ -258,7 +259,13 @@ function CreateInviteModal({ visible, gymId, token, prefillEmail = '', onClose, 
             </View>
             {createdInvite === null && (
               <View style={styles.modalActionBtn}>
-                <Button label="Send Invite" variant="primary" onPress={handleSend} loading={isSending} />
+                <Button
+                  testID="invite-send-btn"
+                  label="Send Invite"
+                  variant="primary"
+                  onPress={handleSend}
+                  loading={isSending}
+                />
               </View>
             )}
           </View>
@@ -447,6 +454,7 @@ export default function InvitesScreen() {
           </View>
           <View style={styles.headerActions}>
             <TouchableOpacity
+              testID="create-invite-btn"
               style={styles.createBtn}
               onPress={() => {
                 setModalPrefillEmail('');
