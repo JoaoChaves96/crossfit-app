@@ -1,5 +1,6 @@
 import {
   ConflictException,
+  ForbiddenException,
   Injectable,
   UnauthorizedException,
 } from '@nestjs/common';
@@ -101,6 +102,59 @@ export class AuthService {
       gymId,
       role,
     });
+  }
+
+  /**
+   * Mint a token for one *named* gym the user is attached to.
+   *
+   * Distinct from issueTokenForUser, which re-resolves the default (oldest)
+   * context. A coach may staff several gyms (DATA_MODEL.md) but the JWT carries
+   * exactly one gymId and GymOwnershipGuard compares it to the route, so
+   * without this every gym but the oldest is unreachable.
+   */
+  async issueTokenForGym(userId: string, gymId: string): Promise<string> {
+    const user = await this.userRepository.findOne({ where: { id: userId } });
+    if (!user) {
+      throw new UnauthorizedException('User not found');
+    }
+
+    const context = await this.resolveGymContextFor(userId, gymId);
+
+    return this.jwtService.sign({
+      sub: user.id,
+      email: user.email,
+      gymId: context.gymId,
+      role: context.role,
+    });
+  }
+
+  /**
+   * Resolve the caller's role at one specific gym.
+   *
+   * Staff beats membership when both exist, matching resolveGymContext — an
+   * owner or coach who also trains at their own gym operates as staff.
+   * Refuses rather than falling back: silently handing back a different gym's
+   * context would be a tenant-isolation hole.
+   */
+  async resolveGymContextFor(
+    userId: string,
+    gymId: string,
+  ): Promise<{ gymId: string; role: string }> {
+    const staffEntry = await this.gymStaffRepository.findOne({
+      where: { userId, gymId, status: 'active' },
+    });
+    if (staffEntry) {
+      return { gymId, role: staffEntry.role };
+    }
+
+    const membership = await this.gymMembershipRepository.findOne({
+      where: { userId, gymId, status: 'active' },
+    });
+    if (membership) {
+      return { gymId, role: 'athlete' };
+    }
+
+    throw new ForbiddenException('User is not attached to this gym');
   }
 
   private async resolveGymContext(
