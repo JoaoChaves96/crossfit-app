@@ -24,6 +24,7 @@ import {
   InviteeNotRegisteredError,
   InviteExpiredError,
   InviteNotFoundError,
+  InviteNotForCallerError,
   InviteRevokedError,
 } from './invite.errors';
 
@@ -173,9 +174,18 @@ export class InviteService {
     };
   }
 
+  /**
+   * Accept an invite as the authenticated caller.
+   *
+   * `currentUserId` is required and comes from the verified JWT: the route
+   * mounts JwtAuthGuard precisely so that this method never has to guess who is
+   * accepting. Resolving the invitee from the invite's email instead — as this
+   * used to — meant an unauthenticated caller holding any invite link got back
+   * a JWT signed for whoever owns that address.
+   */
   async acceptInvite(
     inviteToken: string,
-    currentUserId?: string,
+    currentUserId: string,
   ): Promise<AcceptInviteResponseDto> {
     const invite = await this.inviteRepository.findOne({
       where: { inviteToken },
@@ -200,20 +210,29 @@ export class InviteService {
       throw new InviteAlreadyAcceptedError(inviteToken);
     }
 
-    let invitee: UserEntity | null = null;
-
-    if (currentUserId) {
-      invitee = await this.dataSource.manager.findOne(UserEntity, {
-        where: { id: currentUserId },
-      });
-    } else {
-      invitee = await this.dataSource.manager.findOne(UserEntity, {
-        where: { email: invite.inviteeEmail },
-      });
+    // No caller, no acceptance. An empty id would reach TypeORM as an empty
+    // `where` and match an arbitrary user, so it is refused here rather than
+    // resolved.
+    if (!currentUserId) {
+      throw new InviteNotForCallerError();
     }
+
+    const invitee: UserEntity | null = await this.dataSource.manager.findOne(
+      UserEntity,
+      { where: { id: currentUserId } },
+    );
 
     if (!invitee) {
       throw new InviteeNotRegisteredError(invite.inviteeEmail);
+    }
+
+    // The invite names an address, not an account, and the caller names an
+    // account: only if they agree is this the invited person. Compared
+    // case-insensitively because emails are stored exactly as typed, and
+    // "Nia@example.com" accepting an invite addressed to "nia@example.com" is
+    // the same person.
+    if (invitee.email.toLowerCase() !== invite.inviteeEmail.toLowerCase()) {
+      throw new InviteNotForCallerError();
     }
 
     // Each role has its own "already attached" shape: a coach collides on
@@ -271,7 +290,17 @@ export class InviteService {
     // this the invitee keeps whatever context they had — `gymId: null` for a
     // fresh registration — and every gym-scoped request 403s until they log in
     // again. Same reason CreateGymHandler re-issues.
-    const token = await this.authService.issueTokenForUser(invitee.id);
+    //
+    // For the gym just accepted, not the default one: issueTokenForUser resolves
+    // the caller's *oldest* attachment, so a coach already staffed at another
+    // gym would be handed a token naming that gym while the client stores this
+    // one — reads look right and the first write 403s on GymOwnershipGuard.
+    // This must stay after the transaction: issueTokenForGym resolves the role
+    // from the staff/membership row, which only exists once it is committed.
+    const token = await this.authService.issueTokenForGym(
+      invitee.id,
+      invite.gymId,
+    );
 
     return {
       gym: { id: gym?.id ?? invite.gymId, name: gym?.name ?? '' },

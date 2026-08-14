@@ -7,7 +7,11 @@ import { UserEntity } from '../user/entities/user.entity';
 import { GymStaffEntity } from '../gym-staff/entities/gym-staff.entity';
 import { GymMembershipEntity } from '../gym-membership/entities/gym-membership.entity';
 import { AuthService } from '../auth/auth.service';
-import { CoachAlreadyStaffError, CoachInvitePendingError } from './invite.errors';
+import {
+  CoachAlreadyStaffError,
+  CoachInvitePendingError,
+  InviteNotForCallerError,
+} from './invite.errors';
 
 const GYM_ID = 'gym-1';
 const OWNER_ID = 'owner-1';
@@ -48,7 +52,7 @@ describe('InviteService — coach invites', () => {
         { provide: getRepositoryToken(InviteEntity), useValue: inviteRepo },
         { provide: getRepositoryToken(GymMembershipEntity), useValue: { findOne: jest.fn() } },
         { provide: getDataSourceToken(), useValue: dataSource },
-        { provide: AuthService, useValue: { issueTokenForUser: jest.fn() } },
+        { provide: AuthService, useValue: { issueTokenForGym: jest.fn() } },
       ],
     }).compile();
 
@@ -116,7 +120,9 @@ describe('InviteService — accepting by role', () => {
   let membershipRepo: { findOne: jest.Mock };
   let staffFindOne: jest.Mock;
   let saved: Array<{ entity: unknown; row: Record<string, unknown> }>;
-  let issueTokenForUser: jest.Mock;
+  let issueTokenForGym: jest.Mock;
+  let managerFindUser: jest.Mock;
+  let transactionMock: jest.Mock;
 
   const GYM_ID = 'gym-1';
   const USER = { id: 'user-7', email: 'dana@example.com' };
@@ -144,7 +150,8 @@ describe('InviteService — accepting by role', () => {
     };
     membershipRepo = { findOne: jest.fn().mockResolvedValue(null) };
     staffFindOne = jest.fn().mockResolvedValue(null);
-    issueTokenForUser = jest.fn().mockResolvedValue('re-signed.jwt.token');
+    issueTokenForGym = jest.fn().mockResolvedValue('re-signed.jwt.token');
+    managerFindUser = jest.fn().mockResolvedValue(USER);
 
     const manager = {
       save: jest.fn((entity: unknown, row: Record<string, unknown>) => {
@@ -155,6 +162,8 @@ describe('InviteService — accepting by role', () => {
       findOne: jest.fn().mockResolvedValue(USER),
     };
 
+    transactionMock = jest.fn((cb: (m: typeof manager) => Promise<unknown>) => cb(manager));
+
     const dataSource = {
       getRepository: jest.fn((entity: unknown) => {
         if (entity === GymEntity) return { findOne: jest.fn().mockResolvedValue({ id: GYM_ID, name: 'Box One', location: 'Lisbon' }) };
@@ -162,8 +171,8 @@ describe('InviteService — accepting by role', () => {
         if (entity === GymStaffEntity) return { findOne: staffFindOne };
         throw new Error(`Unexpected entity: ${String(entity)}`);
       }),
-      transaction: jest.fn((cb: (m: typeof manager) => Promise<unknown>) => cb(manager)),
-      manager: { findOne: jest.fn().mockResolvedValue(USER) },
+      transaction: transactionMock,
+      manager: { findOne: managerFindUser },
     };
 
     const module: TestingModule = await Test.createTestingModule({
@@ -172,7 +181,7 @@ describe('InviteService — accepting by role', () => {
         { provide: getRepositoryToken(InviteEntity), useValue: inviteRepo },
         { provide: getRepositoryToken(GymMembershipEntity), useValue: membershipRepo },
         { provide: getDataSourceToken(), useValue: dataSource },
-        { provide: AuthService, useValue: { issueTokenForUser } },
+        { provide: AuthService, useValue: { issueTokenForGym } },
       ],
     }).compile();
 
@@ -204,13 +213,58 @@ describe('InviteService — accepting by role', () => {
     expect(result.role).toBe('athlete');
   });
 
-  it('returns a re-signed token so the new context is usable without re-login', async () => {
+  it('re-signs the token for the gym just accepted, not the caller default', async () => {
     inviteRepo.findOne.mockResolvedValue(pendingInvite('coach'));
 
     const result = await service.acceptInvite('tok-abc', USER.id);
 
-    expect(issueTokenForUser).toHaveBeenCalledWith(USER.id);
+    // Naming the gym is the whole point: a coach already staffed elsewhere would
+    // otherwise be handed a token for their oldest gym while the client stores
+    // this one.
+    expect(issueTokenForGym).toHaveBeenCalledWith(USER.id, GYM_ID);
     expect(result.token).toBe('re-signed.jwt.token');
+  });
+
+  it('mints the token only after the attachment row is committed', async () => {
+    // issueTokenForGym resolves the caller role from gym_staff/gym_membership,
+    // so signing before the transaction commits would throw Forbidden.
+    inviteRepo.findOne.mockResolvedValue(pendingInvite('coach'));
+
+    await service.acceptInvite('tok-abc', USER.id);
+
+    expect(transactionMock.mock.invocationCallOrder[0]).toBeLessThan(
+      issueTokenForGym.mock.invocationCallOrder[0],
+    );
+  });
+
+  it('refuses a caller whose account is not the invited address, with no token and no write', async () => {
+    inviteRepo.findOne.mockResolvedValue(pendingInvite('coach'));
+    managerFindUser.mockResolvedValue({ id: 'attacker-1', email: 'someone.else@example.com' });
+
+    await expect(service.acceptInvite('tok-abc', 'attacker-1')).rejects.toThrow(
+      InviteNotForCallerError,
+    );
+    expect(saved).toHaveLength(0);
+    expect(issueTokenForGym).not.toHaveBeenCalled();
+  });
+
+  it('accepts when the account email differs from the invite only by case', async () => {
+    inviteRepo.findOne.mockResolvedValue(pendingInvite('coach'));
+    managerFindUser.mockResolvedValue({ id: USER.id, email: USER.email.toUpperCase() });
+
+    const result = await service.acceptInvite('tok-abc', USER.id);
+
+    expect(result.role).toBe('coach');
+  });
+
+  it('refuses an unidentified caller rather than resolving one', async () => {
+    inviteRepo.findOne.mockResolvedValue(pendingInvite('coach'));
+
+    await expect(service.acceptInvite('tok-abc', '')).rejects.toThrow(
+      InviteNotForCallerError,
+    );
+    expect(managerFindUser).not.toHaveBeenCalled();
+    expect(saved).toHaveLength(0);
   });
 
   it('refuses a coach invite when the invitee is already staff at that gym', async () => {

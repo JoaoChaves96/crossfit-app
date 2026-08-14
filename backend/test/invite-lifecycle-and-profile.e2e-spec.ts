@@ -12,7 +12,7 @@ import { generateTestToken } from './helpers/jwt.helper';
  *
  * Covers:
  *   GET    /api/invites/:inviteToken           — public: validate invite
- *   POST   /api/invites/:inviteToken/accept    — public: accept invite
+ *   POST   /api/invites/:inviteToken/accept    — auth: accept invite (invitee only)
  *   GET    /api/gyms/:gymId/invites            — owner: list invites
  *   DELETE /api/gyms/:gymId/invites/:token     — owner: revoke invite
  *   GET    /api/me                             — auth: get user profile
@@ -42,6 +42,12 @@ describe('Invite Lifecycle and Profile Endpoints (e2e)', () => {
   // switching tests
   const twoGymCoachUserId = uuidv4();
   const twoGymCoachEmail = `two-gym-coach-lifecycle-${uuidv4()}@test.local`;
+
+  // Coach with an *older* staff row at otherGymId and nothing at gymId — the
+  // multi-attachment case for the accept re-sign: their default context is the
+  // other gym, so a token minted from the default would name the wrong one.
+  const otherGymCoachUserId = uuidv4();
+  const otherGymCoachEmail = `other-gym-coach-lifecycle-${uuidv4()}@test.local`;
 
   // Reused across invite tests
   let pendingInviteToken: string;
@@ -83,6 +89,14 @@ describe('Invite Lifecycle and Profile Endpoints (e2e)', () => {
     role: 'coach',
   });
 
+  // What login gives this coach today: their only attachment is the other gym.
+  const otherGymCoachToken = generateTestToken({
+    id: otherGymCoachUserId,
+    email: otherGymCoachEmail,
+    gymId: otherGymId,
+    role: 'coach',
+  });
+
   beforeAll(async () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
       imports: [AppModule],
@@ -119,7 +133,8 @@ describe('Invite Lifecycle and Profile Endpoints (e2e)', () => {
         ($3, $4, 'Other Gym Owner',  'active', NOW()),
         ($5, $6, 'Athlete User',     'active', NOW()),
         ($7, $8, 'New Coach User',   'active', NOW()),
-        ($9, $10, 'Two-Gym Coach',   'active', NOW())
+        ($9, $10, 'Two-Gym Coach',   'active', NOW()),
+        ($11, $12, 'Other Gym Coach', 'active', NOW())
       `,
       [
         ownerUserId,
@@ -132,6 +147,8 @@ describe('Invite Lifecycle and Profile Endpoints (e2e)', () => {
         newCoachEmail,
         twoGymCoachUserId,
         twoGymCoachEmail,
+        otherGymCoachUserId,
+        otherGymCoachEmail,
       ],
     );
 
@@ -179,6 +196,13 @@ describe('Invite Lifecycle and Profile Endpoints (e2e)', () => {
       [uuidv4(), otherGymId, twoGymCoachUserId, 'coach', 'active'],
     );
 
+    // Deliberately backdated: the accept re-sign must name the gym accepted, and
+    // an assignment older than the new one is what tells the two apart.
+    await dataSource.query(
+      `INSERT INTO gym_staff (id, "gymId", "userId", role, status, "assignedAt") VALUES ($1, $2, $3, $4, $5, NOW() - INTERVAL '30 days')`,
+      [uuidv4(), otherGymId, otherGymCoachUserId, 'coach', 'active'],
+    );
+
     // Seed one pending invite for listing/revoking tests
     const inviteId = uuidv4();
     const inviteToken = `test-token-pending-${uuidv4().replace(/-/g, '')}`.slice(0, 43);
@@ -210,7 +234,7 @@ describe('Invite Lifecycle and Profile Endpoints (e2e)', () => {
       await dataSource.query('DELETE FROM gym_memberships WHERE "gymId" IN ($1, $2)', [gymId, otherGymId]);
       await dataSource.query('DELETE FROM gym_staff WHERE "gymId" IN ($1, $2)', [gymId, otherGymId]);
       await dataSource.query('DELETE FROM gyms WHERE id IN ($1, $2)', [gymId, otherGymId]);
-      await dataSource.query('DELETE FROM users WHERE id IN ($1, $2, $3, $4, $5)', [ownerUserId, otherOwnerUserId, athleteUserId, newCoachUserId, twoGymCoachUserId]);
+      await dataSource.query('DELETE FROM users WHERE id IN ($1, $2, $3, $4, $5, $6)', [ownerUserId, otherOwnerUserId, athleteUserId, newCoachUserId, twoGymCoachUserId, otherGymCoachUserId]);
     } catch {
       // silently ignore cleanup errors
     }
@@ -241,9 +265,9 @@ describe('Invite Lifecycle and Profile Endpoints (e2e)', () => {
   });
 
   // ---------------------------------------------------------------------------
-  // POST /api/invites/:inviteToken/accept — public: accept invite
+  // POST /api/invites/:inviteToken/accept — auth: accept invite (invitee only)
   // ---------------------------------------------------------------------------
-  describe('POST /api/invites/:inviteToken/accept — accept invite (public)', () => {
+  describe('POST /api/invites/:inviteToken/accept — accept invite (invitee only)', () => {
     let acceptInviteToken: string;
     let acceptInviteId: string;
 
@@ -282,7 +306,48 @@ describe('Invite Lifecycle and Profile Endpoints (e2e)', () => {
     it('unknown token → 404', async () => {
       await request(app.getHttpServer())
         .post('/api/invites/nonexistent-accept-token-xyz/accept')
+        .set('Authorization', `Bearer ${athleteToken}`)
         .expect(404);
+    });
+
+    it('no auth token → 401, before any invite is even looked up', async () => {
+      // The response carries a JWT for the accepting account, so an anonymous
+      // caller must be turned away by the guard rather than resolved from the
+      // invite's email — that resolution handed the holder of a link somebody
+      // else's credentials.
+      await request(app.getHttpServer())
+        .post(`/api/invites/${acceptInviteToken}/accept`)
+        .expect(401);
+    });
+
+    it('authenticated caller who is not the invitee → 403, no token, invite untouched', async () => {
+      const foreignInviteId = uuidv4();
+      const foreignToken = `test-token-foreign-${uuidv4().replace(/-/g, '')}`.slice(0, 43);
+      const foreignEmail = `foreign-invitee-${uuidv4()}@test.local`;
+
+      await dataSource!.query(
+        `INSERT INTO invites (id, "gymId", "createdByUserId", "inviteeEmail", "inviteToken", "expiresAt", status, "createdAt")
+         VALUES ($1, $2, $3, $4, $5, NOW() + INTERVAL '7 days', 'pending', NOW())`,
+        [foreignInviteId, gymId, ownerUserId, foreignEmail, foreignToken],
+      );
+
+      const res = await request(app.getHttpServer())
+        .post(`/api/invites/${foreignToken}/accept`)
+        .set('Authorization', `Bearer ${athleteToken}`)
+        .expect(403);
+
+      // No credential, and the message must not confirm whose invite this is.
+      expect(res.body.token).toBeUndefined();
+      expect(JSON.stringify(res.body)).not.toContain(foreignEmail);
+
+      const rows = await dataSource!.query(
+        `SELECT status, "acceptedByUserId" FROM invites WHERE id = $1`,
+        [foreignInviteId],
+      );
+      expect(rows[0].status).toBe('pending');
+      expect(rows[0].acceptedByUserId).toBeNull();
+
+      await dataSource!.query('DELETE FROM invites WHERE id = $1', [foreignInviteId]);
     });
 
     it('already accepted invite → 400', async () => {
@@ -303,6 +368,7 @@ describe('Invite Lifecycle and Profile Endpoints (e2e)', () => {
 
       await request(app.getHttpServer())
         .post(`/api/invites/${alreadyAcceptedToken}/accept`)
+        .set('Authorization', `Bearer ${athleteToken}`)
         .expect(400);
 
       await dataSource.query('DELETE FROM invites WHERE id = $1', [alreadyAcceptedId]);
@@ -325,12 +391,16 @@ describe('Invite Lifecycle and Profile Endpoints (e2e)', () => {
 
       await request(app.getHttpServer())
         .post(`/api/invites/${expiredToken}/accept`)
+        .set('Authorization', `Bearer ${athleteToken}`)
         .expect(400);
 
       await dataSource.query('DELETE FROM invites WHERE id = $1', [expiredId]);
     });
 
-    it('happy path (authenticated user) → 200 with gym and athlete details', async () => {
+    // The route mounts JwtAuthGuard and requires the caller to be the invitee,
+    // so the bearer token below is what makes this pass — not the invite's email
+    // happening to match, as it was before.
+    it('happy path (invitee accepting their own invite) → 200 with gym and athlete details', async () => {
       // Remove existing membership to allow accept
       await dataSource!.query(
         `DELETE FROM gym_memberships WHERE "gymId" = $1 AND "userId" = $2`,
@@ -388,7 +458,7 @@ describe('Invite Lifecycle and Profile Endpoints (e2e)', () => {
       await dataSource!.query('DELETE FROM invites WHERE id = $1', [duplicateInviteId]);
     });
 
-    it('accepting a coach invite creates active staff and returns a coach token', async () => {
+    it('accepting a coach invite creates active staff and returns a coach token for that gym', async () => {
       const token = `coach-invite-token-e2e-${uuidv4().replace(/-/g, '')}`.slice(0, 43);
       await dataSource!.query(
         `INSERT INTO invites (id, "gymId", "createdByUserId", "inviteeEmail", "inviteToken", "expiresAt", status, role)
@@ -418,6 +488,47 @@ describe('Invite Lifecycle and Profile Endpoints (e2e)', () => {
       );
       expect(claims.gymId).toBe(gymId);
       expect(claims.role).toBe('coach');
+    });
+
+    it('a coach already staffed elsewhere gets a token for the gym they just accepted', async () => {
+      // The multi-attachment case, which the single-gym tests above cannot see:
+      // this coach's older assignment is at otherGymId, so a token minted from
+      // their *default* context would name that gym while the client stores the
+      // accepted one — reads look fine and the first write 403s on
+      // GymOwnershipGuard.
+      const token = `multi-gym-accept-e2e-${uuidv4().replace(/-/g, '')}`.slice(0, 43);
+      await dataSource!.query(
+        `INSERT INTO invites (id, "gymId", "createdByUserId", "inviteeEmail", "inviteToken", "expiresAt", status, role)
+         VALUES ($1, $2, $3, $4, $5, NOW() + INTERVAL '7 days', 'pending', 'coach')`,
+        [randomUUID(), gymId, ownerUserId, otherGymCoachEmail, token],
+      );
+
+      const res = await request(app.getHttpServer())
+        .post(`/api/invites/${token}/accept`)
+        .set('Authorization', `Bearer ${otherGymCoachToken}`)
+        .expect(200);
+
+      const claims = JSON.parse(
+        Buffer.from(res.body.token.split('.')[1], 'base64').toString('utf8'),
+      );
+      expect(claims.gymId).toBe(gymId);
+      expect(claims.gymId).not.toBe(otherGymId);
+      expect(claims.role).toBe('coach');
+
+      // And the claim has teeth: this route mounts GymOwnershipGuard, which
+      // compares the route's gym to the token's. The pre-accept token is refused
+      // (403); the re-signed one gets past the guard and only then fails to find
+      // the made-up class (404). Same URL, so the difference is the claim alone.
+      const someClassId = uuidv4();
+      await request(app.getHttpServer())
+        .get(`/api/gyms/${gymId}/classes/${someClassId}/programming`)
+        .set('Authorization', `Bearer ${otherGymCoachToken}`)
+        .expect(403);
+
+      await request(app.getHttpServer())
+        .get(`/api/gyms/${gymId}/classes/${someClassId}/programming`)
+        .set('Authorization', `Bearer ${res.body.token}`)
+        .expect(404);
     });
   });
 

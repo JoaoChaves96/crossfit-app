@@ -61,6 +61,20 @@ export class CoachAlreadyStaffError extends Error {
   }
 }
 
+/**
+ * The authenticated caller is not the person the invite was issued to.
+ *
+ * The message names neither the invitee nor the gym: answering "this invite
+ * belongs to alice@example.com" would turn a guessed link into an address
+ * oracle for anyone holding it.
+ */
+export class InviteNotForCallerError extends Error {
+  constructor() {
+    super('This invite was issued to a different account.');
+    this.name = 'InviteNotForCallerError';
+  }
+}
+
 export class CoachInvitePendingError extends Error {
   constructor(email: string) {
     super(`A coach invite for ${email} is already pending at this gym`);

@@ -6,16 +6,15 @@ import {
   Body,
   Param,
   Query,
-  Req,
   UseGuards,
   ValidationPipe,
   HttpCode,
   HttpStatus,
   BadRequestException,
   ConflictException,
+  ForbiddenException,
   NotFoundException,
 } from '@nestjs/common';
-import type { Request } from 'express';
 import {
   ApiTags,
   ApiBearerAuth,
@@ -47,6 +46,7 @@ import {
   InviteeNotRegisteredError,
   InviteExpiredError,
   InviteNotFoundError,
+  InviteNotForCallerError,
   InviteRevokedError,
 } from '../../domain/invite/invite.errors';
 
@@ -246,15 +246,20 @@ export class InviteController {
   }
 
   /**
-   * Accept an invite. No auth required — athlete may be logged in (JWT optional).
-   * If JWT is present the authenticated user accepts; otherwise resolves by inviteeEmail.
+   * Accept an invite. Authentication required, and the caller must be the
+   * invitee: the response carries a JWT for the accepting account, so resolving
+   * that account from the invite's email would hand a credential to anybody
+   * holding the link. The frontend routes an unauthenticated visitor through
+   * register/login first, which is why nothing legitimate loses access.
    */
   @Post('/invites/:inviteToken/accept')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
     summary: 'Accept an invite',
     description:
-      'Accepts an invite and, depending on the invite\'s role, creates a GymMembership (athlete) or a gym_staff row (coach). Returns a freshly signed JWT carrying the new gym context. If the request includes a valid JWT the authenticated user is used; otherwise the invitee is resolved by the invite email. The invitee must already be registered.',
+      'Accepts an invite and, depending on the invite\'s role, creates a GymMembership (athlete) or a gym_staff row (coach). Returns a freshly signed JWT carrying the accepted gym as its context. Requires authentication: the caller\'s account must be the invited email, compared case-insensitively.',
   })
   @ApiParam({
     name: 'inviteToken',
@@ -273,6 +278,11 @@ export class InviteController {
     description:
       'Token expired, revoked, already accepted, or invitee not registered',
   })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiResponse({
+    status: 403,
+    description: 'The invite was issued to a different account',
+  })
   @ApiResponse({ status: 404, description: 'Invite not found' })
   @ApiResponse({
     status: 409,
@@ -282,14 +292,16 @@ export class InviteController {
   async acceptInvite(
     @Param('inviteToken') inviteToken: string,
     @Body() _body: AcceptInviteRequestDto,
-    @Req() request: Request & { user?: { id: string } },
+    @CurrentUser() userId: string,
   ): Promise<AcceptInviteResponseDto> {
-    const userId: string | undefined = request.user?.id;
     try {
       return await this.inviteService.acceptInvite(inviteToken, userId);
     } catch (err) {
       if (err instanceof InviteNotFoundError) {
         throw new NotFoundException(err.message);
+      }
+      if (err instanceof InviteNotForCallerError) {
+        throw new ForbiddenException(err.message);
       }
       if (
         err instanceof InviteExpiredError ||
