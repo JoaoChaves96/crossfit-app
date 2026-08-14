@@ -286,17 +286,21 @@ MVP scope. Coach desktop has NO duplicate-header bug). Discovery/triage only; fi
   is attached to (staff beats membership; refuses rather than falling back, so it cannot hand
   back another tenant's context) and `GET /api/me/gyms` lists what they may switch to.
   Frontend: `GymContext.switchGym` posts, adopts the re-signed token, then persists the local
-  id; a `GymSwitcher` renders on the coach and athlete surfaces (`coach-classes` and the
-  athlete schedule) **only when there are two or more gyms** — a single-gym user sees nothing,
-  which is every current user. Deliberate: those are the two screens a multi-gym user actually
-  works from. `/schedule-dashboard` has none, so an owner who also coaches elsewhere changes
-  context from `/coach-classes`. This supersedes
-  the 2026-08-05 note above ("Decision: menu, not a multi-gym switcher"): the menu stays, and
-  the switcher sits beside it. Journey 16 proves the switch end to end and is mutation-proved
+  id; switching lives **inside `GymMenu`** — the control that already names the current gym —
+  with the other gyms listed directly beneath it and Log Out below the hairline. Rows appear
+  **only when there are two or more gyms**, so a single-gym user sees exactly the menu they saw
+  before, which is every current user. That menu is on the athlete schedule header and, since
+  2026-08-14, on the coach shell too: `CoachSidebar`'s top-left identity slot on desktop and the
+  `coach-classes` header beside the hamburger on mobile. It is also the coach's **only** sign-out
+  path now — the sidebar's own Log Out is gone. `/schedule-dashboard` has no switch, so an owner
+  who also coaches elsewhere changes context from `/coach-classes`. The one-off inline
+  `GymSwitcher` this shipped with is deleted; `hooks/useUserGyms` is the single implementation.
+  This refines the 2026-08-05 note above ("Decision: menu, not a multi-gym switcher"): the menu
+  stays, and the switch is *in* it. Journey 16 proves the switch end to end and is mutation-proved
   on the write, not the read. See `docs/DECISIONS.md` → **Gym Context Is Switchable** for the
   three documented deviations from `COMMAND_MODEL.md`'s `SelectActiveGym` — notably that
   neither endpoint checks `Gym status = active`, recorded as debt needing one pass over both
-  endpoints *and* the guards. BE 447/447, FE 379/379, 15/15 e2e, `tsc` clean.
+  endpoints *and* the guards. BE 447/447, FE 396/396, 16/16 e2e, `tsc` clean.
 
 ## Previous Phase (2026-05-23)
 
