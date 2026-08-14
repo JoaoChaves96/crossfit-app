@@ -2,6 +2,9 @@ import React, { createContext, ReactNode, useContext, useEffect, useState } from
 import { storage } from '@/utils/storage';
 import { createApiClient } from '@/utils/api-client';
 import { AuthContext } from '@/context/AuthContext';
+import { components } from '@/types/api.gen';
+
+type LoginResponse = components['schemas']['LoginResponseDto'];
 
 const CURRENT_GYM_ID_KEY = 'current_gym_id';
 
@@ -59,7 +62,7 @@ export function GymProvider({ children }: { children: ReactNode }) {
    */
   const switchGym = async (gymId: string): Promise<void> => {
     const client = createApiClient({ token: auth?.token });
-    const { accessToken } = await client.post<{ accessToken: string }>(
+    const { accessToken } = await client.post<LoginResponse>(
       '/api/auth/gym-context',
       { gymId },
     );

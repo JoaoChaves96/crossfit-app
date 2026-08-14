@@ -286,8 +286,11 @@ MVP scope. Coach desktop has NO duplicate-header bug). Discovery/triage only; fi
   is attached to (staff beats membership; refuses rather than falling back, so it cannot hand
   back another tenant's context) and `GET /api/me/gyms` lists what they may switch to.
   Frontend: `GymContext.switchGym` posts, adopts the re-signed token, then persists the local
-  id; a `GymSwitcher` renders on the coach and owner surfaces **only when there are two or
-  more gyms** — a single-gym user sees nothing, which is every current user. This supersedes
+  id; a `GymSwitcher` renders on the coach and athlete surfaces (`coach-classes` and the
+  athlete schedule) **only when there are two or more gyms** — a single-gym user sees nothing,
+  which is every current user. Deliberate: those are the two screens a multi-gym user actually
+  works from. `/schedule-dashboard` has none, so an owner who also coaches elsewhere changes
+  context from `/coach-classes`. This supersedes
   the 2026-08-05 note above ("Decision: menu, not a multi-gym switcher"): the menu stays, and
   the switcher sits beside it. Journey 16 proves the switch end to end and is mutation-proved
   on the write, not the read. See `docs/DECISIONS.md` → **Gym Context Is Switchable** for the

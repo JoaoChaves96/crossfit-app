@@ -457,6 +457,9 @@ Rules:
   caller is provably attached to. See *Owner Gym Context After Creation*.
 - Multi-gym **ownership** remains out of scope (*One Gym Per Owner*). An owner
   who also coaches elsewhere does get the switcher; that is coach staffing.
+  Today it is mounted only on the coach and athlete surfaces, so such an owner
+  changes context from `/coach-classes` — `/schedule-dashboard` carries no
+  switcher.
 - The default context on login is still the oldest active attachment. The
   switcher's choice persists client-side in `currentGymId`, not server-side.
 
