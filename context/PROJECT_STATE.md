@@ -302,6 +302,24 @@ MVP scope. Coach desktop has NO duplicate-header bug). Discovery/triage only; fi
   neither endpoint checks `Gym status = active`, recorded as debt needing one pass over both
   endpoints *and* the guards. BE 447/447, FE 396/396, 16/16 e2e, `tsc` clean.
 
+- ✅ **Gym suspension enforced (2026-08-14)** — the pass that debt asked for, and the resolution
+  of the `Gym status = active` question it left open. `docs/DECISIONS.md` → **Gym Suspension Is A
+  Read-Only Freeze**: a non-`active` gym stays readable to everyone attached to it and mutable by
+  nobody, the owner included. Before this, `gyms.status` was checked in three handlers out of
+  roughly forty gym-scoped mutations — true where someone remembered it, false everywhere else.
+  New `GymStatusGuard` keys on the `:gymId` route param, which turns out to describe the
+  gym-scoped surface exactly: it is mounted on 10 controllers covering 32 mutations, and
+  user-scoped writes (`PATCH /api/me`, notifications) are exempt for free without special-casing.
+  Two routes it structurally cannot see are handled separately: invite acceptance names a token
+  rather than a gym, so `InviteService` refuses it (403 `Gym is suspended`), and the auth
+  endpoints deliberately stay open — login and `gym-context` must keep agreeing, and a token for
+  a frozen gym now buys only that gym's reads. `gym-status.coverage.spec.ts` walks every route
+  the app publishes and fails if a gym-scoped mutation is added without the guard, so the rule
+  cannot quietly go partial again; both it and the e2e were proved to fail with a mount removed.
+  **Suspension is still unreachable** — nothing transitions a gym out of `active` in MVP
+  (*Gym Registration Approval*); the admin surface is Phase 2 and stayed out of scope here.
+  BE 460/460 + 13 new e2e, `tsc` clean.
+
 ## Previous Phase (2026-05-23)
 
 **EPIC:** Notifications (Epic R) — ✅ COMPLETE (2026-05-23)  
@@ -460,6 +478,9 @@ MVP scope. Coach desktop has NO duplicate-header bug). Discovery/triage only; fi
   `x-user-id`/`x-gym-id`, letting the caller pick their identity and gym). For manual
   API testing, mint a real token with `scripts/dev-token.sh <email>`.
 - All endpoints protected with JwtAuthGuard + role-based RolesGuard
+- `GymStatusGuard` (2026-08-14) freezes a non-`active` gym read-only: every mutation on a
+  `:gymId` route is 403, reads are untouched, for every role including the owner. See
+  `docs/DECISIONS.md` → **Gym Suspension Is A Read-Only Freeze**
 - `POST /api/auth/login` — public, issues 7-day JWT for valid credentials
 - `POST /api/auth/register` — public, creates athlete account and issues JWT (gymId: null, role: null)
 - `POST /api/gyms` — 409 if the caller already owns an active gym (one gym per

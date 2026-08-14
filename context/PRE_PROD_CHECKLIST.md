@@ -9,6 +9,13 @@ This is a living document — add items as they surface during MVP development.
 
 - [x] Replace `JwtAuthGuard` stub with real JWT validation ✅ Epic A (2026-05-03)
 - [x] Add role guard to `POST /api/gyms` ✅ Epic A (2026-05-03)
+- [x] Enforce `gyms.status` on gym-scoped mutations ✅ 2026-08-14 — `GymStatusGuard` on every
+      `:gymId` route + a check in `InviteService` for invite acceptance. Suspension is a
+      read-only freeze (`docs/DECISIONS.md`). Before this, three handlers out of ~40 mutations
+      checked status, so the rule held only where someone had remembered it.
+- [ ] Make suspension **reachable** — nothing transitions a gym out of `active` in MVP; the
+      platform-admin approve/suspend surface is Phase 2. The enforcement above ships first so
+      the state is safe on the day something can set it.
 
 ## Data Safety
 

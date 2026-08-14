@@ -474,8 +474,51 @@ both narrowing that command's preconditions:
   hid a gym the token endpoint would still grant is a worse bug than both
   ignoring status. No Tier 1 document says suspending a gym revokes its staff's
   access, and `SelectActiveGym` is scoped to athletes, so extending its
-  precondition to staff would be an invention rather than a reading. Treated as
-  known debt: gym suspension wants one pass covering both endpoints *and* the
-  guards, not a condition bolted onto the switcher alone.
+  precondition to staff would be an invention rather than a reading. **Resolved**
+  by *Gym Suspension Is A Read-Only Freeze*: both endpoints deliberately stay
+  open, because a token for a suspended gym now buys only that gym's reads.
 - That command is also **Athlete**-only. This endpoint serves staff and athletes
   alike, because the multi-gym case that actually exists in the data is a coach's.
+
+## Gym Suspension Is A Read-Only Freeze
+
+While a gym's `status` is anything other than `active`, its data stays readable
+to everyone attached to it and **nobody may change it** — the owner included.
+
+This resolves the ambiguity flagged as debt in *Gym Context Is Switchable*: what
+suspension means for the people inside a suspended gym. It does not change *who*
+can suspend — see *Gym Registration Approval*: nothing transitions a gym into
+`pending_approval` or `suspended` in MVP, and the platform-admin surface that
+would is Phase 2. What ships now is the enforcement, so that the state is already
+safe on the day something can reach it.
+
+Rationale: suspension is an administrative hold, not an eviction. Cutting reads
+would strand a gym's members from their own booking history and results — data
+they created — over a dispute between the platform and the box. Cutting writes is
+what a hold means: no new bookings, no new classes, no new members, nothing that
+grows the gym's obligations while it is held. Exempting the owner would defeat
+the purpose, since the owner is who a hold is aimed at.
+
+This is also the reading most consistent with what already shipped: every
+`gyms.status` check in the codebase before this pass sat on a mutation, and no
+read anywhere was gated on it.
+
+Rules:
+
+- Reads (`GET`, `HEAD`, `OPTIONS`) are unaffected, for every role.
+- Every other method on a gym-scoped route is `403 Gym is suspended`, enforced by
+  `GymStatusGuard` on any route carrying a `:gymId` param. A meta-test
+  (`gym-status.coverage.spec.ts`) fails if a gym-scoped mutation is added without
+  it, so the rule cannot quietly become partial again.
+- **Accepting an invite to a suspended gym is refused** (`403`), checked in
+  `InviteService` because that route names an invite token rather than a gym.
+  Validating the invite link still works — the visitor sees the gym, and only the
+  join is held.
+- **User-scoped writes stay open**: `PATCH /api/me`, marking notifications read,
+  and anything else not addressed to a gym. A member's own account is not the
+  gym's to freeze, and locking a user out of their profile because a box was
+  suspended punishes the wrong party.
+- Authentication is unaffected. `POST /api/auth/login` and
+  `POST /api/auth/gym-context` still issue tokens for a suspended gym: the two
+  must keep agreeing with each other (*Gym Context Is Switchable*), and a token
+  for a frozen gym now grants exactly the reads that gym still allows.
