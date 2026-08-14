@@ -302,6 +302,34 @@ MVP scope. Coach desktop has NO duplicate-header bug). Discovery/triage only; fi
   neither endpoint checks `Gym status = active`, recorded as debt needing one pass over both
   endpoints *and* the guards. BE 447/447, FE 396/396, 16/16 e2e, `tsc` clean.
 
+- ✅ **The backend e2e suite is green (2026-08-14)** — 237/237, from a standing 10 failures that
+  had been carried as "pre-existing, unrelated" for weeks. They were three unrelated causes, and
+  only one was a code defect:
+  - **Seven had never passed at all.** They arrived red in `3be9240` (2026-05-07) and were never
+    run against reality: three `PATCH` results tests used
+    `/api/gyms/:gymId/results/:resultId`, omitting the `classes` segment the controller prefix
+    contributes, so *no route existed* — which is why the `no auth token → 401` case returned
+    404, the detail that identified this in one step. Three asserted a `classId` field
+    `GetClassProgrammingResponseDto` has never had, and one a `gymId` on `ClassTypeItemDto` that
+    has never existed. Verified against the DTOs and controller prefix **at that commit**, not
+    just today's. The wrong URL came from `epics/BACKEND_TESTS_EPIC.md`, now corrected, since a
+    stale doc is what wrote the broken test.
+  - **Two were correct and were overtaken by deliberate changes** nobody followed up on:
+    `classesAssigned` joined `CoachListItemDto` in `ba8b948` and broke a closed-set shape
+    assertion (working as designed), and *One Gym Per Owner* (`3f4146c`) turned a test that
+    creates a second gym for one owner into a 409. That test now has its own owner — and since
+    nothing actually asserted the 409, it now does, deliberately.
+  - **One was a real contract defect, but not where the test pointed.** `PATCH /api/me` with `{}`
+    returns 200 because `a31ff3a` made every field optional so preferences can be patched alone;
+    the handler is safe (`if (name !== undefined)`), so 200 is right. The defect was the Swagger
+    still advertising "name is required and must be non-empty" — corrected. The test now asserts
+    the real contract: an empty body changes nothing, preferences included.
+  - Also fixed a false green: `non-existent result → 404` passed only because *every* id 404'd
+    on a route that did not exist.
+  - **Known flake, pre-existing:** roughly one run in three, one arbitrary test fails with
+    `socket hang up`. Reproduced at clean `HEAD` (1 of 3 runs), so it is not from this work, and
+    it moves between suites. Not diagnosed.
+
 - ✅ **Gym suspension enforced (2026-08-14)** — the pass that debt asked for, and the resolution
   of the `Gym status = active` question it left open. `docs/DECISIONS.md` → **Gym Suspension Is A
   Read-Only Freeze**: a non-`active` gym stays readable to everyone attached to it and mutable by

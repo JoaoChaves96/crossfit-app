@@ -6,6 +6,12 @@
 **Depends on:** Epic M (Refactor) — ✅ Complete  
 **Next epic:** Epic O (Frontend Unit Tests)
 
+> **Correction (2026-08-14):** this epic was marked complete on the day it landed, but seven of
+> the e2e tests it added had never passed — they asserted a route and DTO fields that did not
+> exist, and the suite was evidently not run green before the epic was closed. Fixed 2026-08-14;
+> the endpoint list below carried one of the wrong paths and is corrected. Marking a test epic
+> complete means the suite is green, not that the files exist.
+
 ---
 
 ## Objective
@@ -162,7 +168,9 @@ Write unit tests for:
 
 Add integration tests following the pattern in `backend/test/*.e2e-spec.ts` for:
 - `POST /api/gyms/:gymId/classes/:classId/results` — log result (requires completed class)
-- `PATCH /api/gyms/:gymId/results/:resultId` — edit result
+- `PATCH /api/gyms/:gymId/classes/results/:resultId` — edit result (the `classes`
+  segment comes from the controller prefix; this line omitted it until 2026-08-14,
+  and the e2e written from it had never passed)
 - `POST /api/gyms/:gymId/classes/:classId/toggle-loggable` — toggle loggable status
 - `POST /api/gyms/:gymId/classes/:classId/attendance` — mark attendance (requires in-progress class)
 - `GET /api/gyms/:gymId/classes/:classId/results` — view results
