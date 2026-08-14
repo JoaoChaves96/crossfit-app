@@ -16,7 +16,7 @@ async function bootstrap() {
     ) => callback(null, true),
     credentials: true,
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
-    allowedHeaders: 'Content-Type,Authorization,x-user-id,x-gym-id',
+    allowedHeaders: 'Content-Type,Authorization',
   });
 
   app.useGlobalPipes(

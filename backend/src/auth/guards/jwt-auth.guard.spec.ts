@@ -112,20 +112,41 @@ describe('JwtAuthGuard', () => {
     });
   });
 
-  describe('development mode bypass', () => {
-    it('passes when NODE_ENV is development and Authorization header is absent, setting user from x-headers', () => {
+  // There is no environment in which identity may come from a request header.
+  // A `development` bypass used to live here: with no Authorization header it
+  // built `req.user` straight from `x-user-id` / `x-gym-id`, so the caller chose
+  // who they were and which gym they were in, and every downstream identity and
+  // tenant check ran on attacker-supplied values. Mint a real token instead —
+  // `scripts/dev-token.sh <email>` wraps the same POST /api/auth/login the app
+  // uses. These tests exist to keep the branch from coming back.
+  describe('with headers instead of a token', () => {
+    it('throws even under NODE_ENV=development', () => {
       process.env.NODE_ENV = 'development';
       const { context, request } = buildContext({
         'x-user-id': 'dev-user',
         'x-gym-id': 'dev-gym',
       });
 
-      const result = guard.canActivate(context);
+      expect(() => guard.canActivate(context)).toThrow(UnauthorizedException);
+      expect(request.user).toBeUndefined();
+    });
 
-      expect(result).toBe(true);
-      const user = request.user as Record<string, string | undefined>;
-      expect(user.id).toBe('dev-user');
-      expect(user.gymId).toBe('dev-gym');
+    it('ignores x-user-id when a valid token is present', () => {
+      const token = jwt.sign(
+        { sub: 'real-user', email: 'real@example.com', gymId: 'real-gym', role: 'athlete' },
+        TEST_SECRET,
+        { expiresIn: '1h' },
+      );
+      const { context, request } = buildContext({
+        authorization: `Bearer ${token}`,
+        'x-user-id': 'impersonated-user',
+        'x-gym-id': 'impersonated-gym',
+      });
+
+      expect(guard.canActivate(context)).toBe(true);
+      const user = request.user as Record<string, string>;
+      expect(user.id).toBe('real-user');
+      expect(user.gymId).toBe('real-gym');
     });
   });
 });

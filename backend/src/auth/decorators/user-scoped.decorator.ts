@@ -5,9 +5,8 @@ export const USER_SCOPED_KEY = 'user_scoped';
 /**
  * Marks an endpoint as user-scoped (does not require gymId from route params).
  * User-scoped endpoints:
- * - Require x-user-id header (authentication)
- * - Accept optional x-gym-id header (filtering)
- * - Return data across all gyms unless x-gym-id filters it
+ * - Take the acting user from the verified JWT, like every other endpoint
+ * - Return data across all gyms the user belongs to, not one gym's slice
  *
  * Contrast with gym-scoped endpoints:
  * - Require gymId in route params
