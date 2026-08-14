@@ -14,7 +14,7 @@ import { generateTestToken } from './helpers/jwt.helper';
  * 2. Cancel a booking - DELETE /api/gyms/:gymId/classes/bookings/:bookingId
  * 3. State consistency - Class capacity reflects changes
  *
- * Uses real database, header-based auth (x-user-id, x-gym-id)
+ * Uses real database, real signed JWTs (see test/helpers/jwt.helper.ts)
  * Tests are isolated and deterministic
  */
 describe('Athlete Booking Lifecycle (e2e)', () => {

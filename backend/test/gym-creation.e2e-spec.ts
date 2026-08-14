@@ -14,7 +14,7 @@ import { generateTestToken } from './helpers/jwt.helper';
  * 2. Validation errors on missing/invalid fields
  * 3. Unauthenticated request is rejected (no user found)
  *
- * Uses real database, header-based auth (x-user-id)
+ * Uses real database, real signed JWTs (see test/helpers/jwt.helper.ts)
  */
 describe('Gym Creation (e2e)', () => {
   let app: INestApplication;

@@ -20,6 +20,10 @@ This is a living document — add items as they surface during MVP development.
 
 ## Notes
 
-- Header-based auth (`x-user-id`, `x-gym-id`) is intentional for MVP/dev and is not a bug
-- JWT and role guards are the production replacement for that mechanism
+- Header-based auth (`x-user-id`, `x-gym-id`) is **gone** as of 2026-08-14. It was
+  intentional for early MVP/dev, then survived as a `NODE_ENV=development` bypass in
+  `JwtAuthGuard` after JWT landed. Removed: it let the caller choose their own identity
+  and gym, so every downstream identity and tenant check ran on caller-supplied values.
+- JWT and role guards are now the only mechanism, dev included. Mint a dev token with
+  `scripts/dev-token.sh <email>`.
 - Security audit conducted 2026-04-21 — full findings in `context/DECISION_LOG.md`

@@ -455,7 +455,10 @@ MVP scope. Coach desktop has NO duplicate-header bug). Discovery/triage only; fi
 
 ### Backend
 - `JwtAuthGuard` validates real Bearer tokens (JWT_SECRET from `backend/.env`)
-- Dev bypass: `NODE_ENV=development` + no Authorization header → falls back to `x-user-id`/`x-gym-id` headers
+- No dev bypass. A missing `Authorization` header is a 401 in every environment,
+  `development` included (removed 2026-08-14 — the old bypass built `req.user` from
+  `x-user-id`/`x-gym-id`, letting the caller pick their identity and gym). For manual
+  API testing, mint a real token with `scripts/dev-token.sh <email>`.
 - All endpoints protected with JwtAuthGuard + role-based RolesGuard
 - `POST /api/auth/login` — public, issues 7-day JWT for valid credentials
 - `POST /api/auth/register` — public, creates athlete account and issues JWT (gymId: null, role: null)

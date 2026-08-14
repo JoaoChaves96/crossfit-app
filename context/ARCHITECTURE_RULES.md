@@ -7,7 +7,8 @@
 - Queries are read-only
 - No business logic in controllers
 - Validation at boundaries
-- Header-based auth (x-user-id, x-gym-id)
+- JWT bearer auth on every guarded route, in every environment
+- Identity is never taken from a request header — only from a verified token
 
 ## Frontend
 

@@ -10,7 +10,7 @@ import { generateTestToken } from './helpers/jwt.helper';
  * Class Creation E2E Tests
  *
  * Endpoint: POST /api/gyms/:gymId/classes
- * Auth: header-based — x-user-id (actor), x-gym-id (gym context)
+ * Auth: signed JWT — `sub` (actor), `gymId` (gym context), `role`
  * Role required: owner (gym_staff row with role='owner' for the gym)
  *
  * Request body:

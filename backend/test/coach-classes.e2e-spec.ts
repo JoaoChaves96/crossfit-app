@@ -10,7 +10,7 @@ import { generateTestToken } from './helpers/jwt.helper';
  * Coach Classes E2E Tests
  *
  * Endpoint: GET /api/gyms/:gymId/coach/classes
- * Auth: header-based — x-user-id (actor), x-gym-id (gym context)
+ * Auth: signed JWT — `sub` (actor), `gymId` (gym context), `role`
  * Role required: active coach in the gym (gym_staff row with role='coach')
  *
  * Success response (200):

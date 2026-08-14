@@ -27,7 +27,7 @@ import { generateTestToken } from './helpers/jwt.helper';
  * invitee only becomes staff by accepting the invite (see
  * invite-lifecycle-and-profile.e2e-spec.ts).
  *
- * Auth: header-based — x-user-id (acting user), x-gym-id (gym context)
+ * Auth: signed JWT — `sub` (acting user), `gymId` (gym context), `role`
  * Authorization: acting user must have gym_staff row with role='owner', status='active' for the gym
  *
  * Validates:

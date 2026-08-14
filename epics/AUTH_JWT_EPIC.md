@@ -16,6 +16,13 @@ This epic is **backend-only** — no new screens, no frontend token handling, no
 
 When this epic is complete, the dev bootstrap and header stub remain usable in local dev (via a dev-only bypass mode) but all production paths require a valid JWT.
 
+> **Superseded 2026-08-14:** the dev-only bypass mode described throughout this epic has
+> been **removed**. It let any caller of the dev API choose their own `x-user-id` and
+> `x-gym-id`, so it defeated service-layer identity checks and tenant scoping on every
+> guarded route. Local dev now uses real tokens like everything else —
+> `scripts/dev-token.sh <email>`. The epic's history below is left as written; read every
+> "dev bypass" mention as historical.
+
 ---
 
 ## Current State
@@ -100,7 +107,7 @@ Replace the header-reading stub in `JwtAuthGuard` with real JWT validation:
 - Populate `request.user` with decoded claims (`{ id, email, gymId, role }`)
 - Return 401 for missing, expired, or invalid tokens
 
-**Dev bypass:** if `NODE_ENV === 'development'` and no `Authorization` header is present, fall back to reading `x-user-id` / `x-gym-id` headers as before. This keeps the dev bootstrap working without a token during local development.
+**Dev bypass:** ~~if `NODE_ENV === 'development'` and no `Authorization` header is present, fall back to reading `x-user-id` / `x-gym-id` headers as before. This keeps the dev bootstrap working without a token during local development.~~ **Removed 2026-08-14** — see the note under Objective.
 
 Update `CurrentUser` and `CurrentGym` decorators to read from `request.user` (populated by the guard) with no hardcoded fallbacks outside dev mode.
 
@@ -161,13 +168,13 @@ Tasks #1, #2, #3, #4 can all run in parallel. Task #5 depends on all of them.
 
 - [x] `POST /api/auth/login` issues a valid JWT for correct credentials
 - [x] `POST /api/auth/login` returns 401 for wrong credentials
-- [x] All endpoints reject requests with missing or invalid tokens (except in dev bypass mode)
+- [x] All endpoints reject requests with missing or invalid tokens — no exception, the dev bypass carve-out is gone (2026-08-14)
 - [x] All endpoints enforce the correct role — wrong role returns 403
 - [x] `CurrentUser` and `CurrentGym` read from JWT claims with no hardcoded fallbacks
 - [x] Coach invite creates users with `status: pending` and `passwordHash` set
 - [x] User + staff creation is wrapped in a transaction
 - [x] All existing E2E tests pass using real JWT tokens
-- [x] Dev bootstrap still works locally via the `NODE_ENV=development` header bypass
+- [x] Dev bootstrap still works locally — via real tokens from `scripts/dev-token.sh`, not the header bypass (revised 2026-08-14)
 
 ---
 

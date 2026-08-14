@@ -2,8 +2,10 @@
 
 ## Auth Model
 
-- Header-based auth (x-user-id, x-gym-id)
-- No JWT usage on frontend (by design)
+- JWT bearer auth everywhere, including local dev (2026-08-14)
+- Identity comes only from a verified token; no header ever names the acting user
+- Superseded: header-based auth (x-user-id, x-gym-id), and the dev-only bypass that
+  outlived it
 
 ## Booking State
 

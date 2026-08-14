@@ -1,6 +1,9 @@
 # Auth Infrastructure Initiative
 
-**Status:** Planned (pre-MVP launch)  
+**Status:** ✅ Done — delivered by `epics/AUTH_JWT_EPIC.md`; the last remnant of
+header-based auth (the `NODE_ENV=development` bypass in `JwtAuthGuard`) was removed
+2026-08-14. Everything under "Current State" below describes the *pre-JWT* system and is
+kept as history.  
 **Scope:** Whole backend (not Gym Owner MVP specific)  
 **Target:** Before production launch  
 

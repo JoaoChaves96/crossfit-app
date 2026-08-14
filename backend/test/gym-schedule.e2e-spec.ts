@@ -10,7 +10,7 @@ import { generateTestToken } from './helpers/jwt.helper';
  * Gym Owner Schedule E2E Tests
  *
  * Endpoint: GET /api/gyms/:gymId/schedule
- * Auth: header-based — x-user-id (actor), x-gym-id (gym context)
+ * Auth: signed JWT — `sub` (actor), `gymId` (gym context), `role`
  * Role required: owner (gym_staff row with role='owner' for the gym)
  *
  * Success response (200):

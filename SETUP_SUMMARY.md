@@ -126,9 +126,8 @@ User presses 'w' → Opens web app
 Frontend (Expo)
   │
   ├─ Makes API calls to http://localhost:3000
-  ├─ Includes headers:
-  │   x-user-id: athlete-001
-  │   x-gym-id: gym-001
+  ├─ Includes header:
+  │   Authorization: Bearer <jwt>
   │
 Backend (NestJS)
   │
@@ -174,12 +173,14 @@ docker-compose exec postgres psql -U postgres -d crossfit_box_dev \
 
 ## Key Design Decisions
 
-### Authentication (MVP)
+### Authentication
 
-- **No JWT yet.** Uses headers: `x-user-id`, `x-gym-id`
-- **Frontend:** Includes headers automatically (see `frontend/utils/api-client.ts`)
-- **Backend:** Extracts from headers (see `backend/src/auth/decorators/`)
-- **Manual testing:** Pass headers in cURL/Postman
+- **JWT everywhere**, dev included. No header-auth fallback, no dev bypass.
+- **Frontend:** stores the token from login, sends `Authorization: Bearer <token>`
+  (see `frontend/utils/api-client.ts`)
+- **Backend:** `JwtAuthGuard` verifies the signature and populates `request.user`
+  from the claims (see `backend/src/auth/`)
+- **Manual testing:** `TOKEN=$(./scripts/dev-token.sh athlete@example.com)`
 
 ### Database Initialization
 

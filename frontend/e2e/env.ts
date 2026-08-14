@@ -89,16 +89,16 @@ export function e2eBackendEnv(): Record<string, string> {
     // Silences the class-lifecycle, membership-renewal and reminder crons so a
     // fixture cannot change state mid-test. See backend/src/app.module.ts.
     DISABLE_SCHEDULERS: 'true',
-    // `test`, not `development`, and the difference is load-bearing:
+    // `test`, not `production`: synchronize is on for any non-production
+    // NODE_ENV, which is what builds the schema in the empty e2e database —
+    // no migration step.
     //
-    //  - synchronize is on for any non-production NODE_ENV, which is what
-    //    builds the schema in the empty e2e database — no migration step.
-    //  - under `development`, JwtAuthGuard accepts a request with NO
-    //    Authorization header and takes identity from `x-user-id` headers
-    //    (jwt-auth.guard.ts). That backdoor would mask exactly the auth/token
-    //    races this suite exists to catch: an unauthenticated request would
-    //    succeed instead of 401ing. Under `test` every request must carry a
-    //    real JWT, as in production.
+    // This was once also load-bearing against `development`, because
+    // JwtAuthGuard accepted a request with NO Authorization header and took
+    // identity from `x-user-id` headers — a backdoor that would have masked
+    // exactly the auth/token races this suite exists to catch, letting an
+    // unauthenticated request succeed instead of 401ing. That branch was
+    // removed on 2026-08-14, so every environment now behaves like this one.
     NODE_ENV: 'test',
   };
 }

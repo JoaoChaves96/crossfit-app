@@ -139,63 +139,69 @@ Choose your target:
 - **Android**: Press `a` → Opens Android emulator
 - **Physical device**: Scan QR code with Expo Go app
 
-## Authentication & Headers
+## Authentication
 
-The MVP uses **header-based authentication** (not JWT yet):
+Every request carries a **signed JWT**, in every environment including local dev.
+There is no header-auth shortcut: `x-user-id` / `x-gym-id` are not read anywhere,
+and a request without an `Authorization` header gets a 401 even under
+`NODE_ENV=development`.
 
-- `x-user-id`: The user ID making the request
-- `x-gym-id`: The gym context (required for all `/api/gyms/:gymId/*` endpoints)
+The token's claims are `sub` (user), `email`, `gymId` and `role`. `gymId` is the
+acting gym context — `POST /api/auth/login` resolves it to the user's default gym
+(oldest `assignedAt`), and `POST /api/auth/gym-context` re-issues the token against
+a different gym. The gym in the route must agree with the gym in the token.
 
-### Obtaining user IDs
+### Seeded dev users
 
-After seeding, you have these test users with these emails (frontend uses email-based lookup):
+| Email | Role | Password |
+|-------|------|----------|
+| `athlete@example.com` | Athlete | `password123` |
+| `coach@example.com` | Coach | `password123` |
+| `owner@example.com` | Owner | `password123` |
 
-| Email | Role | Gym |
-|-------|------|-----|
-| `athlete@example.com` | Athlete | CrossFit Test Box |
-| `coach@example.com` | Coach | CrossFit Test Box |
-| `owner@example.com` | Owner | CrossFit Test Box |
-
-For manual API testing with cURL/Postman, you'll need the actual UUIDs. Query them from the database:
-
-```bash
-docker-compose exec postgres psql -U postgres -d crossfit_box_dev -c \
-  "SELECT email, id FROM users WHERE email IN ('athlete@example.com', 'coach@example.com');"
-```
+Members added by `scripts/dev-db-populate-members.sh` also use `password123`. Users
+created by an automated test run have **no password** and cannot log in — they were
+only ever reachable through the header bypass that no longer exists.
 
 ### Frontend
 
-The frontend app automatically includes headers when making API calls. See `frontend/utils/api-client.ts`.
+The app stores the token after login and sends it as `Authorization: Bearer <token>`.
+See `frontend/utils/api-client.ts`.
 
 ### Manual API testing (cURL, Postman)
 
-Get user and gym IDs from database:
+`scripts/dev-token.sh` mints a real token by calling the same login endpoint the app
+uses. It prints the bare token on stdout, so hold it in a variable — tokens last 7 days.
 
 ```bash
-docker-compose exec postgres psql -U postgres -d crossfit_box_dev -c \
-  "SELECT id FROM users WHERE email = 'athlete@example.com'; SELECT id FROM gyms LIMIT 1;"
+TOKEN=$(./scripts/dev-token.sh athlete@example.com)
+GYM_ID=$(docker-compose exec -T postgres psql -U postgres -d crossfit_box_dev -At \
+  -c "SELECT \"gymId\" FROM gym_staff s JOIN users u ON u.id = s.\"userId\" \
+      WHERE u.email = 'owner@example.com' AND s.role = 'owner' LIMIT 1;" | tr -d '\r')
 ```
 
-To fetch the class schedule as the athlete (replace UUIDs):
+To fetch the class schedule as the athlete:
 
 ```bash
-curl -X GET "http://localhost:3000/api/gyms/{GYM_UUID}/classes" \
-  -H "x-user-id: {ATHLETE_UUID}" \
-  -H "x-gym-id: {GYM_UUID}"
+curl -X GET "http://localhost:3000/api/gyms/$GYM_ID/classes" \
+  -H "Authorization: Bearer $TOKEN"
 ```
 
-To book a class (replace UUIDs and {classId}):
+To book a class:
 
 ```bash
-curl -X POST "http://localhost:3000/api/gyms/{GYM_UUID}/classes/{CLASS_UUID}/bookings" \
-  -H "x-user-id: {ATHLETE_UUID}" \
-  -H "x-gym-id: {GYM_UUID}" \
+curl -X POST "http://localhost:3000/api/gyms/$GYM_ID/classes/{CLASS_UUID}/bookings" \
+  -H "Authorization: Bearer $TOKEN" \
   -H "Content-Type: application/json" \
   -d '{
-    "gymId": "{GYM_UUID}",
+    "gymId": "'"$GYM_ID"'",
     "classId": "{CLASS_UUID}"
   }'
 ```
+
+A 403 where you expected a 200 is usually the domain, not auth: an owner token on an
+athlete route returns *"Athlete does not have an active membership in this gym"*,
+because owners hold no membership. Log in as the athlete for athlete routes.
 
 ## Manual Verification Checklist
 

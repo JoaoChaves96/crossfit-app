@@ -15,10 +15,9 @@ import { generateTestToken } from './helpers/jwt.helper';
  *   1. GET /api/gyms/:gymId/configuration/coaches is added to GymConfigurationController
  *   2. A query handler returns { coaches: CoachListItemDto[] }
  *
- * Additionally, RolesGuard reads request.user?.id but JwtAuthGuard (stub) never
- * sets request.user. This means owner-guarded routes return 403 "User not authenticated"
- * for all requests. The guard must be updated to extract userId from the x-user-id
- * header (consistent with CurrentUser decorator) for auth to work in tests.
+ * (Historical: this note also described JwtAuthGuard as a stub that never set
+ * request.user, so RolesGuard 403'd everything. That was fixed by the JWT epic —
+ * the guard verifies a signed token and populates request.user from its claims.)
  */
 
 describe('GET /api/gyms/:gymId/configuration/coaches', () => {
