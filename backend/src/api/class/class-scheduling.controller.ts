@@ -14,6 +14,7 @@ import { CommandBus } from '@nestjs/cqrs';
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../../auth/guards/roles.guard';
 import { GymOwnershipGuard } from '../../auth/guards/gym-ownership.guard';
+import { GymStatusGuard } from '../../auth/guards/gym-status.guard';
 import { Role } from '../../auth/decorators/role.decorator';
 import { CurrentUser } from '../../auth/decorators/current-user.decorator';
 import { CreateClassDto } from '../../commands/class/dto/create-class.dto';
@@ -42,7 +43,7 @@ import { ClassScheduleItemDto } from '../../queries/class/dto/class-schedule-ite
 @Controller('/api/gyms/:gymId/classes')
 @ApiTags('Classes')
 @ApiBearerAuth()
-@UseGuards(JwtAuthGuard, GymOwnershipGuard, RolesGuard)
+@UseGuards(JwtAuthGuard, GymOwnershipGuard, RolesGuard, GymStatusGuard)
 export class ClassSchedulingController {
   constructor(
     @Inject(CommandBus) private readonly commandBus: CommandBus,

@@ -26,6 +26,7 @@ import {
 } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../../auth/guards/roles.guard';
+import { GymStatusGuard } from '../../auth/guards/gym-status.guard';
 import { Role } from '../../auth/decorators/role.decorator';
 import { CurrentUser } from '../../auth/decorators/current-user.decorator';
 import { InviteService } from '../../domain/invite/invite.service';
@@ -41,6 +42,7 @@ import {
   AthleteAlreadyMemberError,
   CoachAlreadyStaffError,
   GymNotFoundError,
+  GymSuspendedError,
   InviteAlreadyAcceptedError,
   InviteAlreadyRevokedError,
   InviteeNotRegisteredError,
@@ -60,7 +62,7 @@ export class InviteController {
    * Gym owner or coach role required.
    */
   @Post('/gyms/:gymId/invites')
-  @UseGuards(JwtAuthGuard, RolesGuard)
+  @UseGuards(JwtAuthGuard, RolesGuard, GymStatusGuard)
   @Role(['owner', 'coach'])
   @ApiBearerAuth()
   @HttpCode(HttpStatus.CREATED)
@@ -112,7 +114,7 @@ export class InviteController {
    * List all invites for a gym. Gym owner or coach role required.
    */
   @Get('/gyms/:gymId/invites')
-  @UseGuards(JwtAuthGuard, RolesGuard)
+  @UseGuards(JwtAuthGuard, RolesGuard, GymStatusGuard)
   @Role(['owner', 'coach'])
   @ApiBearerAuth()
   @HttpCode(HttpStatus.OK)
@@ -156,7 +158,7 @@ export class InviteController {
    * Revoke an invite by token. Gym owner or coach role required.
    */
   @Delete('/gyms/:gymId/invites/:token')
-  @UseGuards(JwtAuthGuard, RolesGuard)
+  @UseGuards(JwtAuthGuard, RolesGuard, GymStatusGuard)
   @Role(['owner', 'coach'])
   @ApiBearerAuth()
   @HttpCode(HttpStatus.OK)
@@ -281,7 +283,8 @@ export class InviteController {
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   @ApiResponse({
     status: 403,
-    description: 'The invite was issued to a different account',
+    description:
+      'The invite was issued to a different account, or the gym is suspended',
   })
   @ApiResponse({ status: 404, description: 'Invite not found' })
   @ApiResponse({
@@ -300,7 +303,10 @@ export class InviteController {
       if (err instanceof InviteNotFoundError) {
         throw new NotFoundException(err.message);
       }
-      if (err instanceof InviteNotForCallerError) {
+      if (
+        err instanceof InviteNotForCallerError ||
+        err instanceof GymSuspendedError
+      ) {
         throw new ForbiddenException(err.message);
       }
       if (

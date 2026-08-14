@@ -15,6 +15,7 @@ import { CommandBus } from '@nestjs/cqrs';
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../../auth/guards/roles.guard';
 import { GymOwnershipGuard } from '../../auth/guards/gym-ownership.guard';
+import { GymStatusGuard } from '../../auth/guards/gym-status.guard';
 import { Role } from '../../auth/decorators/role.decorator';
 import { CurrentUser } from '../../auth/decorators/current-user.decorator';
 import {
@@ -84,7 +85,7 @@ import { GetMembershipPlansResponseDto } from '../../queries/gym-configuration/d
 @Controller('/api/gyms/:gymId/configuration')
 @ApiTags('Gym Configuration')
 @ApiBearerAuth()
-@UseGuards(JwtAuthGuard, GymOwnershipGuard, RolesGuard)
+@UseGuards(JwtAuthGuard, GymOwnershipGuard, RolesGuard, GymStatusGuard)
 export class GymConfigurationController {
   constructor(
     @Inject(CommandBus) private readonly commandBus: CommandBus,

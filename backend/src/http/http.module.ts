@@ -18,6 +18,7 @@ import { NotificationModule } from '../domain/notification/notification.module';
 import { NotificationController } from '../api/notification/notification.controller';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { GymOwnershipGuard } from '../auth/guards/gym-ownership.guard';
+import { GymStatusGuard } from '../auth/guards/gym-status.guard';
 import { UserController } from '../api/user/user.controller';
 import { AthleteController } from '../api/user/athlete.controller';
 import { UserBookingsService } from '../queries/booking/user-bookings.service';
@@ -89,6 +90,7 @@ import { QueryFailedFilter } from './query-failed.filter';
     },
     RolesGuard,
     GymOwnershipGuard,
+    GymStatusGuard,
     UserBookingsService,
     TrainingHistoryService,
     BookingRepository,

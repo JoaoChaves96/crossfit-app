@@ -10,6 +10,7 @@ import { AuthService } from '../auth/auth.service';
 import {
   CoachAlreadyStaffError,
   CoachInvitePendingError,
+  GymSuspendedError,
   InviteNotForCallerError,
 } from './invite.errors';
 
@@ -137,6 +138,7 @@ describe('InviteService — accepting by role', () => {
   let issueTokenForGym: jest.Mock;
   let managerFindUser: jest.Mock;
   let transactionMock: jest.Mock;
+  let gymFindOne: jest.Mock;
 
   const GYM_ID = 'gym-1';
   const USER = { id: 'user-7', email: 'dana@example.com' };
@@ -166,6 +168,12 @@ describe('InviteService — accepting by role', () => {
     staffFindOne = jest.fn().mockResolvedValue(null);
     issueTokenForGym = jest.fn().mockResolvedValue('re-signed.jwt.token');
     managerFindUser = jest.fn().mockResolvedValue(USER);
+    gymFindOne = jest.fn().mockResolvedValue({
+      id: GYM_ID,
+      name: 'Box One',
+      location: 'Lisbon',
+      status: 'active',
+    });
 
     const manager = {
       save: jest.fn((entity: unknown, row: Record<string, unknown>) => {
@@ -180,7 +188,7 @@ describe('InviteService — accepting by role', () => {
 
     const dataSource = {
       getRepository: jest.fn((entity: unknown) => {
-        if (entity === GymEntity) return { findOne: jest.fn().mockResolvedValue({ id: GYM_ID, name: 'Box One', location: 'Lisbon' }) };
+        if (entity === GymEntity) return { findOne: gymFindOne };
         if (entity === UserEntity) return { findOne: jest.fn().mockResolvedValue(USER) };
         if (entity === GymStaffEntity) return { findOne: staffFindOne };
         throw new Error(`Unexpected entity: ${String(entity)}`);
@@ -304,6 +312,24 @@ describe('InviteService — accepting by role', () => {
     await expect(service.acceptInvite('tok-abc', USER.id)).rejects.toThrow(CoachAlreadyStaffError);
     expect(saved).toHaveLength(0);
   });
+
+  // GymStatusGuard freezes mutations on `:gymId` routes, but this one takes its
+  // gym from the invite token, so the guard never sees a gym to check. Joining a
+  // frozen gym is a mutation like any other and the check lives here.
+  it.each(['suspended', 'pending_approval'])(
+    'refuses acceptance into a %s gym, attaching nobody',
+    async (status) => {
+      inviteRepo.findOne.mockResolvedValue(pendingInvite('coach'));
+      gymFindOne.mockResolvedValue({ id: GYM_ID, name: 'Box One', status });
+
+      await expect(service.acceptInvite('tok-abc', USER.id)).rejects.toThrow(
+        GymSuspendedError,
+      );
+      expect(saved).toHaveLength(0);
+      expect(transactionMock).not.toHaveBeenCalled();
+      expect(issueTokenForGym).not.toHaveBeenCalled();
+    },
+  );
 
   it('filters the invite list by role when asked', async () => {
     await service.listInvites(GYM_ID, 'coach');

@@ -19,6 +19,7 @@ import {
   CoachAlreadyStaffError,
   CoachInvitePendingError,
   GymNotFoundError,
+  GymSuspendedError,
   InviteAlreadyAcceptedError,
   InviteAlreadyRevokedError,
   InviteeNotRegisteredError,
@@ -262,6 +263,14 @@ export class InviteService {
     const gym = await this.dataSource.getRepository(GymEntity).findOne({
       where: { id: invite.gymId },
     });
+
+    // A frozen gym takes on nobody. GymStatusGuard cannot cover this route —
+    // it keys on a `:gymId` route param and this one names an invite token, so
+    // the gym is only known here. See docs/DECISIONS.md → *Gym Suspension Is A
+    // Read-Only Freeze*.
+    if (gym && gym.status !== 'active') {
+      throw new GymSuspendedError(invite.gymId);
+    }
 
     await this.dataSource.transaction(async (manager) => {
       if (invite.role === 'coach') {

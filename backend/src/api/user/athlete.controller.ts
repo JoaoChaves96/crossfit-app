@@ -1,6 +1,7 @@
 import { Controller, Get, Param, UseGuards } from '@nestjs/common';
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../../auth/guards/roles.guard';
+import { GymStatusGuard } from '../../auth/guards/gym-status.guard';
 import { Role } from '../../auth/decorators/role.decorator';
 import { CurrentUser } from '../../auth/decorators/current-user.decorator';
 import {
@@ -16,7 +17,7 @@ import { GetTrainingHistoryResponseDto } from '../../queries/training-history/dt
 @Controller('/api/gyms/:gymId/athletes')
 @ApiTags('Athletes')
 @ApiBearerAuth()
-@UseGuards(JwtAuthGuard, RolesGuard)
+@UseGuards(JwtAuthGuard, RolesGuard, GymStatusGuard)
 export class AthleteController {
   constructor(
     private readonly trainingHistoryService: TrainingHistoryService,

@@ -13,6 +13,7 @@ import { CommandBus } from '@nestjs/cqrs';
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../../auth/guards/roles.guard';
 import { GymOwnershipGuard } from '../../auth/guards/gym-ownership.guard';
+import { GymStatusGuard } from '../../auth/guards/gym-status.guard';
 import { Role } from '../../auth/decorators/role.decorator';
 import { CurrentUser } from '../../auth/decorators/current-user.decorator';
 import { AddOrEditProgrammingDto } from '../../commands/class/dto/add-or-edit-programming.dto';
@@ -41,7 +42,7 @@ import { GetClassProgrammingResponseDto } from '../../queries/class/dto/get-clas
 @Controller('/api/gyms/:gymId/classes')
 @ApiTags('Classes')
 @ApiBearerAuth()
-@UseGuards(JwtAuthGuard, GymOwnershipGuard, RolesGuard)
+@UseGuards(JwtAuthGuard, GymOwnershipGuard, RolesGuard, GymStatusGuard)
 export class ClassProgrammingController {
   constructor(
     @Inject(CommandBus) private readonly commandBus: CommandBus,

@@ -8,6 +8,7 @@ import {
 } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../../auth/guards/roles.guard';
+import { GymStatusGuard } from '../../auth/guards/gym-status.guard';
 import { Role } from '../../auth/decorators/role.decorator';
 import { ClassScheduleService } from '../../queries/class/class-schedule.service';
 import { GetClassScheduleResponseDto } from '../../queries/class/dto/get-class-schedule-response.dto';
@@ -15,7 +16,7 @@ import { GetClassScheduleResponseDto } from '../../queries/class/dto/get-class-s
 @Controller('/api/gyms/:gymId/schedule')
 @ApiTags('Gym Schedule')
 @ApiBearerAuth()
-@UseGuards(JwtAuthGuard, RolesGuard)
+@UseGuards(JwtAuthGuard, RolesGuard, GymStatusGuard)
 export class GymScheduleController {
   constructor(private readonly classScheduleService: ClassScheduleService) {}
 

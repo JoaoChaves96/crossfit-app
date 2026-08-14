@@ -47,6 +47,13 @@ export class GymNotFoundError extends Error {
   }
 }
 
+export class GymSuspendedError extends Error {
+  constructor(gymId: string) {
+    super(`Gym is suspended: ${gymId}`);
+    this.name = 'GymSuspendedError';
+  }
+}
+
 export class InviteAlreadyRevokedError extends Error {
   constructor(token: string) {
     super(`Invite has already been revoked: ${token}`);
