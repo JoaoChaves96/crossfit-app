@@ -38,6 +38,11 @@ describe('Invite Lifecycle and Profile Endpoints (e2e)', () => {
   const newCoachUserId = uuidv4();
   const newCoachEmail = `coach-new-lifecycle-${uuidv4()}@test.local`;
 
+  // Coach staffed at both gymId and otherGymId — used for the gym-context
+  // switching tests
+  const twoGymCoachUserId = uuidv4();
+  const twoGymCoachEmail = `two-gym-coach-lifecycle-${uuidv4()}@test.local`;
+
   // Reused across invite tests
   let pendingInviteToken: string;
 
@@ -67,6 +72,15 @@ describe('Invite Lifecycle and Profile Endpoints (e2e)', () => {
     email: newCoachEmail,
     gymId,
     role: 'athlete',
+  });
+
+  // Mirrors what login produces: the token names the first (oldest) gym the
+  // coach is staffed at — this is the token the gym-context switch replaces.
+  const twoGymCoachToken = generateTestToken({
+    id: twoGymCoachUserId,
+    email: twoGymCoachEmail,
+    gymId,
+    role: 'coach',
   });
 
   beforeAll(async () => {
@@ -104,7 +118,8 @@ describe('Invite Lifecycle and Profile Endpoints (e2e)', () => {
         ($1, $2, 'Lifecycle Owner',  'active', NOW()),
         ($3, $4, 'Other Gym Owner',  'active', NOW()),
         ($5, $6, 'Athlete User',     'active', NOW()),
-        ($7, $8, 'New Coach User',   'active', NOW())
+        ($7, $8, 'New Coach User',   'active', NOW()),
+        ($9, $10, 'Two-Gym Coach',   'active', NOW())
       `,
       [
         ownerUserId,
@@ -115,6 +130,8 @@ describe('Invite Lifecycle and Profile Endpoints (e2e)', () => {
         athleteEmail,
         newCoachUserId,
         newCoachEmail,
+        twoGymCoachUserId,
+        twoGymCoachEmail,
       ],
     );
 
@@ -149,6 +166,19 @@ describe('Invite Lifecycle and Profile Endpoints (e2e)', () => {
       [uuidv4(), gymId, athleteUserId, 'active'],
     );
 
+    // Two-gym coach: active staff at both gymId and otherGymId, so the
+    // gym-context switch and /api/me/gyms tests have something to switch
+    // between.
+    await dataSource.query(
+      `INSERT INTO gym_staff (id, "gymId", "userId", role, status, "assignedAt") VALUES ($1, $2, $3, $4, $5, NOW())`,
+      [uuidv4(), gymId, twoGymCoachUserId, 'coach', 'active'],
+    );
+
+    await dataSource.query(
+      `INSERT INTO gym_staff (id, "gymId", "userId", role, status, "assignedAt") VALUES ($1, $2, $3, $4, $5, NOW())`,
+      [uuidv4(), otherGymId, twoGymCoachUserId, 'coach', 'active'],
+    );
+
     // Seed one pending invite for listing/revoking tests
     const inviteId = uuidv4();
     const inviteToken = `test-token-pending-${uuidv4().replace(/-/g, '')}`.slice(0, 43);
@@ -180,7 +210,7 @@ describe('Invite Lifecycle and Profile Endpoints (e2e)', () => {
       await dataSource.query('DELETE FROM gym_memberships WHERE "gymId" IN ($1, $2)', [gymId, otherGymId]);
       await dataSource.query('DELETE FROM gym_staff WHERE "gymId" IN ($1, $2)', [gymId, otherGymId]);
       await dataSource.query('DELETE FROM gyms WHERE id IN ($1, $2)', [gymId, otherGymId]);
-      await dataSource.query('DELETE FROM users WHERE id IN ($1, $2, $3, $4)', [ownerUserId, otherOwnerUserId, athleteUserId, newCoachUserId]);
+      await dataSource.query('DELETE FROM users WHERE id IN ($1, $2, $3, $4, $5)', [ownerUserId, otherOwnerUserId, athleteUserId, newCoachUserId, twoGymCoachUserId]);
     } catch {
       // silently ignore cleanup errors
     }
@@ -726,6 +756,78 @@ describe('Invite Lifecycle and Profile Endpoints (e2e)', () => {
       const body = response.body as Record<string, unknown>;
       expect(body).toHaveProperty('id', gymId);
       expect(body).toHaveProperty('description', 'Updated description for lifecycle gym');
+    });
+  });
+
+  // ---------------------------------------------------------------------------
+  // GET /api/me/gyms — list gyms for the caller
+  // POST /api/auth/gym-context — re-sign the token for another attached gym
+  // ---------------------------------------------------------------------------
+  describe('GET /api/me/gyms and POST /api/auth/gym-context', () => {
+    it('lists both gyms for a coach staffing two', async () => {
+      const res = await request(app.getHttpServer())
+        .get('/api/me/gyms')
+        .set('Authorization', `Bearer ${twoGymCoachToken}`)
+        .expect(200);
+
+      const ids = res.body.gyms.map((g: { gymId: string }) => g.gymId);
+      expect(ids).toContain(gymId);
+      expect(ids).toContain(otherGymId);
+      expect(res.body.gyms.every((g: { role: string }) => g.role === 'coach')).toBe(true);
+    });
+
+    it('re-signs the token for the second gym', async () => {
+      const res = await request(app.getHttpServer())
+        .post('/api/auth/gym-context')
+        .set('Authorization', `Bearer ${twoGymCoachToken}`)
+        .send({ gymId: otherGymId })
+        .expect(200);
+
+      const claims = JSON.parse(
+        Buffer.from(res.body.accessToken.split('.')[1], 'base64').toString('utf8'),
+      );
+      expect(claims.gymId).toBe(otherGymId);
+      expect(claims.role).toBe('coach');
+    });
+
+    it('the re-signed token opens the second gym, which the old one could not', async () => {
+      // The claim this whole phase exists for: the guard compares route gymId
+      // to the token, so the pre-switch token must be refused here.
+      await request(app.getHttpServer())
+        .get(`/api/gyms/${otherGymId}/configuration/coaches`)
+        .set('Authorization', `Bearer ${twoGymCoachToken}`)
+        .expect(403);
+
+      const switched = await request(app.getHttpServer())
+        .post('/api/auth/gym-context')
+        .set('Authorization', `Bearer ${twoGymCoachToken}`)
+        .send({ gymId: otherGymId })
+        .expect(200);
+
+      await request(app.getHttpServer())
+        .get(`/api/gyms/${otherGymId}/coach/classes`)
+        .set('Authorization', `Bearer ${switched.body.accessToken}`)
+        .expect(200);
+    });
+
+    it('refuses a gym the caller is not attached to → 403', async () => {
+      await request(app.getHttpServer())
+        .post('/api/auth/gym-context')
+        .set('Authorization', `Bearer ${athleteToken}`)
+        .send({ gymId: otherGymId })
+        .expect(403);
+    });
+
+    it('rejects a non-uuid gymId → 400', async () => {
+      await request(app.getHttpServer())
+        .post('/api/auth/gym-context')
+        .set('Authorization', `Bearer ${athleteToken}`)
+        .send({ gymId: 'not-a-uuid' })
+        .expect(400);
+    });
+
+    it('no auth token → 401', async () => {
+      await request(app.getHttpServer()).get('/api/me/gyms').expect(401);
     });
   });
 });
