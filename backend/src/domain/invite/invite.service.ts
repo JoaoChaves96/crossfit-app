@@ -124,10 +124,15 @@ export class InviteService {
       }
     }
 
-    const pending = await this.inviteRepository.findOne({
+    // Every pending row, not an arbitrary one: `findOne` here would pick a row
+    // by no particular order, so with two pending rows for the same pair — a
+    // race between two owner requests, or a row predating the single-live-invite
+    // rule — it could land on the expired one and admit a second live invite.
+    const pending = await this.inviteRepository.find({
       where: { gymId, inviteeEmail, role: 'coach', status: 'pending' },
     });
-    if (pending && new Date() <= pending.expiresAt) {
+    const now = new Date();
+    if (pending.some((invite) => now <= invite.expiresAt)) {
       throw new CoachInvitePendingError(inviteeEmail);
     }
   }

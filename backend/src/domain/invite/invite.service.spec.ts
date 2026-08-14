@@ -86,7 +86,7 @@ describe('InviteService — coach invites', () => {
 
   it('rejects a second pending coach invite for the same gym and email', async () => {
     const future = new Date(Date.now() + 86_400_000);
-    inviteRepo.findOne.mockResolvedValue({ id: 'inv-1', status: 'pending', expiresAt: future });
+    inviteRepo.find.mockResolvedValue([{ id: 'inv-1', status: 'pending', expiresAt: future }]);
 
     await expect(service.createInvite(GYM_ID, OWNER_ID, EMAIL, 'coach')).rejects.toThrow(
       CoachInvitePendingError,
@@ -96,12 +96,26 @@ describe('InviteService — coach invites', () => {
 
   it('allows a new coach invite when the previous one has expired', async () => {
     const past = new Date(Date.now() - 86_400_000);
-    inviteRepo.findOne.mockResolvedValue({ id: 'inv-1', status: 'pending', expiresAt: past });
+    inviteRepo.find.mockResolvedValue([{ id: 'inv-1', status: 'pending', expiresAt: past }]);
 
     const result = await service.createInvite(GYM_ID, OWNER_ID, EMAIL, 'coach');
 
     expect(result.role).toBe('coach');
     expect(inviteRepo.save).toHaveBeenCalledTimes(1);
+  });
+
+  // The expired row is returned first, so a check that looks at only one row
+  // lands on it and lets a second live invite through.
+  it('rejects when any pending row is still live, not just the first one found', async () => {
+    inviteRepo.find.mockResolvedValue([
+      { id: 'inv-old', status: 'pending', expiresAt: new Date(Date.now() - 86_400_000) },
+      { id: 'inv-live', status: 'pending', expiresAt: new Date(Date.now() + 86_400_000) },
+    ]);
+
+    await expect(service.createInvite(GYM_ID, OWNER_ID, EMAIL, 'coach')).rejects.toThrow(
+      CoachInvitePendingError,
+    );
+    expect(inviteRepo.save).not.toHaveBeenCalled();
   });
 
   it('does not apply coach preconditions to athlete invites', async () => {
