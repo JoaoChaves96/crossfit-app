@@ -157,6 +157,28 @@ describe('useGym', () => {
       expect(login).not.toHaveBeenCalled();
       expect(mockSetItem).not.toHaveBeenCalled();
     });
+
+    it('reports success when only the local write fails, because the session did switch', async () => {
+      // Arrange — the token is replaced, then persistence fails. Letting that
+      // reject would make the switcher say "Could not switch gym." about the
+      // gym the session is now acting in.
+      mockPost.mockResolvedValue({ accessToken: 'new-token' });
+      mockSetItem.mockRejectedValue(new Error('quota exceeded'));
+      const login = jest.fn(() => Promise.resolve());
+      const wrapper = makeRealWrapper(buildAuthContext({ login }));
+      const consoleError = jest.spyOn(console, 'error').mockImplementation(() => {});
+      const { result } = renderHook(() => useGym(), { wrapper });
+      await act(async () => {});
+
+      // Act & Assert
+      await act(async () => {
+        await expect(result.current.switchGym('gym-b')).resolves.toBeUndefined();
+      });
+      expect(login).toHaveBeenCalledWith('new-token');
+      expect(result.current.currentGymId).toBe('gym-b');
+      expect(consoleError).toHaveBeenCalled();
+      consoleError.mockRestore();
+    });
   });
 
   describe('when used outside GymProvider', () => {

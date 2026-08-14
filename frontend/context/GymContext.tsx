@@ -59,6 +59,13 @@ export function GymProvider({ children }: { children: ReactNode }) {
    * authorizes against the token's gymId claim (GymOwnershipGuard), not against
    * this context. The re-signed token is the actual switch; the local id keeps
    * the choice across reloads.
+   *
+   * Once the token is replaced the session has switched, so a failure of the
+   * local write after that point costs persistence, not the switch — letting it
+   * propagate would make the switcher say "Could not switch gym." about a gym it
+   * is now acting in. Same reasoning, and the same swallow, as invite acceptance
+   * in app/invite/[inviteToken].tsx. A rejection from the POST or from login
+   * still propagates: those really are failed switches.
    */
   const switchGym = async (gymId: string): Promise<void> => {
     const client = createApiClient({ token: auth?.token });
@@ -67,7 +74,13 @@ export function GymProvider({ children }: { children: ReactNode }) {
       { gymId },
     );
     await auth?.login(accessToken);
-    await setCurrentGymId(gymId);
+    try {
+      await setCurrentGymId(gymId);
+    } catch {
+      console.error(
+        '[gym-context] switched, but persisting the gym failed; this session works, a restart will not',
+      );
+    }
   };
 
   return (
