@@ -92,7 +92,11 @@ test('a coach staffed at two gyms reaches both', async ({ page }) => {
   await expect(page.getByText('Gym B Only Type')).toHaveCount(0);
 
   // ── Switch to gym B ───────────────────────────────────────────────────────
-  await page.getByTestId('gym-switcher').click();
+  // The option's own testID, not the `gym-switcher` wrapper: for two gyms that
+  // wrapper's only child is a full-width SegmentedToggle whose two `flex: 1`
+  // segments abut, so the wrapper's bounding-box centre lands on the seam
+  // between them and which segment receives the click turns on sub-pixel
+  // rounding. Same reason this file uses `fillStable` over `.fill()`.
   await page.getByTestId(`gym-switcher-option-${gymB.id}`).click();
 
   // ── After switching: gym B's class, and only gym B's — same shape of
