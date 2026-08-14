@@ -27,6 +27,8 @@ import { AttendanceRepository } from '../repositories/attendance.repository';
 import { ResultRepository } from '../repositories/result.repository';
 import { GymMembershipRepository } from '../repositories/gym-membership.repository';
 import { GymMembershipEntity } from '../domain/gym-membership/entities/gym-membership.entity';
+import { GymStaffEntity } from '../domain/gym-staff/entities/gym-staff.entity';
+import { GymEntity } from '../domain/gym/entities/gym.entity';
 import { BookingEntity } from '../domain/booking/entities/booking.entity';
 import { AttendanceEntity } from '../domain/attendance/entities/attendance.entity';
 import { ResultEntity } from '../domain/result/entities/result.entity';
@@ -35,6 +37,7 @@ import { CoachClassesController } from '../api/coach/coach-classes.controller';
 import { InviteModule } from '../api/invite/invite.module';
 import { InviteController } from '../api/invite/invite.controller';
 import { GetUserProfileService } from '../queries/user/get-user-profile.service';
+import { GetUserGymsService } from '../queries/user/get-user-gyms.service';
 import { UpdateUserProfileHandler } from '../commands/user/handlers/update-user-profile.handler';
 import { UserModule } from '../domain/user/user.module';
 import { UuidParamPipe } from './uuid-param.pipe';
@@ -52,6 +55,8 @@ import { QueryFailedFilter } from './query-failed.filter';
     UserModule,
     TypeOrmModule.forFeature([
       GymMembershipEntity,
+      GymStaffEntity,
+      GymEntity,
       BookingEntity,
       AttendanceEntity,
       ResultEntity,
@@ -91,6 +96,7 @@ import { QueryFailedFilter } from './query-failed.filter';
     ResultRepository,
     GymMembershipRepository,
     GetUserProfileService,
+    GetUserGymsService,
     UpdateUserProfileHandler,
   ],
 })

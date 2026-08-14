@@ -15,6 +15,8 @@ import { UserBookingsService } from '../../queries/booking/user-bookings.service
 import { GetUserBookingsResponseDto } from '../../queries/booking/dto/get-user-bookings-response.dto';
 import { GetUserProfileService } from '../../queries/user/get-user-profile.service';
 import { UserProfileDto } from '../../queries/user/dto/user-profile.dto';
+import { GetUserGymsService } from '../../queries/user/get-user-gyms.service';
+import { GetUserGymsResponseDto } from '../../queries/user/dto/user-gyms-response.dto';
 import { UpdateUserProfileDto } from '../../commands/user/dto/update-user-profile.dto';
 import { UpdateUserProfileCommand } from '../../commands/user/update-user-profile.command';
 
@@ -26,6 +28,7 @@ export class UserController {
   constructor(
     private readonly userBookingsService: UserBookingsService,
     private readonly getUserProfileService: GetUserProfileService,
+    private readonly getUserGymsService: GetUserGymsService,
     private readonly commandBus: CommandBus,
   ) {}
 
@@ -62,6 +65,20 @@ export class UserController {
     @CurrentUser() userId: string,
   ): Promise<GetUserBookingsResponseDto> {
     return this.userBookingsService.getUserBookings(userId);
+  }
+
+  @Get('/gyms')
+  @Role(['athlete', 'owner', 'coach'])
+  @UserScoped()
+  @ApiOperation({
+    summary: "List the caller's gyms",
+    description:
+      'Every gym the authenticated user is actively attached to, as staff or as a member. Crosses all gyms (user-scoped endpoint); more than one entry is what makes the gym switcher appear.',
+  })
+  @ApiResponse({ status: 200, description: 'Gyms returned', type: GetUserGymsResponseDto })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  async getUserGyms(@CurrentUser() userId: string): Promise<GetUserGymsResponseDto> {
+    return this.getUserGymsService.getGyms(userId);
   }
 
   @Get()
