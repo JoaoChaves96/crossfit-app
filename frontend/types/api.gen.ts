@@ -652,6 +652,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/me/gyms": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List the caller's gyms
+         * @description Every gym the authenticated user is actively attached to, as staff or as a member. Crosses all gyms (user-scoped endpoint); more than one entry is what makes the gym switcher appear.
+         */
+        get: operations["UserController_getUserGyms"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/me": {
         parameters: {
             query?: never;
@@ -953,6 +973,26 @@ export interface paths {
         put?: never;
         /** Authenticate a user and receive a JWT token */
         post: operations["AuthController_login"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/auth/gym-context": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Switch the active gym context
+         * @description Returns a token re-signed for the named gym. The caller must have an active staff row or an active membership there. Not a general refresh endpoint: it only re-signs for a gym the caller is provably attached to.
+         */
+        post: operations["AuthController_switchGymContext"];
         delete?: never;
         options?: never;
         head?: never;
@@ -2458,6 +2498,28 @@ export interface components {
             /** @description List of the user's active bookings */
             bookings: components["schemas"]["UserBookingItemDto"][];
         };
+        UserGymDto: {
+            /**
+             * @description Gym ID
+             * @example uuid-gym-id
+             */
+            gymId: string;
+            /**
+             * @description Gym name
+             * @example CrossFit Downtown
+             */
+            gymName: string;
+            /**
+             * @description The caller's role at this gym
+             * @example coach
+             * @enum {string}
+             */
+            role: "owner" | "coach" | "athlete";
+        };
+        GetUserGymsResponseDto: {
+            /** @description Every gym the caller is actively attached to, staff first. More than one entry means the gym switcher applies. */
+            gyms: components["schemas"]["UserGymDto"][];
+        };
         NotificationPreferencesDto: {
             /** @description Receive booking confirmation notifications */
             booking_confirmations: boolean;
@@ -2931,6 +2993,13 @@ export interface components {
              * @example secret123
              */
             password: string;
+        };
+        SwitchGymContextDto: {
+            /**
+             * @description The gym to switch the session context to
+             * @example uuid-gym-id
+             */
+            gymId: string;
         };
     };
     responses: never;
@@ -4821,6 +4890,33 @@ export interface operations {
             };
         };
     };
+    UserController_getUserGyms: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Gyms returned */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GetUserGymsResponseDto"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
     UserController_getUserProfile: {
         parameters: {
             query?: never;
@@ -5473,6 +5569,44 @@ export interface operations {
             };
             /** @description Invalid credentials. */
             401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    AuthController_switchGymContext: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SwitchGymContextDto"];
+            };
+        };
+        responses: {
+            /** @description Token re-signed for the named gym. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LoginResponseDto"];
+                };
+            };
+            /** @description Unauthorized. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description User is not attached to this gym. */
+            403: {
                 headers: {
                     [name: string]: unknown;
                 };

@@ -1,5 +1,7 @@
-import React, { createContext, ReactNode, useEffect, useState } from 'react';
+import React, { createContext, ReactNode, useContext, useEffect, useState } from 'react';
 import { storage } from '@/utils/storage';
+import { createApiClient } from '@/utils/api-client';
+import { AuthContext } from '@/context/AuthContext';
 
 const CURRENT_GYM_ID_KEY = 'current_gym_id';
 
@@ -7,11 +9,13 @@ export interface GymContextType {
   currentGymId: string | null;
   isLoading: boolean;
   setCurrentGymId: (gymId: string) => Promise<void>;
+  switchGym: (gymId: string) => Promise<void>;
 }
 
 export const GymContext = createContext<GymContextType | undefined>(undefined);
 
 export function GymProvider({ children }: { children: ReactNode }) {
+  const auth = useContext(AuthContext);
   const [currentGymId, setCurrentGymIdState] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -44,8 +48,27 @@ export function GymProvider({ children }: { children: ReactNode }) {
     await storage.setItem(CURRENT_GYM_ID_KEY, gymId);
   };
 
+  /**
+   * Switch which gym this session acts in.
+   *
+   * setCurrentGymId alone only writes local storage, which is why pointing it
+   * at a second gym used to produce 403s rather than a switch: the backend
+   * authorizes against the token's gymId claim (GymOwnershipGuard), not against
+   * this context. The re-signed token is the actual switch; the local id keeps
+   * the choice across reloads.
+   */
+  const switchGym = async (gymId: string): Promise<void> => {
+    const client = createApiClient({ token: auth?.token });
+    const { accessToken } = await client.post<{ accessToken: string }>(
+      '/api/auth/gym-context',
+      { gymId },
+    );
+    await auth?.login(accessToken);
+    await setCurrentGymId(gymId);
+  };
+
   return (
-    <GymContext.Provider value={{ currentGymId, isLoading, setCurrentGymId }}>
+    <GymContext.Provider value={{ currentGymId, isLoading, setCurrentGymId, switchGym }}>
       {children}
     </GymContext.Provider>
   );

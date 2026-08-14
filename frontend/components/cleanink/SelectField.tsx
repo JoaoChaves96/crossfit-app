@@ -36,6 +36,8 @@ import { Icon } from './Icon';
 export interface SelectItem {
   id: string;
   label: string;
+  /** Exact testID for this row's option, overriding the default of none. */
+  testID?: string;
 }
 
 export type SelectFetchState<T = unknown> =
@@ -97,6 +99,7 @@ export function SelectField({
     return (
       <TouchableOpacity
         key={item.id}
+        testID={item.testID}
         style={[
           inSheet ? styles.sheetItem : styles.menuItem,
           isSelected && styles.itemSelected,

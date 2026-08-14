@@ -38,6 +38,7 @@ import { useRefreshOnAppActive } from '@/hooks/useRefreshOnAppActive';
 import { DesktopTopNav } from '@/components/DesktopTopNav';
 import { NotificationBell } from '@/components/NotificationBell';
 import { GymMenu } from '@/components/GymMenu';
+import { GymSwitcher } from '@/components/GymSwitcher';
 import { SafeScreen } from '@/components/SafeScreen';
 import {
   Text,
@@ -570,6 +571,7 @@ export default function ScheduleScreen() {
         {isDesktop ? <DesktopTopNav gymName={gymName} /> : (
           <SafeScreen style={styles.header} extraTopPadding={Space.md}>
             <GymMenu gymName={gymName} />
+            <GymSwitcher />
             <NotificationBell />
           </SafeScreen>
         )}
@@ -594,6 +596,7 @@ export default function ScheduleScreen() {
         <DesktopTopNav gymName={gymName} />
         <View style={desktopStyles.contentArea}>
           <View style={desktopStyles.innerWrap}>
+            <GymSwitcher />
             <ScheduleControls
               timeView={timeView}
               onTimeViewChange={setTimeView}
@@ -634,6 +637,7 @@ export default function ScheduleScreen() {
   const header = (
     <SafeScreen style={styles.header} extraTopPadding={Space.md}>
       <GymMenu gymName={gymName} />
+      <GymSwitcher />
       <NotificationBell />
     </SafeScreen>
   );

@@ -127,6 +127,7 @@ const GYM_CONTEXT = {
   currentGymId: GYM_ID,
   isLoading: false,
   setCurrentGymId: jest.fn(),
+  switchGym: jest.fn(),
 };
 
 function renderScreen(mockApi = createMockApiClient()) {

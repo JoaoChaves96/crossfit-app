@@ -1,13 +1,55 @@
 import React from 'react';
 import { renderHook, act } from '@testing-library/react-native';
 import { useGym } from '@/hooks/useGym';
-import { GymContext, GymContextType } from '@/context/GymContext';
+import { GymContext, GymContextType, GymProvider } from '@/context/GymContext';
+import { AuthContext, AuthContextType } from '@/context/AuthContext';
+
+// switchGym's real implementation is exercised here, over a mocked api
+// client and storage, rather than through the fake context the rest of this
+// file uses — those tests are about useGym's pass-through, not the switch
+// itself.
+const mockPost = jest.fn();
+jest.mock('@/utils/api-client', () => ({
+  createApiClient: () => ({ post: mockPost }),
+}));
+
+const mockSetItem = jest.fn();
+jest.mock('@/utils/storage', () => ({
+  storage: {
+    setItem: (...args: unknown[]) => mockSetItem(...args),
+    getItem: jest.fn().mockResolvedValue(null),
+    removeItem: jest.fn(),
+  },
+}));
+
+function buildAuthContext(overrides?: Partial<AuthContextType>): AuthContextType {
+  return {
+    user: null,
+    token: 'old-token',
+    isAuthenticated: true,
+    isLoading: false,
+    login: jest.fn(() => Promise.resolve()),
+    logout: jest.fn(() => Promise.resolve()),
+    ...overrides,
+  };
+}
+
+function makeRealWrapper(authValue: AuthContextType) {
+  return function Wrapper({ children }: { children: React.ReactNode }) {
+    return (
+      <AuthContext.Provider value={authValue}>
+        <GymProvider>{children}</GymProvider>
+      </AuthContext.Provider>
+    );
+  };
+}
 
 function buildGymContext(overrides?: Partial<GymContextType>): GymContextType {
   return {
     currentGymId: 'gym-abc',
     isLoading: false,
     setCurrentGymId: jest.fn(() => Promise.resolve()),
+    switchGym: jest.fn(() => Promise.resolve()),
     ...overrides,
   };
 }
@@ -70,6 +112,50 @@ describe('useGym', () => {
 
       // Assert
       expect(typeof result.current.setCurrentGymId).toBe('function');
+    });
+  });
+
+  describe('switchGym (real implementation)', () => {
+    beforeEach(() => {
+      jest.clearAllMocks();
+      mockSetItem.mockResolvedValue(undefined);
+    });
+
+    it('stores the re-signed token before moving the local gym id, in that order', async () => {
+      // Arrange
+      mockPost.mockResolvedValue({ accessToken: 'new-token' });
+      const login = jest.fn(() => Promise.resolve());
+      const wrapper = makeRealWrapper(buildAuthContext({ login }));
+      const { result } = renderHook(() => useGym(), { wrapper });
+      await act(async () => {}); // settle the mount read
+
+      // Act
+      await act(async () => {
+        await result.current.switchGym('gym-b');
+      });
+
+      // Assert
+      expect(login).toHaveBeenCalledWith('new-token');
+      expect(mockSetItem).toHaveBeenCalledWith('current_gym_id', 'gym-b');
+      expect(login.mock.invocationCallOrder[0]).toBeLessThan(
+        mockSetItem.mock.invocationCallOrder[0]
+      );
+    });
+
+    it('touches neither the token nor the local gym id when the switch is refused', async () => {
+      // Arrange
+      mockPost.mockRejectedValue(new Error('Forbidden'));
+      const login = jest.fn(() => Promise.resolve());
+      const wrapper = makeRealWrapper(buildAuthContext({ login }));
+      const { result } = renderHook(() => useGym(), { wrapper });
+      await act(async () => {});
+
+      // Act & Assert
+      await act(async () => {
+        await expect(result.current.switchGym('gym-b')).rejects.toThrow('Forbidden');
+      });
+      expect(login).not.toHaveBeenCalled();
+      expect(mockSetItem).not.toHaveBeenCalled();
     });
   });
 

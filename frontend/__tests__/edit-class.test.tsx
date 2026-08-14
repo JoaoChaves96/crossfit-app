@@ -42,6 +42,7 @@ const GYM_CONTEXT = {
   currentGymId: GYM_ID,
   isLoading: false,
   setCurrentGymId: jest.fn(),
+  switchGym: jest.fn(),
 };
 
 const CLASS_DETAIL = {

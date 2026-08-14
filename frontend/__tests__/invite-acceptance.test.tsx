@@ -36,6 +36,7 @@ const gymValue: GymContextType = {
   currentGymId: null,
   isLoading: false,
   setCurrentGymId: mockSetCurrentGymId,
+  switchGym: jest.fn(),
 };
 
 function renderScreen() {

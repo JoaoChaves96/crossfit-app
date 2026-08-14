@@ -10,6 +10,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { useGym } from '@/hooks/useGym';
 import { useResponsiveLayout } from '@/hooks/useResponsiveLayout';
 import { SafeScreen } from '@/components/SafeScreen';
+import { GymSwitcher } from '@/components/GymSwitcher';
 import { Text, Icon, StatusChip, Button, SegmentedToggle } from '@/components/cleanink';
 import { Ink, Status, Space } from '@/constants/design';
 import { createApiClient } from '@/utils/api-client';
@@ -340,6 +341,8 @@ export default function CoachClassesScreen() {
           )}
           <Text size="screen" weight="bold" tone="strong">My Assigned Classes</Text>
         </View>
+
+        <GymSwitcher />
 
         {/* Upcoming / Past filter */}
         <View style={styles.filterRow}>

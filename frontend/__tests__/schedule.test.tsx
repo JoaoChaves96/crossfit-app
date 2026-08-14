@@ -39,6 +39,14 @@ jest.mock('@/utils/alert', () => ({
   showAlert: jest.fn(),
 }));
 
+// GymSwitcher fetches independently via the same mocked api client this suite
+// uses for the schedule itself; stub it out so its own request doesn't
+// consume this suite's per-call mockResolvedValueOnce queue. GymSwitcher.test.tsx
+// owns its behavior.
+jest.mock('@/components/GymSwitcher', () => ({
+  GymSwitcher: () => null,
+}));
+
 // expo-router global mock (jest-setup.ts) omits useFocusEffect which is
 // imported by schedule.tsx. Override here to include it.
 jest.mock('expo-router', () => ({
@@ -141,6 +149,7 @@ const GYM_CONTEXT = {
   currentGymId: 'gym-1',
   isLoading: false,
   setCurrentGymId: jest.fn(),
+  switchGym: jest.fn(),
 };
 
 function renderScreen(mockApi = createMockApiClient()) {
