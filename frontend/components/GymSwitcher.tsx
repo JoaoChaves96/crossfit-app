@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { View } from 'react-native';
 import { useAuth } from '@/hooks/useAuth';
 import { useGym } from '@/hooks/useGym';
@@ -30,23 +30,31 @@ export function GymSwitcher() {
   const [gyms, setGyms] = useState<UserGym[]>([]);
   const [error, setError] = useState<string | null>(null);
 
-  const fetchGyms = useCallback(async () => {
-    if (!token) return;
-    try {
-      const client = createApiClient({ token });
-      const data = await client.get<GetUserGymsResponse>('/api/me/gyms');
-      setGyms(data.gyms ?? []);
-    } catch {
-      // A failed fetch just leaves the switcher hidden — a single-gym caller
-      // and a caller whose gym list failed to load look the same, and both
-      // are silently fine.
-      setGyms([]);
-    }
-  }, [token]);
-
   useEffect(() => {
-    fetchGyms();
-  }, [fetchGyms]);
+    // A caller can navigate away from schedule/coach-classes before this
+    // resolves (both mount the switcher and neither blocks navigation on
+    // it). `cancelled` stops a late response from setting state on an
+    // unmounted component instead of just discarding it.
+    let cancelled = false;
+
+    (async () => {
+      if (!token) return;
+      try {
+        const client = createApiClient({ token });
+        const data = await client.get<GetUserGymsResponse>('/api/me/gyms');
+        if (!cancelled) setGyms(data.gyms ?? []);
+      } catch {
+        // A failed fetch just leaves the switcher hidden — a single-gym
+        // caller and a caller whose gym list failed to load look the same,
+        // and both are silently fine.
+        if (!cancelled) setGyms([]);
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [token]);
 
   const handleSelect = async (gymId: string) => {
     setError(null);
