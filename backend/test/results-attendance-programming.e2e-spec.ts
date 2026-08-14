@@ -11,7 +11,9 @@ import { generateTestToken } from './helpers/jwt.helper';
  *
  * Endpoints covered:
  * - POST /api/gyms/:gymId/classes/:classId/results       (log result)
- * - PATCH /api/gyms/:gymId/results/:resultId             (edit result)
+ * - PATCH /api/gyms/:gymId/classes/results/:resultId     (edit result — the
+ *   `classes` segment comes from the controller prefix; the route names no
+ *   class because a result id is already unique)
  * - GET  /api/gyms/:gymId/classes/:classId/results       (view results)
  * - POST /api/gyms/:gymId/classes/:classId/toggle-loggable
  * - POST /api/gyms/:gymId/classes/:classId/attendance    (mark attendance)
@@ -340,17 +342,17 @@ describe('Results, Attendance, and Programming (e2e)', () => {
   });
 
   // =========================================================================
-  // 2. PATCH /api/gyms/:gymId/results/:resultId  (edit result)
+  // 2. PATCH /api/gyms/:gymId/classes/results/:resultId  (edit result)
   // =========================================================================
 
-  describe('PATCH /api/gyms/:gymId/results/:resultId — edit result', () => {
+  describe('PATCH /api/gyms/:gymId/classes/results/:resultId — edit result', () => {
     // loggedResultId is set during the log result happy path test above
 
     it('happy path: athlete edits their result → 200', async () => {
       expect(loggedResultId).toBeDefined();
 
       const res = await request(app.getHttpServer())
-        .patch(`/api/gyms/${gymId}/results/${loggedResultId}`)
+        .patch(`/api/gyms/${gymId}/classes/results/${loggedResultId}`)
         .set('Authorization', `Bearer ${athleteToken}`)
         .send({
           resultId: loggedResultId,
@@ -368,7 +370,7 @@ describe('Results, Attendance, and Programming (e2e)', () => {
       expect(loggedResultId).toBeDefined();
 
       await request(app.getHttpServer())
-        .patch(`/api/gyms/${gymId}/results/${loggedResultId}`)
+        .patch(`/api/gyms/${gymId}/classes/results/${loggedResultId}`)
         .send({ resultId: loggedResultId, value: '250' })
         .expect(401);
     });
@@ -377,7 +379,7 @@ describe('Results, Attendance, and Programming (e2e)', () => {
       expect(loggedResultId).toBeDefined();
 
       await request(app.getHttpServer())
-        .patch(`/api/gyms/${gymId}/results/${loggedResultId}`)
+        .patch(`/api/gyms/${gymId}/classes/results/${loggedResultId}`)
         .set('Authorization', `Bearer ${wrongGymToken}`)
         .send({ resultId: loggedResultId, value: '250' })
         .expect(403);
@@ -386,7 +388,7 @@ describe('Results, Attendance, and Programming (e2e)', () => {
     it('non-existent result → 404', async () => {
       const fakeResultId = uuidv4();
       await request(app.getHttpServer())
-        .patch(`/api/gyms/${gymId}/results/${fakeResultId}`)
+        .patch(`/api/gyms/${gymId}/classes/results/${fakeResultId}`)
         .set('Authorization', `Bearer ${athleteToken}`)
         .send({ resultId: fakeResultId, value: '250' })
         .expect(404);
@@ -630,15 +632,30 @@ describe('Results, Attendance, and Programming (e2e)', () => {
     const endpoint = () =>
       `/api/gyms/${gymId}/classes/${publishedClassId}/programming`;
 
+    /**
+     * GetClassProgrammingResponseDto, exactly: the route already names the
+     * class, so the body does not repeat it. These tests used to assert a
+     * `classId` field the DTO has never had, and so had never passed.
+     */
+    const expectProgrammingShape = (body: unknown) => {
+      expect(Object.keys(body as object).sort()).toEqual([
+        'content',
+        'lastUpdatedAt',
+        'loggable',
+      ]);
+      // Null until programming is saved; the toggle above set loggable true.
+      expect(body).toHaveProperty('content', null);
+      expect(body).toHaveProperty('lastUpdatedAt', null);
+      expect(typeof (body as { loggable: unknown }).loggable).toBe('boolean');
+    };
+
     it('happy path: coach retrieves programming → 200', async () => {
       const res = await request(app.getHttpServer())
         .get(endpoint())
         .set('Authorization', `Bearer ${coachToken}`)
         .expect(200);
 
-      const body = res.body as Record<string, unknown>;
-      // content is null when no programming has been set yet
-      expect(body).toHaveProperty('classId', publishedClassId);
+      expectProgrammingShape(res.body);
     });
 
     it('happy path: owner retrieves programming → 200', async () => {
@@ -647,7 +664,7 @@ describe('Results, Attendance, and Programming (e2e)', () => {
         .set('Authorization', `Bearer ${ownerToken}`)
         .expect(200);
 
-      expect(res.body).toHaveProperty('classId', publishedClassId);
+      expectProgrammingShape(res.body);
     });
 
     it('no auth token → 401', async () => {
@@ -662,7 +679,7 @@ describe('Results, Attendance, and Programming (e2e)', () => {
         .set('Authorization', `Bearer ${athleteToken}`)
         .expect(200);
 
-      expect(res.body).toHaveProperty('classId', publishedClassId);
+      expectProgrammingShape(res.body);
     });
 
     it('gymId mismatch (JWT gym ≠ route gym) → 403', async () => {

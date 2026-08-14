@@ -119,7 +119,8 @@ export class UserController {
   })
   @ApiResponse({
     status: 400,
-    description: 'Validation error - name is required and must be non-empty',
+    description:
+      'Validation error - every field is optional, but a supplied name must be a non-empty string',
   })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   @ApiResponse({

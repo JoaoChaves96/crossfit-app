@@ -244,7 +244,10 @@ describe('GET /api/gyms/:gymId/configuration/coaches', () => {
           'Invalid Date',
         );
 
-        // No extra unexpected top-level keys (exact shape)
+        // No extra unexpected top-level keys (exact shape). This list is closed
+        // on purpose, so growing CoachListItemDto is meant to fail here and be
+        // acknowledged — `classesAssigned` was added in ba8b948 and this was not
+        // updated with it.
         const allowedKeys = [
           'id',
           'userId',
@@ -253,6 +256,7 @@ describe('GET /api/gyms/:gymId/configuration/coaches', () => {
           'role',
           'status',
           'assignedAt',
+          'classesAssigned',
         ];
         const coachKeys = Object.keys(coach);
         for (const key of coachKeys) {

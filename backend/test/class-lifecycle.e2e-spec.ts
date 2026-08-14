@@ -627,7 +627,15 @@ describe('Class Lifecycle & Gym Configuration (e2e)', () => {
         const found = classTypes.find((ct) => ct.id === classTypeId);
         expect(found).toBeDefined();
         expect(found).toHaveProperty('name', 'Config WOD');
-        expect(found).toHaveProperty('gymId', gymId);
+        // ClassTypeItemDto, exactly. No `gymId`: the route is already scoped to
+        // one gym, and the list cannot contain another's. This assertion used to
+        // demand a `gymId` field the DTO has never had, so it had never passed.
+        expect(Object.keys(found as object).sort()).toEqual([
+          'id',
+          'loggable',
+          'name',
+          'resultMetrics',
+        ]);
       });
     });
 

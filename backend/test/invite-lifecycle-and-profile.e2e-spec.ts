@@ -744,12 +744,33 @@ describe('Invite Lifecycle and Profile Endpoints (e2e)', () => {
       expect(body).toHaveProperty('email', athleteEmail);
     });
 
-    it('missing name → 400', async () => {
-      await request(app.getHttpServer())
+    // Every field is optional so notification preferences can be patched without
+    // resending the name, so an empty body is a no-op rather than an error. This
+    // test asserted 400 — correct when it was written, before a31ff3a made `name`
+    // optional — and the thing that actually needed fixing was the endpoint's
+    // Swagger, which went on advertising `name` as required.
+    it('empty body → 200, changing nothing', async () => {
+      const before = await request(app.getHttpServer())
+        .get('/api/me')
+        .set('Authorization', `Bearer ${athleteToken}`)
+        .expect(200);
+
+      const response = await request(app.getHttpServer())
         .patch('/api/me')
         .set('Authorization', `Bearer ${athleteToken}`)
         .send({})
-        .expect(400);
+        .expect(200);
+
+      const body = response.body as Record<string, unknown>;
+      const prior = before.body as Record<string, unknown>;
+      expect(body).toHaveProperty('id', athleteUserId);
+      expect(body.name).toBe(prior.name);
+      expect(body.email).toBe(prior.email);
+      // The riskiest part of an optional-everything patch: an unsent field must
+      // not be read as "clear this".
+      expect(body.notificationPreferences).toEqual(
+        prior.notificationPreferences,
+      );
     });
 
     it('empty name string → 400', async () => {
