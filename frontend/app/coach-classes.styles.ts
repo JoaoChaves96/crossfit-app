@@ -29,6 +29,10 @@ export const styles = StyleSheet.create({
   },
 
   // Header
+  identityRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
   header: {
     flexDirection: 'row',
     alignItems: 'center',

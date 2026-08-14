@@ -10,7 +10,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { useGym } from '@/hooks/useGym';
 import { useResponsiveLayout } from '@/hooks/useResponsiveLayout';
 import { SafeScreen } from '@/components/SafeScreen';
-import { GymSwitcher } from '@/components/GymSwitcher';
+import { GymMenu } from '@/components/GymMenu';
 import { Text, Icon, StatusChip, Button, SegmentedToggle } from '@/components/cleanink';
 import { Ink, Status, Space } from '@/constants/design';
 import { createApiClient } from '@/utils/api-client';
@@ -329,20 +329,26 @@ export default function CoachClassesScreen() {
         style={[styles.main, isMobile && styles.mainMobile]}
         applyTopInset={isMobile}
         extraTopPadding={Space.base}>
-        {/* Header */}
-        <View style={styles.header}>
-          {isMobile && (
+        {/* Identity row, mobile only: the gym menu names the gym, offers the
+            others, and owns sign-out — the same control the athlete header
+            carries. On desktop it lives in the sidebar's top-left slot
+            instead, so this row would be a second copy of it. */}
+        {isMobile && (
+          <View style={styles.identityRow}>
             <TouchableOpacity
               testID="hamburger-btn"
               style={styles.hamburgerBtn}
               onPress={() => setDrawerOpen(true)}>
               <Icon name="menu" size={24} tone="strong" />
             </TouchableOpacity>
-          )}
+            <GymMenu />
+          </View>
+        )}
+
+        {/* Header */}
+        <View style={styles.header}>
           <Text size="screen" weight="bold" tone="strong">My Assigned Classes</Text>
         </View>
-
-        <GymSwitcher />
 
         {/* Upcoming / Past filter */}
         <View style={styles.filterRow}>

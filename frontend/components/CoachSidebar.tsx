@@ -3,8 +3,9 @@ import { Pressable, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { SafeScreen } from '@/components/SafeScreen';
 import { Text, Icon, type IconName } from '@/components/cleanink';
-import { Space, Status } from '@/constants/design';
-import { useAuth } from '@/hooks/useAuth';
+import { Space } from '@/constants/design';
+import { useResponsiveLayout } from '@/hooks/useResponsiveLayout';
+import { GymMenu } from '@/components/GymMenu';
 import { styles } from './OwnerSidebar.styles';
 
 // ─── Nav model ──────────────────────────────────────────────────────────────
@@ -44,7 +45,7 @@ interface CoachSidebarProps {
 
 export function CoachSidebar({ activeItem, onNavigate }: CoachSidebarProps) {
   const router = useRouter();
-  const { logout } = useAuth();
+  const { isMobile } = useResponsiveLayout();
 
   const handlePress = (item: CoachNavItem) => {
     if (onNavigate) {
@@ -56,16 +57,22 @@ export function CoachSidebar({ activeItem, onNavigate }: CoachSidebarProps) {
     }
   };
 
-  const handleLogout = async () => {
-    await logout();
-    router.replace('/login' as never);
-  };
-
   return (
     <SafeScreen style={styles.sidebar} extraTopPadding={Space.lg}>
+      {/* Top-left identity, the same slot the athlete's gym name occupies. On
+          desktop that is the gym menu itself — it names the gym, offers the
+          others, and owns sign-out. On mobile this sidebar lives inside a
+          drawer, so the menu sits in the screen header instead and the drawer
+          keeps the product name. */}
       <View style={styles.sidebarLogo}>
-        <Icon name="gym" size={20} tone="strong" />
-        <Text weight="bold" size="title" tone="strong">CrossFit Box</Text>
+        {isMobile ? (
+          <>
+            <Icon name="gym" size={20} tone="strong" />
+            <Text weight="bold" size="title" tone="strong">CrossFit Box</Text>
+          </>
+        ) : (
+          <GymMenu />
+        )}
       </View>
       <View style={styles.navGroup}>
         {COACH_NAV_ITEMS.map((item) => {
@@ -93,17 +100,8 @@ export function CoachSidebar({ activeItem, onNavigate }: CoachSidebarProps) {
         })}
       </View>
 
-      {/* Log Out pinned to the foot of the nav — the only sign-out path on the
-          coach screens, which have no GymMenu. Matches the owner shell. */}
-      <View style={styles.footer}>
-        <Pressable
-          testID="nav-logout"
-          style={styles.logoutItem}
-          onPress={handleLogout}>
-          <Icon name="logout" size={18} tone={Status.danger} />
-          <Text weight="medium" tone={Status.danger}>Log Out</Text>
-        </Pressable>
-      </View>
+      {/* No Log Out here: the gym menu owns it, so the coach signs out from the
+          same control the athlete does rather than from two places at once. */}
     </SafeScreen>
   );
 }
