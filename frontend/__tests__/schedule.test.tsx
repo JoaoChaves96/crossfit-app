@@ -39,13 +39,10 @@ jest.mock('@/utils/alert', () => ({
   showAlert: jest.fn(),
 }));
 
-// GymSwitcher fetches independently via the same mocked api client this suite
-// uses for the schedule itself; stub it out so its own request doesn't
-// consume this suite's per-call mockResolvedValueOnce queue. GymSwitcher.test.tsx
-// owns its behavior.
-jest.mock('@/components/GymSwitcher', () => ({
-  GymSwitcher: () => null,
-}));
+// The header's GymMenu fetches `/api/me/gyms` through this same mocked client.
+// Every mock below routes by URL and rejects anything it doesn't recognise, so
+// that request resolves to "no other gyms" — which is what this suite wants:
+// GymMenu.test.tsx owns the switching behaviour.
 
 // expo-router global mock (jest-setup.ts) omits useFocusEffect which is
 // imported by schedule.tsx. Override here to include it.
@@ -771,5 +768,47 @@ describe('ScheduleScreen — desktop register', () => {
     await waitFor(() => {
       expect(screen.getByText('No classes match the selected filters.')).toBeTruthy();
     });
+  });
+});
+
+// ─── Refused schedule ─────────────────────────────────────────────────────────
+
+// The refusal path is the one a gym switch can strand you on: switching into a
+// gym whose plan doesn't cover its classes answers 403, and this state is what
+// you land on. It used to render the message alone, with no header — so the
+// control that got you here was no longer on screen to get you back.
+describe('ScheduleScreen — refused schedule', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  function mockRefusal() {
+    const mockApi = createMockApiClient();
+    mockApi.get.mockImplementation((url: string) => {
+      if (url.includes('/classes')) return Promise.reject(new Error('You do not have permission to do that.'));
+      if (url.includes('/bookings')) return Promise.resolve(buildBookingsResponse([]));
+      return Promise.reject(new Error(`Unexpected GET: ${url}`));
+    });
+    return mockApi;
+  }
+
+  it('keeps the gym menu reachable on mobile', async () => {
+    renderScreen(mockRefusal());
+
+    await waitFor(() => expect(screen.getByTestId('schedule-error')).toBeTruthy());
+    expect(screen.getByTestId('gym-menu-trigger')).toBeTruthy();
+    // Named, too: a menu whose trigger is blank is a menu nobody presses.
+    expect(screen.getByText('My Gym')).toBeTruthy();
+  });
+
+  it('keeps the gym menu reachable on desktop', async () => {
+    mockIsDesktop = true;
+
+    renderScreen(mockRefusal());
+
+    await waitFor(() => expect(screen.getByTestId('schedule-error')).toBeTruthy());
+    // No name assertion here: the gym name arrives on the request that just
+    // failed, so desktop shows DesktopTopNav's own fallback either way.
+    expect(screen.getByTestId('gym-menu-trigger')).toBeTruthy();
   });
 });

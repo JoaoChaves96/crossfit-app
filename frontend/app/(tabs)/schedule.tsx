@@ -38,7 +38,6 @@ import { useRefreshOnAppActive } from '@/hooks/useRefreshOnAppActive';
 import { DesktopTopNav } from '@/components/DesktopTopNav';
 import { NotificationBell } from '@/components/NotificationBell';
 import { GymMenu } from '@/components/GymMenu';
-import { GymSwitcher } from '@/components/GymSwitcher';
 import { SafeScreen } from '@/components/SafeScreen';
 import {
   Text,
@@ -536,7 +535,18 @@ export default function ScheduleScreen() {
   if (error) {
     return (
       <View style={isDesktop ? desktopStyles.screen : styles.screen}>
-        {isDesktop && <DesktopTopNav />}
+        {/* The header renders here too, and it carries the gym name so the menu
+            inside it can offer the other gyms. Without it, a caller who
+            switched into a gym they cannot read — no active plan there, which
+            answers 403 — had no control left on screen and no way back except
+            logging out. The state that strands you is exactly the state that
+            needs the way out. */}
+        {isDesktop ? <DesktopTopNav gymName={gymName} /> : (
+          <SafeScreen style={styles.header} extraTopPadding={Space.md}>
+            <GymMenu gymName={gymName} />
+            <NotificationBell />
+          </SafeScreen>
+        )}
         <View style={styles.centeredState}>
           <Text testID="schedule-error" size="body" tone={Status.danger} style={{ textAlign: 'center' }}>{error}</Text>
         </View>
@@ -571,7 +581,6 @@ export default function ScheduleScreen() {
         {isDesktop ? <DesktopTopNav gymName={gymName} /> : (
           <SafeScreen style={styles.header} extraTopPadding={Space.md}>
             <GymMenu gymName={gymName} />
-            <GymSwitcher />
             <NotificationBell />
           </SafeScreen>
         )}
@@ -596,7 +605,6 @@ export default function ScheduleScreen() {
         <DesktopTopNav gymName={gymName} />
         <View style={desktopStyles.contentArea}>
           <View style={desktopStyles.innerWrap}>
-            <GymSwitcher />
             <ScheduleControls
               timeView={timeView}
               onTimeViewChange={setTimeView}
@@ -637,7 +645,6 @@ export default function ScheduleScreen() {
   const header = (
     <SafeScreen style={styles.header} extraTopPadding={Space.md}>
       <GymMenu gymName={gymName} />
-      <GymSwitcher />
       <NotificationBell />
     </SafeScreen>
   );
