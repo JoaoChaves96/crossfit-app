@@ -9,7 +9,7 @@
  */
 import { randomUUID } from 'crypto';
 import { expect, test } from '../fixtures';
-import { fillStable, loginAs } from '../helpers/auth';
+import { fillStable, loginAs, visibleTestId } from '../helpers/auth';
 import { seedClass, seedGym, withDb } from '../helpers/seed';
 
 const WOD = '5 rounds: 10 pull-ups, 20 air squats';
@@ -92,11 +92,15 @@ test('a coach staffed at two gyms reaches both', async ({ page }) => {
   await expect(page.getByText('Gym B Only Type')).toHaveCount(0);
 
   // ── Switch to gym B ───────────────────────────────────────────────────────
-  // The option's own testID, not the `gym-switcher` wrapper: for two gyms that
-  // wrapper's only child is a full-width SegmentedToggle whose two `flex: 1`
-  // segments abut, so the wrapper's bounding-box centre lands on the seam
-  // between them and which segment receives the click turns on sub-pixel
-  // rounding. Same reason this file uses `fillStable` over `.fill()`.
+  // Switching lives inside the gym menu now, so the menu has to be opened first.
+  // `visibleTestId` for the trigger: expo-router keeps a previous mount of this
+  // route in the DOM, so a bare testID resolves to two nodes and only one is on
+  // screen — the same reason journey 15 pins its clicks this way.
+  //
+  // Then the option's own testID, not the `gym-switcher` wrapper: that wrapper is
+  // the whole menu card, whose bounding-box centre need not sit over the row
+  // being chosen. Same reason this file uses `fillStable` over `.fill()`.
+  await visibleTestId(page, 'gym-menu-trigger').click();
   await page.getByTestId(`gym-switcher-option-${gymB.id}`).click();
 
   // ── After switching: gym B's class, and only gym B's — same shape of

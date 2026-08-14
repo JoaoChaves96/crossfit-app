@@ -108,7 +108,11 @@ test('each role lands on its own home, survives a reload, and logout clears the 
   await expectReloadKeepsSession(page, /coach-classes/);
   await expect(visibleTestId(page, 'coach-class-list')).toBeVisible({ timeout: 20_000 });
 
-  await visibleTestId(page, 'nav-logout').click();
+  // The coach signs out from the gym menu in the shell's identity slot, not
+  // from the sidebar: that menu is the coach's single sign-out path, the same
+  // control the athlete uses.
+  await visibleTestId(page, 'gym-menu-trigger').click();
+  await visibleTestId(page, 'gym-menu-logout').click();
   await expectSignedOut(page);
 
   // ── The athlete ───────────────────────────────────────────────────────────
