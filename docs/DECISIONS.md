@@ -433,3 +433,46 @@ Rules:
 - A live pending coach invite for the same gym and email blocks a second one.
   An expired one does not.
 - Acceptance re-signs the JWT (see *Gym Context Is Switchable*).
+
+## Gym Context Is Switchable
+
+A user attached to more than one gym may switch which one their session acts in:
+`POST /api/auth/gym-context` returns a token re-signed for the named gym, and
+`GET /api/me/gyms` lists what they may switch to.
+
+Rationale: `DATA_MODEL.md:105` grants coaches multi-gym staffing and `gym_staff`
+stores it, but the JWT carries exactly one `gymId` and `GymOwnershipGuard`
+compares it to the route — so every gym but the oldest was unreachable in every
+session. Making coach invites work turned that from unreachable into a one-click
+path an owner would find immediately.
+
+Rules:
+
+- The caller must have an **active** `gym_staff` row or an **active**
+  `gym_membership` at the target gym. Anything else is `403` — never a silent
+  fallback to another gym.
+- Staff attachment beats membership at the same gym, matching login's own
+  `resolveGymContext`.
+- This is **not** a general refresh endpoint: it re-signs only for a gym the
+  caller is provably attached to. See *Owner Gym Context After Creation*.
+- Multi-gym **ownership** remains out of scope (*One Gym Per Owner*). An owner
+  who also coaches elsewhere does get the switcher; that is coach staffing.
+- The default context on login is still the oldest active attachment. The
+  switcher's choice persists client-side in `currentGymId`, not server-side.
+
+**Deviations from `COMMAND_MODEL.md:193` *SelectActiveGym*,** both deliberate and
+both narrowing that command's preconditions:
+
+- It requires an active `AthleteMembershipPlan`. Not enforced — it would turn
+  "joined but has not bought a plan yet" into "cannot see the gym you just
+  joined", and class visibility and booking already gate on the plan downstream.
+- It requires `Gym status = active`. Not enforced, by either endpoint. The two
+  agree with each other, which is the property that matters most: a list that
+  hid a gym the token endpoint would still grant is a worse bug than both
+  ignoring status. No Tier 1 document says suspending a gym revokes its staff's
+  access, and `SelectActiveGym` is scoped to athletes, so extending its
+  precondition to staff would be an invention rather than a reading. Treated as
+  known debt: gym suspension wants one pass covering both endpoints *and* the
+  guards, not a condition bolted onto the switcher alone.
+- That command is also **Athlete**-only. This endpoint serves staff and athletes
+  alike, because the multi-gym case that actually exists in the data is a coach's.

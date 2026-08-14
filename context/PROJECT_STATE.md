@@ -273,12 +273,27 @@ MVP scope. Coach desktop has NO duplicate-header bug). Discovery/triage only; fi
   and the design at
   `docs/superpowers/specs/2026-08-13-coach-invite-and-gym-context-design.md`.
   BE 437/437 unit + invite e2e specs rewritten, FE 368/368, `tsc` clean.
-  **Not done yet:** the Playwright journey 11 rewrite (its coach test still asserts the
-  removed instant-active behaviour, so it is expected red), and the gym-context switching
-  half of that design (`POST /api/auth/gym-context`, `GET /api/me/gyms`) — the
-  `DECISIONS.md` entry forward-references it, but neither endpoint exists.
+  Journey 11 rewritten to drive acceptance and then *save programming* — a coach-side read
+  is not evidence about a token's claims on this codebase, only a write is.
   **Still open, now sharper:** no email is ever sent. The owner copying the invite link is
   the whole delivery mechanism — recorded as `epics/EMAIL_SERVICE_EPIC.md`.
+- ✅ **Gym context is switchable (2026-08-14)** — the second half of that same design, and the
+  resolution of the multi-gym finding recorded under **Auth State** below. `gym_staff` has
+  always allowed a coach at several gyms, but the JWT carries exactly one `gymId` and
+  `GymOwnershipGuard` compares it to the route — so every gym but the oldest answered 403 in
+  every session, forever, and the deterministic login ordering only made that failure
+  *stable*. New `POST /api/auth/gym-context` re-signs the token for one named gym the caller
+  is attached to (staff beats membership; refuses rather than falling back, so it cannot hand
+  back another tenant's context) and `GET /api/me/gyms` lists what they may switch to.
+  Frontend: `GymContext.switchGym` posts, adopts the re-signed token, then persists the local
+  id; a `GymSwitcher` renders on the coach and owner surfaces **only when there are two or
+  more gyms** — a single-gym user sees nothing, which is every current user. This supersedes
+  the 2026-08-05 note above ("Decision: menu, not a multi-gym switcher"): the menu stays, and
+  the switcher sits beside it. Journey 16 proves the switch end to end and is mutation-proved
+  on the write, not the read. See `docs/DECISIONS.md` → **Gym Context Is Switchable** for the
+  three documented deviations from `COMMAND_MODEL.md`'s `SelectActiveGym` — notably that
+  neither endpoint checks `Gym status = active`, recorded as debt needing one pass over both
+  endpoints *and* the guards. BE 447/447, FE 379/379, 15/15 e2e, `tsc` clean.
 
 ## Previous Phase (2026-05-23)
 
@@ -439,7 +454,12 @@ MVP scope. Coach desktop has NO duplicate-header bug). Discovery/triage only; fi
 - `POST /api/auth/register` — public, creates athlete account and issues JWT (gymId: null, role: null)
 - `POST /api/gyms` — 409 if the caller already owns an active gym (one gym per
   owner, see `docs/DECISIONS.md`); gym context resolution is explicitly ordered so
-  a multi-gym coach gets the same gym on every login (2026-08-10)
+  a multi-gym coach gets the same gym on every login (2026-08-10) — that ordering made the
+  *default* stable, and `POST /api/auth/gym-context` (2026-08-14) is what makes the other
+  gyms reachable at all
+- `POST /api/auth/gym-context` — re-signs the caller's token for one gym they are attached to
+  (staff beats membership; 403 otherwise, never a silent fallback to another gym)
+- `GET /api/me/gyms` — the gyms this user may act in, staff and membership both
 - `CurrentUser` and `CurrentGym` decorators read from JWT claims
 
 ### Frontend

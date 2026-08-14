@@ -235,8 +235,15 @@ that can be arrived at twice.
 Built in the order **13 → 15 → 12 → 14**, each mutation-proved before being called done. Both of
 the "weaker pair" earned their place and were kept: 12 pins the space's capacity reaching a class
 that never states one, and 14 pins the only lever in the MVP that revokes access to a gym the
-athlete still belongs to. The suite was **15 tests, ~3.0 min** at the end of Tier 3, and is
-**14 tests, ~2.8 min** since journey 11's two tests became one.
+athlete still belongs to. The suite was **15 tests, ~3.0 min** at the end of Tier 3, then
+**14 tests, ~2.8 min** once journey 11's two tests became one, and is **15 tests, 4.8 min**
+since journey 16 (2026-08-14).
+
+Treat that 4.8 min as an upper bound, not a like-for-like regression against 2.8: it was measured
+on a machine where six orphaned `jest-worker` processes from an unrelated run 44 hours earlier were
+still consuming cores throughout. One added journey costing two minutes would be a real finding; the
+honest position is that this number has not been measured on a quiet machine. Re-measure before
+drawing any conclusion about the suite's speed — and before spending anything on making it faster.
 
 ### 13. Recurring series — N classes on the *correct* N dates — ✅ DONE
 
@@ -311,6 +318,39 @@ holds the athlete's own live session, so nothing is asserted from the seed. The 
 is what makes it a journey: a suspension that also destroyed the membership, the plan, or the
 eligibility that plan carries looks identical while suspended, so the third claim is a **booking**,
 not a sighting.
+
+### 16. A coach staffed at two gyms reaches both — ✅ DONE (2026-08-14)
+
+Two gyms seeded; gym A's coach is also staffed at gym B with a later `assignedAt`, so login's
+default context stays gym A (`DECISIONS.md:189` — oldest active attachment wins). One class per gym,
+each on a **gym-unique class type**. Coach → `/coach-classes` → gym A's class and only gym A's →
+`gym-switcher-option-<gymB>` → gym B's class and only gym B's → reload, still gym B → **save
+programming at gym B** and read it back.
+
+`seedGym` names every gym's class types `CrossFit` and `Strength`, identically in both gyms, so the
+absence assertions had to be given a name that exists in exactly one gym — otherwise
+`toHaveCount(0)` on a type name is vacuous in both directions. `seedClass` also hard-codes
+`coachUserId: gym.coach.id`, so gym B's class is reassigned to gym A's coach; without that the
+post-switch screen shows zero rows for a reason having nothing to do with switching.
+
+**The write is the journey.** Everything up to the reload passes with the token re-sign deleted from
+`switchGym` — measured, not assumed, and the reason the briefed version of this journey was
+rejected. `src/api/coach/coach-classes.controller.ts:19` mounts only `JwtAuthGuard, RolesGuard` and
+**no `GymOwnershipGuard`**, and its query scopes by the route's `gymId` param plus the token's
+`userId`, so gym B's list reads perfectly well through gym A's stale token the moment
+`currentGymId` rewrites the URL. Switching a local string is enough to make every read green.
+Saving programming posts through `GymOwnershipGuard`, which compares the route's gym to the token's
+own claim — so it is the one assertion the re-sign is load-bearing for.
+
+This is the **same trap journey 11 hit first** (*Findings from Tier 3*: "Reading an accepted coach's
+class list never needed the re-signed token; writing does"), reached from a different direction and
+missed again by a plan written after that finding was recorded. The lesson has now cost two
+journeys: on this codebase, a coach-side read is not evidence about a token's claims. Only a write is.
+
+Mutation-proved twice: the re-sign deleted → **red** at `getByText('Saved')`, element not found;
+and `resolveGymContextFor` falling back to the default context instead of throwing → **red** in the
+backend wire spec (`refuses a gym the caller is not attached to → 403` returned 200), which is where
+that refusal is owned.
 
 ---
 
@@ -510,8 +550,10 @@ surfaces a journey had no way to address: `class-details-title`, `log-results-er
 `create-invite-btn` / `invite-email-input` / `invite-send-btn` / `invite-link-text` /
 `invite-join-btn` on the invite flow.
 
-**Tier 3: ✅ COMPLETE (2026-08-13).** Journeys 12, 13, 14 and 15 all pass; the whole suite is
-**14 tests in ~2.8 minutes** serially — 15 until journey 11's two tests became one. Every journey
+**Tier 3: ✅ COMPLETE (2026-08-13).** Journeys 12, 13, 14 and 15 all pass; the suite was
+**14 tests in ~2.8 minutes** serially at that point — 15 until journey 11's two tests became one —
+and is **15 tests in 4.8 minutes** since journey 16 (2026-08-14), a figure measured on a
+contended machine and carrying the caveat recorded at the top of Tier 3. Every journey
 was mutation-proved against three defects each — listed in *Findings from Tier 3*, along with the one attempt discarded as invalid because it
 changed no observable behaviour. Two of the twelve reds were only reachable after the assertion was
 strengthened: journey 15's token-race claim needed the navigation history rather than a URL (the
