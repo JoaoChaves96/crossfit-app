@@ -257,6 +257,22 @@ describe('InviteService — accepting by role', () => {
     expect(result.role).toBe('coach');
   });
 
+  // The mirror of the case above. Both sides are folded, and only pinning one
+  // direction leaves the other side's `.toLowerCase()` free to be deleted: an
+  // invite stored with capitals (typed that way by whoever sent it) against a
+  // lower-case account is the same person too.
+  it('accepts when the invite address differs from the account only by case', async () => {
+    inviteRepo.findOne.mockResolvedValue({
+      ...pendingInvite('coach'),
+      inviteeEmail: USER.email.toUpperCase(),
+    });
+    managerFindUser.mockResolvedValue({ id: USER.id, email: USER.email });
+
+    const result = await service.acceptInvite('tok-abc', USER.id);
+
+    expect(result.role).toBe('coach');
+  });
+
   it('refuses an unidentified caller rather than resolving one', async () => {
     inviteRepo.findOne.mockResolvedValue(pendingInvite('coach'));
 
