@@ -763,13 +763,6 @@ export default function GymSetupScreen() {
       const ownerToken = gymResponse.accessToken;
       await login(ownerToken);
 
-      // GymContext is loaded from storage and is otherwise only populated by
-      // login, so without this the owner leaves the wizard with
-      // currentGymId: null — and every gym-scoped owner screen quietly does
-      // nothing (create-class's pickers hang on "Loading…", the dashboard shows
-      // an empty week) until they log out and back in.
-      await setCurrentGymId(gymId);
-
       const client = createApiClient({ token: ownerToken });
 
       // Step 2: Create spaces sequentially
@@ -788,6 +781,21 @@ export default function GymSetupScreen() {
           name: classType.name.trim(),
         } satisfies ConfigureClassTypesBody);
       }
+
+      // GymContext is loaded from storage and is otherwise only populated by
+      // login, so without this the owner leaves the wizard with
+      // currentGymId: null — and every gym-scoped owner screen quietly does
+      // nothing (create-class's pickers hang on "Loading…", the dashboard shows
+      // an empty week) until they log out and back in.
+      //
+      // Deliberately last, after the configuration calls. It used to run right
+      // after the gym was created, where anything thrown by it aborted steps 2
+      // and 3 — leaving a committed gym with no spaces and no class types, which
+      // the wizard cannot repair because a retry answers 409 under One Gym Per
+      // Owner. Nothing between the create and here reads the context (steps 2
+      // and 3 use ownerToken directly), so the write is free to come after the
+      // work it must not be able to break.
+      await setCurrentGymId(gymId);
 
       setCreatedGymName(wizardState.basics.name.trim());
       setIsSuccess(true);

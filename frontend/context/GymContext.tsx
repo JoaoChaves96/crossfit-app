@@ -45,10 +45,39 @@ export function GymProvider({ children }: { children: ReactNode }) {
     // state meant a storage failure cost the caller the gym entirely, not just
     // its survival across a restart — and a screen with no gym issues no
     // requests at all, which reads to the user as an empty gym. This order
-    // makes a failed write cost only persistence. The rejection still
-    // propagates so callers can decide what to say about it.
+    // makes a failed write cost only persistence.
     setCurrentGymIdState(gymId);
-    await storage.setItem(CURRENT_GYM_ID_KEY, gymId);
+
+    // That persistence failure is absorbed here rather than propagated, because
+    // no caller wants it. Every writer reaches this line *after* a server-side
+    // commit — a login, an accepted invite, a created gym, a re-signed
+    // gym-context token — so surfacing the rejection reports a committed
+    // operation as failed:
+    //
+    //   - gym-setup.tsx ran this before creating spaces and class types, so a
+    //     rejection left the gym committed with neither, and retrying answered
+    //     409 under One Gym Per Owner. Unrecoverable from the wizard. That call
+    //     now also comes last, so ordering and this catch each cover it.
+    //   - login.tsx skipped its routeForRole and showed "Something went wrong"
+    //     over an already-stored token.
+    //   - switchGym said "Could not switch gym." about a gym it had already
+    //     switched into.
+    //
+    // Invite acceptance keeps its own catch on top of this one: its bad outcome
+    // is the only unrepairable one, and ordering cannot save it.
+    //
+    // What a failed write costs is survival across a restart: the gym is
+    // re-read from the token's claims on the next login. Nothing to tell the
+    // user about. This only rejects on native anyway — utils/storage swallows
+    // localStorage failures itself — so the two platforms now agree.
+    try {
+      await storage.setItem(CURRENT_GYM_ID_KEY, gymId);
+    } catch (error) {
+      console.error(
+        '[gym-context] gym set for this session, but persisting it failed; a restart will not keep it',
+        error,
+      );
+    }
   };
 
   /**
@@ -63,9 +92,9 @@ export function GymProvider({ children }: { children: ReactNode }) {
    * Once the token is replaced the session has switched, so a failure of the
    * local write after that point costs persistence, not the switch — letting it
    * propagate would make the switcher say "Could not switch gym." about a gym it
-   * is now acting in. Same reasoning, and the same swallow, as invite acceptance
-   * in app/invite/[inviteToken].tsx. A rejection from the POST or from login
-   * still propagates: those really are failed switches.
+   * is now acting in. setCurrentGymId absorbs that itself, so there is nothing
+   * to catch here. A rejection from the POST or from login still propagates:
+   * those really are failed switches.
    */
   const switchGym = async (gymId: string): Promise<void> => {
     const client = createApiClient({ token: auth?.token });
@@ -74,13 +103,7 @@ export function GymProvider({ children }: { children: ReactNode }) {
       { gymId },
     );
     await auth?.login(accessToken);
-    try {
-      await setCurrentGymId(gymId);
-    } catch {
-      console.error(
-        '[gym-context] switched, but persisting the gym failed; this session works, a restart will not',
-      );
-    }
+    await setCurrentGymId(gymId);
   };
 
   return (

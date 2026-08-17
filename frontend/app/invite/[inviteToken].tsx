@@ -149,16 +149,17 @@ export default function InviteAcceptanceScreen() {
       // path. Without this an accepted coach lands on a screen that never
       // issues a request until they log out and back in. Same for an athlete.
       //
-      // Guarded separately from the accept call: by this point the server has
-      // committed the staff/membership row, so a storage failure here must not
-      // route the user into the error state. That state offers "Try Again",
-      // which re-posts accept and now answers 400 — telling someone who really
-      // is a coach, twice, that they are not.
+      // Cannot fail this acceptance: by this point the server has committed the
+      // staff/membership row, so a storage failure must not route the user into
+      // the error state. That state offers "Try Again", which re-posts accept
+      // and now answers 400 — telling someone who really is a coach, twice,
+      // that they are not.
       //
-      // The provider sets the in-memory gym before it awaits the write, so what
-      // a rejection here costs is persistence, not this session: the next screen
-      // still loads, and the gym is re-read from the token's claims on the next
-      // login. Nothing to tell the user about.
+      // setCurrentGymId already absorbs its own persistence failure, so this
+      // catch is deliberate redundancy rather than a live path. It stays because
+      // this is the one writer whose bad outcome is unrepairable by the user,
+      // and the one that cannot be made safe by ordering instead: the gym has to
+      // be written before we navigate, or the destination mounts without it.
       try {
         await gym.setCurrentGymId(result.gym.id);
       } catch {
