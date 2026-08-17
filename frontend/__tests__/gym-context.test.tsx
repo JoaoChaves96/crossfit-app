@@ -78,16 +78,17 @@ describe('GymProvider', () => {
 
   it('keeps the gym for this session when persistence fails', async () => {
     mockSetItem.mockRejectedValue(new Error('storage unavailable'));
+    const consoleError = jest.spyOn(console, 'error').mockImplementation(() => {});
 
     const { result } = renderProvider();
     await settleMount();
 
-    // The rejection still reaches the caller — a failed write is not silent
-    // here, it is the caller's to interpret.
+    // The rejection does NOT reach the caller. Every writer gets here after a
+    // server-side commit, so a caller that surfaced this would report a
+    // committed operation as failed — see the provider for the three ways that
+    // went wrong.
     await act(async () => {
-      await expect(result.current.setCurrentGymId('gym-1')).rejects.toThrow(
-        'storage unavailable',
-      );
+      await expect(result.current.setCurrentGymId('gym-1')).resolves.toBeUndefined();
     });
 
     // What a failed write costs is survival across a restart, not the session.
@@ -95,5 +96,12 @@ describe('GymProvider', () => {
     // ordering left the user staring at an empty gym — the exact dead end
     // writing the gym on invite acceptance existed to remove.
     expect(result.current.currentGymId).toBe('gym-1');
+
+    // Absorbed is not unnoticed.
+    expect(consoleError).toHaveBeenCalledWith(
+      expect.stringContaining('persisting it failed'),
+      expect.any(Error),
+    );
+    consoleError.mockRestore();
   });
 });

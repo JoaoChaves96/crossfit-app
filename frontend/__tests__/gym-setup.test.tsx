@@ -98,6 +98,9 @@ function goToReview(utils: ReturnType<typeof renderWizard>) {
 
 beforeEach(() => {
   jest.clearAllMocks();
+  // clearAllMocks leaves implementations in place, so one set by a test would
+  // otherwise leak into the next.
+  mockSetCurrentGymId.mockImplementation(() => Promise.resolve());
   mockIsMobile = true;
   api = createMockApiClient();
   (createApiClient as jest.Mock).mockReturnValue(api);
@@ -285,6 +288,34 @@ describe('GymSetupScreen — submit', () => {
     fireEvent.press(utils.getByTestId('create-gym-btn'));
 
     await waitFor(() => expect(mockSetCurrentGymId).toHaveBeenCalledWith(GYM_ID));
+  });
+
+  it('writes the gym context only after the spaces and class types exist', async () => {
+    // Ordering, not decoration. This write used to sit immediately after the
+    // create, where anything it threw aborted the two configuration loops — and
+    // the owner was left with a committed gym that had no spaces and no class
+    // types, unrepairable from the wizard because a retry answers 409 under One
+    // Gym Per Owner. Keeping it last means a failure there can cost at most
+    // persistence of the gym choice.
+    let postsWhenContextWritten = -1;
+    mockSetCurrentGymId.mockImplementation(() => {
+      postsWhenContextWritten = api.post.mock.calls.length;
+      return Promise.resolve();
+    });
+
+    api.post
+      .mockResolvedValueOnce(CREATE_GYM_RESPONSE)
+      .mockResolvedValueOnce({})
+      .mockResolvedValueOnce({});
+
+    const utils = renderWizard();
+    goToReview(utils);
+    fireEvent.press(utils.getByTestId('create-gym-btn'));
+
+    await waitFor(() => expect(mockSetCurrentGymId).toHaveBeenCalledWith(GYM_ID));
+
+    // All three POSTs — gym, space, class type — were already away.
+    expect(postsWhenContextWritten).toBe(3);
   });
 
   it('offers a first class the owner can now coach themselves', async () => {
