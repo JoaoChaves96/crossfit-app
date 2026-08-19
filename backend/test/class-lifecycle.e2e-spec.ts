@@ -5,6 +5,7 @@ import { AppModule } from '../src/app.module';
 import { DataSource } from 'typeorm';
 import { v4 as uuidv4 } from 'uuid';
 import { generateTestToken } from './helpers/jwt.helper';
+import { listenOnEphemeralPort } from './helpers/listen';
 
 /**
  * Class Lifecycle & Gym Configuration Integration Tests
@@ -82,7 +83,7 @@ describe('Class Lifecycle & Gym Configuration (e2e)', () => {
 
     app = moduleFixture.createNestApplication();
     app.useGlobalPipes(new ValidationPipe({ whitelist: true }));
-    await app.init();
+    await listenOnEphemeralPort(app);
 
     dataSource = moduleFixture.get(DataSource);
     if (dataSource && dataSource.isInitialized) {

@@ -5,6 +5,7 @@ import { AppModule } from '../src/app.module';
 import { DataSource } from 'typeorm';
 import { v4 as uuidv4 } from 'uuid';
 import { generateTestToken } from './helpers/jwt.helper';
+import { listenOnEphemeralPort } from './helpers/listen';
 
 /**
  * Athlete Booking Lifecycle Integration Tests
@@ -45,7 +46,7 @@ describe('Athlete Booking Lifecycle (e2e)', () => {
     }).compile();
 
     app = moduleFixture.createNestApplication();
-    await app.init();
+    await listenOnEphemeralPort(app);
 
     dataSource = moduleFixture.get(DataSource);
     if (dataSource && dataSource.isInitialized) {

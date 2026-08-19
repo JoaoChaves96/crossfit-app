@@ -6,6 +6,7 @@ import { DataSource } from 'typeorm';
 import { v4 as uuidv4 } from 'uuid';
 import { randomUUID } from 'crypto';
 import { generateTestToken } from './helpers/jwt.helper';
+import { listenOnEphemeralPort } from './helpers/listen';
 
 /**
  * Invite Lifecycle and Profile E2E Tests
@@ -104,7 +105,7 @@ describe('Invite Lifecycle and Profile Endpoints (e2e)', () => {
 
     app = moduleFixture.createNestApplication();
     app.useGlobalPipes(new ValidationPipe({ whitelist: true }));
-    await app.init();
+    await listenOnEphemeralPort(app);
 
     dataSource = moduleFixture.get(DataSource);
 

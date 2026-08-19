@@ -6,6 +6,7 @@ import { AppModule } from '../src/app.module';
 import { DataSource } from 'typeorm';
 import { v4 as uuid } from 'uuid';
 import { generateTestToken } from './helpers/jwt.helper';
+import { listenOnEphemeralPort } from './helpers/listen';
 
 /**
  * E2E tests for GET /api/gyms/:gymId/configuration/coaches
@@ -75,7 +76,7 @@ describe('GET /api/gyms/:gymId/configuration/coaches', () => {
     }).compile();
 
     app = moduleFixture.createNestApplication();
-    await app.init();
+    await listenOnEphemeralPort(app);
 
     dataSource = moduleFixture.get(DataSource);
 

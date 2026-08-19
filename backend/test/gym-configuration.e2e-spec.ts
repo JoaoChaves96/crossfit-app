@@ -5,6 +5,7 @@ import { AppModule } from '../src/app.module';
 import { DataSource } from 'typeorm';
 import { v4 as uuidv4 } from 'uuid';
 import { generateTestToken } from './helpers/jwt.helper';
+import { listenOnEphemeralPort } from './helpers/listen';
 
 /**
  * Gym Configuration E2E Tests — Spaces & Class Types
@@ -129,7 +130,7 @@ describe('Gym Configuration — Spaces & Class Types (e2e)', () => {
 
     app = moduleFixture.createNestApplication();
     app.useGlobalPipes(new ValidationPipe({ whitelist: true }));
-    await app.init();
+    await listenOnEphemeralPort(app);
 
     dataSource = moduleFixture.get(DataSource);
 
