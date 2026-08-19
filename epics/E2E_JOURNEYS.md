@@ -470,6 +470,15 @@ recurrence will say which half broke. No retry was added and `workers: 1` is unc
 scenarios. E2E owns `crossfit_box_e2e` and is free to wipe it; it must never be able to reach
 the dev database.
 
+> **This rule was written here and enforced only here for six days.** The backend jest suite
+> (`backend/test/*.e2e-spec.ts`) had no `DB_NAME` of its own and ran on `crossfit_box_dev` the
+> whole time — which is what produced its `socket hang up` flake, and what made that flake look
+> unrelated to anything in this epic. Fixed 2026-08-19: it owns `crossfit_box_api_e2e` behind its
+> own `assertE2eDatabase` (`backend/test/helpers/e2e-database.ts`). **A different database from
+> this suite's, deliberately** — both truncate on start, so one shared database would let an
+> overlapping run corrupt the other. A harness rule stated in an epic is not enforced by being
+> stated; it is enforced per stack.
+
 **The lifecycle scheduler must not run.** It ticks every minute and transitions classes out of
 `published` underneath a running test — the reason the old seeder dated everything a week out.
 Journeys 3, 7 and 9 depend on precise class states. The e2e backend runs with the scheduler

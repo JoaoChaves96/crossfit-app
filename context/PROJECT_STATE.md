@@ -348,6 +348,34 @@ MVP scope. Coach desktop has NO duplicate-header bug). Discovery/triage only; fi
   (*Gym Registration Approval*); the admin surface is Phase 2 and stayed out of scope here.
   BE 460/460 + 13 new e2e, `tsc` clean.
 
+- ✅ **The backend e2e suite owns a database (2026-08-19)** — closes the `socket hang up` flake
+  that "the backend e2e suite is green" above left carried as undiagnosed. It was **two**
+  independent faults, and each masked the other's fix:
+  - **No database of its own.** `backend/.env` sets no `DB_NAME`, so `database.config.ts` fell
+    through to `crossfit_box_dev` — shared with any live dev backend, whose minute-cron sweep
+    (`getClassesByStates`, filtered on state with **no `gymId`**) advanced past-dated fixtures out
+    from under running assertions, while seven workers ran `synchronize` DDL on the same schema.
+    `epics/E2E_JOURNEYS.md` → *Harness constraints* already stated the rule — *"it must never be
+    able to reach the dev database"* — but only the Playwright stack enforced it, which is why
+    this looked already-fixed. The jest suite now owns `crossfit_box_api_e2e` behind
+    `assertE2eDatabase`, builds its schema once in `globalSetup` (so workers' `synchronize` is a
+    no-op rather than concurrent DDL), and truncates on start — leftovers had grown 144 → 293.
+    A **separate** database from Playwright's on purpose: both truncate, so sharing one would let
+    an overlapping run corrupt the other.
+  - **Supertest rebound a port per request.** With `app.init()` alone, supertest binds and closes
+    its own server per request — ~240 × 7 workers — and a port freed by one worker gets rebound
+    while a socket still points at the old owner. `listenOnEphemeralPort` binds once per spec
+    file. `socket hang up`, `Parse Error: Expected HTTP/` and a spurious `501` are that one fault
+    read from whichever end saw the corrupted stream first.
+
+  Measured, not argued: **20/20 clean** with both fixes; **15/20 with the listen fix removed**
+  (one run cascading to 37 failures in 188s), against a 2/12 baseline. The listen fix had
+  previously been judged "moved nothing outside noise" — it was real, and the shared-database
+  contamination hid it. 237/237 in **7.5s**, down from 9.5–45s. Isolation proved by counting the
+  dev database before and after: unchanged. **Not yet proved under live contention** — that needs
+  a dev backend on `crossfit_box_dev` with schedulers on, which would mutate the hand-seeded
+  fixtures. `test/jest-e2e.json` still has no TZ `globalSetup`, unlike the unit run — open debt.
+
 ## Previous Phase (2026-05-23)
 
 **EPIC:** Notifications (Epic R) — ✅ COMPLETE (2026-05-23)  

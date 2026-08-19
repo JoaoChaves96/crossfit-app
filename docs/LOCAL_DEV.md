@@ -62,6 +62,27 @@ This:
 
 **Note:** The script uses environment variables from `backend/.env`. If you modified those, adjust the script accordingly.
 
+### 3. Create the test databases
+
+Each test suite owns its own database and truncates it. `crossfit_box_dev` holds hand-seeded
+manual-test scenarios that no script rebuilds, so neither suite may reach it:
+
+```bash
+docker-compose exec postgres psql -U postgres -c 'CREATE DATABASE crossfit_box_api_e2e'
+docker-compose exec postgres psql -U postgres -c 'CREATE DATABASE crossfit_box_e2e'
+```
+
+| Database | Owned by | Created by |
+|---|---|---|
+| `crossfit_box_dev` | your dev stack | `docker-compose` (`POSTGRES_DB`) |
+| `crossfit_box_api_e2e` | `backend` → `npm run test:e2e` | you, once (command above) |
+| `crossfit_box_e2e` | `frontend` → Playwright journeys | you, once (command above) |
+
+Both suites build their own schema via TypeORM `synchronize` on first run and refuse to start
+against any other database (`backend/test/helpers/e2e-database.ts`,
+`frontend/e2e/env.ts`). A missing database fails loudly with the `CREATE DATABASE` command
+rather than falling back.
+
 ## Backend Setup
 
 ### 1. Set environment variables
