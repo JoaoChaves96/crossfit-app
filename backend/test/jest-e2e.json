@@ -15,5 +15,6 @@
       "tsconfig": "<rootDir>/../tsconfig.json"
     }
   },
+  "globalSetup": "<rootDir>/helpers/e2e-global-setup.ts",
   "setupFiles": ["<rootDir>/helpers/jest-e2e.setup.ts"]
 }
