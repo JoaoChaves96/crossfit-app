@@ -372,9 +372,17 @@ MVP scope. Coach desktop has NO duplicate-header bug). Discovery/triage only; fi
   (one run cascading to 37 failures in 188s), against a 2/12 baseline. The listen fix had
   previously been judged "moved nothing outside noise" — it was real, and the shared-database
   contamination hid it. 237/237 in **7.5s**, down from 9.5–45s. Isolation proved by counting the
-  dev database before and after: unchanged. **Not yet proved under live contention** — that needs
-  a dev backend on `crossfit_box_dev` with schedulers on, which would mutate the hand-seeded
-  fixtures.
+  dev database before and after: unchanged.
+
+  **Proved under live contention (2026-08-20).** A dev backend was run against
+  `crossfit_box_dev` with schedulers on, as the competitor the original flake needed, and it was
+  confirmed to be genuinely sweeping rather than merely running — three minute-ticks, each logging
+  `transitioned 1 class(es)`, which moved one stale zero-booking class `published → completed` in
+  the dev database while the suite ran. **10/10 batches clean, 239/239 each.** The decisive number
+  is the leftover count: `@test.local` users had grown 144 → 293 over ~55 runs on the shared
+  database, ~2.7 per run, so ten runs owed ~27 — it moved by **zero**. Users, notifications,
+  plans, gyms and the two-gym switching fixture are all byte-identical across the run; the single
+  class transition is the competitor's own write, not the suite's.
 
 - ✅ **The backend e2e suite is timezone-pinned (2026-08-20)** — it never was, so for its whole
   life every date assertion in it ran on the machine's zone. The unit run has been pinned since

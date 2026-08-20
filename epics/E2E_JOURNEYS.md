@@ -478,6 +478,11 @@ the dev database.
 > this suite's, deliberately** — both truncate on start, so one shared database would let an
 > overlapping run corrupt the other. A harness rule stated in an epic is not enforced by being
 > stated; it is enforced per stack.
+>
+> Proved under contention 2026-08-20: a dev backend on `crossfit_box_dev` with schedulers on,
+> logging a class transition every minute, ran alongside 10 × `npm run test:e2e` (239/239 each,
+> 0 failures). The dev database's `@test.local` leftovers — which had grown ~2.7 per run while the
+> databases were shared — moved by zero.
 
 **The lifecycle scheduler must not run.** It ticks every minute and transitions classes out of
 `published` underneath a running test — the reason the old seeder dated everything a week out.
