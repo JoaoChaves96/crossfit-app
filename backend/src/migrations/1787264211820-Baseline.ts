@@ -1,0 +1,124 @@
+import { MigrationInterface, QueryRunner } from "typeorm";
+
+export class Baseline1787264211820 implements MigrationInterface {
+    name = 'Baseline1787264211820'
+
+    public async up(queryRunner: QueryRunner): Promise<void> {
+        await queryRunner.query(`CREATE TABLE "gym_staff" ("id" uuid NOT NULL, "gymId" uuid NOT NULL, "userId" uuid NOT NULL, "role" character varying NOT NULL, "status" character varying NOT NULL DEFAULT 'active', "assignedAt" TIMESTAMP NOT NULL DEFAULT now(), CONSTRAINT "PK_8dc7e61ec3e3ccba615f7edef0f" PRIMARY KEY ("id"))`);
+        await queryRunner.query(`CREATE INDEX "IDX_3cbfc71efa63aadd2ca15e765c" ON "gym_staff" ("gymId", "role") `);
+        await queryRunner.query(`CREATE INDEX "IDX_0d9546b9563cbdda64d7a3863a" ON "gym_staff" ("gymId", "userId") `);
+        await queryRunner.query(`CREATE TABLE "class_types" ("id" uuid NOT NULL, "gymId" uuid NOT NULL, "name" character varying NOT NULL, "loggable" boolean NOT NULL DEFAULT false, "resultMetrics" character varying NOT NULL DEFAULT 'none', "deletedAt" TIMESTAMP, CONSTRAINT "PK_b46a4ca8cc5d4355ff51d221423" PRIMARY KEY ("id"))`);
+        await queryRunner.query(`CREATE INDEX "IDX_cda9ddda0cdfeea3ac24c63822" ON "class_types" ("gymId") `);
+        await queryRunner.query(`CREATE TABLE "users" ("id" uuid NOT NULL, "email" character varying NOT NULL, "passwordHash" character varying, "socialLoginId" character varying, "name" character varying NOT NULL, "status" character varying NOT NULL DEFAULT 'pending', "notificationPreferences" jsonb NOT NULL DEFAULT '{"booking_confirmations":true,"waitlist_updates":true,"class_changes":true,"class_reminders":true}', "createdAt" TIMESTAMP NOT NULL DEFAULT now(), CONSTRAINT "UQ_97672ac88f789774dd47f7c8be3" UNIQUE ("email"), CONSTRAINT "PK_a3ffb1c0c8416b9fc6f907b7433" PRIMARY KEY ("id"))`);
+        await queryRunner.query(`CREATE TABLE "gym_memberships" ("id" uuid NOT NULL, "gymId" uuid NOT NULL, "userId" uuid NOT NULL, "status" character varying NOT NULL DEFAULT 'active', "joinedAt" TIMESTAMP NOT NULL DEFAULT now(), CONSTRAINT "PK_274911e6fd999c0aeb8e346e724" PRIMARY KEY ("id"))`);
+        await queryRunner.query(`CREATE INDEX "IDX_7f11641574eb3c2b6032a946b6" ON "gym_memberships" ("userId", "status") `);
+        await queryRunner.query(`CREATE INDEX "IDX_7aa32e180975909fbbdadd3fe7" ON "gym_memberships" ("gymId", "userId") `);
+        await queryRunner.query(`CREATE TABLE "athlete_membership_plans" ("id" uuid NOT NULL, "gymMembershipId" uuid NOT NULL, "membershipPlanId" uuid NOT NULL, "status" character varying NOT NULL DEFAULT 'active', "startedAt" TIMESTAMP NOT NULL DEFAULT now(), "expiresAt" TIMESTAMP, "autoRoll" boolean NOT NULL DEFAULT true, "autoRollCount" integer NOT NULL DEFAULT '0', CONSTRAINT "PK_ea1ef427c48330b68168f0fe8e6" PRIMARY KEY ("id"))`);
+        await queryRunner.query(`CREATE UNIQUE INDEX "IDX_athlete_membership_plans_one_active" ON "athlete_membership_plans" ("gymMembershipId") WHERE status = 'active'`);
+        await queryRunner.query(`CREATE INDEX "IDX_56163489262483681d8f6f7ae3" ON "athlete_membership_plans" ("gymMembershipId", "status") `);
+        await queryRunner.query(`CREATE TABLE "membership_plans" ("id" uuid NOT NULL, "gymId" uuid NOT NULL, "name" character varying NOT NULL, "pricing" integer NOT NULL, "billingCycle" character varying NOT NULL, "classTypes" text NOT NULL, "status" character varying NOT NULL DEFAULT 'active', "createdAt" TIMESTAMP NOT NULL DEFAULT now(), CONSTRAINT "PK_85ca9d6f4262a6bbff2a540c640" PRIMARY KEY ("id"))`);
+        await queryRunner.query(`CREATE INDEX "IDX_c5bad6a0f6a4496f5b31b79ca6" ON "membership_plans" ("gymId") `);
+        await queryRunner.query(`CREATE TABLE "spaces" ("id" uuid NOT NULL, "gymId" uuid NOT NULL, "name" character varying NOT NULL, "baseCapacity" integer NOT NULL, "deletedAt" TIMESTAMP, CONSTRAINT "PK_dbe542974aca57afcb60709d4c8" PRIMARY KEY ("id"))`);
+        await queryRunner.query(`CREATE INDEX "IDX_61263c8664c5ca25d438fd92fc" ON "spaces" ("gymId") `);
+        await queryRunner.query(`CREATE TABLE "gyms" ("id" uuid NOT NULL, "name" character varying NOT NULL, "description" character varying, "location" character varying NOT NULL, "logoUrl" character varying, "ownerUserId" uuid NOT NULL, "status" character varying NOT NULL DEFAULT 'pending_approval', "createdAt" TIMESTAMP NOT NULL DEFAULT now(), "lastModifiedAt" TIMESTAMP NOT NULL DEFAULT now(), CONSTRAINT "PK_fe765086496cf3c8475652cddcb" PRIMARY KEY ("id"))`);
+        await queryRunner.query(`CREATE TABLE "bookings" ("id" uuid NOT NULL, "classId" uuid NOT NULL, "userId" uuid NOT NULL, "status" character varying NOT NULL, "bookedPosition" integer, "createdAt" TIMESTAMP NOT NULL DEFAULT now(), "cancelledAt" TIMESTAMP, CONSTRAINT "PK_bee6805982cc1e248e94ce94957" PRIMARY KEY ("id"))`);
+        await queryRunner.query(`CREATE INDEX "IDX_c7ed9c1972ebe7f9e412e8c0a3" ON "bookings" ("classId", "userId") `);
+        await queryRunner.query(`CREATE TABLE "programming" ("id" uuid NOT NULL, "classId" uuid NOT NULL, "content" text NOT NULL, "createdByUserId" uuid NOT NULL, "createdAt" TIMESTAMP NOT NULL DEFAULT now(), "lastModifiedAt" TIMESTAMP NOT NULL DEFAULT now(), "lastModifiedByUserId" uuid, CONSTRAINT "PK_43d63e41f10347ba7d5988989d3" PRIMARY KEY ("id"))`);
+        await queryRunner.query(`CREATE TABLE "attendance" ("id" uuid NOT NULL, "classId" uuid NOT NULL, "userId" uuid NOT NULL, "present" boolean NOT NULL, "markedAt" TIMESTAMP NOT NULL DEFAULT now(), "markedByUserId" uuid NOT NULL, "notes" text, CONSTRAINT "PK_ee0ffe42c1f1a01e72b725c0cb2" PRIMARY KEY ("id"))`);
+        await queryRunner.query(`CREATE INDEX "IDX_4c164f308fb9bf626ef067484e" ON "attendance" ("classId", "userId") `);
+        await queryRunner.query(`CREATE TABLE "results" ("id" uuid NOT NULL, "classId" uuid NOT NULL, "userId" uuid NOT NULL, "metricType" character varying NOT NULL, "value" character varying NOT NULL, "unit" character varying NOT NULL, "notes" text, "loggedAt" TIMESTAMP NOT NULL DEFAULT now(), "editedAt" TIMESTAMP, CONSTRAINT "PK_e8f2a9191c61c15b627c117a678" PRIMARY KEY ("id"))`);
+        await queryRunner.query(`CREATE INDEX "IDX_48159d4b6d222018d0855538f1" ON "results" ("classId", "userId") `);
+        await queryRunner.query(`CREATE TABLE "classes" ("id" uuid NOT NULL, "gymId" uuid NOT NULL, "classTypeId" uuid NOT NULL, "coachUserId" uuid NOT NULL, "spaceId" uuid NOT NULL, "scheduledDate" date NOT NULL, "scheduledTime" TIME NOT NULL, "capacity" integer NOT NULL, "duration" integer NOT NULL DEFAULT '60', "seriesId" uuid, "loggable" boolean NOT NULL DEFAULT true, "state" character varying NOT NULL DEFAULT 'published', "createdAt" TIMESTAMP NOT NULL DEFAULT now(), "lastModifiedAt" TIMESTAMP NOT NULL DEFAULT now(), "deletedAt" TIMESTAMP, CONSTRAINT "PK_e207aa15404e9b2ce35910f9f7f" PRIMARY KEY ("id"))`);
+        await queryRunner.query(`CREATE INDEX "IDX_e3707cb905de9b9986e76f2b0b" ON "classes" ("coachUserId") `);
+        await queryRunner.query(`CREATE INDEX "IDX_918fa4c56ac871c603ce9f584f" ON "classes" ("gymId", "scheduledDate") `);
+        await queryRunner.query(`CREATE INDEX "IDX_68c26d8eca8ef1e6abaee3b03c" ON "classes" ("gymId", "state") `);
+        await queryRunner.query(`CREATE TABLE "invites" ("id" uuid NOT NULL, "gymId" uuid NOT NULL, "createdByUserId" uuid NOT NULL, "inviteeEmail" character varying NOT NULL, "inviteToken" character varying NOT NULL, "acceptedAt" TIMESTAMP, "acceptedByUserId" uuid, "expiresAt" TIMESTAMP NOT NULL, "status" character varying NOT NULL DEFAULT 'pending', "role" character varying NOT NULL DEFAULT 'athlete', "createdAt" TIMESTAMP NOT NULL DEFAULT now(), "deletedAt" TIMESTAMP, CONSTRAINT "UQ_3824468eb106ed367f9ed36802b" UNIQUE ("inviteToken"), CONSTRAINT "PK_aa52e96b44a714372f4dd31a0af" PRIMARY KEY ("id"))`);
+        await queryRunner.query(`CREATE INDEX "IDX_75a27a02f730444aebd6d5a5f6" ON "invites" ("gymId", "inviteeEmail") `);
+        await queryRunner.query(`CREATE UNIQUE INDEX "IDX_3824468eb106ed367f9ed36802" ON "invites" ("inviteToken") `);
+        await queryRunner.query(`CREATE TABLE "notifications" ("id" uuid NOT NULL, "userId" uuid NOT NULL, "gymId" uuid NOT NULL, "type" character varying NOT NULL, "title" character varying NOT NULL, "body" character varying NOT NULL, "data" jsonb NOT NULL DEFAULT '{}', "read" boolean NOT NULL DEFAULT false, "createdAt" TIMESTAMP NOT NULL DEFAULT now(), CONSTRAINT "PK_6a72c3c0f683f6462415e653c3a" PRIMARY KEY ("id"))`);
+        await queryRunner.query(`CREATE INDEX "IDX_8348e554546cefe638df7fca95" ON "notifications" ("gymId") `);
+        await queryRunner.query(`CREATE INDEX "IDX_21e65af2f4f242d4c85a92aff4" ON "notifications" ("userId", "createdAt") `);
+        await queryRunner.query(`CREATE INDEX "IDX_d60c47e715847c8aa792ba6d1e" ON "notifications" ("userId", "read") `);
+        await queryRunner.query(`CREATE TABLE "push_tokens" ("id" uuid NOT NULL, "userId" uuid NOT NULL, "token" character varying NOT NULL, "platform" character varying NOT NULL, "createdAt" TIMESTAMP NOT NULL DEFAULT now(), CONSTRAINT "PK_32734e87f299c29ca3878861f4f" PRIMARY KEY ("id"))`);
+        await queryRunner.query(`CREATE UNIQUE INDEX "IDX_869b4a9ba2c9e030aafc4b7dc7" ON "push_tokens" ("token") `);
+        await queryRunner.query(`CREATE INDEX "IDX_95b226ff93ba9b9edfd06136be" ON "push_tokens" ("userId") `);
+        await queryRunner.query(`CREATE TABLE "class_series" ("id" uuid NOT NULL, "gymId" uuid NOT NULL, "classTypeId" uuid NOT NULL, "coachUserId" uuid NOT NULL, "spaceId" uuid NOT NULL, "weekdays" integer array NOT NULL, "scheduledTime" TIME NOT NULL, "duration" integer NOT NULL DEFAULT '60', "capacity" integer, "startDate" date NOT NULL, "endDate" date NOT NULL, "createdByUserId" uuid NOT NULL, "createdAt" TIMESTAMP NOT NULL DEFAULT now(), CONSTRAINT "PK_3043e35717adb4f919950ac35db" PRIMARY KEY ("id"))`);
+        await queryRunner.query(`CREATE INDEX "IDX_798fa337fd11ec848e50821a18" ON "class_series" ("gymId") `);
+        await queryRunner.query(`ALTER TABLE "gym_staff" ADD CONSTRAINT "FK_f014aa98ad87b7c445b3eb99837" FOREIGN KEY ("gymId") REFERENCES "gyms"("id") ON DELETE NO ACTION ON UPDATE NO ACTION`);
+        await queryRunner.query(`ALTER TABLE "class_types" ADD CONSTRAINT "FK_cda9ddda0cdfeea3ac24c638227" FOREIGN KEY ("gymId") REFERENCES "gyms"("id") ON DELETE NO ACTION ON UPDATE NO ACTION`);
+        await queryRunner.query(`ALTER TABLE "gym_memberships" ADD CONSTRAINT "FK_8c13b8dcde055e48d0bf2d1c6fa" FOREIGN KEY ("gymId") REFERENCES "gyms"("id") ON DELETE NO ACTION ON UPDATE NO ACTION`);
+        await queryRunner.query(`ALTER TABLE "gym_memberships" ADD CONSTRAINT "FK_45bbc8511c3b9954812df249bc8" FOREIGN KEY ("userId") REFERENCES "users"("id") ON DELETE NO ACTION ON UPDATE NO ACTION`);
+        await queryRunner.query(`ALTER TABLE "athlete_membership_plans" ADD CONSTRAINT "FK_160876fc498111a4b78a6e08bc0" FOREIGN KEY ("gymMembershipId") REFERENCES "gym_memberships"("id") ON DELETE NO ACTION ON UPDATE NO ACTION`);
+        await queryRunner.query(`ALTER TABLE "athlete_membership_plans" ADD CONSTRAINT "FK_a8af4074cb1bbb2da0cfec0c618" FOREIGN KEY ("membershipPlanId") REFERENCES "membership_plans"("id") ON DELETE NO ACTION ON UPDATE NO ACTION`);
+        await queryRunner.query(`ALTER TABLE "membership_plans" ADD CONSTRAINT "FK_c5bad6a0f6a4496f5b31b79ca64" FOREIGN KEY ("gymId") REFERENCES "gyms"("id") ON DELETE NO ACTION ON UPDATE NO ACTION`);
+        await queryRunner.query(`ALTER TABLE "spaces" ADD CONSTRAINT "FK_61263c8664c5ca25d438fd92fcf" FOREIGN KEY ("gymId") REFERENCES "gyms"("id") ON DELETE NO ACTION ON UPDATE NO ACTION`);
+        await queryRunner.query(`ALTER TABLE "bookings" ADD CONSTRAINT "FK_b6076a0f5134d6753bc30712bf0" FOREIGN KEY ("classId") REFERENCES "classes"("id") ON DELETE NO ACTION ON UPDATE NO ACTION`);
+        await queryRunner.query(`ALTER TABLE "programming" ADD CONSTRAINT "FK_0fb40bbd0f3ab00dabee96c691d" FOREIGN KEY ("classId") REFERENCES "classes"("id") ON DELETE NO ACTION ON UPDATE NO ACTION`);
+        await queryRunner.query(`ALTER TABLE "attendance" ADD CONSTRAINT "FK_af129543ec010c822cb6f0254b5" FOREIGN KEY ("classId") REFERENCES "classes"("id") ON DELETE NO ACTION ON UPDATE NO ACTION`);
+        await queryRunner.query(`ALTER TABLE "results" ADD CONSTRAINT "FK_5bffac2865f7665da8dc719299e" FOREIGN KEY ("classId") REFERENCES "classes"("id") ON DELETE NO ACTION ON UPDATE NO ACTION`);
+        await queryRunner.query(`ALTER TABLE "classes" ADD CONSTRAINT "FK_888ef7551efecef2f01dfda1694" FOREIGN KEY ("gymId") REFERENCES "gyms"("id") ON DELETE NO ACTION ON UPDATE NO ACTION`);
+        await queryRunner.query(`ALTER TABLE "classes" ADD CONSTRAINT "FK_89b3e48e4387ead19ac97e7b293" FOREIGN KEY ("classTypeId") REFERENCES "class_types"("id") ON DELETE NO ACTION ON UPDATE NO ACTION`);
+        await queryRunner.query(`ALTER TABLE "classes" ADD CONSTRAINT "FK_51c3c98724384bfaff79fd7183c" FOREIGN KEY ("spaceId") REFERENCES "spaces"("id") ON DELETE NO ACTION ON UPDATE NO ACTION`);
+        await queryRunner.query(`ALTER TABLE "classes" ADD CONSTRAINT "FK_e3707cb905de9b9986e76f2b0bb" FOREIGN KEY ("coachUserId") REFERENCES "users"("id") ON DELETE NO ACTION ON UPDATE NO ACTION`);
+    }
+
+    public async down(queryRunner: QueryRunner): Promise<void> {
+        await queryRunner.query(`ALTER TABLE "classes" DROP CONSTRAINT "FK_e3707cb905de9b9986e76f2b0bb"`);
+        await queryRunner.query(`ALTER TABLE "classes" DROP CONSTRAINT "FK_51c3c98724384bfaff79fd7183c"`);
+        await queryRunner.query(`ALTER TABLE "classes" DROP CONSTRAINT "FK_89b3e48e4387ead19ac97e7b293"`);
+        await queryRunner.query(`ALTER TABLE "classes" DROP CONSTRAINT "FK_888ef7551efecef2f01dfda1694"`);
+        await queryRunner.query(`ALTER TABLE "results" DROP CONSTRAINT "FK_5bffac2865f7665da8dc719299e"`);
+        await queryRunner.query(`ALTER TABLE "attendance" DROP CONSTRAINT "FK_af129543ec010c822cb6f0254b5"`);
+        await queryRunner.query(`ALTER TABLE "programming" DROP CONSTRAINT "FK_0fb40bbd0f3ab00dabee96c691d"`);
+        await queryRunner.query(`ALTER TABLE "bookings" DROP CONSTRAINT "FK_b6076a0f5134d6753bc30712bf0"`);
+        await queryRunner.query(`ALTER TABLE "spaces" DROP CONSTRAINT "FK_61263c8664c5ca25d438fd92fcf"`);
+        await queryRunner.query(`ALTER TABLE "membership_plans" DROP CONSTRAINT "FK_c5bad6a0f6a4496f5b31b79ca64"`);
+        await queryRunner.query(`ALTER TABLE "athlete_membership_plans" DROP CONSTRAINT "FK_a8af4074cb1bbb2da0cfec0c618"`);
+        await queryRunner.query(`ALTER TABLE "athlete_membership_plans" DROP CONSTRAINT "FK_160876fc498111a4b78a6e08bc0"`);
+        await queryRunner.query(`ALTER TABLE "gym_memberships" DROP CONSTRAINT "FK_45bbc8511c3b9954812df249bc8"`);
+        await queryRunner.query(`ALTER TABLE "gym_memberships" DROP CONSTRAINT "FK_8c13b8dcde055e48d0bf2d1c6fa"`);
+        await queryRunner.query(`ALTER TABLE "class_types" DROP CONSTRAINT "FK_cda9ddda0cdfeea3ac24c638227"`);
+        await queryRunner.query(`ALTER TABLE "gym_staff" DROP CONSTRAINT "FK_f014aa98ad87b7c445b3eb99837"`);
+        await queryRunner.query(`DROP INDEX "public"."IDX_798fa337fd11ec848e50821a18"`);
+        await queryRunner.query(`DROP TABLE "class_series"`);
+        await queryRunner.query(`DROP INDEX "public"."IDX_95b226ff93ba9b9edfd06136be"`);
+        await queryRunner.query(`DROP INDEX "public"."IDX_869b4a9ba2c9e030aafc4b7dc7"`);
+        await queryRunner.query(`DROP TABLE "push_tokens"`);
+        await queryRunner.query(`DROP INDEX "public"."IDX_d60c47e715847c8aa792ba6d1e"`);
+        await queryRunner.query(`DROP INDEX "public"."IDX_21e65af2f4f242d4c85a92aff4"`);
+        await queryRunner.query(`DROP INDEX "public"."IDX_8348e554546cefe638df7fca95"`);
+        await queryRunner.query(`DROP TABLE "notifications"`);
+        await queryRunner.query(`DROP INDEX "public"."IDX_3824468eb106ed367f9ed36802"`);
+        await queryRunner.query(`DROP INDEX "public"."IDX_75a27a02f730444aebd6d5a5f6"`);
+        await queryRunner.query(`DROP TABLE "invites"`);
+        await queryRunner.query(`DROP INDEX "public"."IDX_68c26d8eca8ef1e6abaee3b03c"`);
+        await queryRunner.query(`DROP INDEX "public"."IDX_918fa4c56ac871c603ce9f584f"`);
+        await queryRunner.query(`DROP INDEX "public"."IDX_e3707cb905de9b9986e76f2b0b"`);
+        await queryRunner.query(`DROP TABLE "classes"`);
+        await queryRunner.query(`DROP INDEX "public"."IDX_48159d4b6d222018d0855538f1"`);
+        await queryRunner.query(`DROP TABLE "results"`);
+        await queryRunner.query(`DROP INDEX "public"."IDX_4c164f308fb9bf626ef067484e"`);
+        await queryRunner.query(`DROP TABLE "attendance"`);
+        await queryRunner.query(`DROP TABLE "programming"`);
+        await queryRunner.query(`DROP INDEX "public"."IDX_c7ed9c1972ebe7f9e412e8c0a3"`);
+        await queryRunner.query(`DROP TABLE "bookings"`);
+        await queryRunner.query(`DROP TABLE "gyms"`);
+        await queryRunner.query(`DROP INDEX "public"."IDX_61263c8664c5ca25d438fd92fc"`);
+        await queryRunner.query(`DROP TABLE "spaces"`);
+        await queryRunner.query(`DROP INDEX "public"."IDX_c5bad6a0f6a4496f5b31b79ca6"`);
+        await queryRunner.query(`DROP TABLE "membership_plans"`);
+        await queryRunner.query(`DROP INDEX "public"."IDX_56163489262483681d8f6f7ae3"`);
+        await queryRunner.query(`DROP INDEX "public"."IDX_athlete_membership_plans_one_active"`);
+        await queryRunner.query(`DROP TABLE "athlete_membership_plans"`);
+        await queryRunner.query(`DROP INDEX "public"."IDX_7aa32e180975909fbbdadd3fe7"`);
+        await queryRunner.query(`DROP INDEX "public"."IDX_7f11641574eb3c2b6032a946b6"`);
+        await queryRunner.query(`DROP TABLE "gym_memberships"`);
+        await queryRunner.query(`DROP TABLE "users"`);
+        await queryRunner.query(`DROP INDEX "public"."IDX_cda9ddda0cdfeea3ac24c63822"`);
+        await queryRunner.query(`DROP TABLE "class_types"`);
+        await queryRunner.query(`DROP INDEX "public"."IDX_0d9546b9563cbdda64d7a3863a"`);
+        await queryRunner.query(`DROP INDEX "public"."IDX_3cbfc71efa63aadd2ca15e765c"`);
+        await queryRunner.query(`DROP TABLE "gym_staff"`);
+    }
+
+}

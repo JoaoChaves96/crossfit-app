@@ -39,8 +39,8 @@ RUN apk add --no-cache --virtual .build python3 make g++ \
 
 COPY --from=builder /app/dist ./dist
 # The migrations are needed as source: the CLI runs them through ts-node.
-# Phase 2: COPY --from=builder /app/src/migrations ./src/migrations
-# Phase 2: COPY --from=builder /app/src/data-source.ts ./src/data-source.ts
+COPY --from=builder /app/src/migrations ./src/migrations
+COPY --from=builder /app/src/data-source.ts ./src/data-source.ts
 COPY tsconfig.json ./
 
 # Never root. `node` already exists in the base image.
