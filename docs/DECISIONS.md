@@ -522,3 +522,41 @@ Rules:
   `POST /api/auth/gym-context` still issue tokens for a suspended gym: the two
   must keep agreeing with each other (*Gym Context Is Switchable*), and a token
   for a frozen gym now grants exactly the reads that gym still allows.
+
+## Schema Changes Travel With A Migration
+
+**Decision:** Every change to an entity ships in the same pull request as a
+migration that applies it. `backend/src/migrations/` holds one generated
+baseline plus one migration per change after it.
+
+**How each environment gets its schema:**
+
+| Environment | Built by |
+|---|---|
+| Local dev | `synchronize` — fast iteration, disposable database |
+| Local e2e | migrations |
+| CI e2e | migrations |
+| Staging | migrations, as an explicit release step |
+
+**Workflow:** change the entity → `npm run migration:generate -- src/migrations/<Name>`
+→ **read the generated SQL** → commit both together. `npm run schema:check` gates
+this in CI by building a throwaway database from migrations alone and asserting
+`schema:log` finds nothing to do.
+
+**The reading step is not ceremony.** `schema:log` compares the entities to the
+schema, so it is blind to anything the entities do not describe. A construct
+written only in raw SQL — a check constraint, a trigger, a function, a
+concurrent index — will be dropped by a regenerated baseline and no gate will
+notice. Such constructs must be hand-written into a migration and marked with a
+comment saying they are invisible to drift detection.
+
+Partial indexes are *not* in that category: TypeORM expresses them via
+`@Index(name, columns, { where })` and `synchronize` builds them. The one-active-
+plan guard on `AthleteMembershipPlanEntity` is declared exactly that way and is
+present in every database, which is why the baseline squash was safe.
+
+**Why this exists:** before 2026-08-20 the five files in `backend/src/migrations/`
+were never registered in `databaseConfig`, had no npm script, and had never run
+anywhere. Every schema was built by `synchronize`, so a first deployment with
+`NODE_ENV=production` would have come up against an empty database and failed on
+its first query.
