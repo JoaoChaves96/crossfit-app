@@ -40,6 +40,13 @@ jobs:
         with:
           node-version: '24'
           cache: npm
+          # There is no lock file at the repo root — the two apps each have
+          # their own. Without these paths setup-node looks only at the root,
+          # finds nothing, and fails the job before a single test runs.
+          # This job installs both, so both are listed.
+          cache-dependency-path: |
+            backend/package-lock.json
+            frontend/package-lock.json
 
       - run: npm ci
         working-directory: backend
