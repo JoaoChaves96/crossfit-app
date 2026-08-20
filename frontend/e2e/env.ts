@@ -89,9 +89,10 @@ export function e2eBackendEnv(): Record<string, string> {
     // Silences the class-lifecycle, membership-renewal and reminder crons so a
     // fixture cannot change state mid-test. See backend/src/app.module.ts.
     DISABLE_SCHEDULERS: 'true',
-    // `test`, not `production`: synchronize is on for any non-production
-    // NODE_ENV, which is what builds the schema in the empty e2e database —
-    // no migration step.
+    // `production`, so synchronize is OFF: the schema is built by
+    // `migration:run` in global-setup.ts and by nothing else. While this was
+    // `test`, synchronize built the e2e schema on boot and the migration path
+    // was exercised by nothing — a baseline no test could contradict.
     //
     // This was once also load-bearing against `development`, because
     // JwtAuthGuard accepted a request with NO Authorization header and took
@@ -99,6 +100,23 @@ export function e2eBackendEnv(): Record<string, string> {
     // exactly the auth/token races this suite exists to catch, letting an
     // unauthenticated request succeed instead of 401ing. That branch was
     // removed on 2026-08-14, so every environment now behaves like this one.
-    NODE_ENV: 'test',
+    NODE_ENV: 'production',
+  };
+}
+
+/**
+ * Environment for running the backend's migration CLI against the e2e database.
+ *
+ * Same guard as everything else here: the database name is a constant, never
+ * inherited. `NODE_ENV=production` is deliberate — it forces `synchronize` off
+ * for this one command, so the schema is built by the migration and only by the
+ * migration. If synchronize also ran, a passing suite would prove nothing about
+ * the baseline.
+ */
+export function e2eMigrationEnv(): Record<string, string> {
+  return {
+    DB_NAME: E2E_DB_NAME,
+    NODE_ENV: 'production',
+    DISABLE_SCHEDULERS: 'true',
   };
 }

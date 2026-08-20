@@ -76,11 +76,14 @@ export default defineConfig({
       // The e2e backend. `e2eBackendEnv()` is what points it at the e2e
       // database, its own port, and turns the schedulers off.
       command: 'npm run start --prefix ../backend',
-      // No health route exists; Swagger UI is served once the app is listening.
-      url: `${E2E_API_URL}/api-docs`,
+      // A real health route now exists, and it pings the database — so this
+      // waits for a stack that can actually serve, not merely one that is
+      // listening. Swagger UI was a proxy for readiness, which its comment
+      // admitted.
+      url: `${E2E_API_URL}/health`,
       env: e2eBackendEnv(),
-      // Nest compiles before listening, and the first boot against an empty
-      // database also runs TypeORM synchronize.
+      // Nest compiles before listening. The schema is already in place:
+      // global-setup.ts runs the migrations.
       timeout: 180_000,
       // Never adopt a server already on this port: it would be running with
       // unknown env, and "unknown env" here means possibly the dev database.
