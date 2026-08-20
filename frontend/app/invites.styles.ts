@@ -242,9 +242,12 @@ export const styles = StyleSheet.create({
   },
 
   // Success state
+  // Not a success box: it reports a link that still has to be delivered by hand.
+  // Status.openWash is reserved for open/available status, and DESIGN.md has no
+  // success role — so this is a plain sunken panel bounded by a hairline.
   successBox: {
     borderRadius: Radius.control,
-    backgroundColor: Status.openWash,
+    backgroundColor: Ground.sunken,
     borderWidth: 1,
     borderColor: Line.hairline,
     padding: Space.md,

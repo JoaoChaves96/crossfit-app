@@ -1,5 +1,5 @@
 import { StyleSheet } from 'react-native';
-import { Ground, Ink, Line, Radius, Space, Elevation } from '@/constants/design';
+import { Accent, Ground, Ink, Line, Radius, Space, Elevation } from '@/constants/design';
 
 export const styles = StyleSheet.create({
   root: {
@@ -35,6 +35,28 @@ export const styles = StyleSheet.create({
     borderRadius: Radius.chip,
     paddingHorizontal: Space.md,
     paddingVertical: Space.xs,
+  },
+  // marginLeft: 'auto' rather than a spacer View — the header is a plain row and
+  // the button is the only thing that belongs on the right.
+  //
+  // This is the screen's single accent (One Accent Rule): Members had none
+  // before, so the emphasis was free. The empty state deliberately does NOT get
+  // a second button for the same reason — it points at this one instead.
+  inviteBtn: {
+    marginLeft: 'auto',
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: Accent.base,
+    borderRadius: Radius.control,
+    paddingVertical: Space.sm,
+    paddingHorizontal: Space.base,
+    gap: Space.xs,
+  },
+  // At 390 the header row cannot hold hamburger + title + count + a labelled
+  // button — the label pushed the control off the right edge. Icon-only here,
+  // square so the "+" stays centred; the label lives in accessibilityLabel.
+  inviteBtnMobile: {
+    paddingHorizontal: Space.sm,
   },
 
   // Search

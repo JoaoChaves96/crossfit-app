@@ -9,7 +9,7 @@ import {
   ScrollView,
   ActivityIndicator,
 } from 'react-native';
-import { useRouter } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useAuth } from '@/hooks/useAuth';
 import { useGym } from '@/hooks/useGym';
 import { createApiClient } from '@/utils/api-client';
@@ -302,6 +302,19 @@ export default function InvitesScreen() {
   const [modalPrefillEmail, setModalPrefillEmail] = useState('');
   const [revokingToken, setRevokingToken] = useState<string | null>(null);
   const [drawerOpen, setDrawerOpen] = useState(false);
+
+  // `?new=1` opens the create modal straight away, so arriving from Members'
+  // "Invite member" lands on the form rather than on a list the owner then has
+  // to find a button on. Mount-only by design: closing the modal must not
+  // re-open it while the param is still on the URL.
+  //
+  // Declared before the guards below — those return early, and a hook after
+  // them would change hook order between renders.
+  const { new: openNew } = useLocalSearchParams<{ new?: string }>();
+  React.useEffect(() => {
+    if (openNew === '1') setModalVisible(true);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const handleSidebarNav = (key: string) => {
     setDrawerOpen(false);

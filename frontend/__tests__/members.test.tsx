@@ -71,6 +71,34 @@ describe('MembersScreen', () => {
     Object.values(mockApiClient).forEach((fn) => fn.mockReset());
   });
 
+  // The Invite member control. Only its label is pinned here, because the label
+  // is what broke: at 390 the header row (hamburger + title + count + button)
+  // pushed a labelled button off the right edge, and nothing but a screenshot
+  // caught it. The navigation it performs is covered live by Playwright.
+  it('offers Invite member on desktop, labelled', async () => {
+    mockApiClient.get.mockResolvedValue({ members: [buildMember()] });
+
+    render(<MembersScreen />);
+
+    await screen.findByText('Jane Doe');
+    expect(screen.getByTestId('members-invite-btn')).toBeTruthy();
+    expect(screen.getByText('Invite member')).toBeTruthy();
+  });
+
+  it('drops the Invite member label on mobile so the header cannot overflow', async () => {
+    mockIsMobile = true;
+    mockApiClient.get.mockResolvedValue({ members: [buildMember()] });
+
+    render(<MembersScreen />);
+
+    await screen.findByText('Jane Doe');
+    // Still reachable, still named for assistive tech — just not laid out with
+    // text competing for a 390px row.
+    expect(screen.getByTestId('members-invite-btn')).toBeTruthy();
+    expect(screen.getByLabelText('Invite member')).toBeTruthy();
+    expect(screen.queryByText('Invite member')).toBeNull();
+  });
+
   it('shows the plan name and expiry on desktop', async () => {
     mockApiClient.get.mockResolvedValue({ members: [buildMember()] });
 

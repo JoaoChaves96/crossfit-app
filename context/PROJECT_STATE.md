@@ -290,6 +290,20 @@ MVP scope. Coach desktop has NO duplicate-header bug). Discovery/triage only; fi
   `sendInviteEmail` → `announceInviteLink`, documented as a seam that must not start throwing:
   the invite row is already persisted, so raising would destroy a valid token over a delivery
   never attempted. BE `tsc` 0 + 508/508, FE `tsc` 0 + 397/397, journey 11 green.
+- ✅ **Members has a route to adding someone (2026-08-20)** — navigation only, not a feature: an
+  owner standing on Members had no control that led anywhere, even though `/invites` already
+  did the whole job. Members now carries an **Invite member** control that pushes
+  `/invites?new=1`, and Invites opens its create modal on mount when that flag is present.
+  It says *Invite*, not *Add*, deliberately: `POST /members` needs an `athleteUserId`, and
+  resolving one from a typed email would be a cross-tenant read of users outside the gym —
+  forbidden by the isolation invariant. The invite flow is the tenant-safe path, so there is
+  no one-click enrolment to offer and the label does not imply one. Two DESIGN.md
+  consequences: the control is the screen's single accent (Members had none before, so the
+  emphasis was free), and the empty state therefore gets **no** second button — it points at
+  this one. At 390 the labelled button overflowed the header row past the right edge; it is
+  icon-only there with the name kept in `accessibilityLabel`. Only a screenshot caught that,
+  so it is pinned by a jest test on the responsive label plus a Playwright bounding-box
+  assertion. FE `tsc` 0 + 399/399, 15/15 journeys green (2.2 min).
 - ✅ **Gym context is switchable (2026-08-14)** — the second half of that same design, and the
   resolution of the multi-gym finding recorded under **Auth State** below. `gym_staff` has
   always allowed a coach at several gyms, but the JWT carries exactly one `gymId` and

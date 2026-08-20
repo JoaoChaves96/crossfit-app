@@ -13,7 +13,7 @@ import { useGym } from '@/hooks/useGym';
 import { useResponsiveLayout } from '@/hooks/useResponsiveLayout';
 import { SafeScreen } from '@/components/SafeScreen';
 import { Text, Icon, StatusChip, type ChipTone } from '@/components/cleanink';
-import { Ink, Status, Space } from '@/constants/design';
+import { Accent, Ink, Status, Space } from '@/constants/design';
 import { createApiClient } from '@/utils/api-client';
 import { components } from '@/types/api.gen';
 import { OwnerSidebar, OWNER_NAV_ITEMS } from '@/components/OwnerSidebar';
@@ -204,7 +204,11 @@ function EmptyState() {
         <Icon name="people" size={28} tone="faint" />
       </View>
       <Text size="title" weight="semibold" tone="strong">No members yet</Text>
-      <Text size="body" tone="muted" style={styles.emptyDesc}>Members will appear here once athletes join your gym.</Text>
+      {/* No button here — the header's Invite member is the view's one accent. */}
+      <Text size="body" tone="muted" style={styles.emptyDesc}>
+        Members appear here once athletes accept an invite. Use the + button above to create a
+        link for someone.
+      </Text>
     </View>
   );
 }
@@ -295,6 +299,25 @@ export default function MembersScreen() {
                   : `${visibleMembers.length} ${visibleMembers.length === 1 ? 'member' : 'members'}`}
               </Text>
             </View>
+            {/*
+              "Invite", not "Add": there is no one-click enrolment. POST /members
+              needs an athleteUserId, resolving one from an email would be a
+              cross-tenant read, and the invite flow is the tenant-safe path.
+              This is navigation only — it opens the existing invite modal on
+              /invites, closing the gap where an owner on this screen had no
+              route to adding someone.
+            */}
+            <TouchableOpacity
+              testID="members-invite-btn"
+              accessibilityLabel="Invite member"
+              style={[styles.inviteBtn, isMobile && styles.inviteBtnMobile]}
+              onPress={() => router.push('/invites?new=1')}
+              activeOpacity={0.7}>
+              <Icon name="add" size={18} tone={Accent.on} />
+              {!isMobile && (
+                <Text size="body" weight="semibold" tone={Accent.on}>Invite member</Text>
+              )}
+            </TouchableOpacity>
           </View>
 
           <View style={styles.searchRow}>
