@@ -374,7 +374,19 @@ MVP scope. Coach desktop has NO duplicate-header bug). Discovery/triage only; fi
   contamination hid it. 237/237 in **7.5s**, down from 9.5–45s. Isolation proved by counting the
   dev database before and after: unchanged. **Not yet proved under live contention** — that needs
   a dev backend on `crossfit_box_dev` with schedulers on, which would mutate the hand-seeded
-  fixtures. `test/jest-e2e.json` still has no TZ `globalSetup`, unlike the unit run — open debt.
+  fixtures.
+
+- ✅ **The backend e2e suite is timezone-pinned (2026-08-20)** — it never was, so for its whole
+  life every date assertion in it ran on the machine's zone. The unit run has been pinned since
+  it was written (`test/jest-tz.setup.ts`); jest allows one `globalSetup` per config, so the e2e
+  hook now calls that same function rather than restating it. `America/New_York` is chosen for the
+  sign: west of UTC, a late-UTC instant falls on the previous local day, which is the only
+  condition under which a value stored as an instant and read on a local calendar disagrees with
+  itself — the `@Column('date')` bug this project already paid for. Nothing broke (239/239), so
+  this exposed no live defect; it closes a hole rather than fixing a symptom. `timezone.e2e-spec.ts`
+  asserts the offset, because an unpinned zone **fails open**: every date assertion keeps passing
+  and says nothing. Mutation-proved — with the pin removed both assertions fail, the second
+  reading the 20th where it should read the 19th.
 
 ## Previous Phase (2026-05-23)
 

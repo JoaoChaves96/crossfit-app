@@ -18,8 +18,23 @@
  * to create it — an empty target is a setup problem, not a test failure.
  */
 import { E2E_DB_NAME, e2eDataSource, pinE2eDatabase } from './e2e-database';
+import pinTimezone from '../jest-tz.setup';
 
 export default async function setupE2eDatabase(): Promise<void> {
+  /**
+   * Pin the zone here too, for the reason jest-tz.setup.ts gives at length: this
+   * is the only hook that runs before the workers fork, and V8 has cached the
+   * zone by the time a spec file could set it.
+   *
+   * The unit run has been pinned since it was written; this suite never was, so
+   * every date assertion in it has been running on the machine's zone. On a UTC
+   * host that makes them tautological — local and UTC truncation coincide, so a
+   * value stored as an instant and read on a local calendar cannot be caught. A
+   * negative offset is the harsher choice and the one the unit suite and the
+   * Playwright suite already use.
+   */
+  pinTimezone();
+
   // `synchronize` keys off NODE_ENV, and this process is the one that builds the
   // schema, so it has to agree with the workers about which environment it is.
   process.env.NODE_ENV = 'test';
