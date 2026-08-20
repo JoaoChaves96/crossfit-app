@@ -82,8 +82,12 @@ export class InviteService {
 
     await this.inviteRepository.save(invite);
 
-    const frontendUrl =
-      process.env.FRONTEND_URL || 'https://app.crossfitbox.com';
+    // localhost, not a plausible-looking domain. The previous default was
+    // `https://app.crossfitbox.com`, which nobody here owns: a missing
+    // FRONTEND_URL minted invite links that looked correct and went nowhere,
+    // silently. A localhost link is obviously wrong to whoever sees it, and
+    // every deployed environment sets the variable.
+    const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:8081';
     const inviteLink = `${frontendUrl}/invite/${inviteToken}`;
 
     await this.announceInviteLink(inviteeEmail, gym.name, inviteLink);

@@ -127,6 +127,32 @@ describe('InviteService — coach invites', () => {
 
     expect(result.role).toBe('athlete');
   });
+
+  describe('FRONTEND_URL', () => {
+    const originalFrontendUrl = process.env.FRONTEND_URL;
+
+    afterEach(() => {
+      if (originalFrontendUrl === undefined) delete process.env.FRONTEND_URL;
+      else process.env.FRONTEND_URL = originalFrontendUrl;
+    });
+
+    it('falls back to localhost, never to a domain we do not own', async () => {
+      delete process.env.FRONTEND_URL;
+
+      const result = await service.createInvite(GYM_ID, OWNER_ID, EMAIL, 'coach');
+
+      expect(result.inviteLink).toMatch(/^http:\/\/localhost:8081\/invite\//);
+      expect(result.inviteLink).not.toContain('crossfitbox.com');
+    });
+
+    it('uses FRONTEND_URL when it is set', async () => {
+      process.env.FRONTEND_URL = 'https://app.boxops.dev';
+
+      const result = await service.createInvite(GYM_ID, OWNER_ID, EMAIL, 'coach');
+
+      expect(result.inviteLink).toMatch(/^https:\/\/app\.boxops\.dev\/invite\//);
+    });
+  });
 });
 
 describe('InviteService — accepting by role', () => {

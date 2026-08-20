@@ -936,9 +936,29 @@ export interface paths {
         put?: never;
         /**
          * Accept an invite
-         * @description Accepts an invite and, depending on the invite's role, creates a GymMembership (athlete) or a gym_staff row (coach). Returns a freshly signed JWT carrying the new gym context. If the request includes a valid JWT the authenticated user is used; otherwise the invitee is resolved by the invite email. The invitee must already be registered.
+         * @description Accepts an invite and, depending on the invite's role, creates a GymMembership (athlete) or a gym_staff row (coach). Returns a freshly signed JWT carrying the accepted gym as its context. Requires authentication: the caller's account must be the invited email, compared case-insensitively.
          */
         post: operations["InviteController_acceptInvite"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/health": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Liveness and database reachability
+         * @description Returns 200 when the process is listening and a SELECT 1 succeeds. Returns 503 when the database is unreachable. Unauthenticated.
+         */
+        get: operations["HealthController_check"];
+        put?: never;
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -2220,7 +2240,7 @@ export interface components {
             inviteToken: string;
             /**
              * @description Full acceptance URL. Email delivery is not implemented, so the owner copies this and sends it themselves.
-             * @example https://app.crossfitbox.com/invite/AbC123...
+             * @example https://app.boxops.dev/invite/AbC123...
              */
             inviteLink: string;
             /**
@@ -2957,6 +2977,18 @@ export interface components {
              * @example Successfully joined gym as coach
              */
             message: string;
+        };
+        HealthResponseDto: {
+            /**
+             * @description Always "ok" when the response is 200.
+             * @example ok
+             */
+            status: string;
+            /**
+             * @description Result of a SELECT 1 against the application database.
+             * @example up
+             */
+            database: string;
         };
         RegisterDto: {
             /**
@@ -4980,7 +5012,7 @@ export interface operations {
                     "application/json": components["schemas"]["UserProfileDto"];
                 };
             };
-            /** @description Validation error - name is required and must be non-empty */
+            /** @description Validation error - every field is optional, but a supplied name must be a non-empty string */
             400: {
                 headers: {
                     [name: string]: unknown;
@@ -5337,7 +5369,7 @@ export interface operations {
             };
         };
         responses: {
-            /** @description Invite created and email sent */
+            /** @description Invite created. No email is delivered — there is no mail provider wired (see epics/EMAIL_SERVICE_EPIC.md), so the caller is responsible for getting `inviteLink` to the invitee. Treat that link as the only delivery mechanism. */
             201: {
                 headers: {
                     [name: string]: unknown;
@@ -5484,6 +5516,20 @@ export interface operations {
                 };
                 content?: never;
             };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description The invite was issued to a different account, or the gym is suspended */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
             /** @description Invite not found */
             404: {
                 headers: {
@@ -5493,6 +5539,33 @@ export interface operations {
             };
             /** @description Invitee is already a member (athlete) or already staff (coach) at this gym */
             409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    HealthController_check: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The process and its database are both healthy. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HealthResponseDto"];
+                };
+            };
+            /** @description The process is listening but the database is unreachable. */
+            503: {
                 headers: {
                     [name: string]: unknown;
                 };

@@ -10,7 +10,7 @@ export class InviteCoachResponseDto {
   @ApiProperty({
     description:
       'Full acceptance URL. Email delivery is not implemented, so the owner copies this and sends it themselves.',
-    example: 'https://app.crossfitbox.com/invite/AbC123...',
+    example: 'https://app.boxops.dev/invite/AbC123...',
   })
   inviteLink: string;
 
