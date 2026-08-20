@@ -22,7 +22,72 @@
 
 Crossfit class booking application.
 
-## Current Phase (2026-08-03)
+## Current Phase (2026-08-20)
+
+**Staging Infrastructure — Phases 1–3 COMPLETE.** Design spec:
+`docs/superpowers/specs/2026-08-20-staging-infrastructure-design.md`. Plan (13 tasks):
+`docs/superpowers/plans/2026-08-20-staging-phases-1-3.md`. All 13 tasks implemented,
+verified and committed on `dev` — **not pushed, not merged to `main`**.
+
+Before this work nothing had ever been deployed: no CI, no Dockerfile, no cloud config, no
+path from an empty database to the current schema. Phases 1–3 make the apps *deployable*
+and gate them; they do **not** provision anything and cost nothing.
+
+**Phase 1 — deployable apps**
+- ✅ `GET /health` — unauthenticated, pings the DB, 503 when it is down, leaks no driver
+  message. Playwright's `webServer` now waits on it instead of `/api-docs`.
+- ✅ `database.config.ts` rewritten as `buildDatabaseConfig(env)`: `DATABASE_URL` takes
+  precedence over the discrete `DB_*` vars, `DATABASE_SSL=true` opts into TLS, migrations
+  are registered, and `migrationsRun` is **always false** — running them is an explicit
+  release step, never a boot side effect (two instances booting would race on DDL).
+- ✅ CORS is an allowlist from `CORS_ORIGINS`, falling back to allow-all when unset so local
+  work is unchanged. Swagger's server URL comes from `PUBLIC_API_URL`; `PORT` is honoured.
+- ✅ The `https://app.crossfitbox.com` invite-link default is gone (`FRONTEND_URL` or
+  localhost). It silently minted dead links, and the CrossFit trademark is a liability.
+- ✅ Env contract documented in `backend/.env.example` and `frontend/.env.example`.
+- ✅ App identity: `name` BoxOps, `slug`/`scheme` `boxops`, bundle id `dev.boxops.mobile`.
+- ✅ `backend/Dockerfile` — multi-stage `node:24-alpine`, `dumb-init` as PID 1, non-root,
+  devDependencies retained so the migration CLI can run in the release step.
+
+**Phase 2 — one verified baseline migration**
+- ✅ The five never-executed migrations are deleted and replaced by
+  `src/migrations/1787264211820-Baseline.ts` (17 tables, 16 FKs, full `down()`), generated
+  from the entities against an empty database via the new `src/data-source.ts`.
+- ✅ The e2e suite is now **migration-built**, not synchronize-built: `global-setup.ts` runs
+  `migration:run` before truncating, and the truncate excludes TypeORM's `migrations`
+  ledger. Proved twice from an empty database, 15/15 both times.
+- ⚠️ **Correction to the spec's Problem §3.** The spec claims the one-active-plan partial
+  unique index is not declared on `AthleteMembershipPlanEntity` and is therefore "absent
+  everywhere". That is **false**: the decorator is there, the index generated with its
+  `WHERE status = 'active'` clause intact, and index dumps of the migration-built database
+  and the synchronize-built dev database are byte-identical. The invariant was already
+  enforced; nothing had to be hand-carried. The spec's own text is left as the historical
+  record of an approved design — the corrected rationale lives in `docs/DECISIONS.md`
+  ("Schema Changes Travel With A Migration").
+
+**Phase 3 — CI**
+- ✅ `.github/workflows/ci.yml` — backend (types, lint, unit, schema drift against a
+  Postgres service), frontend (types, tests), and a Dockerfile build with no registry push.
+- ✅ `.github/workflows/e2e.yml` — the 15 Playwright journeys, hermetic, artifacts on failure.
+- ✅ `npm run schema:check` builds a throwaway database from migrations alone and asserts the
+  entities describe nothing more. Proved to fail on an injected column and pass after revert.
+- ⚠️ **The CI Lint step is `continue-on-error: true` and is therefore not yet a gate.** Bare
+  `eslint` reports 921 errors, 253 of them not auto-fixable (mostly
+  `@typescript-eslint/no-unsafe-*` against untyped supertest and mock objects), so
+  `npm run lint` has never exited 0 either. Clearing those 253 is its own piece of work;
+  when it lands, drop the flag.
+
+**Verified baselines after this work:** backend `tsc` clean, 520/520 unit, 239/239 jest e2e,
+`schema:check` ✓; frontend `tsc` clean, 399/399 unit, 15/15 Playwright journeys. Image builds
+and serves `/health` 200. The dev database was untouched throughout (338 users before and
+after) and no scratch databases leaked.
+
+**Phases 4–6 remain, and are blocked on provisioning** (Neon Postgres `eu-central-1`, Fly.io
+API in `mad`, Cloudflare Pages, and the `boxops.dev` DNS records) — none of which exists yet.
+`api.boxops.dev` / `app.boxops.dev` are the intended origins. `epics/EMAIL_SERVICE_EPIC.md`
+(provider settled as Resend) is downstream of that domain and DNS work.
+
+## Previous Phase (2026-08-03)
 
 **Tiered Audit — Phase 3: bug triage & fixes** (Trello board "Crossfit Application")
 Phase 1 (automated sweep) and Phase 2 (per-screen walkthrough vs `.pen` designs) surfaced
@@ -622,6 +687,9 @@ MVP scope. Coach desktop has NO duplicate-header bug). Discovery/triage only; fi
 - Backend: NestJS on port 3000 (requires `JWT_SECRET` in `backend/.env`)
 - Frontend: Expo web on port 8081
 - Database: PostgreSQL (seeded with test users: owner@, coach@, athlete@example.com / password123)
+  - Dev keeps `synchronize: true` (`NODE_ENV !== 'production'`); a schema change still needs a
+    migration or `npm run schema:check` fails. `crossfit_box_e2e` is built from migrations.
+- Env: copy `backend/.env.example` → `backend/.env` and `frontend/.env.example` → `frontend/.env`
 - Designs: `/designs/auth-screens.pen`, `/designs/athlete-screens.pen`, `/designs/gym-owner-screens.pen`, `/designs/coach-screens.pen`
 
 ## Verified Working Flows (Athlete MVP)
