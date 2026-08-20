@@ -86,7 +86,7 @@ export class InviteService {
       process.env.FRONTEND_URL || 'https://app.crossfitbox.com';
     const inviteLink = `${frontendUrl}/invite/${inviteToken}`;
 
-    await this.sendInviteEmail(inviteeEmail, gym.name, inviteLink);
+    await this.announceInviteLink(inviteeEmail, gym.name, inviteLink);
 
     return {
       inviteToken,
@@ -386,22 +386,36 @@ export class InviteService {
     return invite.status;
   }
 
-  private async sendInviteEmail(
+  /**
+   * Does NOT send an email. Nothing in this repo can — there is no mail provider,
+   * no transport and no credentials (`epics/EMAIL_SERVICE_EPIC.md`). This is the
+   * seam where delivery will eventually live, kept deliberately so the call site
+   * does not move when it arrives.
+   *
+   * Until then the returned `inviteLink` is the ONLY way an invite reaches anyone,
+   * and the owner is the transport. That is why this method cannot start throwing
+   * on failure as a "safety" improvement: there is no failure to report, and the
+   * invite row is already persisted by the time we get here, so raising would
+   * destroy a valid token over a delivery that was never attempted.
+   */
+  private async announceInviteLink(
     inviteeEmail: string,
     gymName: string,
     inviteLink: string,
   ): Promise<void> {
     if (process.env.NODE_ENV !== 'production') {
+      // "DEV EMAIL" previously read as though a mail path existed and this was
+      // merely its local stand-in. It is not: no branch of this method delivers.
       console.log(
-        `[InviteService] DEV EMAIL — To: ${inviteeEmail} | Subject: You're invited to ${gymName}! | Link: ${inviteLink}`,
+        `[InviteService] NOT EMAILED (no provider) — invite for ${inviteeEmail} to ${gymName}. ` +
+          `Send this link yourself: ${inviteLink}`,
       );
       return;
     }
 
-    // Production: integrate AWS SES or equivalent here
     console.warn(
-      '[InviteService] Production email delivery not yet configured. Invite link:',
-      inviteLink,
+      `[InviteService] NOT EMAILED (no provider) — invite for ${inviteeEmail} was created but ` +
+        `nothing was delivered. Someone must send this link manually: ${inviteLink}`,
     );
   }
 }

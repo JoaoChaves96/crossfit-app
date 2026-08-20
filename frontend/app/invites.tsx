@@ -98,7 +98,9 @@ function InviteRow({ invite, onResend, onRevoke, isRevoking }: InviteRowProps) {
             {invite.inviteeEmail}
           </Text>
           <Text size="meta" tone="muted">
-            {isAccepted ? `Joined ${formatDate(invite.createdAt)}` : `Sent ${formatDate(invite.createdAt)}`}
+            {isAccepted
+              ? `Joined ${formatDate(invite.createdAt)}`
+              : `Created ${formatDate(invite.createdAt)}`}
           </Text>
         </View>
         <StatusBadge status={status} />
@@ -113,7 +115,8 @@ function InviteRow({ invite, onResend, onRevoke, isRevoking }: InviteRowProps) {
               onPress={() => onResend(invite)}
               activeOpacity={0.7}
             >
-              <Text size="meta" weight="medium" tone="muted">Resend</Text>
+              {/* Not "Resend" — nothing was ever sent. This mints a fresh link. */}
+              <Text size="meta" weight="medium" tone="muted">New link</Text>
             </TouchableOpacity>
             {!isExpiredStatus && (
               <TouchableOpacity
@@ -237,7 +240,19 @@ function CreateInviteModal({ visible, gymId, token, prefillEmail = '', onClose, 
             {/* Success state */}
             {createdInvite !== null && (
               <View style={styles.successBox}>
-                <Text size="meta" weight="semibold" tone={Status.open}>Invite link generated</Text>
+                {/*
+                  Quiet meta text, not a green confirmation: DESIGN.md reserves
+                  Open Green for status-chip text on its wash (availability), and
+                  there is no success role. It also must not read as "delivered" —
+                  nothing was sent, so the owner is the transport.
+                */}
+                <Text size="meta" weight="semibold" tone="strong">
+                  Invite created — not sent
+                </Text>
+                <Text size="meta" tone="muted">
+                  No email goes out. Copy this link and send it to them yourself; it expires in
+                  7 days.
+                </Text>
                 <View style={styles.linkRow}>
                   <View style={styles.linkTextBox}>
                     <Text testID="invite-link-text" size="meta" tone="muted" numberOfLines={1}>
@@ -261,7 +276,7 @@ function CreateInviteModal({ visible, gymId, token, prefillEmail = '', onClose, 
               <View style={styles.modalActionBtn}>
                 <Button
                   testID="invite-send-btn"
-                  label="Send Invite"
+                  label="Create Link"
                   variant="primary"
                   onPress={handleSend}
                   loading={isSending}
@@ -392,9 +407,9 @@ export default function InvitesScreen() {
       <View style={styles.emptyIconCircle}>
         <Icon name="mail" size={28} tone="faint" />
       </View>
-      <Text size="title" weight="semibold" style={styles.emptyTitle}>No invites sent yet</Text>
+      <Text size="title" weight="semibold" style={styles.emptyTitle}>No invites yet</Text>
       <Text size="body" tone="muted" style={styles.emptyDesc}>
-        {"Invite athletes to join your gym. They'll receive an email with a link to accept."}
+        {'Create an invite link for an athlete, then send them the link yourself — by text, WhatsApp, or your own email. Nothing is delivered automatically.'}
       </Text>
       <View style={styles.emptyBtnWrap}>
         <Button

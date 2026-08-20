@@ -276,7 +276,20 @@ MVP scope. Coach desktop has NO duplicate-header bug). Discovery/triage only; fi
   Journey 11 rewritten to drive acceptance and then *save programming* — a coach-side read
   is not evidence about a token's claims on this codebase, only a write is.
   **Still open, now sharper:** no email is ever sent. The owner copying the invite link is
-  the whole delivery mechanism — recorded as `epics/EMAIL_SERVICE_EPIC.md`.
+  the whole delivery mechanism — recorded as `epics/EMAIL_SERVICE_EPIC.md`, which as of
+  2026-08-20 is a full epic with a cost section (monetary cost is ~nil at invite volume; the
+  real prerequisites are a domain with SPF/DKIM/DMARC and SES sandbox exit).
+- ✅ **Truth-in-UI: nothing claims a send that does not happen (2026-08-20)** — the system used
+  to advertise delivery it never performed. Swagger's create-invite 201 said "email sent"; the
+  invites empty state said athletes "will receive an email"; the primary action said **Send
+  Invite** and the per-row action **Resend**, when there had never been a send to repeat.
+  Now: Swagger names the epic and calls `inviteLink` the only delivery mechanism, the action is
+  **Create Link**, the row action is **New link**, dates read *Created* not *Sent*, and both
+  invite modals tell the owner they are the transport. The success box also dropped its green —
+  DESIGN.md reserves Open Green for status-chip text on its wash and has no success role.
+  `sendInviteEmail` → `announceInviteLink`, documented as a seam that must not start throwing:
+  the invite row is already persisted, so raising would destroy a valid token over a delivery
+  never attempted. BE `tsc` 0 + 508/508, FE `tsc` 0 + 397/397, journey 11 green.
 - ✅ **Gym context is switchable (2026-08-14)** — the second half of that same design, and the
   resolution of the multi-gym finding recorded under **Auth State** below. `gym_staff` has
   always allowed a coach at several gyms, but the JWT carries exactly one `gymId` and
@@ -647,7 +660,8 @@ MVP scope. Coach desktop has NO duplicate-header bug). Discovery/triage only; fi
 
 ## Invite Endpoints (Task #1 Complete)
 
-✅ POST /api/gyms/:gymId/invites (owner/coach — creates invite, sends email, returns token + link)
+✅ POST /api/gyms/:gymId/invites (owner/coach — creates invite, returns token + link; **sends no
+   email**, the link is the only delivery mechanism — `epics/EMAIL_SERVICE_EPIC.md`)
 ✅ GET /api/invites/:inviteToken (public — validates invite, returns gym name + status)
 ✅ POST /api/invites/:inviteToken/accept (public — creates membership, returns gym + athlete)
 

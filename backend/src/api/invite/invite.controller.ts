@@ -79,7 +79,10 @@ export class InviteController {
   @ApiBody({ type: CreateInviteDto })
   @ApiResponse({
     status: 201,
-    description: 'Invite created and email sent',
+    description:
+      'Invite created. No email is delivered — there is no mail provider wired ' +
+      '(see epics/EMAIL_SERVICE_EPIC.md), so the caller is responsible for getting ' +
+      '`inviteLink` to the invitee. Treat that link as the only delivery mechanism.',
     type: InviteResponseDto,
   })
   @ApiResponse({

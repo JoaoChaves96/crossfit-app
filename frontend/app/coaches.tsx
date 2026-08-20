@@ -457,7 +457,7 @@ function InviteModal({ visible, onClose, onSuccess, gymId, token }: InviteModalP
             <View style={styles.modalActionBtn}>
               <Button
                 testID="modal-confirm-btn"
-                label={created !== null ? 'Done' : 'Send Invite'}
+                label={created !== null ? 'Done' : 'Create Link'}
                 variant="primary"
                 onPress={created !== null ? handleClose : handleSubmit}
                 loading={isSubmitting}
