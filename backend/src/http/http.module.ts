@@ -37,6 +37,7 @@ import { GymScheduleController } from '../api/gym-schedule/gym-schedule.controll
 import { CoachClassesController } from '../api/coach/coach-classes.controller';
 import { InviteModule } from '../api/invite/invite.module';
 import { InviteController } from '../api/invite/invite.controller';
+import { HealthController } from '../api/health/health.controller';
 import { GetUserProfileService } from '../queries/user/get-user-profile.service';
 import { GetUserGymsService } from '../queries/user/get-user-gyms.service';
 import { UpdateUserProfileHandler } from '../commands/user/handlers/update-user-profile.handler';
@@ -78,6 +79,7 @@ import { QueryFailedFilter } from './query-failed.filter';
     CoachClassesController,
     NotificationController,
     InviteController,
+    HealthController,
   ],
   providers: [
     {
