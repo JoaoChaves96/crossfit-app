@@ -73,7 +73,11 @@ it('does NOT fire when already active (no real resume)', () => {
 it('uses the latest callback without re-subscribing', () => {
   const first = jest.fn();
   const second = jest.fn();
-  const { rerender } = renderHook(({ cb }) => useRefreshOnAppActive(cb), {
+  // The props type has to be annotated here, not left to inference from
+  // `initialProps`: renderHook declares its options as `NoInfer<Props>`, so the
+  // callback is the only inference site and an unannotated destructure resolves
+  // Props to `unknown`.
+  const { rerender } = renderHook(({ cb }: { cb: () => void }) => useRefreshOnAppActive(cb), {
     initialProps: { cb: first },
   });
 
