@@ -1,0 +1,121 @@
+# The fast gate: types, unit tests, lint, and schema drift. Never touches a
+# cloud provider, so it cannot be blocked by one being down or by a fork PR
+# having no access to secrets.
+name: ci
+
+on:
+  push:
+    branches: [main, dev]
+  pull_request:
+
+concurrency:
+  # A new push supersedes the run in flight for the same ref.
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  backend:
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        # Matches docker-compose.yml, so a CI-only schema difference is not a
+        # thing that can happen.
+        image: postgres:15-alpine
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: postgres
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 10
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+          cache-dependency-path: backend/package-lock.json
+
+      - run: npm ci
+        working-directory: backend
+
+      - name: Types
+        run: npx tsc --noEmit
+        working-directory: backend
+
+      - name: Lint
+        # --fix is in the package script; CI must report, not rewrite.
+        #
+        # Reporting only, deliberately. On the day this workflow was written the
+        # bare invocation had 921 errors, of which 253 are NOT auto-fixable —
+        # almost all @typescript-eslint/no-unsafe-* against untyped supertest and
+        # mock objects. So `npm run lint` never exited 0 either: lint has never
+        # been a gate in this repo, and turning it into one here would paint every
+        # pull request red for debt that predates it. Clearing those 253 is its
+        # own piece of work; when it lands, delete this line and the gate is real.
+        continue-on-error: true
+        run: npx eslint "{src,apps,libs,test}/**/*.ts"
+        working-directory: backend
+
+      - name: Unit tests
+        run: npm test
+        working-directory: backend
+
+      - name: Schema drift
+        # The gate from Task 11: builds a throwaway database from migrations
+        # alone and asserts the entities describe nothing more.
+        run: npm run schema:check
+        working-directory: backend
+        env:
+          DB_HOST: localhost
+          DB_PORT: '5432'
+          DB_USERNAME: postgres
+          DB_PASSWORD: postgres
+          JWT_SECRET: ci-secret-not-used-for-anything-real
+
+  frontend:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - run: npm ci
+        working-directory: frontend
+
+      - name: Types
+        run: npx tsc --noEmit
+        working-directory: frontend
+
+      - name: Tests
+        # jsdom reports 750px, so unpinned suites exercise the mobile layout
+        # only. Suites that care about desktop pin the viewport themselves.
+        run: npm test
+        working-directory: frontend
+
+  image:
+    # Proves the Dockerfile still builds. No registry push — that is Phase 5.
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: docker/setup-buildx-action@v3
+
+      - uses: docker/build-push-action@v6
+        with:
+          context: backend
+          push: false
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
