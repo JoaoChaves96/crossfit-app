@@ -215,8 +215,23 @@ Pages, proxied). `CORS_ORIGINS` is exactly `https://app.boxops.dev`, so the raw
     the shim takes the native branch; the jest suite structurally cannot catch this class of bug.
     A `Platform.OS='web'`-pinned suite is an open follow-up.
 
+- ✅ **The athlete header no longer claims a gym called "My Gym" (2026-08-21, `d4b69cd`).**
+  `DesktopTopNav` defaulted `gymName` to `'My Gym'` and only the Schedule screen passed a real
+  one, so Profile / My Bookings / Training History / class-details / log-results all read
+  **"My Gym"** while Schedule read the real name in the same session — and Schedule's own
+  loading and error branches render the bar bare, so even it flickered. The name was never the
+  screens' to supply: `GymMenu` already reads it from `useUserGyms()`. `DesktopTopNav` now takes
+  **no name prop at all**, and the placeholder is gone — a generic stand-in does not degrade, it
+  lies. Before either source answers the trigger is a bare chevron, still pressable and labelled
+  `Gym menu` for assistive tech. `GymMenu` keeps its optional `gymName` for the mobile header,
+  which passes the schedule response's authoritative name.
+  - **Why nothing caught it:** the one assertion on the header pinned the placeholder itself
+    (`getByText('My Gym')`) and ran mobile-only — jsdom is 750px, where `DesktopTopNav` never
+    renders. Now pinned by a **desktop-register** test that the name comes from `/api/me/gyms`
+    with no prop threaded in, plus one that no stand-in appears when the gym list is empty.
+
 **Full baseline, all four suites measured 2026-08-21:** backend `tsc` clean, **523/523** unit
-(51 suites), **239/239** jest e2e (15 suites); frontend `tsc` clean, **419/419** unit (37
+(51 suites), **239/239** jest e2e (15 suites); frontend `tsc` clean, **420/420** unit (37
 suites), **16/16** Playwright journeys in 4.2 min. This supersedes the 520/399 figures recorded
 against Phases 1–3 above.
 
