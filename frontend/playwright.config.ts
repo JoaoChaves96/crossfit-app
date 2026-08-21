@@ -1,11 +1,12 @@
 import { defineConfig, devices } from '@playwright/test';
 import path from 'path';
 import {
-  E2E_API_URL,
   E2E_TIMEZONE,
   E2E_WEB_PORT,
-  E2E_WEB_URL,
+  e2eApiUrl,
   e2eBackendEnv,
+  e2eTarget,
+  e2eWebUrl,
 } from './e2e/env';
 
 /**
@@ -13,7 +14,16 @@ import {
  * database `crossfit_box_e2e` — so it can be destructive while a dev stack on
  * 3000/8081 stays untouched. See e2e/env.ts for why that separation is
  * enforced in three places rather than trusted once.
+ *
+ * `E2E_TARGET=remote` runs the same journeys against a DEPLOYED environment
+ * instead. Only two things change: the addresses come from the environment, and
+ * nothing is booted locally. Everything that makes a journey a journey — the
+ * timezone pin, serial execution, no retries, per-journey seeding — is shared,
+ * because a remote run that behaved differently would not be verifying the same
+ * thing.
  */
+const isRemote = e2eTarget() === 'remote';
+
 export default defineConfig({
   testDir: './e2e',
 
@@ -47,7 +57,7 @@ export default defineConfig({
   reporter: process.env.CI ? [['github'], ['list']] : [['list']],
 
   use: {
-    baseURL: E2E_WEB_URL,
+    baseURL: e2eWebUrl(),
 
     // Pins the BROWSER's clock to a negative-offset zone. Without this, on a
     // UTC machine, "the day the owner picked" and "the day the athlete sees"
@@ -71,7 +81,14 @@ export default defineConfig({
 
   globalSetup: path.resolve(__dirname, 'e2e/global-setup.ts'),
 
-  webServer: [
+  // Nothing to boot against a deployed environment: the API is a Fly machine and
+  // the web app is a static bundle on a CDN, both already running before this
+  // process starts. Locally this is the whole stack.
+  //
+  // `undefined` rather than `[]`: Playwright treats an empty array as "no
+  // servers" too, but undefined is what the option's absence means, and it keeps
+  // the remote path from looking like a stack that failed to be configured.
+  webServer: isRemote ? undefined : [
     {
       // The e2e backend. `e2eBackendEnv()` is what points it at the e2e
       // database, its own port, and turns the schedulers off.
@@ -80,7 +97,7 @@ export default defineConfig({
       // waits for a stack that can actually serve, not merely one that is
       // listening. Swagger UI was a proxy for readiness, which its comment
       // admitted.
-      url: `${E2E_API_URL}/health`,
+      url: `${e2eApiUrl()}/health`,
       env: e2eBackendEnv(),
       // Nest compiles before listening. The schema is already in place:
       // global-setup.ts runs the migrations.
@@ -93,7 +110,7 @@ export default defineConfig({
     },
     {
       command: `npx expo start --web --port ${E2E_WEB_PORT}`,
-      url: E2E_WEB_URL,
+      url: e2eWebUrl(),
       // No API base URL is passed, and NODE_ENV is left alone — neither works.
       // Expo inlines EXPO_PUBLIC_* into the bundle from .env FILES ahead of the
       // environment, so an override here loses to .env.local even with a cold

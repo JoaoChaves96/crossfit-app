@@ -232,18 +232,39 @@ export function e2eBackendEnv(): Record<string, string> {
 }
 
 /**
- * Environment for running the backend's migration CLI against the e2e database.
+ * Environment for running the backend's migration CLI against this run's
+ * database.
  *
- * Same guard as everything else here: the database name is a constant, never
- * inherited. `NODE_ENV=production` is deliberate — it forces `synchronize` off
- * for this one command, so the schema is built by the migration and only by the
- * migration. If synchronize also ran, a passing suite would prove nothing about
- * the baseline.
+ * Local: the database name is a constant, never inherited — the same guard as
+ * everything else here. Remote: `DATABASE_URL`, which `buildDatabaseConfig`
+ * prefers over the discrete `DB_*` variables, so passing both would be
+ * ambiguous and exactly one is ever set. `DB_NAME` is deliberately absent on
+ * the remote path: a leftover value there would be silently ignored by the
+ * config but read as meaningful by anyone debugging this.
+ *
+ * `NODE_ENV=production` in both cases forces `synchronize` off for this one
+ * command, so the schema is built by the migration and only by the migration.
+ * If synchronize also ran, a passing suite would prove nothing about the
+ * baseline.
+ *
+ * `DATABASE_SSL=true` on the remote path is not optional: Neon refuses a
+ * plaintext connection, and since 7d215f7 the certificate is verified rather
+ * than merely trusted.
  */
 export function e2eMigrationEnv(): Record<string, string> {
-  return {
-    DB_NAME: E2E_DB_NAME,
-    NODE_ENV: 'production',
-    DISABLE_SCHEDULERS: 'true',
-  };
+  const base = { NODE_ENV: 'production', DISABLE_SCHEDULERS: 'true' };
+
+  if (e2eTarget() === 'remote') {
+    const url = process.env.E2E_DATABASE_URL;
+    if (!url) {
+      throw new Error(
+        `[e2e] E2E_DATABASE_URL is required when E2E_TARGET=remote. Use Neon's ` +
+          `DIRECT (non-pooled) endpoint: the migration CLI needs a real session, ` +
+          `and DDL through PgBouncer is a failure mode with no upside here.`,
+      );
+    }
+    return { ...base, DATABASE_URL: url, DATABASE_SSL: 'true' };
+  }
+
+  return { ...base, DB_NAME: E2E_DB_NAME };
 }

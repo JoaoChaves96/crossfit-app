@@ -22,10 +22,11 @@ import { execFileSync } from 'child_process';
 import path from 'path';
 import { Client } from 'pg';
 import {
-  E2E_DB_NAME,
   assertE2eDatabase,
-  e2eDbConfig,
+  e2eDbConnection,
+  e2eDbName,
   e2eMigrationEnv,
+  e2eTarget,
 } from './env';
 
 /**
@@ -36,16 +37,31 @@ import {
 const MIGRATIONS_LEDGER = 'migrations';
 
 async function globalSetup(): Promise<void> {
-  assertE2eDatabase(e2eDbConfig.database);
+  // Before anything opens a socket. On a remote run this is the check standing
+  // between a malformed E2E_DB_NAME and staging's own data.
+  const dbName = e2eDbName();
+  assertE2eDatabase(dbName);
 
-  const client = new Client(e2eDbConfig);
+  // From env.ts rather than assembled here: `helpers/seed.ts` opens its own
+  // client from the same function, and two copies of the remote branch is how
+  // the two files would drift onto different databases.
+  const client = new Client(e2eDbConnection());
 
   try {
     await client.connect();
   } catch (err) {
+    // The remedy differs by target, and a wrong remedy sends someone creating a
+    // local database to fix a deployment. Neither message mentions a host: on a
+    // remote run the address lives inside E2E_DATABASE_URL, which carries the
+    // password and must not be echoed.
+    const remedy =
+      e2eTarget() === 'remote'
+        ? `Check E2E_DATABASE_URL points at Neon's DIRECT endpoint for "${dbName}", ` +
+          `and that the workflow created that database before this ran.`
+        : `Create it first: docker exec crossfit_postgres psql -U postgres -c 'CREATE DATABASE ${dbName}'.`;
+
     throw new Error(
-      `[e2e] Could not connect to "${E2E_DB_NAME}" at ${e2eDbConfig.host}:${e2eDbConfig.port}. ` +
-        `Create it first: docker exec crossfit_postgres psql -U postgres -c 'CREATE DATABASE ${E2E_DB_NAME}'. ` +
+      `[e2e] Could not connect to "${dbName}". ${remedy} ` +
         `(${err instanceof Error ? err.message : String(err)})`,
     );
   }
@@ -59,7 +75,11 @@ async function globalSetup(): Promise<void> {
 
     // Build the schema from migrations. Idempotent: TypeORM skips migrations
     // already recorded in its own table, so a repeat run is a no-op.
-    assertE2eDatabase(e2eMigrationEnv().DB_NAME);
+    //
+    // Asserted against `e2eDbName()` rather than the migration env's DB_NAME,
+    // which only exists on the local path — a remote run passes DATABASE_URL
+    // instead, so reading `.DB_NAME` there would assert on `undefined`.
+    assertE2eDatabase(e2eDbName());
     execFileSync('npm', ['run', 'migration:run'], {
       cwd: path.resolve(__dirname, '../../backend'),
       env: { ...process.env, ...e2eMigrationEnv() },
@@ -77,7 +97,7 @@ async function globalSetup(): Promise<void> {
 
     if (tables.rowCount === 0) {
       throw new Error(
-        `[e2e] "${E2E_DB_NAME}" has no tables after migration:run. The baseline ` +
+        `[e2e] "${dbName}" has no tables after migration:run. The baseline ` +
           `migration should have created them — check the migration output above.`,
       );
     }
@@ -85,7 +105,7 @@ async function globalSetup(): Promise<void> {
     const quoted = tables.rows.map((r) => `"${r.name}"`).join(', ');
     await client.query(`TRUNCATE TABLE ${quoted} RESTART IDENTITY CASCADE`);
 
-    console.log(`[e2e] Truncated ${tables.rowCount} tables in ${E2E_DB_NAME}.`);
+    console.log(`[e2e] Truncated ${tables.rowCount} tables in ${dbName}.`);
   } finally {
     await client.end();
   }
