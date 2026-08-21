@@ -1,6 +1,6 @@
 import { BadRequestException, Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { MoreThan, Repository, IsNull } from 'typeorm';
+import { DataSource, MoreThan, Repository, IsNull } from 'typeorm';
 import { createHash, randomBytes } from 'crypto';
 import { v4 as uuid } from 'uuid';
 import * as bcrypt from 'bcrypt';
@@ -28,6 +28,7 @@ export class PasswordResetService {
     private readonly userRepository: Repository<UserEntity>,
     private readonly mailer: PasswordResetMailer,
     private readonly authService: AuthService,
+    private readonly dataSource: DataSource,
   ) {}
 
   /**
@@ -75,6 +76,13 @@ export class PasswordResetService {
     row.tokenHash = this.hashToken(token);
     row.expiresAt = expiresAt;
     row.usedAt = null;
+    // Set from the app clock, never left to the column's `DEFAULT now()`, which
+    // is the database clock: the throttle above compares `createdAt` against a
+    // cutoff computed here, and a naive `timestamp` column stores whatever zone
+    // wrote it. Mixing the two silently disables the throttle wherever the app
+    // is not running in UTC. Every other write path in this codebase sets
+    // `createdAt` explicitly for the same reason.
+    row.createdAt = new Date();
 
     await this.tokenRepository.save(row);
 
@@ -98,11 +106,20 @@ export class PasswordResetService {
       throw new BadRequestException(INVALID_TOKEN_MESSAGE);
     }
 
-    user.passwordHash = await bcrypt.hash(newPassword, 10);
-    await this.userRepository.save(user);
+    const passwordHash = await bcrypt.hash(newPassword, 10);
 
-    row.usedAt = new Date();
-    await this.tokenRepository.save(row);
+    // One transaction for both writes. Split, the failure between them leaves
+    // the account on the new password with the token still unused — a
+    // single-use credential that the mailbox holder can replay, which is the
+    // one property this feature exists to guarantee. Hashing happens before
+    // the transaction opens: bcrypt at cost 10 is ~100ms and nothing about it
+    // needs to hold a connection.
+    await this.dataSource.transaction(async (manager) => {
+      await manager.update(UserEntity, user.id, { passwordHash });
+      await manager.update(PasswordResetTokenEntity, row.id, {
+        usedAt: new Date(),
+      });
+    });
 
     // Through AuthService, never jwtService.sign: the claims' gym/role
     // resolution must be byte-identical to what login produces.

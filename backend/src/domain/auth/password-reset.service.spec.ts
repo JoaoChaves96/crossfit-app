@@ -1,5 +1,6 @@
 import { Test } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
+import { DataSource, EntityManager } from 'typeorm';
 import { BadRequestException } from '@nestjs/common';
 import { createHash } from 'crypto';
 import * as bcrypt from 'bcrypt';
@@ -21,6 +22,24 @@ describe('PasswordResetService', () => {
   const tokens = { findOne: jest.fn(), save: jest.fn(), count: jest.fn() };
   const mailer = { sendPasswordResetEmail: jest.fn() };
   const auth = { issueTokenForUser: jest.fn() };
+
+  // Runs the callback inline against a stub manager: this proves the writes go
+  // through one transaction, while whether that transaction is atomic is a
+  // database property and belongs to the e2e suite.
+  const manager = { update: jest.fn() };
+  const dataSource = {
+    transaction: jest.fn(
+      (run: (m: EntityManager) => Promise<unknown>) =>
+        run(manager as unknown as EntityManager) as Promise<unknown>,
+    ),
+  };
+
+  /** The value written for one entity inside the transaction. */
+  function updatedWith(entity: unknown): Record<string, unknown> {
+    const call = manager.update.mock.calls.find(([target]) => target === entity);
+    if (!call) throw new Error('no transactional update for that entity');
+    return call[2] as Record<string, unknown>;
+  }
 
   const user = {
     id: 'user-1',
@@ -48,6 +67,7 @@ describe('PasswordResetService', () => {
         { provide: getRepositoryToken(UserEntity), useValue: users },
         { provide: PasswordResetMailer, useValue: mailer },
         { provide: AuthService, useValue: auth },
+        { provide: DataSource, useValue: dataSource },
       ],
     }).compile();
 
@@ -188,29 +208,40 @@ describe('PasswordResetService', () => {
     it('stores a new bcrypt hash and returns a token from AuthService', async () => {
       tokens.findOne.mockResolvedValue(validRow());
       users.findOne.mockResolvedValue({ ...user });
-      users.save = jest.fn().mockImplementation((u) => Promise.resolve(u));
 
       const jwt = await service.resetPassword('plain', 'brand-new-password');
 
       expect(jwt).toBe('signed.jwt.token');
       expect(auth.issueTokenForUser).toHaveBeenCalledWith(user.id);
 
-      const savedUser = users.save.mock.calls[0][0];
-      expect(savedUser.passwordHash).not.toBe('old-hash');
+      const { passwordHash } = updatedWith(UserEntity);
+      expect(passwordHash).not.toBe('old-hash');
       await expect(
-        bcrypt.compare('brand-new-password', savedUser.passwordHash),
+        bcrypt.compare('brand-new-password', passwordHash as string),
       ).resolves.toBe(true);
     });
 
     it('marks the token used so it cannot be replayed', async () => {
       tokens.findOne.mockResolvedValue(validRow());
       users.findOne.mockResolvedValue({ ...user });
-      users.save = jest.fn().mockImplementation((u) => Promise.resolve(u));
 
       await service.resetPassword('plain', 'brand-new-password');
 
-      const savedRow = tokens.save.mock.calls[0][0];
-      expect(savedRow.usedAt).toBeInstanceOf(Date);
+      expect(updatedWith(PasswordResetTokenEntity).usedAt).toBeInstanceOf(Date);
+    });
+
+    it('writes the new hash and the used marker in one transaction', async () => {
+      tokens.findOne.mockResolvedValue(validRow());
+      users.findOne.mockResolvedValue({ ...user });
+
+      await service.resetPassword('plain', 'brand-new-password');
+
+      // A password changed with the token still replayable is the one state
+      // this feature must never leave behind, so both writes share a unit.
+      expect(dataSource.transaction).toHaveBeenCalledTimes(1);
+      expect(manager.update).toHaveBeenCalledTimes(2);
+      expect(users.save).not.toHaveBeenCalled();
+      expect(tokens.save).not.toHaveBeenCalled();
     });
 
     it.each([
