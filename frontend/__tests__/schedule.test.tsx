@@ -782,33 +782,57 @@ describe('ScheduleScreen — refused schedule', () => {
     jest.clearAllMocks();
   });
 
-  function mockRefusal() {
+  /**
+   * The schedule request is refused, so the response that names the gym never
+   * arrives. `/api/me/gyms` still answers — which is the point: the header's
+   * name comes from the gym list, not from this screen.
+   */
+  function mockRefusal(gyms: { gymId: string; gymName: string }[] = [{ gymId: 'gym-1', gymName: 'Test Gym' }]) {
     const mockApi = createMockApiClient();
     mockApi.get.mockImplementation((url: string) => {
       if (url.includes('/classes')) return Promise.reject(new Error('You do not have permission to do that.'));
       if (url.includes('/bookings')) return Promise.resolve(buildBookingsResponse([]));
+      if (url.includes('/me/gyms')) return Promise.resolve({ gyms });
       return Promise.reject(new Error(`Unexpected GET: ${url}`));
     });
     return mockApi;
   }
 
-  it('keeps the gym menu reachable on mobile', async () => {
+  it('keeps the gym menu reachable on mobile, named from the gym list', async () => {
     renderScreen(mockRefusal());
 
     await waitFor(() => expect(screen.getByTestId('schedule-error')).toBeTruthy());
     expect(screen.getByTestId('gym-menu-trigger')).toBeTruthy();
-    // Named, too: a menu whose trigger is blank is a menu nobody presses.
-    expect(screen.getByText('My Gym')).toBeTruthy();
+    // Named, too: a menu whose trigger is blank is a menu nobody presses. The
+    // name has to come from the gym list here — the schedule response that
+    // carries it is the request that just failed.
+    await waitFor(() => expect(screen.getByText('Test Gym')).toBeTruthy());
   });
 
-  it('keeps the gym menu reachable on desktop', async () => {
+  it('names the gym on desktop from shared state, with no prop threaded in', async () => {
+    // Pinned to desktop deliberately: DesktopTopNav is the desktop-only header,
+    // and it used to default the name to a plausible-looking stand-in. It takes
+    // no name at all now, so this passing proves the menu reads shared state.
     mockIsDesktop = true;
 
     renderScreen(mockRefusal());
 
     await waitFor(() => expect(screen.getByTestId('schedule-error')).toBeTruthy());
-    // No name assertion here: the gym name arrives on the request that just
-    // failed, so desktop shows DesktopTopNav's own fallback either way.
     expect(screen.getByTestId('gym-menu-trigger')).toBeTruthy();
+    await waitFor(() => expect(screen.getByText('Test Gym')).toBeTruthy());
+  });
+
+  it('shows no stand-in gym name when neither source has answered', async () => {
+    mockIsDesktop = true;
+
+    // Gym list resolves empty: nothing anywhere knows the name.
+    renderScreen(mockRefusal([]));
+
+    await waitFor(() => expect(screen.getByTestId('schedule-error')).toBeTruthy());
+    // The control stays pressable and labelled for assistive tech, but the
+    // header does not invent a name — a stand-in reads as the real one.
+    expect(screen.getByTestId('gym-menu-trigger')).toBeTruthy();
+    expect(screen.getByLabelText('Gym menu')).toBeTruthy();
+    expect(screen.queryByText('My Gym')).toBeNull();
   });
 });

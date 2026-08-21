@@ -370,7 +370,11 @@ export default function ScheduleScreen() {
   const { isDesktop } = useResponsiveLayout();
 
   const [classes, setClasses] = useState<EnrichedClass[]>([]);
-  const [gymName, setGymName] = useState('My Gym');
+  // Undefined, not a placeholder: the schedule response names the gym, and
+  // until it answers the menu names it from the gym list instead. Seeding this
+  // with a stand-in only meant the header showed a fake name first and the real
+  // one a moment later.
+  const [gymName, setGymName] = useState<string | undefined>(undefined);
   const [planExpiresAt, setPlanExpiresAt] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   // Full-screen spinner is for the first load only. Refocus refetches keep the
@@ -541,7 +545,7 @@ export default function ScheduleScreen() {
             answers 403 — had no control left on screen and no way back except
             logging out. The state that strands you is exactly the state that
             needs the way out. */}
-        {isDesktop ? <DesktopTopNav gymName={gymName} /> : (
+        {isDesktop ? <DesktopTopNav /> : (
           <SafeScreen style={styles.header} extraTopPadding={Space.md}>
             <GymMenu gymName={gymName} />
             <NotificationBell />
@@ -578,7 +582,7 @@ export default function ScheduleScreen() {
   if (classes.length === 0) {
     return (
       <View style={isDesktop ? desktopStyles.screen : styles.screen}>
-        {isDesktop ? <DesktopTopNav gymName={gymName} /> : (
+        {isDesktop ? <DesktopTopNav /> : (
           <SafeScreen style={styles.header} extraTopPadding={Space.md}>
             <GymMenu gymName={gymName} />
             <NotificationBell />
@@ -602,7 +606,7 @@ export default function ScheduleScreen() {
   if (isDesktop) {
     return (
       <View style={desktopStyles.screen}>
-        <DesktopTopNav gymName={gymName} />
+        <DesktopTopNav />
         <View style={desktopStyles.contentArea}>
           <View style={desktopStyles.innerWrap}>
             <ScheduleControls

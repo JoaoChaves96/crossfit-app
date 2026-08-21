@@ -17,11 +17,7 @@ const NAV_ITEMS = [
   { label: 'Profile', path: '/(tabs)/profile', testID: 'tab-profile' },
 ];
 
-interface DesktopTopNavProps {
-  gymName?: string;
-}
-
-export function DesktopTopNav({ gymName = 'My Gym' }: DesktopTopNavProps) {
+export function DesktopTopNav() {
   const router = useRouter();
   const pathname = usePathname();
 
@@ -32,8 +28,10 @@ export function DesktopTopNav({ gymName = 'My Gym' }: DesktopTopNavProps) {
 
   return (
     <View style={navStyles.topBar}>
-      {/* Gym selector menu (gym name + Log Out) */}
-      <GymMenu gymName={gymName} />
+      {/* Gym selector menu (gym name + Log Out). The name is the menu's own
+          business: it reads the gym list every session loads anyway, so a
+          screen that draws this bar never has to know — or guess — the name. */}
+      <GymMenu />
 
       {/* Nav tabs */}
       <View style={navStyles.navTabs}>

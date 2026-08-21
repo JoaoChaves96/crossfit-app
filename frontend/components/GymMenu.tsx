@@ -35,9 +35,12 @@ export function GymMenu({ gymName, nameStyle }: GymMenuProps) {
   const { logout } = useAuth();
   const { gyms, currentGymId, currentGymName, canSwitch, error, select } = useUserGyms();
 
-  // 'My Gym' only shows in the gap before either source has answered, and it is
-  // the same placeholder DesktopTopNav already falls back to.
-  const displayName = gymName ?? currentGymName ?? 'My Gym';
+  // No placeholder name. A generic stand-in reads as the gym's actual name, so
+  // it does not degrade — it lies, and it lied on every athlete screen but
+  // Schedule for as long as it existed. The gap before either source answers
+  // shows the bare chevron instead: the control is still there and still
+  // pressable, it just does not claim to know something it does not.
+  const displayName = gymName ?? currentGymName;
 
   const handleLogout = async () => {
     setOpen(false);
@@ -59,10 +62,13 @@ export function GymMenu({ gymName, nameStyle }: GymMenuProps) {
         style={menuStyles.selector}
         onPress={() => setOpen(true)}
         testID="gym-menu-trigger"
+        accessibilityLabel={displayName ?? 'Gym menu'}
       >
-        <Text weight="bold" tone="strong" tracking="snug" style={[menuStyles.gymName, nameStyle]}>
-          {displayName}
-        </Text>
+        {displayName ? (
+          <Text weight="bold" tone="strong" tracking="snug" style={[menuStyles.gymName, nameStyle]}>
+            {displayName}
+          </Text>
+        ) : null}
         <Icon name="chevronDown" size={14} tone="faint" />
       </Pressable>
 
@@ -76,8 +82,10 @@ export function GymMenu({ gymName, nameStyle }: GymMenuProps) {
         <Pressable style={menuStyles.backdrop} onPress={() => setOpen(false)}>
           <View style={menuStyles.menuCard} testID={canSwitch ? 'gym-switcher' : undefined}>
             <View style={menuStyles.gymRow}>
-              <Text weight="semibold" size="body" tone="strong">{displayName}</Text>
-              <Text size="label" tone="faint" style={menuStyles.gymRowSub}>
+              {displayName ? (
+                <Text weight="semibold" size="body" tone="strong">{displayName}</Text>
+              ) : null}
+              <Text size="label" tone="faint" style={displayName ? menuStyles.gymRowSub : undefined}>
                 {canSwitch ? 'Current gym' : 'Your gym'}
               </Text>
             </View>
