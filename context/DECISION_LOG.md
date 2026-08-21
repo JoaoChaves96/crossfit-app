@@ -122,6 +122,14 @@ encrypted, but the server certificate is not verified, so a machine-in-the-middl
 Fly and Neon would not be detected. Closing this means pinning Neon's CA and setting
 `rejectUnauthorized: true`; it is a deliberate decision for the phases 4-6 plan.
 
+**SUPERSEDED 2026-08-21 — this limitation is closed; the text above is the historical
+record.** Task 2 of the phases 4-6 plan (`7d215f7`) changed `database.config.ts` to
+`rejectUnauthorized: env.DATABASE_SSL_INSECURE !== 'true'`, so certificate verification is
+**on by default** and `DATABASE_SSL_INSECURE` is the named, deliberate escape hatch. Proved
+in production, not merely in tests: staging runs with `DATABASE_SSL=true` and no insecure
+flag, and `GET https://api.boxops.dev/health` returns `{"status":"ok","database":"up"}` —
+a verified-TLS connection to Neon. Do not read the paragraph above as an open security gap.
+
 ## `api.boxops.dev` Is Unproxied (2026-08-21)
 
 **Decision:** The `api` CNAME to Fly is **DNS only** (grey cloud), not proxied.
@@ -139,3 +147,45 @@ Cloudflare edge address), the certificate reached `Status = Issued` within 15s o
 `fly certs create`, and `GET https://api.boxops.dev/health` returns
 `{"status":"ok","database":"up"}` behind an `issuer=Let's Encrypt` certificate
 for `CN=api.boxops.dev`.
+
+## No Exported Asset May Sit Under a `node_modules` Path (2026-08-21)
+
+**Decision:** The web bundle is built with `npm run export:web`, never bare
+`npx expo export --platform web`. The script chains
+`frontend/scripts/relocate-vendor-assets.mjs`, which moves
+`dist/assets/node_modules/` to `dist/assets/vendor/` and repoints the references
+in the bundle. A build whose `dist/` still contains a `node_modules` path
+segment is a broken build and must fail.
+
+**Rationale:** Cloudflare Pages' uploader skips any path containing a
+`node_modules` segment. `expo export` mirrors an asset's on-disk location into
+the output tree, so anything shipped inside a package —
+`@expo/vector-icons` glyph fonts, `@react-navigation/elements` chrome icons,
+and formerly the Hanken Grotesk faces — lands in exactly the excluded path.
+Those files are never uploaded, and because `_redirects` ends in
+`/* /index.html 200`, every request for one returns **`200` with HTML**. Nothing
+404s, so no monitor or status-code check notices.
+
+**Why this is a rule and not just a fix:** the failure is invisible in the two
+places you would normally look. The status code is `200`, and the only console
+output is `OTS parsing error: invalid sfntVersion: 1008813135` — that number is
+the ASCII `<!DO` of `<!DOCTYPE`, i.e. a font parser reading index.html. The
+user-visible symptom was a **blank page**: `useFonts` never resolved, and the
+root layout returned `null` while it waited.
+
+Where we control the import, vendoring into `frontend/assets/` is preferred over
+relying on the script — that is why the four Hanken Grotesk faces now live in
+`frontend/assets/fonts/`. The script exists for the assets we do not control.
+
+**Corollary — a font failure must never blank the app.** `app/_layout.tsx` gates
+first paint on `!fontsLoaded && !fontError`, not on `fontsLoaded` alone. Holding
+paint to avoid a flash of the system face is worth it; holding it forever on an
+unreachable `.ttf`, with no error and nothing rendered, is not. A wrong face
+beats no app.
+
+**Verified 2026-08-21:** a clean `npm run export:web` relocated 37 assets and
+repointed 31 references; `find dist -path '*node_modules*'` is empty; all 41
+exported assets serve their own content type over a local static server (zero
+`text/html`); the console is clean where it previously carried 20 font warnings.
+The blank-page path was reproduced deliberately by hiding the font directory
+behind the SPA rewrite — fonts report `error` and the app still renders in full.

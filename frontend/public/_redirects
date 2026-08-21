@@ -1,0 +1,11 @@
+# Cloudflare Pages SPA fallback.
+#
+# `expo export` with web.output "static" emits an HTML file per known route, so
+# Pages serves those directly — it checks static assets before consulting this
+# file. What it cannot serve is a DYNAMIC route: /invite/<token> has no
+# corresponding file, and an invite link that 404s is the one link in this
+# product that absolutely must open for a stranger.
+#
+# 200 (rewrite), not 301: the URL must stay intact for expo-router to read the
+# token from it on the client.
+/*    /index.html   200

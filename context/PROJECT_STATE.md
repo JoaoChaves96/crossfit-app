@@ -46,8 +46,14 @@ and gate them; they do **not** provision anything and cost nothing.
   localhost). It silently minted dead links, and the CrossFit trademark is a liability.
 - ✅ Env contract documented in `backend/.env.example` and `frontend/.env.example`.
 - ✅ App identity: `name` BoxOps, `slug`/`scheme` `boxops`, bundle id `dev.boxops.mobile`.
-- ✅ `backend/Dockerfile` — multi-stage `node:24-alpine`, `dumb-init` as PID 1, non-root,
-  devDependencies retained so the migration CLI can run in the release step.
+- ✅ `backend/Dockerfile` — multi-stage `node:24-alpine`, `dumb-init` as PID 1, non-root.
+- ⚠️ **Correction (2026-08-21).** This entry used to claim "devDependencies retained so the
+  migration CLI can run in the release step". That was never true: the runtime stage sets
+  `NODE_ENV=production` **before** `npm ci`, so `ts-node`, `tsconfig-paths` and `typescript`
+  are all absent from the image. The first real Fly deploy died in the release command on
+  `Cannot find module 'tsconfig-paths/register'`. Fixed in `6cf046f` by running migrations
+  off compiled output (`migration:run:prod` → `dist/data-source.js`) rather than by shipping
+  a TypeScript toolchain to production. The image stays production-only, by design.
 
 **Phase 2 — one verified baseline migration**
 - ✅ The five never-executed migrations are deleted and replaced by
@@ -82,10 +88,46 @@ and gate them; they do **not** provision anything and cost nothing.
 and serves `/health` 200. The dev database was untouched throughout (338 users before and
 after) and no scratch databases leaked.
 
-**Phases 4–6 remain, and are blocked on provisioning** (Neon Postgres `eu-central-1`, Fly.io
-API in `mad`, Cloudflare Pages, and the `boxops.dev` DNS records) — none of which exists yet.
-`api.boxops.dev` / `app.boxops.dev` are the intended origins. `epics/EMAIL_SERVICE_EPIC.md`
-(provider settled as Resend) is downstream of that domain and DNS work.
+**Phases 4–6 — UNDERWAY (2026-08-21).** Plan (11 tasks):
+`docs/superpowers/plans/2026-08-21-staging-phases-4-6.md`; SDD ledger at
+`.superpowers/sdd/2026-08-21-staging-phases-4-6/progress.md`. Provisioning now exists: Neon
+Postgres `eu-central-1` (database `boxops_staging`) and Fly.io in **`fra`, not the spec's
+`mad`** — Neon's region is fixed and Frankfurt-to-Frankfurt saves ~25-30ms per query.
+
+- ✅ **Task 1 — the API is deployed and live.** `boxops-api-staging` in `fra`, image 67 MB,
+  the Baseline migration ran as a release step, and `GET https://api.boxops.dev/health`
+  returns `{"status":"ok","database":"up"}` — which also proves Neon connectivity under
+  **verified** TLS. Scaled to **one** machine deliberately: Fly's HA default created two, and
+  because `[env]` omits `DISABLE_SCHEDULERS` on purpose, two machines mean every `@Cron`
+  (class lifecycle, membership renewal, reminders) fires twice. Task 9's `boxops-api-e2e` will
+  need `fly deploy --ha=false` for the same reason.
+- ✅ **Task 2 — verified TLS to Neon** (`7d215f7`), and **Task 3 — `api.boxops.dev`**
+  (`2abaf96`): CNAME unproxied (grey cloud), Let's Encrypt certificate `Issued`, Swagger
+  advertising `https://api.boxops.dev`.
+- ✅ Tasks 5, 7, 10 (code) landed earlier (`370508f..4b95984`), CI green. Task 7 is unreviewed.
+- 🔄 **Task 4 — Cloudflare Pages, in progress.** Steps 1–5 done: `boxops-app.pages.dev` is
+  deployed and serving. Steps 6–8 remain, and the human still has to attach
+  `app.boxops.dev`.
+- ✅ **Blank staging page — FIXED and verified live.** `boxops-app.pages.dev` answered `200`
+  and rendered nothing. Root cause: Pages skips any upload path containing a `node_modules`
+  segment, and `expo export` put every package-owned asset there, so the `/* /index.html 200`
+  rewrite answered each `.ttf` with HTML; `useFonts` then never resolved and the root layout
+  returned `null` forever. Three changes: the Hanken Grotesk faces are vendored into
+  `frontend/assets/fonts/`; `frontend/scripts/relocate-vendor-assets.mjs` (run via the new
+  `npm run export:web`) relocates the assets we don't control (`@expo/vector-icons`,
+  `@react-navigation/elements`); and first paint no longer waits forever on a failed font.
+  Verified locally — tsc clean, 410 tests green, all 41 exported assets serve their own
+  content type, blank-page path reproduced and confirmed fixed. **Still to do: redeploy and
+  re-verify against the live URL** (plan Step 6 now checks `content_type`, not just the status
+  code — a `200` is what hid this). See DECISION_LOG "No Exported Asset May Sit Under a
+  `node_modules` Path".
+- ⬜ Then Task 6 (CI deploy), 8–9 (remote e2e, deferrable), 11.
+- **Human gates:** 1 (Fly secrets), 2 (Cloudflare DNS) and 3 (Pages API token) are cleared.
+  Remaining: Gate 4 (create the Pages project, attach the domain), Gate 5 (Fly deploy token +
+  three GitHub secrets), Gate 6 (the ephemeral e2e app + `NEON_ADMIN_DATABASE_URL`).
+
+`epics/EMAIL_SERVICE_EPIC.md` (provider settled as Resend) is downstream of this domain and
+DNS work, and `api.boxops.dev` existing now unblocks part of it.
 
 ## Previous Phase (2026-08-03)
 
