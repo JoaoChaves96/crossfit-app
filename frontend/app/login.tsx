@@ -164,6 +164,16 @@ export default function LoginScreen() {
             onPress={handleSubmit}
             loading={isLoading}
           />
+
+          {/* Quiet, not accented: the Log In button owns the one accent on this
+              view (One Accent Rule). */}
+          <TouchableOpacity
+            testID="login-forgot-link"
+            onPress={() => router.push('/forgot-password' as never)}>
+            <Text size="meta" tone={Ink.muted} style={styles.forgotLink}>
+              Forgot password?
+            </Text>
+          </TouchableOpacity>
         </View>
 
         {/* Footer */}

@@ -25,11 +25,17 @@ function NavigationGuard() {
 
   const isDevBootstrap = __DEV__ && pathname === DEV_BOOTSTRAP_ROUTE;
   // Public (signed-out) routes the guard must never bounce to /login: the invite
-  // deep-link plus the auth screens themselves. Without /register here the guard
-  // redirects any unauthenticated visitor off the sign-up screen straight back to
-  // login, making registration (and the invite → register hand-off) unreachable.
+  // and password-reset deep links plus the auth screens themselves. Without
+  // /register here the guard redirects any unauthenticated visitor off the
+  // sign-up screen straight back to login, making registration (and the
+  // invite → register hand-off) unreachable — and without /reset-password/ a
+  // reset link opened from a mail client lands on login instead of the form.
   const isPublicRoute =
-    pathname.startsWith('/invite/') || pathname === '/login' || pathname === '/register';
+    pathname.startsWith('/invite/') ||
+    pathname.startsWith('/reset-password/') ||
+    pathname === '/login' ||
+    pathname === '/register' ||
+    pathname === '/forgot-password';
 
   useEffect(() => {
     if (isDevBootstrap) return;

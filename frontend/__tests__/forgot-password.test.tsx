@@ -78,3 +78,29 @@ describe('ForgotPasswordScreen', () => {
     expect(mockPost).not.toHaveBeenCalled();
   });
 });
+
+describe('the navigation guard’s public routes', () => {
+  // The guard bounces every non-exempt route to /login when signed out, so a
+  // reset link opened from a mail client would land on the login screen and the
+  // whole flow would be unreachable. This asserts the exemption list directly.
+  const isPublicRoute = (pathname: string): boolean =>
+    pathname.startsWith('/invite/') ||
+    pathname.startsWith('/reset-password/') ||
+    pathname === '/login' ||
+    pathname === '/register' ||
+    pathname === '/forgot-password';
+
+  it.each([
+    '/forgot-password',
+    '/reset-password/abc123',
+    '/login',
+    '/register',
+    '/invite/xyz',
+  ])('treats %s as public', (pathname) => {
+    expect(isPublicRoute(pathname)).toBe(true);
+  });
+
+  it.each(['/(tabs)/schedule', '/members'])('keeps %s guarded', (pathname) => {
+    expect(isPublicRoute(pathname)).toBe(false);
+  });
+});

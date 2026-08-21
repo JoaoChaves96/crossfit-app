@@ -73,6 +73,12 @@ export const styles = StyleSheet.create({
     marginTop: -Space.xs,
   },
 
+  // Forgot-password link — sits under the CTA, centred, deliberately unaccented.
+  forgotLink: {
+    textAlign: 'center',
+    marginTop: -Space.sm,
+  },
+
   // Footer
   footer: {
     flexDirection: 'row',
