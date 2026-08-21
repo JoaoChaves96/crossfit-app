@@ -54,7 +54,7 @@ describe('buildDatabaseConfig', () => {
 
   it('enables TLS only when DATABASE_SSL is exactly "true"', () => {
     expect(build({ DATABASE_SSL: 'true' }).ssl).toEqual({
-      rejectUnauthorized: false,
+      rejectUnauthorized: true,
     });
     expect(build({ DATABASE_SSL: 'false' }).ssl).toBeUndefined();
     expect(build({}).ssl).toBeUndefined();
@@ -77,5 +77,34 @@ describe('buildDatabaseConfig', () => {
       (build({ NODE_ENV: 'production' }) as { migrationsRun?: boolean })
         .migrationsRun,
     ).not.toBe(true);
+  });
+});
+
+describe('TLS', () => {
+  it('verifies the server certificate when DATABASE_SSL is true', () => {
+    const config = buildDatabaseConfig({
+      DATABASE_URL: 'postgres://u:p@example.neon.tech/db',
+      DATABASE_SSL: 'true',
+    } as NodeJS.ProcessEnv) as { ssl?: { rejectUnauthorized: boolean } };
+
+    expect(config.ssl).toEqual({ rejectUnauthorized: true });
+  });
+
+  it('allows an unverified connection only when explicitly asked', () => {
+    const config = buildDatabaseConfig({
+      DATABASE_URL: 'postgres://u:p@example.neon.tech/db',
+      DATABASE_SSL: 'true',
+      DATABASE_SSL_INSECURE: 'true',
+    } as NodeJS.ProcessEnv) as { ssl?: { rejectUnauthorized: boolean } };
+
+    expect(config.ssl).toEqual({ rejectUnauthorized: false });
+  });
+
+  it('omits ssl entirely when DATABASE_SSL is unset, so local Postgres still works', () => {
+    const config = buildDatabaseConfig({} as NodeJS.ProcessEnv) as {
+      ssl?: unknown;
+    };
+
+    expect(config.ssl).toBeUndefined();
   });
 });

@@ -71,7 +71,21 @@ export function buildDatabaseConfig(
     type: 'postgres',
     ...connection,
     ...(env.DATABASE_SSL === 'true'
-      ? { ssl: { rejectUnauthorized: false } }
+      ? {
+          ssl: {
+            // Verification ON. `sslmode`/`channel_binding` in a provider URL are
+            // libpq parameters that node-postgres silently ignores, so this flag
+            // is the ONLY thing standing between us and an unauthenticated
+            // channel. Neon serves Let's Encrypt certificates and Node's bundled
+            // CA store trusts ISRG Root X1, so no CA file has to travel with the
+            // image.
+            //
+            // DATABASE_SSL_INSECURE is the deliberate, named escape hatch for a
+            // provider with a private CA. It has to be asked for by name; it is
+            // not what a missing variable gets you.
+            rejectUnauthorized: env.DATABASE_SSL_INSECURE !== 'true',
+          },
+        }
       : {}),
     entities,
     migrations: [`${__dirname}/../migrations/*.{ts,js}`],
@@ -79,7 +93,8 @@ export function buildDatabaseConfig(
     // machines starting together would race on the same DDL.
     migrationsRun: false,
     // Unchanged on purpose. `frontend/e2e/env.ts` e2eBackendEnv() sets
-    // NODE_ENV=test specifically so this stays on and builds the e2e schema.
+    // NODE_ENV=production now (e2e moved onto migrations), so this only stays
+    // on for local dev and jest, never for the e2e schema.
     synchronize: env.NODE_ENV !== 'production',
     logging: env.DATABASE_LOGGING === 'true',
   };
