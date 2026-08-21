@@ -268,3 +268,37 @@ a browser starts.
 and the first client render. The app renders and works. It is allow-listed
 narrowly so the console check still fails on anything new; if it is ever fixed,
 delete the entry so a regression is caught again.
+
+## Resend Is The Email Provider (2026-08-21)
+
+**Decision:** Transactional email goes out through **Resend**, from
+`mail.boxops.dev`. The application talks to it behind a two-driver seam
+(`MAIL_DRIVER=log` locally and in tests, `MAIL_DRIVER=resend` on staging), so no
+code path is provider-aware.
+
+**Rationale:** SES was the obvious alternative and was rejected because nothing
+else in this stack is on AWS — the app runs on Fly with Neon, so SES would add an
+IAM surface and a second cloud account for one capability. At this volume both are
+free, so cost did not decide it; onboarding did. SES starts every account in a
+sandbox that only sends to pre-verified addresses and requires a written
+production-access request, while Resend needs only domain verification. The seam
+is the hedge: if volume or deliverability ever argues for SES, one driver is added
+and one env var changes.
+
+## Invite Delivery Reports Status Synchronously, With No Send Log (2026-08-21)
+
+**Decision:** The invite email is sent **inline** inside `createInvite`, and the
+create response carries `delivery: 'sent' | 'failed'`. There is no send log
+table, no `delivery` column, and no retry sweep. A send failure does **not** roll
+back the invite — the invite is created and the owner is told to fall back to the
+copy-link affordance, which is why that affordance is deliberately retained.
+
+**Rationale:** At this volume the failures worth designing for are permanent, not
+transient — a typo'd address, a hard bounce, a mis-set key — and a retry cannot fix
+any of them. A human is always on screen at the moment an invite is created, so
+synchronous truth reaches exactly the person who can act on it; a queue would move
+the failure somewhere nobody is looking. A retry sweep would also need a scheduler,
+and staging runs two Fly machines, so it would inherit the duplicate-cron problem
+before delivering any value. Both a send log and retries are purely additive later:
+the seam already isolates the provider, and `delivery` is a response field, so
+adding persistence breaks no contract.

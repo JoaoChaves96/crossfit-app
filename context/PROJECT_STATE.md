@@ -253,8 +253,14 @@ against Phases 1–3 above.
 
 
 
-`epics/EMAIL_SERVICE_EPIC.md` (provider settled as Resend) is downstream of this domain and
-DNS work, and `api.boxops.dev` existing now unblocks part of it.
+✅ **Email service — built 2026-08-21, not yet verified live.** `epics/EMAIL_SERVICE_EPIC.md` is
+now a record, not a brief. Invites for **both** roles are mailed through a `MailDriver` seam
+(Resend over `fetch`, no new npm dependency) and both create responses carry
+`delivery: 'sent' | 'failed'`; a failure keeps the invite and its token, and the owner is told to
+pass the link on. `MAIL_DRIVER` defaults to a non-sending log driver, so **nothing is delivered
+anywhere yet** — the remaining work is human: Resend signup, SPF/DKIM/DMARC for `mail.boxops.dev`
+in Cloudflare, then `MAIL_DRIVER=resend` + `RESEND_API_KEY` as Fly secrets. Password reset is
+still unbuilt but no longer blocked: it has a mail seam to build on.
 
 ## Previous Phase (2026-08-03)
 
@@ -509,10 +515,11 @@ MVP scope. Coach desktop has NO duplicate-header bug). Discovery/triage only; fi
   BE 437/437 unit + invite e2e specs rewritten, FE 368/368, `tsc` clean.
   Journey 11 rewritten to drive acceptance and then *save programming* — a coach-side read
   is not evidence about a token's claims on this codebase, only a write is.
-  **Still open, now sharper:** no email is ever sent. The owner copying the invite link is
-  the whole delivery mechanism — recorded as `epics/EMAIL_SERVICE_EPIC.md`, which as of
-  2026-08-20 is a full epic with a cost section (monetary cost is ~nil at invite volume; the
-  real prerequisites are a domain with SPF/DKIM/DMARC and SES sandbox exit).
+  **Was open, now closed (2026-08-21):** at the time of this entry no email was ever sent and
+  the owner copying the invite link was the whole delivery mechanism. Invites are now emailed
+  through Resend inside `createInvite`, with the result reported as `delivery` on the response
+  and the copy-link affordance kept as the failure fallback — see the 2026-08-21 email-service
+  entry near the top of this file and `epics/EMAIL_SERVICE_EPIC.md`.
 - ✅ **Truth-in-UI: nothing claims a send that does not happen (2026-08-20)** — the system used
   to advertise delivery it never performed. Swagger's create-invite 201 said "email sent"; the
   invites empty state said athletes "will receive an email"; the primary action said **Send
@@ -911,8 +918,9 @@ MVP scope. Coach desktop has NO duplicate-header bug). Discovery/triage only; fi
 
 ## Invite Endpoints (Task #1 Complete)
 
-✅ POST /api/gyms/:gymId/invites (owner/coach — creates invite, returns token + link; **sends no
-   email**, the link is the only delivery mechanism — `epics/EMAIL_SERVICE_EPIC.md`)
+✅ POST /api/gyms/:gymId/invites (owner/coach — creates invite, returns token + link; **emails the
+   invite inline** and reports `delivery: 'sent' | 'failed'`, with the link as the fallback when a
+   send fails — `epics/EMAIL_SERVICE_EPIC.md`)
 ✅ GET /api/invites/:inviteToken (public — validates invite, returns gym name + status)
 ✅ POST /api/invites/:inviteToken/accept (public — creates membership, returns gym + athlete)
 

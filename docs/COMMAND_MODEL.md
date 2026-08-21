@@ -1254,7 +1254,10 @@ Commands are grouped by actor role (Athlete, Coach, Gym Owner, Platform Admin) a
   - `role = coach`
   - `status = active`
   - `assigned_at = now`
-- Send invitation email (implementation-specific; may be async)
+- Send the invitation email inline, during the command — not queued, not deferred.
+  The result is reported on the response as `delivery: 'sent' | 'failed'`; a failed
+  send does **not** roll back the invite, and the owner falls back to copying the
+  invite link.
 
 **Failure Cases:**
 

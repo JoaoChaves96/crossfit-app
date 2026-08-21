@@ -1,78 +1,131 @@
-# Email Service — OPEN (not scheduled)
+# Email Service — BUILT (2026-08-21), awaiting live verification
 
 **Goal:** an invite reaches its recipient without the gym owner acting as the mail carrier.
 
-**Status:** open, unscheduled. This file is the brief for whoever picks it up, and the record of
-why the copy-the-link mechanism exists so it is not mistaken for a bug or "fixed" by accident.
+**Status:** the code is complete, tested and merged on `dev`. Invites are mailed through a driver
+seam whose default is a non-sending log driver, so **nothing is delivered anywhere until
+`MAIL_DRIVER=resend` and `RESEND_API_KEY` are set on an environment.** That last step is a human
+prerequisite (Resend signup + DNS), and until it happens §6's done-when is unmet: no invite has
+yet arrived at a real external inbox.
 
 **Source:** the coach-invite work of 2026-08-13
-(`docs/superpowers/specs/2026-08-13-coach-invite-and-gym-context-design.md`). That spec made
-acceptance mandatory for coach invites, which means an invite link now has to *reach* a person
-who may not have an account yet. It does not, so the gap is recorded here rather than left
-implied by a `TODO`.
+(`docs/superpowers/specs/2026-08-13-coach-invite-and-gym-context-design.md`), which made
+acceptance mandatory for coach invites and so required an invite link to *reach* a person who may
+not have an account yet.
+
+**Design:** `docs/superpowers/specs/2026-08-21-email-service-design.md`.
+**Plan:** `docs/superpowers/plans/2026-08-21-email-service.md`.
 
 ---
 
-## 1. There is no email provider, anywhere
+## 1. What shipped
 
-No provider is wired in the repo. `backend/package.json` has no mail dependency (no
-`nodemailer`, no `@aws-sdk/client-ses`, no hosted-API client), there is no mail module, no
-template directory, and no SMTP or API-key configuration to set. The only outbound channel
-that exists is Expo push (`epics/NOTIFICATIONS_EPIC.md`), which reaches **registered devices**
-and therefore cannot carry an invite to someone who has never signed up.
+**Provider:** Resend, over its HTTP API via global `fetch`. **No new npm dependency** in either
+project — sending an email is one POST, and owning the error mapping is what lets the service
+report a status instead of guessing at an SDK's exception types.
 
-There is exactly one seam where delivery would live, `InviteService.announceInviteLink` in
-`backend/src/domain/invite/invite.service.ts`. It does not deliver. Both branches log:
+**The seam.** `MailDriver` has exactly two implementations, selected at boot by `MAIL_DRIVER`:
 
-- outside production, a `NOT EMAILED (no provider)` line carrying the recipient and the link;
-- in production, the same as a `console.warn`, then it returns.
+| Driver | Behaviour |
+|---|---|
+| `log` (default) | Logs the message; with `MAIL_PREVIEW_DIR` set, writes the rendered HTML there so a template can be opened in a browser. **Never throws** — it is the absence of a provider, not a provider under test. |
+| `resend` | One POST to `api.resend.com/emails`; throws `MailDeliveryError` carrying the status and the provider's body. Refuses to boot without `RESEND_API_KEY`. |
 
-It never throws and never reports failure, so `createInvite` succeeds identically whether or not
-anything was delivered — which is correct, because nothing is ever attempted. Every invite in the
-system, athlete and coach, has been created this way; **nothing has ever been emailed.** Password
-reset does not exist either, so invites are the whole of the requirement today.
+Selection is boot-time, so a misconfigured environment fails the deploy rather than the first
+invite an owner creates. The key is checked for **presence, never validity** — the forced-failure
+verification needs the app to boot with a wrong key so Resend can answer 401 at send time.
 
-The method is deliberately kept as a seam so the call site does not move when a provider arrives.
-It must not start throwing as a "safety" improvement: the invite row is already persisted by the
-time it runs, so raising would destroy a valid token over a delivery that was never attempted.
+**Above the seam:** `InviteMailer` owns the two role-specific templates. An athlete is joining a
+gym; a coach is being offered a job — different subjects and different bodies, both landing on the
+same `/invite/<token>` screen, both naming who invited them, which gym, and the 7-day expiry. The
+expiry date is formatted with `timeZone: 'UTC'` pinned, or the same instant would read as a
+different day depending on the host's clock zone.
 
-## 2. Owner-copies-the-link is the deliberate interim mechanism
+**Delivery reporting.** `InviteService.announceInviteLink` kept its name and its call site — the
+seam did not move when a provider arrived — but now returns `'sent' | 'failed'` instead of `void`,
+and it **must never throw**. The invite row is persisted before it runs, so raising would destroy
+a valid token over a delivery the owner can still work around by copying the link. Converting the
+exception into a status is its entire job. The status surfaces as `delivery` on **both** create
+responses: `InviteResponseDto` and `InviteCoachResponseDto` (coach invites go through
+`InviteCoachHandler`, not the generic invite controller).
 
-Coach invites shipped knowing this. The decision (`docs/DECISIONS.md` → **Coach Invites Require
-Acceptance**) needs a link to travel; with no mail path, the owner is the transport. That is
-accepted as an **interim** mechanism, not the intended one — it works for a gym whose owner can
-message the coach directly, and not at all for anything larger.
+**One source of truth for the link.** `InviteService.buildInviteLink` is now the only place an
+invite link is composed; `createInvite`, `listInvites` and the email all call it, and
+`InviteListItemDto` carries `inviteLink`. `inviteLinkFor()` in `coaches.tsx` — which rebuilt the
+link from `window.location.origin` and so could disagree with the backend about the host — is
+deleted. The missing-`FRONTEND_URL` fallback is `http://localhost:8081`, deliberately: the old
+default `https://app.crossfitbox.com` is a domain nobody here owns, so it minted links that looked
+correct and went nowhere.
 
-The UI says so plainly, as of 2026-08-20. Swagger's `POST /api/gyms/:gymId/invites` response, the
-athlete-invite modal, the invites empty state, and the coach-invite modal all state that no email
-is delivered and the link must be sent by hand. The athlete modal's primary action is **Create
-Link**, not "Send Invite", and the per-row action is **New link**, not "Resend" — there was never
-a send to re-do.
+**Owner-facing behaviour.** Both invite modals now report the send and keep the link:
 
-What a real email would replace:
+- sent → quiet meta text, `Invite emailed to <address>.` There is no green banner; DESIGN.md has
+  no success role.
+- failed → `We couldn't email this invite. It's still valid — send them the link yourself.` in
+  strong ink, **not** `Status.danger` — danger is destructive-only (Two Reds Rule).
 
-- `frontend/app/coaches.tsx` — the created-invite modal stays open after a successful invite
-  purely so the owner can copy the link, and each pending row (desktop and mobile) carries its
-  own **Copy link** button.
-- `frontend/app/invites.tsx` — the same created-invite modal for athlete invites, plus the
-  "send it to them yourself" copy in the modal and the empty state.
-- `inviteLinkFor()` in `coaches.tsx`, which **rebuilds** the link from `window.location.origin`
-  and the token because the list endpoint returns the token only. The backend builds its own
-  link from `FRONTEND_URL`, so the two can disagree about the origin. That whole helper exists
-  because delivery does not; it goes away with this epic.
-- `docs/COMMAND_MODEL.md:1257` — "Send invitation email (implementation-specific; may be async)"
-  is the one place in the docs that still reads as though a send happens. It becomes true here.
+The primary action is **Send Invite** and the per-row action is **Resend**, both now honest. The
+Copy affordances stay: an owner re-sending a link to someone who lost the mail is a real need.
+They have simply stopped being the *only* way an invite arrives. The athlete modal's dismiss
+button reads **Done** once the invite exists, because at that point it cancels nothing.
 
-The copy affordances are not wasted work — an owner re-sending a link to someone who lost the
-mail is a real need — but they stop being the *only* way an invite arrives.
+## 2. Deliberately not built
 
-## 3. Cost
+- **No retries and no send log.** The failures at this volume are permanent (bad address, bad key,
+  unverified domain), not transient; a human is always on screen when an invite is created; the
+  copy-link fallback already exists; and a retry sweep would inherit the duplicate-cron problem
+  from staging's two Fly machines. Both are additive later.
+- **No `delivery` column and no migration.** The status describes one request. After that request
+  an invite is just an invite, and a column would imply a history the system does not keep.
+- **No non-invite email** — receipts, reminders, digests. Class reminders already go out over push.
+- **Password reset still does not exist**, but it is no longer blocked: it now has a mail seam to
+  build on.
 
-**Monetary cost at this product's volume is effectively nil.** Invites are one-per-new-member,
-not a broadcast channel: a gym onboarding 50 athletes a month sends ~50 emails. Every provider's
-free or lowest tier covers that with three orders of magnitude to spare.
+## 3. Configuration
 
-Approximate list prices (my knowledge cutoff is May 2026 — **confirm at signup, these move**):
+Documented in `backend/.env.example`. `MAIL_PREVIEW_DIR` is unset under jest and Playwright, so no
+test run writes files into the working tree, and `MAIL_DRIVER` is unset there too — the log driver
+runs and `delivery` is `'sent'` without anything leaving the machine.
+
+**Human prerequisites, still outstanding:**
+
+1. Sign up for Resend; add `mail.boxops.dev` as a sending domain.
+2. Add Resend's SPF + DKIM records to Cloudflare DNS, plus a DMARC TXT record on
+   `_dmarc.boxops.dev`.
+3. `flyctl secrets set RESEND_API_KEY=... MAIL_DRIVER=resend -a boxops-api-staging`.
+
+`FRONTEND_URL` was verified already correct on staging (its secret digest is byte-identical to
+`CORS_ORIGINS`, which is `https://app.boxops.dev`).
+
+## 4. History — the state this epic closed (2026-08-13 → 2026-08-21)
+
+Kept because it explains why the copy-the-link affordances exist, so they are not mistaken for a
+bug or "fixed" by accident.
+
+For eight days there was **no email provider anywhere** in the repo: no mail dependency, no mail
+module, no templates, no SMTP or API-key configuration. The only outbound channel was Expo push,
+which reaches registered devices and therefore could not carry an invite to someone who had never
+signed up. `announceInviteLink` existed but only logged — a `NOT EMAILED (no provider)` line
+carrying the recipient and the link. **Every invite ever created in this system before 2026-08-21
+was created that way; nothing had ever been emailed.**
+
+Owner-copies-the-link was the deliberate interim mechanism, accepted knowingly when coach invites
+shipped: `docs/DECISIONS.md` → **Coach Invites Require Acceptance** needs a link to travel, and
+with no mail path the owner was the transport. From 2026-08-20 the UI said so plainly, in a
+truth-in-UI pass that renamed the primary action to **Create Link** and the per-row action to
+**New link** — there had never been a send to re-do. Those labels are what this epic reversed, and
+the invariant that pass established still holds in the other direction: **no surface may claim a
+send that does not happen.**
+
+## 5. Cost
+
+Retained from the original brief; it is what settled the provider choice.
+
+**Monetary cost at this product's volume is effectively nil.** Invites are one-per-new-member, not
+a broadcast channel: a gym onboarding 50 athletes a month sends ~50 emails. Every provider's free
+or lowest tier covers that with three orders of magnitude to spare.
+
+Approximate list prices (knowledge cutoff May 2026 — **confirm at signup, these move**):
 
 | Provider | Shape | Cost at ~50/mo | Cost at 5,000/mo |
 |---|---|---|---|
@@ -83,51 +136,26 @@ Approximate list prices (my knowledge cutoff is May 2026 — **confirm at signup
 
 **The real costs are not the invoice:**
 
-- **A domain you control.** Deliverability requires SPF, DKIM and DMARC records on a domain you
-  own — you cannot send as `@gmail.com`. ~$10–15/year if there isn't one already. This is the
-  hard prerequisite; without it, invites land in spam and the epic has failed even though the
-  code works.
-- **SES starts in sandbox.** It will only send to addresses you have verified until you file a
-  production-access request with AWS (a short form, typically approved in a day or so). Plan for
-  that lead time rather than discovering it on launch day. Providers like Resend and Postmark
-  have a lighter version of the same domain-verification step.
-- **Engineering time**, which dominates: two templates, config plumbing, a local-development
-  story, and the delivery-failure handling in §4. Small, but larger than the bill.
-- **Ongoing attention.** Bounces and complaints affect sender reputation; SES will suspend an
-  account with a bad bounce rate. A tiny volume makes this unlikely, but it is not zero-touch.
+- **A domain you control.** Deliverability requires SPF, DKIM and DMARC on a domain you own — you
+  cannot send as `@gmail.com`. This is the hard prerequisite; without it invites land in spam and
+  the epic has failed even though the code works. Satisfied here by `mail.boxops.dev`.
+- **SES starts in sandbox**, sending only to verified addresses until a production-access request
+  is approved. Resend's domain verification is the lighter version of the same step — which, with
+  the app not running on AWS, is why Resend won.
+- **Engineering time**, which dominates the bill.
+- **Ongoing attention.** Bounces and complaints affect sender reputation.
 
-**Recommendation if this is picked up:** SES if the app is already going to run on AWS (cheapest,
-one less vendor, sandbox is the only friction); Resend if it is not (least setup, free at this
-volume, better developer experience). Either is defensible — this is a decision, not a finding.
+## 6. Done when
 
-## 4. Scope when this is picked up
+- [x] Both invite roles render a role-appropriate email naming the inviter, the gym and the expiry.
+- [x] A provider failure leaves the invite row intact, tells the owner delivery failed, and still
+      offers the link to copy.
+- [x] The email and the Copy button cannot name different origins.
+- [x] No surface in the app, the Swagger schema, or `docs/` claims a send that does not happen.
+- [ ] **An invite created through the UI arrives as an email at a real external address, for both
+      the athlete and the coach role, from a domain with SPF/DKIM/DMARC passing.** Blocked on §3's
+      human prerequisites. Arrival alone does not count — one inbox accepting a message says
+      nothing about the next one, so the evidence is the `Authentication-Results` header.
+- [ ] The forced-failure path confirmed against the real provider on staging.
 
-- **Provider choice** (see §3), configured, including the local-development story: a catcher such
-  as Mailhog, or keep the dev logging branch deliberately. A code comment once named SES as the
-  assumed direction; that was an assumption, not a decision.
-- **Templates for both invite roles.** An athlete invite and a coach invite say different
-  things — one joins a gym, the other is offered a job — and both land on the same
-  `/invite/<token>` screen. Both must state who invited them, which gym, and that the link
-  expires in 7 days.
-- **A single source of truth for the link.** Resolve the `FRONTEND_URL` vs `window.location.origin`
-  disagreement described in §2, so the email and the UI cannot name different origins.
-- **A delivery-failure story that does not lose the invite.** The invite row is already persisted
-  before `announceInviteLink` is called, so a send failure must not roll it back or the owner
-  loses a valid token. The minimum: surface to the owner that delivery failed, and keep the
-  copy-link affordance as the fallback path. Retries and a send log are the larger version of the
-  same question.
-- **Retire the interim copy** listed in §2 — but only the claims, not the Copy buttons.
-
-## 5. Done when
-
-- An invite created through the UI arrives as an email at a real external address, for both the
-  athlete and the coach role, from a domain with SPF/DKIM/DMARC passing.
-- A forced provider failure leaves the invite row intact, tells the owner delivery failed, and
-  still offers the link to copy.
-- No surface in the app, the Swagger schema, or `docs/` claims a send that does not happen —
-  which, inverted, is the invariant the 2026-08-20 truth-in-UI pass established and this epic
-  must not regress.
-
-**Out of scope until asked for:** any non-invite email (receipts, reminders, digests, password
-reset). Class reminders already go out over push. Password reset is its own epic and does not
-exist yet, though it will need this one first.
+Verification procedure: `docs/superpowers/plans/2026-08-21-email-service.md` → Task 11.
