@@ -259,10 +259,13 @@ record, not a brief. Invites for **both** roles are mailed through a `MailDriver
 failure keeps the invite and its token, and the owner is told to pass the link on. Resend is live on
 staging from `mail.boxops.dev` (EU region) with DKIM, SPF, the bounce MX and `_dmarc` all verified by
 `dig`, and **two real invites reached an external Gmail inbox**. `MAIL_DRIVER` still defaults to the
-non-sending log driver, so local and test runs deliver nothing. Remaining: the forced-failure path
-against the real provider, and the `Authentication-Results` header was never read — see the epic's
-Evidence section for both caveats. Password reset is still unbuilt but no longer blocked: it has a
-mail seam to build on.
+non-sending log driver, so local and test runs deliver nothing. The **forced-failure path is now
+confirmed against real Resend too**: with an unverified `MAIL_FROM` deployed, a created invite came
+back `delivery: 'failed'`, stayed `pending`, and its link still validated; the sender was restored
+and the next invite reported `sent`. Two limits are accepted rather than open — the
+`Authentication-Results` header was never read (alignment inferred from `dig`), and the live invites
+went through the API rather than the deployed UI. Both are recorded in the epic's Evidence section.
+Password reset is still unbuilt but no longer blocked: it has a mail seam to build on.
 
 ## Previous Phase (2026-08-03)
 

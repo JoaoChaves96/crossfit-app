@@ -1,12 +1,14 @@
-# Email Service — BUILT (2026-08-21), awaiting live verification
+# Email Service — COMPLETE (2026-08-21)
 
 **Goal:** an invite reaches its recipient without the gym owner acting as the mail carrier.
 
-**Status:** the code is complete, tested and merged on `dev`. Invites are mailed through a driver
-seam whose default is a non-sending log driver, so **nothing is delivered anywhere until
-`MAIL_DRIVER=resend` and `RESEND_API_KEY` are set on an environment.** That last step is a human
-prerequisite (Resend signup + DNS), and until it happens §6's done-when is unmet: no invite has
-yet arrived at a real external inbox.
+**Status:** done and verified live. Invites for both roles are mailed through a driver seam and
+arrived at a real external inbox from `mail.boxops.dev`; the failure path was forced against real
+Resend and reported `delivery: 'failed'` without costing the invite. Every §6 box is ticked — see
+the Evidence section, including the two limits accepted on it.
+
+The seam's default is still the non-sending log driver, so **a new environment delivers nothing
+until `MAIL_DRIVER=resend` and `RESEND_API_KEY` are set on it.** Only `boxops-api-staging` has them.
 
 **Source:** the coach-invite work of 2026-08-13
 (`docs/superpowers/specs/2026-08-13-coach-invite-and-gym-context-design.md`), which made
@@ -154,8 +156,8 @@ Approximate list prices (knowledge cutoff May 2026 — **confirm at signup, thes
 - [x] No surface in the app, the Swagger schema, or `docs/` claims a send that does not happen.
 - [x] **An invite arrives as an email at a real external address, for both the athlete and the
       coach role, from a domain with SPF/DKIM/DMARC passing.** Done 2026-08-21 — see the evidence
-      below, and the two caveats on it.
-- [ ] The forced-failure path confirmed against the real provider on staging.
+      below, and the two accepted limits on it.
+- [x] The forced-failure path confirmed against the real provider on staging. Done 2026-08-21.
 
 Verification procedure: `docs/superpowers/plans/2026-08-21-email-service.md` → Task 11.
 
@@ -171,15 +173,39 @@ Both roles were then created against `api.boxops.dev` and both responses carried
 `delivery: 'sent'`; **both emails arrived in a real external Gmail inbox**, confirmed by the
 recipient. CI run 32513785089 was green on all six jobs.
 
-**Two caveats, recorded rather than glossed:**
+**The forced-failure run, 2026-08-21.** Rather than the bogus `RESEND_API_KEY` the plan's Task 11
+described, `MAIL_FROM` was pointed at a sender Resend does not know — an equivalent rejection that
+needs no secret restored from memory afterwards. `MAIL_FROM` was unset when it was over, so the
+verified `DEFAULT_MAIL_FROM` is what staging uses again.
 
-1. **The `Authentication-Results` header was not inspected.** This checklist item originally
-   demanded it, on the reasoning that one inbox accepting a message says nothing about the next.
-   Arrival is confirmed; header-level SPF/DKIM/DMARC alignment is inferred from the DNS being
-   correct, not observed. Cheap to close next time an invite is sent.
-2. **The invites were created through the API, not the UI.** The UI path over the same endpoints
-   is covered by FE tests and journey 11 locally, but the deployed screens were not driven by hand
-   for this evidence.
+With the unverified sender deployed, an invite created through `POST /api/gyms/:gymId/invites`
+returned `delivery: 'failed'` while keeping everything else intact: the row persisted, the invite
+listed as `pending`, and `GET /api/invites/:token` still validated the link. The API log named the
+reason, which is what makes this the provider's rejection and not a local guess:
+
+```
+Resend returned 403: {"statusCode":403,"message":"This API key is not authorized to
+send emails from unverified-boxops-test.dev"}
+```
+
+After `flyctl secrets unset MAIL_FROM`, the same call returned `delivery: 'sent'`, so staging was
+not left half-configured. All test invites were revoked.
+
+One thing this run taught, worth keeping: Resend also 422s on a recipient at `example.com`
+("please use our testing email address instead"). A first attempt failed for that reason rather
+than the sender, which read identically from the caller's side. **`delivery: 'failed'` says nothing
+about why** — the log line is the only place the reason exists, by the no-send-log decision.
+`delivered@resend.dev` is the recipient to use for a test that must actually leave.
+
+**Two limits on the evidence, accepted rather than closed:**
+
+1. **The `Authentication-Results` header was not inspected.** Header-level SPF/DKIM/DMARC
+   alignment is inferred from the four DNS records being correct under `dig`, not observed in a
+   received message. Accepted: the records are the thing that determines the outcome, and every
+   receiver evaluates them itself.
+2. **The invites were created through the API, not the deployed UI.** Accepted: both screens'
+   sent and failed states are covered by the frontend suites and journey 11, over the same
+   endpoints this run exercised live.
 
 **The first attempt found a real gap:** the invites were created while staging still ran `f655a65`,
 because all ten email commits were committed but never pushed. The responses came back with no
