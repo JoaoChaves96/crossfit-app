@@ -82,13 +82,7 @@ export class InviteService {
 
     await this.inviteRepository.save(invite);
 
-    // localhost, not a plausible-looking domain. The previous default was
-    // `https://app.crossfitbox.com`, which nobody here owns: a missing
-    // FRONTEND_URL minted invite links that looked correct and went nowhere,
-    // silently. A localhost link is obviously wrong to whoever sees it, and
-    // every deployed environment sets the variable.
-    const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:8081';
-    const inviteLink = `${frontendUrl}/invite/${inviteToken}`;
+    const inviteLink = this.buildInviteLink(inviteToken);
 
     await this.announceInviteLink(inviteeEmail, gym.name, inviteLink);
 
@@ -345,6 +339,7 @@ export class InviteService {
       id: invite.id,
       inviteeEmail: invite.inviteeEmail,
       inviteToken: invite.inviteToken,
+      inviteLink: this.buildInviteLink(invite.inviteToken),
       role: invite.role,
       status: invite.status,
       createdAt: invite.createdAt.toISOString(),
@@ -388,6 +383,22 @@ export class InviteService {
       return 'expired';
     }
     return invite.status;
+  }
+
+  /**
+   * The single place an invite link is composed. `createInvite`, `listInvites`
+   * and the invite email all call this, so the email and the Copy-link button
+   * cannot disagree about the origin.
+   *
+   * The fallback is localhost, not a plausible-looking domain. The previous
+   * default was `https://app.crossfitbox.com`, which nobody here owns: a
+   * missing FRONTEND_URL minted links that looked correct and went nowhere,
+   * silently. A localhost link is obviously wrong to whoever sees it, and
+   * every deployed environment sets the variable.
+   */
+  private buildInviteLink(inviteToken: string): string {
+    const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:8081';
+    return `${frontendUrl}/invite/${inviteToken}`;
   }
 
   /**

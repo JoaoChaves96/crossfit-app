@@ -20,6 +20,15 @@ export class InviteListItemDto {
   inviteToken!: string;
 
   @ApiProperty({
+    description:
+      'Full acceptance URL, built by the API from FRONTEND_URL. The only place an invite link ' +
+      'is composed — clients must not rebuild it from their own origin, or the link in the ' +
+      'invite email and the one behind Copy link could name different hosts.',
+    example: 'https://app.boxops.dev/invite/abc123xyz',
+  })
+  inviteLink!: string;
+
+  @ApiProperty({
     description: 'What accepting this invite makes the invitee',
     enum: ['athlete', 'coach'],
     example: 'coach',

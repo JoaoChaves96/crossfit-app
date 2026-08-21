@@ -152,6 +152,26 @@ describe('InviteService — coach invites', () => {
 
       expect(result.inviteLink).toMatch(/^https:\/\/app\.boxops\.dev\/invite\//);
     });
+
+    it('gives list items the same link the create response built', async () => {
+      process.env.FRONTEND_URL = 'https://app.boxops.dev';
+      inviteRepo.find.mockResolvedValue([
+        {
+          id: 'inv-1',
+          inviteeEmail: EMAIL,
+          inviteToken: 'tok-abc',
+          role: 'coach',
+          status: 'pending',
+          createdAt: new Date('2026-08-14T10:00:00.000Z'),
+          expiresAt: new Date('2026-08-21T10:00:00.000Z'),
+          acceptedAt: null,
+        },
+      ]);
+
+      const [item] = await service.listInvites(GYM_ID, 'coach');
+
+      expect(item.inviteLink).toBe('https://app.boxops.dev/invite/tok-abc');
+    });
   });
 });
 

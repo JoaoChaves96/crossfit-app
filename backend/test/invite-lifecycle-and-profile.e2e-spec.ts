@@ -551,6 +551,9 @@ describe('Invite Lifecycle and Profile Endpoints (e2e)', () => {
         expect(item).toHaveProperty('id');
         expect(item).toHaveProperty('inviteeEmail');
         expect(item).toHaveProperty('inviteToken');
+        // The API composes the link, so a client never rebuilds it from its
+        // own origin and the emailed link cannot name a different host.
+        expect(item.inviteLink).toContain(`/invite/${item.inviteToken as string}`);
         expect(item).toHaveProperty('status');
         expect(item).toHaveProperty('createdAt');
         expect(item).toHaveProperty('expiresAt');
