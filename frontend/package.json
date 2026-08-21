@@ -10,11 +10,11 @@
     "web": "expo start --web",
     "test": "jest",
     "lint": "expo lint",
+    "export:web": "expo export --platform web --clear && node ./scripts/relocate-vendor-assets.mjs",
     "generate:api-types": "openapi-typescript http://localhost:3000/api-docs-json -o types/api.gen.ts",
     "test:e2e": "playwright test"
   },
   "dependencies": {
-    "@expo-google-fonts/hanken-grotesk": "^0.4.3",
     "@expo/vector-icons": "^15.0.3",
     "@react-navigation/bottom-tabs": "^7.4.0",
     "@react-navigation/elements": "^2.6.3",

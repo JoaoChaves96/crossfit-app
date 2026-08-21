@@ -3,13 +3,7 @@ import { Stack, usePathname, useRouter } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import 'react-native-reanimated';
 import { useContext, useEffect } from 'react';
-import {
-  useFonts,
-  HankenGrotesk_400Regular,
-  HankenGrotesk_500Medium,
-  HankenGrotesk_600SemiBold,
-  HankenGrotesk_700Bold,
-} from '@expo-google-fonts/hanken-grotesk';
+import { useFonts } from 'expo-font';
 
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
@@ -56,15 +50,24 @@ export default function RootLayout() {
   const colorScheme = useColorScheme();
 
   // Clean Ink type voice — one self-hosted grotesk across web + native.
-  // Render nothing until it's ready so text never flashes in the system face.
-  const [fontsLoaded] = useFonts({
-    HankenGrotesk_400Regular,
-    HankenGrotesk_500Medium,
-    HankenGrotesk_600SemiBold,
-    HankenGrotesk_700Bold,
+  //
+  // Vendored into assets/fonts rather than imported from
+  // @expo-google-fonts/hanken-grotesk: that package's path put the exported
+  // files under dist/assets/node_modules/…, and Cloudflare Pages skips any
+  // path containing a node_modules segment. The fonts were never uploaded, so
+  // every .ttf fell through the SPA rewrite and came back as index.html.
+  const [fontsLoaded, fontError] = useFonts({
+    HankenGrotesk_400Regular: require('../assets/fonts/HankenGrotesk_400Regular.ttf'),
+    HankenGrotesk_500Medium: require('../assets/fonts/HankenGrotesk_500Medium.ttf'),
+    HankenGrotesk_600SemiBold: require('../assets/fonts/HankenGrotesk_600SemiBold.ttf'),
+    HankenGrotesk_700Bold: require('../assets/fonts/HankenGrotesk_700Bold.ttf'),
   });
 
-  if (!fontsLoaded) {
+  // Hold the first paint so text never flashes in the system face — but only
+  // while loading is still in flight. Gating on fontsLoaded alone meant a
+  // single unreachable .ttf returned null forever: a blank page, no error,
+  // nothing to debug from. A wrong face beats no app.
+  if (!fontsLoaded && !fontError) {
     return null;
   }
 

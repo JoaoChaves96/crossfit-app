@@ -78,7 +78,7 @@ export const Status = {
 } as const;
 
 // ─── Type ─────────────────────────────────────────────────────────────────────
-// One workhorse grotesk (Hanken Grotesk), self-hosted via @expo-google-fonts.
+// One workhorse grotesk (Hanken Grotesk), self-hosted from assets/fonts.
 // Family names match the keys registered in the root layout's useFonts().
 export const Type = {
   family: {
