@@ -1019,6 +1019,66 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/auth/forgot-password": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Request a password reset link
+         * @description Always returns 200 with an empty body — for a known address, an unknown address, a throttled request and a failed send alike. Any variation would be an account-enumeration oracle, and a delivery status would tell an anonymous caller nothing they could act on.
+         */
+        post: operations["AuthController_forgotPassword"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/auth/reset-password/{token}/validate": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Check whether a reset link is still usable
+         * @description Lets the reset screen show an expired state on mount instead of after the user has typed a new password twice.
+         */
+        get: operations["AuthController_validateResetToken"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/auth/reset-password": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Set a new password using a reset link
+         * @description On success the user is signed in: the response carries a JWT, as register and login do. Sessions issued before the reset are NOT revoked — an accepted limit recorded in epics/PASSWORD_RESET_EPIC.md.
+         */
+        post: operations["AuthController_resetPassword"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -3049,6 +3109,32 @@ export interface components {
              * @example uuid-gym-id
              */
             gymId: string;
+        };
+        ForgotPasswordDto: {
+            /**
+             * @description Email address to send a reset link to
+             * @example user@example.com
+             */
+            email: string;
+        };
+        ValidateResetTokenResponseDto: {
+            /**
+             * @description Whether the reset link can still be used. False covers unknown, expired and already-used alike — the three are not distinguished.
+             * @example true
+             */
+            valid: boolean;
+        };
+        ResetPasswordDto: {
+            /**
+             * @description The token from the reset link
+             * @example k7Qd3Zk1t0m9vY6bF2sN8pR4wJ5xL1cH0aT7uE3gQ2i
+             */
+            token: string;
+            /**
+             * @description The new password (minimum 1 character)
+             * @example secret123
+             */
+            password: string;
         };
     };
     responses: never;
@@ -5697,6 +5783,89 @@ export interface operations {
             };
             /** @description User is not attached to this gym. */
             403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    AuthController_forgotPassword: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ForgotPasswordDto"];
+            };
+        };
+        responses: {
+            /** @description Request accepted. Reveals nothing about the address. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation error (malformed email). */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    AuthController_validateResetToken: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The token from the reset link */
+                token: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Validity of the token. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ValidateResetTokenResponseDto"];
+                };
+            };
+        };
+    };
+    AuthController_resetPassword: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ResetPasswordDto"];
+            };
+        };
+        responses: {
+            /** @description Password changed. Returns a signed JWT access token. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LoginResponseDto"];
+                };
+            };
+            /** @description The reset link is unknown, expired or already used — the three are deliberately indistinguishable. Also returned for validation errors. */
+            400: {
                 headers: {
                     [name: string]: unknown;
                 };
