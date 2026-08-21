@@ -1,8 +1,10 @@
 import {
   Body,
   Controller,
+  Get,
   HttpCode,
   HttpStatus,
+  Param,
   Post,
   UseGuards,
   ValidationPipe,
@@ -11,25 +13,35 @@ import {
   ApiBearerAuth,
   ApiBody,
   ApiOperation,
+  ApiParam,
   ApiResponse,
   ApiTags,
 } from '@nestjs/swagger';
 import { AuthService } from '../../domain/auth/auth.service';
+import { PasswordResetService } from '../../domain/auth/password-reset.service';
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { CurrentUser } from '../../auth/decorators/current-user.decorator';
+import { ForgotPasswordDto } from './dto/forgot-password.dto';
 import { LoginDto } from './dto/login.dto';
 import { LoginResponseDto } from './dto/login-response.dto';
 import { RegisterDto } from './dto/register.dto';
+import { ResetPasswordDto } from './dto/reset-password.dto';
 import { SwitchGymContextDto } from './dto/switch-gym-context.dto';
+import { ValidateResetTokenResponseDto } from './dto/validate-reset-token-response.dto';
 
 @ApiTags('Auth')
 @Controller('api/auth')
 export class AuthController {
-  constructor(private readonly authService: AuthService) {}
+  constructor(
+    private readonly authService: AuthService,
+    private readonly passwordResetService: PasswordResetService,
+  ) {}
 
   @Post('register')
   @HttpCode(HttpStatus.OK)
-  @ApiOperation({ summary: 'Register a new user account and receive a JWT token' })
+  @ApiOperation({
+    summary: 'Register a new user account and receive a JWT token',
+  })
   @ApiBody({ type: RegisterDto })
   @ApiResponse({
     status: 200,
@@ -105,6 +117,73 @@ export class AuthController {
     const accessToken = await this.authService.issueTokenForGym(
       userId,
       dto.gymId,
+    );
+    return { accessToken };
+  }
+
+  @Post('forgot-password')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary: 'Request a password reset link',
+    description:
+      'Always returns 200 with an empty body — for a known address, an unknown address, a throttled request and a failed send alike. Any variation would be an account-enumeration oracle, and a delivery status would tell an anonymous caller nothing they could act on.',
+  })
+  @ApiBody({ type: ForgotPasswordDto })
+  @ApiResponse({
+    status: 200,
+    description: 'Request accepted. Reveals nothing about the address.',
+  })
+  @ApiResponse({
+    status: 400,
+    description: 'Validation error (malformed email).',
+  })
+  async forgotPassword(@Body() body: ForgotPasswordDto): Promise<void> {
+    await this.passwordResetService.requestReset(body.email);
+  }
+
+  @Get('reset-password/:token/validate')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary: 'Check whether a reset link is still usable',
+    description:
+      'Lets the reset screen show an expired state on mount instead of after the user has typed a new password twice.',
+  })
+  @ApiParam({ name: 'token', description: 'The token from the reset link' })
+  @ApiResponse({
+    status: 200,
+    description: 'Validity of the token.',
+    type: ValidateResetTokenResponseDto,
+  })
+  async validateResetToken(
+    @Param('token') token: string,
+  ): Promise<ValidateResetTokenResponseDto> {
+    return { valid: await this.passwordResetService.isTokenValid(token) };
+  }
+
+  @Post('reset-password')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary: 'Set a new password using a reset link',
+    description:
+      'On success the user is signed in: the response carries a JWT, as register and login do. Sessions issued before the reset are NOT revoked — an accepted limit recorded in epics/PASSWORD_RESET_EPIC.md.',
+  })
+  @ApiBody({ type: ResetPasswordDto })
+  @ApiResponse({
+    status: 200,
+    description: 'Password changed. Returns a signed JWT access token.',
+    type: LoginResponseDto,
+  })
+  @ApiResponse({
+    status: 400,
+    description:
+      'The reset link is unknown, expired or already used — the three are deliberately indistinguishable. Also returned for validation errors.',
+  })
+  async resetPassword(
+    @Body() body: ResetPasswordDto,
+  ): Promise<LoginResponseDto> {
+    const accessToken = await this.passwordResetService.resetPassword(
+      body.token,
+      body.password,
     );
     return { accessToken };
   }
