@@ -270,6 +270,9 @@ describe('Coach Invitation (e2e)', () => {
       expect(body).toHaveProperty('expiresAt');
       expect(body).toHaveProperty('inviteeEmail', existingCoachEmail);
       expect(body).toHaveProperty('role', 'coach');
+      // MAIL_DRIVER is unset here, so the log driver runs and nothing leaves the
+      // machine — but the field must still be present and one of the two states.
+      expect(['sent', 'failed']).toContain(body.delivery);
 
       const staffRows = await dataSource!.query(
         `SELECT * FROM gym_staff WHERE "gymId" = $1 AND "userId" = $2`,

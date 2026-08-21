@@ -1,4 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
+import type { InviteDeliveryStatus } from '../../../domain/invite/invite-delivery.types';
 
 export class InviteCoachResponseDto {
   @ApiProperty({
@@ -9,7 +10,8 @@ export class InviteCoachResponseDto {
 
   @ApiProperty({
     description:
-      'Full acceptance URL. Email delivery is not implemented, so the owner copies this and sends it themselves.',
+      'Full acceptance URL. Also emailed to the invitee; kept in the response so the owner can ' +
+      'pass it on themselves, which is the fallback when delivery is "failed".',
     example: 'https://app.boxops.dev/invite/AbC123...',
   })
   inviteLink: string;
@@ -32,4 +34,13 @@ export class InviteCoachResponseDto {
     example: 'coach',
   })
   role: 'coach';
+
+  @ApiProperty({
+    description:
+      'Whether the invite email was delivered. "failed" means the invite is still valid and its ' +
+      'token still usable — the caller must pass the link on by hand.',
+    enum: ['sent', 'failed'],
+    example: 'sent',
+  })
+  delivery: InviteDeliveryStatus;
 }

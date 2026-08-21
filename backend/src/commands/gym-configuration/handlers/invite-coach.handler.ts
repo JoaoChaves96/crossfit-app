@@ -67,6 +67,7 @@ export class InviteCoachHandler implements ICommandHandler<InviteCoachCommand> {
         expiresAt: invite.expiresAt,
         inviteeEmail: invite.inviteeEmail,
         role: 'coach',
+        delivery: invite.delivery,
       };
     } catch (err) {
       if (

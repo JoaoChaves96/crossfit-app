@@ -1,5 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import type { InviteRole } from '../../../domain/invite/entities/invite.entity';
+import type { InviteDeliveryStatus } from '../../../domain/invite/invite-delivery.types';
 
 export class InviteResponseDto {
   @ApiProperty({
@@ -32,4 +33,13 @@ export class InviteResponseDto {
     example: 'coach',
   })
   role: InviteRole;
+
+  @ApiProperty({
+    description:
+      'Whether the invite email was delivered. "failed" means the invite is still valid and its ' +
+      'token still usable — the caller must pass the link on by hand.',
+    enum: ['sent', 'failed'],
+    example: 'sent',
+  })
+  delivery: InviteDeliveryStatus;
 }

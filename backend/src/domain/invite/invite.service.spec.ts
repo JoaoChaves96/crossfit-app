@@ -7,6 +7,7 @@ import { UserEntity } from '../user/entities/user.entity';
 import { GymStaffEntity } from '../gym-staff/entities/gym-staff.entity';
 import { GymMembershipEntity } from '../gym-membership/entities/gym-membership.entity';
 import { AuthService } from '../auth/auth.service';
+import { InviteMailer } from '../../infrastructure/mail/invite-mailer';
 import {
   CoachAlreadyStaffError,
   CoachInvitePendingError,
@@ -23,8 +24,10 @@ describe('InviteService — coach invites', () => {
   let inviteRepo: { findOne: jest.Mock; find: jest.Mock; save: jest.Mock; update: jest.Mock };
   let userFindOne: jest.Mock;
   let staffFindOne: jest.Mock;
+  let sendInviteEmail: jest.Mock;
 
   beforeEach(async () => {
+    sendInviteEmail = jest.fn().mockResolvedValue(undefined);
     inviteRepo = {
       findOne: jest.fn().mockResolvedValue(null),
       find: jest.fn().mockResolvedValue([]),
@@ -54,6 +57,7 @@ describe('InviteService — coach invites', () => {
         { provide: getRepositoryToken(GymMembershipEntity), useValue: { findOne: jest.fn() } },
         { provide: getDataSourceToken(), useValue: dataSource },
         { provide: AuthService, useValue: { issueTokenForGym: jest.fn() } },
+        { provide: InviteMailer, useValue: { sendInviteEmail } },
       ],
     }).compile();
 
@@ -173,6 +177,55 @@ describe('InviteService — coach invites', () => {
       expect(item.inviteLink).toBe('https://app.boxops.dev/invite/tok-abc');
     });
   });
+
+  describe('delivery', () => {
+    it('reports sent, and mails the invitee with the gym, role and link', async () => {
+      userFindOne.mockResolvedValue({ id: OWNER_ID, name: 'Olive Owner', email: 'olive@example.com' });
+
+      const result = await service.createInvite(GYM_ID, OWNER_ID, 'athlete@example.com');
+
+      expect(result.delivery).toBe('sent');
+      expect(sendInviteEmail).toHaveBeenCalledTimes(1);
+      const input = sendInviteEmail.mock.calls[0][0];
+      expect(input.inviteeEmail).toBe('athlete@example.com');
+      expect(input.gymName).toBe('Box One');
+      expect(input.role).toBe('athlete');
+      expect(input.inviterName).toBe('Olive Owner');
+      expect(input.inviterEmail).toBe('olive@example.com');
+      expect(input.inviteLink).toBe(result.inviteLink);
+      expect(input.expiresAt).toBeInstanceOf(Date);
+    });
+
+    // The row is saved before delivery is attempted. A send failure that
+    // destroyed the invite would cost the owner a valid token over something
+    // they can still work around by copying the link.
+    it('reports failed but keeps the invite and returns its token', async () => {
+      sendInviteEmail.mockRejectedValue(new Error('Resend returned 401'));
+
+      const result = await service.createInvite(GYM_ID, OWNER_ID, 'athlete@example.com');
+
+      expect(result.delivery).toBe('failed');
+      expect(result.inviteToken).toHaveLength(43);
+      expect(result.inviteLink).toContain(`/invite/${result.inviteToken}`);
+      expect(inviteRepo.save).toHaveBeenCalledTimes(1);
+    });
+
+    it('still sends when the inviting user cannot be found', async () => {
+      userFindOne.mockResolvedValue(null);
+
+      const result = await service.createInvite(GYM_ID, OWNER_ID, 'athlete@example.com');
+
+      expect(result.delivery).toBe('sent');
+      expect(sendInviteEmail.mock.calls[0][0].inviterName).toBeNull();
+      expect(sendInviteEmail.mock.calls[0][0].inviterEmail).toBeNull();
+    });
+
+    it('sends the coach wording for a coach invite', async () => {
+      await service.createInvite(GYM_ID, OWNER_ID, EMAIL, 'coach');
+
+      expect(sendInviteEmail.mock.calls[0][0].role).toBe('coach');
+    });
+  });
 });
 
 describe('InviteService — accepting by role', () => {
@@ -250,6 +303,7 @@ describe('InviteService — accepting by role', () => {
         { provide: getRepositoryToken(GymMembershipEntity), useValue: membershipRepo },
         { provide: getDataSourceToken(), useValue: dataSource },
         { provide: AuthService, useValue: { issueTokenForGym } },
+        { provide: InviteMailer, useValue: { sendInviteEmail: jest.fn() } },
       ],
     }).compile();
 

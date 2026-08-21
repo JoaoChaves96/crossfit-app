@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { DataSource, Repository } from 'typeorm';
 import { randomBytes } from 'crypto';
@@ -14,6 +14,8 @@ import { RevokeInviteResponseDto } from '../../api/invite/dto/revoke-invite-resp
 import { ValidateInviteResponseDto } from '../../api/invite/dto/validate-invite-response.dto';
 import { AcceptInviteResponseDto } from '../../api/invite/dto/accept-invite-response.dto';
 import { AuthService } from '../auth/auth.service';
+import { InviteMailer } from '../../infrastructure/mail/invite-mailer';
+import { InviteDeliveryStatus } from './invite-delivery.types';
 import {
   AthleteAlreadyMemberError,
   CoachAlreadyStaffError,
@@ -34,6 +36,8 @@ const TOKEN_BYTE_LENGTH = 32;
 
 @Injectable()
 export class InviteService {
+  private readonly logger = new Logger(InviteService.name);
+
   constructor(
     @InjectRepository(InviteEntity)
     private readonly inviteRepository: Repository<InviteEntity>,
@@ -41,6 +45,7 @@ export class InviteService {
     private readonly gymMembershipRepository: Repository<GymMembershipEntity>,
     private readonly dataSource: DataSource,
     private readonly authService: AuthService,
+    private readonly inviteMailer: InviteMailer,
   ) {}
 
   async createInvite(
@@ -84,7 +89,19 @@ export class InviteService {
 
     const inviteLink = this.buildInviteLink(inviteToken);
 
-    await this.announceInviteLink(inviteeEmail, gym.name, inviteLink);
+    const inviter = await this.dataSource
+      .getRepository(UserEntity)
+      .findOne({ where: { id: createdByUserId } });
+
+    const delivery = await this.announceInviteLink({
+      inviteeEmail,
+      gymName: gym.name,
+      inviteLink,
+      role,
+      expiresAt,
+      inviterName: inviter?.name ?? null,
+      inviterEmail: inviter?.email ?? null,
+    });
 
     return {
       inviteToken,
@@ -92,6 +109,7 @@ export class InviteService {
       expiresAt: expiresAt.toISOString(),
       inviteeEmail,
       role,
+      delivery,
     };
   }
 
@@ -402,35 +420,41 @@ export class InviteService {
   }
 
   /**
-   * Does NOT send an email. Nothing in this repo can — there is no mail provider,
-   * no transport and no credentials (`epics/EMAIL_SERVICE_EPIC.md`). This is the
-   * seam where delivery will eventually live, kept deliberately so the call site
-   * does not move when it arrives.
+   * Delivery. Kept at this name and call site so the seam did not move when a
+   * provider arrived.
    *
-   * Until then the returned `inviteLink` is the ONLY way an invite reaches anyone,
-   * and the owner is the transport. That is why this method cannot start throwing
-   * on failure as a "safety" improvement: there is no failure to report, and the
-   * invite row is already persisted by the time we get here, so raising would
-   * destroy a valid token over a delivery that was never attempted.
+   * It MUST NOT throw. The invite row is already persisted by the time it
+   * runs, so raising would destroy a valid token over a delivery failure the
+   * owner can work around by copying the link. Converting the exception into a
+   * status is the entire job.
    */
-  private async announceInviteLink(
-    inviteeEmail: string,
-    gymName: string,
-    inviteLink: string,
-  ): Promise<void> {
-    if (process.env.NODE_ENV !== 'production') {
-      // "DEV EMAIL" previously read as though a mail path existed and this was
-      // merely its local stand-in. It is not: no branch of this method delivers.
-      console.log(
-        `[InviteService] NOT EMAILED (no provider) — invite for ${inviteeEmail} to ${gymName}. ` +
-          `Send this link yourself: ${inviteLink}`,
+  private async announceInviteLink(input: {
+    inviteeEmail: string;
+    gymName: string;
+    inviteLink: string;
+    role: InviteRole;
+    expiresAt: Date;
+    inviterName: string | null;
+    inviterEmail: string | null;
+  }): Promise<InviteDeliveryStatus> {
+    try {
+      await this.inviteMailer.sendInviteEmail({
+        role: input.role,
+        inviteeEmail: input.inviteeEmail,
+        gymName: input.gymName,
+        inviterName: input.inviterName,
+        inviterEmail: input.inviterEmail,
+        inviteLink: input.inviteLink,
+        expiresAt: input.expiresAt,
+      });
+      return 'sent';
+    } catch (err) {
+      this.logger.warn(
+        `Invite for ${input.inviteeEmail} to ${input.gymName} was created but NOT delivered: ` +
+          `${err instanceof Error ? err.message : String(err)}. ` +
+          `The invite is valid; the link is ${input.inviteLink}`,
       );
-      return;
+      return 'failed';
     }
-
-    console.warn(
-      `[InviteService] NOT EMAILED (no provider) — invite for ${inviteeEmail} was created but ` +
-        `nothing was delivered. Someone must send this link manually: ${inviteLink}`,
-    );
   }
 }

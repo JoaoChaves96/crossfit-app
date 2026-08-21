@@ -25,6 +25,7 @@ describe('InviteCoachHandler', () => {
     expiresAt: '2026-08-20T00:00:00.000Z',
     inviteeEmail: COACH_EMAIL,
     role: 'coach' as const,
+    delivery: 'sent' as const,
   };
 
   beforeEach(async () => {
