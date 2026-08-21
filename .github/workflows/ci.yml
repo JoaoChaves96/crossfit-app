@@ -1,6 +1,9 @@
-# The fast gate: types, unit tests, lint, and schema drift. Never touches a
-# cloud provider, so it cannot be blocked by one being down or by a fork PR
-# having no access to secrets.
+# The gate: types, unit tests, lint, schema drift, and the 15 Playwright
+# journeys. Never touches a cloud provider, so it cannot be blocked by one being
+# down or by a fork PR having no access to secrets.
+#
+# One workflow rather than two, because a deploy must depend on ALL of these and
+# `workflow_run` can only name one workflow — see the `e2e` job's comment.
 name: ci
 
 on:
@@ -119,3 +122,90 @@ jobs:
           push: false
           cache-from: type=gha
           cache-to: type=gha,mode=max
+
+  e2e:
+    # The 15 Playwright journeys, hermetic: Postgres as a service container, the
+    # schema from migrations, the API and Expo web booted by Playwright's own
+    # webServer. Nothing here reaches a cloud provider, so a provider outage or a
+    # fork PR with no secrets cannot block it.
+    #
+    # A job in `ci` rather than its own workflow, because `deploy` must depend on
+    # BOTH this and the fast checks. `workflow_run` can only name one workflow, so
+    # a separate workflow would deploy while this one was still red. Job-level
+    # `needs` is the only real barrier GitHub offers.
+    runs-on: ubuntu-latest
+    # Serial by design (playwright.config.ts workers: 1 — measured, see its
+    # comment). ~6 min on a runner; allow generously more.
+    timeout-minutes: 30
+
+    services:
+      postgres:
+        image: postgres:15-alpine
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: postgres
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 10
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+          # There is no lock file at the repo root — the two apps each have
+          # their own. Without these paths setup-node looks only at the root,
+          # finds nothing, and fails the job before a single test runs. This
+          # job installs both, so both are listed.
+          cache-dependency-path: |
+            backend/package-lock.json
+            frontend/package-lock.json
+
+      - run: npm ci
+        working-directory: backend
+
+      - run: npm ci
+        working-directory: frontend
+
+      - name: Create the e2e database
+        # global-setup.ts connects to it and refuses to create it, by design:
+        # the name is a constant so no run can be pointed elsewhere.
+        run: |
+          PGPASSWORD=postgres psql -h localhost -U postgres -d postgres \
+            -c 'CREATE DATABASE crossfit_box_e2e'
+
+      - name: Install Chromium
+        run: npx playwright install --with-deps chromium
+        working-directory: frontend
+
+      - name: Backend env
+        # backend/.env is gitignored, and main.ts loads it via dotenv/config.
+        # global-setup.ts runs the migrations; the API boots with synchronize
+        # off (e2eBackendEnv sets NODE_ENV=production).
+        run: |
+          cat > backend/.env <<'EOF'
+          JWT_SECRET=ci-e2e-secret-not-used-for-anything-real
+          DB_HOST=localhost
+          DB_PORT=5432
+          DB_USERNAME=postgres
+          DB_PASSWORD=postgres
+          EOF
+
+      - name: Journeys
+        run: npm run test:e2e
+        working-directory: frontend
+
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: playwright-report
+          path: |
+            frontend/playwright-report
+            frontend/test-results
+          retention-days: 7
