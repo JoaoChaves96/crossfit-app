@@ -17,6 +17,8 @@
 **→ See `epics/GYM_PROFILE_EPIC.md` for completed epic details**
 **→ See `epics/NOTIFICATIONS_EPIC.md` for completed epic details**
 **→ See `epics/MEMBERSHIP_PLANS_EPIC.md` for completed epic details**
+**→ See `epics/EMAIL_SERVICE_EPIC.md` for completed epic details**
+**→ See `epics/PASSWORD_RESET_EPIC.md` for completed epic details**
 
 ## Product
 
@@ -267,16 +269,30 @@ and the next invite reported `sent`. Two limits are accepted rather than open �
 went through the API rather than the deployed UI. Both are recorded in the epic's Evidence section.
 Password reset is still unbuilt but no longer blocked: it has a mail seam to build on.
 
-📋 **Password reset — designed and scoped 2026-08-21, not yet built.** `epics/PASSWORD_RESET_EPIC.md`
-+ `docs/superpowers/specs/2026-08-21-password-reset-design.md`. Self-service forgot-password only:
-three public endpoints, a `password_reset_tokens` table storing `sha256(token)` with a 1-hour
-single-use lifetime, a per-email throttle needing **no new dependency**, a second mailer above the
-**unmodified** mail seam, and two screens. Settled and not to be re-litigated: `forgot-password`
-always returns an identical empty 200 (no enumeration oracle, and no `delivery` field — an anonymous
-caller can do nothing with `failed`), a reset **does not revoke existing sessions**, and a successful
-reset signs the user in. Excluded: change-password-while-signed-in, owner-triggered reset,
-set-password for invited users, global IP throttling (in-memory can't work across staging's two Fly
-machines), expired-row cleanup.
+✅ **Password reset — shipped and verified 2026-08-22.** `epics/PASSWORD_RESET_EPIC.md` is now a
+record, not a brief (all 9 tasks ✅, with a Verification Record). Self-service forgot-password only:
+three public endpoints exempt from the auth guard, a `password_reset_tokens` table storing
+`sha256(token)` with a 1-hour single-use lifetime, a per-email throttle needing **no new dependency**,
+a second mailer above the **unmodified** mail seam, and two screens (`/forgot-password`,
+`/reset-password/[token]`) reached from a link on `/login`. Settled and not to be re-litigated:
+`forgot-password` always returns an identical empty 200 (no enumeration oracle, and no `delivery`
+field — an anonymous caller can do nothing with `failed`), a reset **does not revoke existing
+sessions**, and a successful reset signs the user in. Both of those, plus hashed-vs-plaintext token
+storage, are recorded in `context/DECISION_LOG.md`.
+
+Verified live signed-out at 1280×832 and 390×844 against the log driver: mail link → form → new
+password → signed in, old password 401, replayed link refused. **One real bug was found by that
+walk-through and fixed:** the 15-minute throttle never fired, because `createdAt` came from the
+database clock (UTC) while the throttle window came from the app clock — broken on any non-UTC
+deploy, latent because staging is UTC. The guard is the new `backend/test/password-reset.e2e-spec.ts`
+(TZ pinned to `America/New_York`); reverting the fix fails it with a drift of exactly 14,400,023 ms.
+`resetPassword`'s two writes now share one transaction, and `backend/.mail-preview/` is gitignored
+since a rendered preview contains a working link. Suites at close: backend 60/582, backend e2e
+16/246, frontend 40/445, `tsc` clean in both.
+
+Excluded and still unbuilt: change-password-while-signed-in, owner-triggered reset, set-password for
+invited users, global IP throttling (in-memory can't work across staging's two Fly machines),
+expired-row cleanup.
 
 ## Previous Phase (2026-08-03)
 

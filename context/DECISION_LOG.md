@@ -302,3 +302,35 @@ and staging runs two Fly machines, so it would inherit the duplicate-cron proble
 before delivering any value. Both a send log and retries are purely additive later:
 the seam already isolates the provider, and `delivery` is a response field, so
 adding persistence breaks no contract.
+
+## Reset Tokens Are Stored Hashed, Unlike Invite Tokens (2026-08-22)
+
+**Decision:** `password_reset_tokens` stores only `sha256(token)`. The token itself
+exists in the mailed link and nowhere else — not in the row, not in a log line. This
+is a deliberate divergence from `InviteEntity.inviteToken`, which stays plaintext.
+
+**Rationale:** Blast radius, not consistency. A reset token *is* the account: whoever
+holds it sets the password and is signed in. An invite token only offers to create an
+account that does not exist yet, inside a gym the inviter already chose, so a leaked
+invite grants an unwanted membership rather than someone else's identity. Hashing
+costs nothing here because nothing ever needs to read a token back — the only query
+is a lookup by the hash of what the caller presented — whereas the invite flow
+deliberately reads its token back to render the copy-link affordance the owner falls
+back on when mail fails. Two different mechanisms is the correct answer; do not
+"unify" them by making resets plaintext.
+
+## A Password Reset Revokes No Existing Sessions (2026-08-22)
+
+**Decision:** Completing a reset changes the password hash and consumes the token.
+Every JWT already issued stays valid until it expires, on every device.
+
+**Rationale:** There is nothing to revoke against. The tokens are stateless and
+signed, with no server-side session store, no `jti` deny-list and no
+`tokenVersion`/`passwordChangedAt` claim, so honouring a revocation would mean
+inventing a session-invalidation layer for one flow. The dominant real case is a
+user who simply forgot a password and has no other live session, where revocation
+buys nothing. The case it *would* help — a hijacked device — is not solved either,
+since MVP has no session list to show and no way to tell the user it worked. The
+hedge is that the fix is additive and cheap when it matters: a `passwordChangedAt`
+comparison in the guard, or bumping a claim. Accepted with eyes open, recorded here
+so the gap is a decision and not an oversight.
