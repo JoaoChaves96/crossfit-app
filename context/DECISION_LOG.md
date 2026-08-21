@@ -112,7 +112,7 @@ schema objects, which is noise in exactly the `npm run schema:check` drift gate 
 make schema truth trustworthy. Together with Neon branching, add-ons are the platform's
 real lock-in vectors; the standing rule is that everything stays portable to RDS.
 
-## Staging TLS Is Encrypted But Not Yet Authenticated (2026-08-21)
+## Staging TLS Is Encrypted But Not Yet Authenticated (2026-08-21) — SUPERSEDED
 
 **Known limitation, recorded so it is not mistaken for a solved problem.**
 `sslmode` and `channel_binding` in a Neon connection URL are **libpq** parameters that

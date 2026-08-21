@@ -91,8 +91,14 @@ after) and no scratch databases leaked.
 **Phases 4–6 — UNDERWAY (2026-08-21).** Plan (11 tasks):
 `docs/superpowers/plans/2026-08-21-staging-phases-4-6.md`; SDD ledger at
 `.superpowers/sdd/2026-08-21-staging-phases-4-6/progress.md`. Provisioning now exists: Neon
-Postgres `eu-central-1` (database `boxops_staging`) and Fly.io in **`fra`, not the spec's
-`mad`** — Neon's region is fixed and Frankfurt-to-Frankfurt saves ~25-30ms per query.
+Postgres `eu-central-1` (database `boxops_staging`, **not** the spec's `crossfit_box_staging`) and
+Fly.io in **`fra`, not the spec's `mad`** — Neon's region is fixed and Frankfurt-to-Frankfurt saves
+~25-30ms per query. Both departures are argued in `context/DECISION_LOG.md`.
+
+**Staging lives at two origins:** the API on `https://api.boxops.dev` (Fly, DNS unproxied — a grey
+cloud, because Fly terminates TLS itself) and the web app on `https://app.boxops.dev` (Cloudflare
+Pages, proxied). `CORS_ORIGINS` is exactly `https://app.boxops.dev`, so the raw
+`boxops-app.pages.dev` origin cannot log in — by design, not a fault.
 
 - ✅ **Task 1 — the API is deployed and live.** `boxops-api-staging` in `fra`, image 67 MB,
   the Baseline migration ran as a release step, and `GET https://api.boxops.dev/health`
@@ -104,7 +110,9 @@ Postgres `eu-central-1` (database `boxops_staging`) and Fly.io in **`fra`, not t
 - ✅ **Task 2 — verified TLS to Neon** (`7d215f7`), and **Task 3 — `api.boxops.dev`**
   (`2abaf96`): CNAME unproxied (grey cloud), Let's Encrypt certificate `Issued`, Swagger
   advertising `https://api.boxops.dev`.
-- ✅ Tasks 5, 7, 10 (code) landed earlier (`370508f..4b95984`), CI green. Task 7 is unreviewed.
+- ✅ Tasks 5, 7, 10 (code) landed earlier (`370508f..4b95984`), CI green. **Task 7 has since been
+  reviewed and approved** — rulings P1/P2/P3 all honoured, `E2E_ALLOWED_API_ORIGIN` deleted with no
+  dead alias left behind.
 - ✅ **Task 4 — Cloudflare Pages complete.** `app.boxops.dev` is attached and **proxied** (the
   opposite of the `api` record, deliberately — Pages is proxied by nature). All 41 assets
   return their own content type, zero `text/html` fallbacks; the login screen renders with its
@@ -144,7 +152,24 @@ Postgres `eu-central-1` (database `boxops_staging`) and Fly.io in **`fra`, not t
   in `error`, console clean, login screen renders. Checked by `content_type` per asset, never
   by status code: a `200` is what hid this for a whole session. See DECISION_LOG "No Exported
   Asset May Sit Under a `node_modules` Path".
-- ⬜ **Remaining: Task 10's live seed run, then Task 11 (docs sync).** Task 9 deferred as above.
+- ✅ **The seed is manual by design, and that is a constraint rather than a convenience.**
+  `scripts/staging-seed.sh` + `scripts/sql/staging-seed.sql` (`873eabd`) are additive, every insert
+  `ON CONFLICT DO NOTHING` against ids derived from a constant demo-gym id, so a second run is a
+  no-op — proved by running it twice against a throwaway `seed_check` database (users 8→8, gyms 1→1,
+  classes 54→54). It refuses any database whose `current_database()` is not `boxops_staging` and it
+  exits **before** any write. **No pipeline step may write application data**: deploys run
+  migrations and nothing else, so no deploy can clobber a demo someone is mid-way through showing.
+- **The job graph, as it actually is:** `backend` · `frontend` · `image` · `e2e` (the 15 journeys)
+  → `deploy` (push to `dev` only, `needs` all four) → `staging-smoke` (`needs: [deploy]`). Six jobs.
+  The `remote-e2e` job the plan describes does not exist — Task 9 is deferred, `staging-smoke` is
+  what stands in its place, and Fly app `boxops-api-e2e` is provisioned but empty.
+- ⚠️ **Still not a gate: the CI Lint step is `continue-on-error: true`** (921 bare-`eslint` errors,
+  253 of them not auto-fixable). Carried forward from Phase 3 unchanged; deploying staging did not
+  change it, and it should not be mistaken for one of the four gates `deploy` waits on.
+- ⬜ **Remaining: Task 10 steps 5–6 — the live seed run and the survives-a-redeploy check.** Both
+  are [HUMAN]: they need the Neon DIRECT url for `boxops_staging`, which exists nowhere on disk
+  (Fly secrets are write-only). **Staging is deployed but has no demo data**, and the
+  survives-a-redeploy acceptance test is UNRUN. Task 9 deferred as above.
 - ✅ **All six human gates are cleared.** `gh secret list` shows all five secrets
   (`FLY_API_TOKEN`, `FLY_API_TOKEN_E2E`, `CLOUDFLARE_ACCOUNT_ID`, `CLOUDFLARE_API_TOKEN`,
   `NEON_ADMIN_DATABASE_URL`); Fly app `boxops-api-e2e` exists and is `pending` with nothing

@@ -224,6 +224,62 @@ A 403 where you expected a 200 is usually the domain, not auth: an owner token o
 athlete route returns *"Athlete does not have an active membership in this gym"*,
 because owners hold no membership. Log in as the athlete for athlete routes.
 
+## Running Against Staging
+
+Staging is `https://api.boxops.dev` (Fly) and `https://app.boxops.dev` (Cloudflare Pages),
+backed by Neon's `boxops_staging`. Two commands here talk to it. Both are **manual** — the
+pipeline runs neither.
+
+### The smoke check (read-only, no database)
+
+```bash
+cd frontend
+SMOKE_WEB_URL=https://app.boxops.dev npm run test:smoke
+```
+
+One unauthenticated Playwright check that the deployed app actually works: the login screen
+renders, no asset is served as `text/html`, no `FontFace` is in `error`, and a wrong-password
+login returns the API's 401 rather than an unreachable-API message. It needs no database and
+writes nothing, which is why it is safe to point at staging. `ci` runs it after every deploy.
+
+### The journeys against a deployed environment
+
+```bash
+cd frontend
+E2E_TARGET=remote \
+E2E_WEB_URL=https://app.boxops.dev \
+E2E_API_URL=https://api.boxops.dev \
+E2E_DB_NAME=crossfit_box_e2e_<runid> \
+E2E_DATABASE_URL='<neon DIRECT url for that database>' \
+  npm run test:e2e
+```
+
+The journeys truncate and reseed, so they may **never** run against a database anyone cares
+about. Four guards enforce that, and each throws before a socket opens:
+
+- `E2E_DATABASE_URL` must be Neon's **direct** endpoint, not the pooled one — the suite runs
+  migrations, and DDL through PgBouncer is a class of failure with no upside.
+- `E2E_DB_NAME` must match `crossfit_box_e2e_<runid>`, where the run id is 7–40 lowercase
+  alphanumerics. Hyphens, underscores and uppercase are refused.
+- `boxops_staging` and `crossfit_box_dev` are on an explicit forbidden list. **The guard will
+  refuse `boxops_staging`** — pointing the journeys at staging is the mistake it exists to stop.
+- `E2E_TARGET=remote` with any of the four variables missing aborts at config load.
+
+### Seeding the staging demo data
+
+```bash
+STAGING_DATABASE_URL='<neon DIRECT url for boxops_staging>' ./scripts/staging-seed.sh
+```
+
+Additive and idempotent: every insert is `ON CONFLICT DO NOTHING` against ids derived from a
+constant demo-gym id, so a second run is a no-op and it never truncates. Contrast
+`scripts/dev-db-reset.sh`, which destroys everything. It refuses any database whose
+`current_database()` is not `boxops_staging`, and it prints the user count before and after so
+you can see what it did. All demo passwords are `password123`.
+
+Manual on purpose: no pipeline step may write application data, so no deploy can clobber a demo
+mid-presentation.
+
 ## Manual Verification Checklist
 
 After all services are running, verify the MVP works end-to-end:
