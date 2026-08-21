@@ -1,10 +1,31 @@
 # EPIC: Auth Flows (Epic B)
 
-**Status:** 🔄 NOT STARTED  
-**Start Date:** TBD  
+**Status:** ✅ COMPLETE  
 **Owner:** Frontend team (backend assist)  
 **Depends on:** `epics/AUTH_JWT_EPIC.md` — ✅ Complete  
-**Next epic:** `epics/INVITE_EPIC.md` (Epic C — Invite & Onboarding)
+**Next epic:** `epics/INVITE_ONBOARDING_EPIC.md` (Epic C — Invite & Onboarding)
+
+Login and self-registration shipped: `POST /api/auth/register` exists alongside `login`,
+`frontend/app/login.tsx`, `register.tsx` and `no-gym.tsx` are live, every screen goes through the
+shared API client, and unauthenticated navigation is guarded.
+
+**Password reset is not part of this epic and never was** — it is scoped separately in
+`epics/PASSWORD_RESET_EPIC.md`, which is where a forgotten password is handled. It was excluded here
+because there was no way to email anyone; that constraint is gone now that
+`epics/EMAIL_SERVICE_EPIC.md` shipped the mail seam.
+
+**Three notes for anyone reading this as a record rather than a brief:**
+
+1. **The shipped paths differ from the plan below.** The auth context and API client landed as
+   `frontend/hooks/useAuth.ts`, `hooks/useApiClient.ts`, `utils/api-client.ts` and `utils/storage.ts`,
+   not the `frontend/src/context/…` / `frontend/src/lib/…` layout Task #3 proposed. The code is the
+   truth; the task text is left as written for history.
+2. **The design references in Tasks #1 and #4–#6 are retired.** Pencil, `.pen` files and the
+   `ux-designer` agent are no longer how design works here — see `frontend/DESIGN.md` and the
+   `impeccable` skill. Do not treat `designs/auth-screens.pen` as a specification.
+3. **The dev bootstrap credentials below are wrong.** `frontend/app/dev-bootstrap.tsx` ships
+   `owner@example.com` / `coach@example.com` / `athlete@example.com` with password `password123`,
+   and gates itself on `__DEV__` rather than `NODE_ENV`.
 
 ---
 
@@ -23,6 +44,8 @@ When this epic is complete:
 ---
 
 ## Current State
+
+*(As at the start of the epic. All five lines are now resolved — see the Status section.)*
 
 - Backend has `POST /api/auth/login` — issues real JWTs
 - All endpoints require a valid Bearer token (JWT guard + role guard)
@@ -46,7 +69,7 @@ When this epic is complete:
 
 ### Excluded
 - Invite flow and email delivery (Epic C)
-- Password reset / forgot password
+- Password reset / forgot password — now its own epic, `epics/PASSWORD_RESET_EPIC.md`
 - OAuth / social login
 - Token refresh
 
@@ -132,7 +155,7 @@ in the navigation stack.
 
 ## Tasks
 
-### Task #1: UX Design — Login, Register, No-Gym screens
+### Task #1: UX Design — Login, Register, No-Gym screens — 🗑 RETIRED (Pencil)
 **Agent:** ux-designer | **Type:** FEATURE
 
 Design the following screens in `designs/auth-screens.pen` (auth screens are
@@ -145,7 +168,7 @@ password and reset password):
 
 Use existing screens in `designs/athlete-screens.pen` as style reference.
 
-### Task #2: Backend — Register endpoint
+### Task #2: Backend — Register endpoint — ✅ DONE
 **Agent:** backend-developer | **Type:** FEATURE
 
 Implement `POST /api/auth/register` as described in the Register Endpoint Design section
@@ -161,7 +184,7 @@ Update:
 
 The endpoint must be public (no JwtAuthGuard). Add full Swagger decorators.
 
-### Task #3: Frontend INFRA — Auth context + token storage + API client
+### Task #3: Frontend INFRA — Auth context + token storage + API client — ✅ DONE
 **Agent:** frontend-developer | **Type:** INFRA
 
 Implement the auth infrastructure as described in the Frontend Architecture section.
@@ -176,7 +199,7 @@ Update:
 
 Do NOT migrate existing screens to apiClient yet — that is part of Tasks #4–#7.
 
-### Task #4: Frontend FEATURE — Login screen
+### Task #4: Frontend FEATURE — Login screen — ✅ DONE
 **Agent:** frontend-developer | **Type:** FEATURE
 
 DESIGN REFERENCE: `designs/athlete-screens.pen` — frame: "Login"
@@ -188,7 +211,7 @@ then route by role as described in the Navigation Guard section.
 
 Handle loading, error (wrong credentials → show inline message), and success states.
 
-### Task #5: Frontend FEATURE — Register screen
+### Task #5: Frontend FEATURE — Register screen — ✅ DONE
 **Agent:** frontend-developer | **Type:** FEATURE
 
 DESIGN REFERENCE: `designs/athlete-screens.pen` — frame: "Register"
@@ -200,7 +223,7 @@ then route to `/no-gym` (role and gymId will be null for a newly registered user
 
 Handle loading, error (email taken → show inline message), and success states.
 
-### Task #6: Frontend FEATURE — No-Gym screen
+### Task #6: Frontend FEATURE — No-Gym screen — ✅ DONE
 **Agent:** frontend-developer | **Type:** FEATURE
 
 DESIGN REFERENCE: `designs/athlete-screens.pen` — frame: "No Gym"
@@ -210,7 +233,7 @@ is not yet part of a gym and should ask their gym owner for an invite.
 
 Include a logout button that calls `AuthContext.logout()`.
 
-### Task #7: Frontend FEATURE — Migrate existing screens to apiClient
+### Task #7: Frontend FEATURE — Migrate existing screens to apiClient — ✅ DONE
 **Agent:** frontend-developer | **Type:** REFACTOR
 
 Replace all raw fetch calls in existing screens with `apiClient`. No behaviour changes —
@@ -218,7 +241,7 @@ only the HTTP layer changes. Screens: coach-classes, coach-class-details,
 coach-mark-attendance, athlete schedule, my-bookings, class-details, gym-owner schedule,
 coaches screen, invite-coach modal.
 
-### Task #8: Frontend FEATURE — Dev bootstrap screen update
+### Task #8: Frontend FEATURE — Dev bootstrap screen update — ✅ DONE
 **Agent:** frontend-developer | **Type:** FEATURE
 
 Update the dev bootstrap screen to show sample user cards (Owner, Coach, Athlete).
@@ -245,23 +268,27 @@ Tasks #1, #2, #3 can run in parallel. Tasks #4–#8 depend on all three.
 
 ## Acceptance Criteria
 
-- [ ] `POST /api/auth/register` creates an athlete account and returns a JWT
-- [ ] `POST /api/auth/register` returns 409 for duplicate email
-- [ ] Unauthenticated users are redirected to the login screen
-- [ ] Login screen issues a token and routes to the correct home screen by role
-- [ ] Register screen creates an account and routes to the no-gym screen
-- [ ] No-gym screen is shown for users with no gym association
-- [ ] All API calls carry the Bearer token automatically
-- [ ] 401 responses log the user out and redirect to login
-- [ ] Dev bootstrap shows sample user cards and logs in with one tap
-- [ ] Logout clears the token and redirects to login
+- [x] `POST /api/auth/register` creates an athlete account and returns a JWT
+- [x] `POST /api/auth/register` returns 409 for duplicate email
+- [x] Unauthenticated users are redirected to the login screen — `frontend/app/_layout.tsx`, which
+      also exempts `/login`, `/register` and `/invite/*` so signed-out onboarding stays reachable
+- [x] Login screen issues a token and routes to the correct home screen by role
+- [x] Register screen creates an account and routes to the no-gym screen
+- [x] No-gym screen is shown for users with no gym association
+- [x] All API calls carry the Bearer token automatically — `frontend/hooks/useApiClient.ts`
+- [x] 401 responses log the user out and redirect to login — `wrap401` in `useApiClient.ts`
+- [x] Dev bootstrap shows sample user cards and logs in with one tap
+- [x] Logout clears the token and redirects to login
 
 ---
 
 ## References
 
 - **Depends on:** `epics/AUTH_JWT_EPIC.md`
-- **Next:** `epics/INVITE_EPIC.md` (Epic C — Invite & Onboarding)
+- **Next:** `epics/INVITE_ONBOARDING_EPIC.md` (Epic C — Invite & Onboarding)
+- **Forgotten password:** `epics/PASSWORD_RESET_EPIC.md`
 - **Auth guard:** `backend/src/auth/guards/jwt-auth.guard.ts`
 - **Login endpoint:** `backend/src/api/auth/auth.controller.ts`
-- **Design files:** `designs/auth-screens.pen` (auth screens), `designs/athlete-screens.pen` (style reference)
+- **Shipped frontend auth:** `frontend/hooks/useAuth.ts`, `hooks/useApiClient.ts`,
+  `utils/api-client.ts`, `utils/storage.ts`
+- **Design:** `frontend/DESIGN.md` + the `impeccable` skill (the `.pen` files are retired)
