@@ -1,0 +1,54 @@
+# The staging API. One machine, always on, in the same city as the database.
+#
+# `fra` and not the spec's `mad`: Neon's region is fixed at project creation and
+# is eu-central-1 (AWS Frankfurt). Frankfurt-to-Frankfurt is ~1-3ms; Madrid
+# would add ~25-30ms to EVERY query, so a request making ten ORM round-trips
+# would inherit ~300ms of pure network. Iberian user-facing latency barely
+# differs between the two. See context/DECISION_LOG.md (2026-08-21).
+app = 'boxops-api-staging'
+primary_region = 'fra'
+
+[build]
+  dockerfile = 'Dockerfile'
+
+# Migrations are a RELEASE step, never a boot side effect: `migrationsRun` is
+# false in database.config.ts because two machines booting together would race
+# on the same DDL. This runs once, before the new machines take traffic, and a
+# non-zero exit aborts the deploy.
+#
+# It overrides DATABASE_URL with the DIRECT Neon endpoint for the duration of
+# the command. DDL through PgBouncer (the pooled endpoint) is a class of failure
+# with no upside here.
+[deploy]
+  release_command = "sh -c 'DATABASE_URL=\"$DATABASE_MIGRATION_URL\" npm run migration:run'"
+  strategy = 'immediate'
+
+[env]
+  PORT = '3000'
+  # DISABLE_SCHEDULERS is deliberately absent: staging SHOULD run the
+  # class-lifecycle, membership-renewal and reminder crons. Only the e2e suite
+  # silences them.
+
+[http_service]
+  internal_port = 3000
+  force_https = true
+  # No scale-to-zero. The three @Cron services must tick, and a cold start
+  # would make the post-deploy journey timings unreliable.
+  auto_stop_machines = false
+  auto_start_machines = false
+  min_machines_running = 1
+  processes = ['app']
+
+  [[http_service.checks]]
+    # /health pings the database, so this fails a release that is listening but
+    # cannot reach Neon — which is exactly the deploy that must not go green.
+    interval = '15s'
+    timeout = '5s'
+    grace_period = '30s'
+    method = 'GET'
+    path = '/health'
+
+[[vm]]
+  size = 'shared-cpu-1x'
+  memory = '512mb'
+  cpus = 1
