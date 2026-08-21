@@ -2239,7 +2239,7 @@ export interface components {
              */
             inviteToken: string;
             /**
-             * @description Full acceptance URL. Email delivery is not implemented, so the owner copies this and sends it themselves.
+             * @description Full acceptance URL. Also emailed to the invitee; kept in the response so the owner can pass it on themselves, which is the fallback when delivery is "failed".
              * @example https://app.boxops.dev/invite/AbC123...
              */
             inviteLink: string;
@@ -2259,6 +2259,12 @@ export interface components {
              * @enum {string}
              */
             role: "coach";
+            /**
+             * @description Whether the invite email was delivered. "failed" means the invite is still valid and its token still usable — the caller must pass the link on by hand.
+             * @example sent
+             * @enum {string}
+             */
+            delivery: "sent" | "failed";
         };
         ChangeCoachStatusResponseDto: {
             /** @example uuid-gym-staff-id */
@@ -2829,6 +2835,12 @@ export interface components {
              * @enum {string}
              */
             role: "athlete" | "coach";
+            /**
+             * @description Whether the invite email was delivered. "failed" means the invite is still valid and its token still usable — the caller must pass the link on by hand.
+             * @example sent
+             * @enum {string}
+             */
+            delivery: "sent" | "failed";
         };
         InviteListItemDto: {
             /**
@@ -2846,6 +2858,11 @@ export interface components {
              * @example abc123xyz...
              */
             inviteToken: string;
+            /**
+             * @description Full acceptance URL, built by the API from FRONTEND_URL. The only place an invite link is composed — clients must not rebuild it from their own origin, or the link in the invite email and the one behind Copy link could name different hosts.
+             * @example https://app.boxops.dev/invite/abc123xyz
+             */
+            inviteLink: string;
             /**
              * @description What accepting this invite makes the invitee
              * @example coach
@@ -5369,7 +5386,7 @@ export interface operations {
             };
         };
         responses: {
-            /** @description Invite created. No email is delivered — there is no mail provider wired (see epics/EMAIL_SERVICE_EPIC.md), so the caller is responsible for getting `inviteLink` to the invitee. Treat that link as the only delivery mechanism. */
+            /** @description Invite created and emailed to the invitee. Check `delivery`: "sent" means the email went out, "failed" means the invite is still valid but nothing was delivered and the link must be passed on by hand. */
             201: {
                 headers: {
                     [name: string]: unknown;

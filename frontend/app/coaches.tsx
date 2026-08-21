@@ -35,17 +35,6 @@ type CoachInvite = components['schemas']['InviteListItemDto'];
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
-function inviteLinkFor(inviteToken: string): string {
-  // The list endpoint returns the token, not the link the backend built, so
-  // rebuild it against this origin. Email delivery does not exist yet, so
-  // this string is the whole delivery mechanism.
-  const origin =
-    typeof window !== 'undefined' && window.location
-      ? window.location.origin
-      : '';
-  return `${origin}/invite/${inviteToken}`;
-}
-
 function confirmDeactivate(displayName: string, onConfirm: () => void) {
   // `showConfirm`, never `Alert.alert`: react-native-web's Alert is a literal
   // no-op (`static alert() {}`), so on web this confirm silently did nothing —
@@ -438,9 +427,21 @@ function InviteModal({ visible, onClose, onSuccess, gymId, token }: InviteModalP
 
           {created !== null ? (
             <View style={styles.linkBox}>
-              <Text size="meta" tone="muted">
-                Invite created. Send this link to the coach — email delivery is not set up yet.
-              </Text>
+              {/*
+                Quiet meta text, never a green banner: DESIGN.md has no success
+                role. And a delivery failure uses strong ink, not Status.danger
+                — danger is destructive-only (Two Reds Rule), and this is
+                information the owner can act on.
+              */}
+              {created.delivery === 'sent' ? (
+                <Text size="meta" tone="muted">
+                  {`Invite emailed to ${created.inviteeEmail}.`}
+                </Text>
+              ) : (
+                <Text size="meta" weight="semibold" tone="strong">
+                  We couldn&apos;t email this invite. It&apos;s still valid — send them the link yourself.
+                </Text>
+              )}
               <View style={styles.linkRow}>
                 <Text testID="coach-invite-link-text" size="meta" numberOfLines={1} style={styles.linkText}>
                   {created.inviteLink}
@@ -465,7 +466,7 @@ function InviteModal({ visible, onClose, onSuccess, gymId, token }: InviteModalP
             <View style={styles.modalActionBtn}>
               <Button
                 testID="modal-confirm-btn"
-                label={created !== null ? 'Done' : 'Create Link'}
+                label={created !== null ? 'Done' : 'Send Invite'}
                 variant="primary"
                 onPress={created !== null ? handleClose : handleSubmit}
                 loading={isSubmitting}
@@ -626,7 +627,9 @@ export default function CoachesScreen() {
   }
 
   function handleCopyInviteLink(invite: CoachInvite) {
-    Clipboard.setString(inviteLinkFor(invite.inviteToken));
+    // The API's own link, never one rebuilt from this origin: the email and the
+    // Copy button must not be able to name different hosts.
+    Clipboard.setString(invite.inviteLink);
     setCopiedToken(invite.inviteToken);
     setTimeout(() => setCopiedToken(null), 2000);
   }

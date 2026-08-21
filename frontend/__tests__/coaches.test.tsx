@@ -43,6 +43,7 @@ const pendingInvite = {
   id: 'inv-1',
   inviteeEmail: 'dana@example.com',
   inviteToken: 'tok-abc',
+  inviteLink: 'https://app.boxops.dev/invite/tok-abc',
   role: 'coach',
   status: 'pending',
   createdAt: '2026-08-13T10:00:00.000Z',
@@ -91,7 +92,9 @@ describe('CoachesScreen — pending invites', () => {
 
     fireEvent.press(screen.getByTestId('copy-invite-link-tok-abc'));
 
-    expect(mockSetString).toHaveBeenCalledWith(expect.stringContaining('/invite/tok-abc'));
+    // The exact string the API built, not one the client re-derived from its own
+    // origin: those two can name different hosts.
+    expect(mockSetString).toHaveBeenCalledWith('https://app.boxops.dev/invite/tok-abc');
     expect(screen.getByText('Copied!')).toBeTruthy();
   });
 
@@ -111,14 +114,15 @@ describe('CoachesScreen — pending invites', () => {
     );
   });
 
-  it('shows the generated link after sending an invite, instead of claiming success', async () => {
+  it('confirms the email went out, and still offers the link', async () => {
     mockGet.mockResolvedValue({ coaches: [] });
     mockPost.mockResolvedValue({
       inviteToken: 'tok-new',
-      inviteLink: 'http://localhost:8081/invite/tok-new',
+      inviteLink: 'https://app.boxops.dev/invite/tok-new',
       expiresAt: '2026-08-20T10:00:00.000Z',
       inviteeEmail: 'new@example.com',
       role: 'coach',
+      delivery: 'sent',
     });
 
     render(<CoachesScreen />);
@@ -127,7 +131,31 @@ describe('CoachesScreen — pending invites', () => {
     fireEvent.press(screen.getByTestId('modal-confirm-btn'));
 
     await waitFor(() => expect(screen.getByTestId('coach-invite-link-text')).toBeTruthy());
-    expect(screen.getByText('http://localhost:8081/invite/tok-new')).toBeTruthy();
+    expect(screen.getByText('Invite emailed to new@example.com.')).toBeTruthy();
+    expect(screen.getByText('https://app.boxops.dev/invite/tok-new')).toBeTruthy();
+  });
+
+  it('says delivery failed but keeps the invite usable', async () => {
+    mockGet.mockResolvedValue({ coaches: [] });
+    mockPost.mockResolvedValue({
+      inviteToken: 'tok-new',
+      inviteLink: 'https://app.boxops.dev/invite/tok-new',
+      expiresAt: '2026-08-20T10:00:00.000Z',
+      inviteeEmail: 'new@example.com',
+      role: 'coach',
+      delivery: 'failed',
+    });
+
+    render(<CoachesScreen />);
+    fireEvent.press(screen.getByTestId('invite-coach-btn'));
+    fireEvent.changeText(screen.getByTestId('invite-coach-email-input'), 'new@example.com');
+    fireEvent.press(screen.getByTestId('modal-confirm-btn'));
+
+    await waitFor(() => expect(screen.getByTestId('coach-invite-link-text')).toBeTruthy());
+    expect(
+      screen.getByText("We couldn't email this invite. It's still valid — send them the link yourself."),
+    ).toBeTruthy();
+    expect(screen.getByText('https://app.boxops.dev/invite/tok-new')).toBeTruthy();
   });
 
   // The desktop register uses a table row (PendingInviteRow); mobile uses its
