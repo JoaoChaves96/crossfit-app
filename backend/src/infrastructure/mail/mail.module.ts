@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { createMailDriver } from './mail-driver.factory';
+import { InviteMailer } from './invite-mailer';
 import { MAIL_DRIVER_TOKEN } from './mail.types';
 
 @Module({
@@ -8,7 +9,8 @@ import { MAIL_DRIVER_TOKEN } from './mail.types';
       provide: MAIL_DRIVER_TOKEN,
       useFactory: () => createMailDriver(process.env),
     },
+    InviteMailer,
   ],
-  exports: [MAIL_DRIVER_TOKEN],
+  exports: [InviteMailer],
 })
 export class MailModule {}
