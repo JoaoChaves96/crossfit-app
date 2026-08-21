@@ -105,9 +105,33 @@ Postgres `eu-central-1` (database `boxops_staging`) and Fly.io in **`fra`, not t
   (`2abaf96`): CNAME unproxied (grey cloud), Let's Encrypt certificate `Issued`, Swagger
   advertising `https://api.boxops.dev`.
 - ✅ Tasks 5, 7, 10 (code) landed earlier (`370508f..4b95984`), CI green. Task 7 is unreviewed.
-- 🔄 **Task 4 — Cloudflare Pages, in progress.** Steps 1–5 done: `boxops-app.pages.dev` is
-  deployed and serving. Steps 6–8 remain, and the human still has to attach
-  `app.boxops.dev`.
+- ✅ **Task 4 — Cloudflare Pages complete.** `app.boxops.dev` is attached and **proxied** (the
+  opposite of the `api` record, deliberately — Pages is proxied by nature). All 41 assets
+  return their own content type, zero `text/html` fallbacks; the login screen renders with its
+  fonts; `OPTIONS /auth/login` from `https://app.boxops.dev` returns `204` with a matching
+  `access-control-allow-origin`. Both halves of staging are live.
+- ✅ **Task 6 — CI deploys staging on green** (`27cd9f1`). `deploy` runs only on a push to
+  `dev` and `needs` **every** gate, the journeys included. Run 32487003683 was green end to
+  end including the first real `deploy`; the `release_command` ran `migration:run:prod` on a
+  runner, and CI's `export:web` produced a bundle byte-identical to the verified hand-deploy
+  (`Uploaded 0 files (119 already uploaded)`) — the strongest evidence the
+  relocate-vendor-assets fix is deterministic.
+  **The `needs` gate is proven, not assumed:** run 32488229956 on a throwaway branch made
+  `deploy` `if`-eligible with a deliberately failing backend spec — `backend` went red (exactly
+  1 of 524 tests) and `deploy` was **skipped**. The branch was deleted, local and remote.
+- ✅ **Task 8 — the journeys can run against a deployed environment** (`d6943e0`). Remote mode
+  boots no `webServer` and migrates through Neon's DIRECT endpoint; four separate refusals each
+  throw before a socket opens. 15/15 local journeys unregressed.
+- ✅ **Post-deploy verification — `staging-smoke`.** One read-only, unauthenticated Playwright
+  check against the deployed origin: the login screen renders, no asset is served as
+  `text/html`, no `FontFace` is in `error`, and an in-page wrong-password login returns the
+  API's 401 message rather than the unreachable-API message. Green against live
+  `app.boxops.dev` in 1.7s, and proven non-vacuous against the CORS-refused `pages.dev` origin.
+  Needs **no database** — that is the point.
+  **Task 9 (the full remote-journey harness with a per-run Neon database and an ephemeral Fly
+  app) is deferred, not rejected**, and its plan is intact. See DECISION_LOG "Post-Deploy
+  Verification Is a Read-Only Smoke Test, Not the Full Journey Suite" for what the deferral
+  costs and the two measured font-checking traps.
 - ✅ **Blank staging page — FIXED and verified live.** `boxops-app.pages.dev` answered `200`
   and rendered nothing. Root cause: Pages skips any upload path containing a `node_modules`
   segment, and `expo export` put every package-owned asset there, so the `/* /index.html 200`
@@ -116,15 +140,17 @@ Postgres `eu-central-1` (database `boxops_staging`) and Fly.io in **`fra`, not t
   `frontend/assets/fonts/`; `frontend/scripts/relocate-vendor-assets.mjs` (run via the new
   `npm run export:web`) relocates the assets we don't control (`@expo/vector-icons`,
   `@react-navigation/elements`); and first paint no longer waits forever on a failed font.
-  Verified locally — tsc clean, 410 tests green, all 41 exported assets serve their own
-  content type, blank-page path reproduced and confirmed fixed. **Still to do: redeploy and
-  re-verify against the live URL** (plan Step 6 now checks `content_type`, not just the status
-  code — a `200` is what hid this). See DECISION_LOG "No Exported Asset May Sit Under a
-  `node_modules` Path".
-- ⬜ Then Task 6 (CI deploy), 8–9 (remote e2e, deferrable), 11.
-- **Human gates:** 1 (Fly secrets), 2 (Cloudflare DNS) and 3 (Pages API token) are cleared.
-  Remaining: Gate 4 (create the Pages project, attach the domain), Gate 5 (Fly deploy token +
-  three GitHub secrets), Gate 6 (the ephemeral e2e app + `NEON_ADMIN_DATABASE_URL`).
+  Verified live — all 41 assets on the deployed origin return their own content type, no font
+  in `error`, console clean, login screen renders. Checked by `content_type` per asset, never
+  by status code: a `200` is what hid this for a whole session. See DECISION_LOG "No Exported
+  Asset May Sit Under a `node_modules` Path".
+- ⬜ **Remaining: Task 10's live seed run, then Task 11 (docs sync).** Task 9 deferred as above.
+- ✅ **All six human gates are cleared.** `gh secret list` shows all five secrets
+  (`FLY_API_TOKEN`, `FLY_API_TOKEN_E2E`, `CLOUDFLARE_ACCOUNT_ID`, `CLOUDFLARE_API_TOKEN`,
+  `NEON_ADMIN_DATABASE_URL`); Fly app `boxops-api-e2e` exists and is `pending` with nothing
+  deployed, reserved for Task 9 if it is ever taken up. Both Fly tokens are deploy-scoped to
+  one app each and expire 2046 (Fly's 20-year default — flagged, not shortened). Nothing is
+  blocked on account access.
 
 `epics/EMAIL_SERVICE_EPIC.md` (provider settled as Resend) is downstream of this domain and
 DNS work, and `api.boxops.dev` existing now unblocks part of it.

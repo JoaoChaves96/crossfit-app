@@ -189,3 +189,82 @@ exported assets serve their own content type over a local static server (zero
 `text/html`); the console is clean where it previously carried 20 font warnings.
 The blank-page path was reproduced deliberately by hiding the font directory
 behind the SPA rewrite — fonts report `error` and the app still renders in full.
+
+## Post-Deploy Verification Is a Read-Only Smoke Test, Not the Full Journey Suite (2026-08-21)
+
+**Decision:** A deploy to staging is verified by `staging-smoke` — one read-only,
+unauthenticated Playwright check against the deployed origin. The full
+remote-journey harness (Task 9 of
+`docs/superpowers/plans/2026-08-21-staging-phases-4-6.md`: a per-run Neon
+database plus a short-lived Fly app behind the deployed bundle) is **deferred,
+not rejected**, and the plan is left intact for when write-path verification
+against a deployment earns its cost.
+
+**Rationale:** The unit tests and the 15 local journeys prove the *code* works.
+They cannot prove the deployed *artifact* works, because they never build or
+upload one — the Pages upload, the API origin inlined at build time, CORS, the
+certificate and the release-command migration are all invisible to them. That
+gap is not theoretical: it is exactly how the blank-page bug shipped with CI
+green (see "No Exported Asset May Sit Under a `node_modules` Path"), and how a
+`release_command` referencing a ts-node script absent from the production image
+survived three phases of review.
+
+Closing that gap needs four assertions, none of which need a database:
+
+1. the login screen renders (the bug was an empty `#root`, not an exception, so
+   only visible content distinguishes the two),
+2. no asset is served as `text/html` — the root cause, asserted directly,
+   because the `/* /index.html 200` rewrite makes status codes meaningless,
+3. no `FontFace` sits in `status: 'error'` and the face the screen actually uses
+   has `loaded`,
+4. an in-page login with a wrong password renders **"Wrong email or password"**
+   rather than "Something went wrong" — the two branches in `app/login.tsx`
+   distinguish "the API answered" from "the API was unreachable", so this single
+   assertion covers DNS, the certificate, the CORS preflight and the baked-in
+   origin.
+
+**What the deferral costs:** the write paths — booking, attendance, result
+logging — are not exercised against a deployment. They are exercised against
+byte-identical code locally, and CI has demonstrated the bundle is reproducible
+(run 32487003683 uploaded `0 files (119 already uploaded)`, i.e. the runner's
+export matched the verified hand-deploy exactly). So the unanswered question is
+narrow: does a write behave differently over real latency to Neon? Real, but not
+worth an ephemeral Fly app, a per-run database, teardown that must never leak,
+and a safety property whose downside is truncating the hand-seeded demo data.
+
+**It reports rather than prevents.** `staging-smoke` runs *after* `deploy`, so a
+failure means staging is already serving broken code. That is accepted: testing
+the artifact that is actually deployed requires deploying it first, an
+API-only rollback would leave the two halves mismatched and cannot un-run a
+migration, and staging is where it is cheap to be wrong. Fix forward.
+
+**Why a separate Playwright config.** `playwright.config.ts` sets `globalSetup`
+unconditionally, so even on `E2E_TARGET=remote` it runs `e2e/global-setup.ts`,
+which connects, migrates and truncates. Reusing it would drag a database into a
+suite that needs none. The spec also imports `@playwright/test` directly rather
+than `e2e/fixtures.ts`, whose `pinApiOrigin()` would rewrite every `/api` call
+to `localhost:3001` and silently steer the check off the deployment.
+
+**Verified 2026-08-21:** green against live `https://app.boxops.dev` in 1.7s.
+Proven non-vacuous by pointing it at `boxops-app.pages.dev`, which `CORS_ORIGINS`
+refuses by design — render, fonts and assets all still pass and it fails
+precisely at assertion 4. Refuses at config load with no `SMOKE_WEB_URL`, before
+a browser starts.
+
+**Two measured traps, recorded so they are not re-learned:**
+
+- **`document.fonts.check()` is unusable for this.** Against live staging,
+  `check('16px "TotallyNotARealFont"')` returns **`true`** — an unknown family
+  resolves to a fallback and the browser reports nothing left to load. A check
+  built on it would *pass* for a font that was never registered, the inverse of
+  its purpose. Assert on the `FontFace` registry instead, where a font served as
+  HTML fails OTS parsing and lands in `error`.
+- **`unloaded` is not a failure.** A face is fetched on first use, so
+  `HankenGrotesk_500Medium` is legitimately unloaded on a screen with no
+  medium-weight text. Requiring all four faces would go red on a copy change.
+
+**Known debt, allow-listed with its reason inline:** the deployed app logs
+`Minified React error #418`, a hydration mismatch between the prerendered HTML
+and the first client render. The app renders and works. It is allow-listed
+narrowly so the console check still fails on anything new; if it is ever fixed,
+delete the entry so a regression is caught again.
