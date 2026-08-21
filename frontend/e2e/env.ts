@@ -40,20 +40,6 @@ export const E2E_WEB_PORT = 8082;
 export const E2E_API_URL = `http://localhost:${E2E_API_PORT}`;
 export const E2E_WEB_URL = `http://localhost:${E2E_WEB_PORT}`;
 
-/**
- * The dev API the app must never be pointed at during a run.
- *
- * `frontend/.env.local` sets EXPO_PUBLIC_API_BASE_URL to a LAN address for
- * device testing. Expo does not overwrite a variable already present in the
- * system environment (`@expo/env` loadEnvFiles), so exporting our own value
- * wins — but a bundler cache or a stray port could still land the app on the
- * dev API, where writes would reach the dev database through HTTP and slip
- * straight past the SQL-level guard below. `pinApiOrigin()` in fixtures.ts
- * closes that by REWRITING every `/api` request whose origin is not this one, so
- * no page in the suite can reach a host other than the e2e API.
- */
-export const E2E_ALLOWED_API_ORIGIN = E2E_API_URL;
-
 /** Connection settings for the e2e database. Host settings mirror the dev container. */
 export const e2eDbConfig = {
   host: process.env.DB_HOST ?? 'localhost',
@@ -64,20 +50,161 @@ export const e2eDbConfig = {
 } as const;
 
 /**
- * Throws unless the given database name is exactly the e2e database.
+ * Where this run's stack lives.
  *
- * Called before opening a connection and before any destructive statement. It
- * is cheap and it is the last line of defence for a mistake that is not
- * recoverable: the dev database holds manually seeded scenarios that no script
- * can rebuild.
+ * `local` is the default and behaves exactly as this file always has: constants,
+ * never inherited values. `remote` runs the same journeys against a DEPLOYED
+ * environment — the Pages build and an ephemeral API — and takes its addresses
+ * from the environment because a deployment's addresses are not knowable here.
+ *
+ * The default is deliberate. A missing or misspelled variable resolves to
+ * `local`, which is the harmless direction: a local run against a remote
+ * database is the accident worth preventing, not the reverse.
+ */
+export type E2eTarget = 'local' | 'remote';
+
+export function e2eTarget(): E2eTarget {
+  return process.env.E2E_TARGET === 'remote' ? 'remote' : 'local';
+}
+
+/**
+ * Databases the suite must never touch, whatever the target says.
+ *
+ * `crossfit_box_dev` holds hand-seeded manual-test scenarios no script can
+ * rebuild. `boxops_staging` holds the demo data, which a deploy is forbidden to
+ * write and a test suite has even less business truncating. `neondb` and
+ * `postgres` are provider-owned. This list is checked in BOTH targets — the
+ * pattern below would already reject them, and that redundancy is the point: a
+ * future edit to the pattern cannot quietly re-open the hole.
+ */
+export const E2E_FORBIDDEN_DB_NAMES: readonly string[] = [
+  'crossfit_box_dev',
+  'boxops_staging',
+  'neondb',
+  'postgres',
+];
+
+/**
+ * The only shape a remote e2e database name may take: the local name, an
+ * underscore, and a 7-40 character run id of lowercase alphanumerics.
+ *
+ * Anchored at both ends, and the suffix cannot be empty. `crossfit_box_e2e_` and
+ * `crossfit_box_e2e_abc_staging` both fail, which is the shape a typo or a
+ * copy-paste takes.
+ */
+const REMOTE_DB_PATTERN = new RegExp(`^${E2E_DB_NAME}_[a-z0-9]{7,40}$`);
+
+function requiredEnv(name: string): string {
+  // `expo/no-dynamic-env-var` guards the BUNDLER, which inlines EXPO_PUBLIC_*
+  // statically. Nothing in e2e/ is bundled — this runs in Node, where a dynamic
+  // read is just a read.
+  // eslint-disable-next-line expo/no-dynamic-env-var
+  const value = process.env[name];
+  if (!value) {
+    throw new Error(
+      `[e2e] ${name} is required when E2E_TARGET=remote. The remote target has ` +
+        `no defaults on purpose: guessing a deployment's address is how a run ` +
+        `ends up somewhere nobody intended.`,
+    );
+  }
+  return value;
+}
+
+/** The web origin under test. */
+export function e2eWebUrl(): string {
+  return e2eTarget() === 'remote' ? requiredEnv('E2E_WEB_URL') : E2E_WEB_URL;
+}
+
+/**
+ * The API origin every `/api` request is pinned to, and the one the app must
+ * never be pointed away from during a run.
+ *
+ * `frontend/.env.local` sets EXPO_PUBLIC_API_BASE_URL to a LAN address for
+ * device testing. Expo does not overwrite a variable already present in the
+ * system environment (`@expo/env` loadEnvFiles), so exporting our own value
+ * wins — but a bundler cache or a stray port could still land the app on the
+ * dev API, where writes would reach the dev database through HTTP and slip
+ * straight past the SQL-level guard below. `pinApiOrigin()` in fixtures.ts
+ * closes that by REWRITING every `/api` request whose origin is not this one, so
+ * no page in the suite can reach a host other than this run's API. That is also
+ * what makes a deployed bundle's baked-in base URL irrelevant on the remote
+ * target — where the origin is the EPHEMERAL API in front of this run's
+ * throwaway database, never staging's own API, which writes to
+ * `boxops_staging`.
+ */
+export function e2eApiUrl(): string {
+  return e2eTarget() === 'remote' ? requiredEnv('E2E_API_URL') : E2E_API_URL;
+}
+
+/** The database this run may touch, and only this one. */
+export function e2eDbName(): string {
+  return e2eTarget() === 'remote' ? requiredEnv('E2E_DB_NAME') : E2E_DB_NAME;
+}
+
+/** Whatever `new Client()` needs to reach this run's database. */
+export type E2eDbConnection = typeof e2eDbConfig | { connectionString: string };
+
+/**
+ * Connection settings for this run's database, local or remote.
+ *
+ * One function rather than a branch in each caller: `global-setup.ts` and
+ * `helpers/seed.ts` both open their own client, and a duplicated
+ * `E2E_DATABASE_URL` branch is how the two would drift into pointing at
+ * different databases. Neither caller may skip `assertE2eDatabase()` because of
+ * this — the connection and the guard answer different questions.
+ */
+export function e2eDbConnection(): E2eDbConnection {
+  if (e2eTarget() !== 'remote') return e2eDbConfig;
+
+  const url = process.env.E2E_DATABASE_URL;
+  if (!url) {
+    throw new Error(
+      `[e2e] E2E_DATABASE_URL is required when E2E_TARGET=remote. Use Neon's ` +
+        `DIRECT (non-pooled) endpoint: the migration CLI and the truncate need ` +
+        `a real session, and a pooled connection can serve them from different ` +
+        `backends. There is no default on purpose.`,
+    );
+  }
+  return { connectionString: url };
+}
+
+/**
+ * Throws unless the given database name is this run's designated e2e database.
+ *
+ * Called before opening a connection and before any destructive statement.
+ * Cheap, and the last line of defence for a mistake that is not recoverable.
+ *
+ * The remote target widened WHAT this accepts — a per-run throwaway name — and
+ * nothing else. It still refuses the dev database, and it now also refuses
+ * `boxops_staging`, which is the same mistake in its modern form: staging holds
+ * demo data seeded by hand, outside the pipeline, precisely so that no automated
+ * step can clobber it.
  */
 export function assertE2eDatabase(name: string): void {
-  if (name !== E2E_DB_NAME) {
+  const refuse = (why: string): never => {
     throw new Error(
-      `[e2e] Refusing to run against database "${name}". ` +
-        `The e2e suite may only touch "${E2E_DB_NAME}" — it truncates data, and ` +
-        `the dev database holds hand-seeded manual-test scenarios.`,
+      `[e2e] Refusing to run against database "${name}": ${why} ` +
+        `This suite truncates data; the dev database holds hand-seeded ` +
+        `manual-test scenarios and staging holds the demo data.`,
     );
+  };
+
+  if (E2E_FORBIDDEN_DB_NAMES.includes(name)) {
+    refuse('it is on the forbidden list.');
+  }
+
+  if (e2eTarget() === 'remote') {
+    if (!REMOTE_DB_PATTERN.test(name)) {
+      refuse(
+        `a remote run may only touch a per-run throwaway database matching ` +
+          `${E2E_DB_NAME}_<runid>.`,
+      );
+    }
+    return;
+  }
+
+  if (name !== E2E_DB_NAME) {
+    refuse(`a local run may only touch "${E2E_DB_NAME}".`);
   }
 }
 

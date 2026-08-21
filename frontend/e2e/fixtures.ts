@@ -9,11 +9,11 @@
  */
 import { test as base, expect } from '@playwright/test';
 import type { Browser, Page } from '@playwright/test';
-import { E2E_ALLOWED_API_ORIGIN } from './env';
+import { e2eApiUrl } from './env';
 
 /**
- * Reroutes every `/api` request to the e2e backend, whatever origin the bundle
- * was built to call.
+ * Reroutes every `/api` request to this run's API, whatever origin the bundle
+ * was built to call. See `e2eApiUrl()` for which origin that is per target.
  *
  * This is a pin, not a guard, and it is deliberate. The app's API base is
  * inlined into the bundle from `EXPO_PUBLIC_API_BASE_URL`, and Expo resolves
@@ -40,12 +40,13 @@ import { E2E_ALLOWED_API_ORIGIN } from './env';
  * another origin, and that is what this makes impossible.
  */
 function pinApiOrigin(page: Page): void {
+  const allowed = e2eApiUrl();
   void page.route(
-    (url) => url.pathname.startsWith('/api') && url.origin !== E2E_ALLOWED_API_ORIGIN,
+    (url) => url.pathname.startsWith('/api') && url.origin !== allowed,
     (route) => {
       const original = new URL(route.request().url());
       return route.continue({
-        url: `${E2E_ALLOWED_API_ORIGIN}${original.pathname}${original.search}`,
+        url: `${allowed}${original.pathname}${original.search}`,
       });
     },
   );

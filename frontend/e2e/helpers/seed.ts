@@ -21,7 +21,7 @@
  */
 import { randomUUID } from 'crypto';
 import { Client } from 'pg';
-import { E2E_API_URL, assertE2eDatabase, e2eDbConfig } from '../env';
+import { assertE2eDatabase, e2eApiUrl, e2eDbConnection, e2eDbName } from '../env';
 import { bookableDay, type CalendarDay } from './dates';
 
 // ── Types ────────────────────────────────────────────────────────────────────
@@ -89,16 +89,20 @@ export interface SeededClass {
 // ── Database access ──────────────────────────────────────────────────────────
 
 /**
- * Opens a connection to the e2e database, runs `fn`, and always closes.
+ * Opens a connection to this run's e2e database, runs `fn`, and always closes.
  *
  * `assertE2eDatabase` runs before connecting: the guard has to sit on the path
  * every statement takes, not only on the truncate in global-setup, because an
  * INSERT into the dev database is just as unwelcome as a TRUNCATE.
+ *
+ * The name and the connection come from `env.ts` rather than from a constant
+ * here, so a remote run reaches its per-run throwaway database and the guard
+ * judges the name it will actually connect to.
  */
 export async function withDb<T>(fn: (client: Client) => Promise<T>): Promise<T> {
-  assertE2eDatabase(e2eDbConfig.database);
+  assertE2eDatabase(e2eDbName());
 
-  const client = new Client(e2eDbConfig);
+  const client = new Client(e2eDbConnection());
   await client.connect();
   try {
     return await fn(client);
@@ -116,16 +120,17 @@ export async function withDb<T>(fn: (client: Client) => Promise<T>): Promise<T> 
  * backend that was not running produced a green suite full of skips.
  */
 async function registerUser(name: string, email: string, password: string): Promise<SeededUser> {
+  const apiUrl = e2eApiUrl();
   let res: Response;
   try {
-    res = await fetch(`${E2E_API_URL}/api/auth/register`, {
+    res = await fetch(`${apiUrl}/api/auth/register`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ name, email, password }),
     });
   } catch (err) {
     throw new Error(
-      `[seed] Could not reach the e2e API at ${E2E_API_URL} to register ${email}. ` +
+      `[seed] Could not reach the e2e API at ${apiUrl} to register ${email}. ` +
         `Is the e2e backend up? (${err instanceof Error ? err.message : String(err)})`,
     );
   }
