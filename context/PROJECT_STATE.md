@@ -194,10 +194,49 @@ Pages, proxied). `CORS_ORIGINS` is exactly `https://app.boxops.dev`, so the raw
   container holding 8082, which made the journeys unrunnable with no safe workaround. Proven by
   a real 15/15 run on 3101/8182; documented in `docs/LOCAL_DEV.md`.
 
+- ✅ **Every destructive confirm on web is fixed (2026-08-21).** `react-native-web`'s `Alert`
+  export is `class Alert { static alert() {} }` — an empty no-op, so every screen guarding a
+  destructive action with `Alert.alert` did *nothing at all* on web: no dialog, no request, no
+  console error. An owner could not delete a space, delete a class type, archive a plan, disable
+  a coach or clear notifications, and every `Alert.alert('Error', …)` failure message was
+  invisible. **21 call sites across 7 files** (`app/coaches.tsx`, `app/edit-class.tsx`,
+  `app/notifications.tsx`, `app/gym-settings/{ClassTypesTab,SpacesTab,PlansTab,ProfileTab}.tsx`)
+  now go through the already-existing cross-platform shim `utils/alert.ts`
+  (`showConfirm` / `showAlert` / `showError`), which branches on `Platform.OS`.
+  - `eslint.config.js` bans importing `Alert` from `react-native` (`no-restricted-imports`,
+    `utils/alert.ts` exempt) so the mistake cannot come back.
+  - New journey `e2e/journeys/17-destructive-confirms-reach-the-server.spec.ts` asserts the
+    behaviour a person performs: a dialog is **raised**, **dismiss** leaves the database
+    untouched, **accept** reaches it — read from Postgres via three new seed readers
+    (`readSpaceDeletedAt`, `readClassTypeDeletedAt`, `readCoachStaffStatus`).
+  - **Why nothing caught it:** journey 12 creates a space and a class type but never deletes,
+    and the jest suites drive the confirm's `onPress` callback directly — the one part that was
+    never broken. `jest.config.ts` is `testEnvironment: 'node'`, so `Platform.OS !== 'web'` and
+    the shim takes the native branch; the jest suite structurally cannot catch this class of bug.
+    A `Platform.OS='web'`-pinned suite is an open follow-up.
+
 **Full baseline, all four suites measured 2026-08-21:** backend `tsc` clean, **523/523** unit
 (51 suites), **239/239** jest e2e (15 suites); frontend `tsc` clean, **419/419** unit (37
-suites), **15/15** Playwright journeys in 3.3 min. This supersedes the 520/399 figures recorded
+suites), **16/16** Playwright journeys in 4.2 min. This supersedes the 520/399 figures recorded
 against Phases 1–3 above.
+
+- ✅ **Frontend lint is green for the first time (2026-08-21).** `npx eslint .` was at **11
+  errors**; it is now **0 errors, 52 warnings**. Note that `npm run lint` (`expo lint`) has a
+  narrower file scope and only ever showed 2 of them — measure with `npx eslint .`.
+  - 2 × `react/no-unescaped-entities` (`app/(tabs)/profile.tsx`,
+    `app/gym-settings/ClassTypesTab.tsx`) fixed by wrapping the copy as a JS string
+    (`{"…you'd…"}`), **not** with `&apos;` — React Native does not decode HTML entities, so
+    the entity fix would have shipped a literal `&apos;` to native.
+  - 3 × `react-hooks/rules-of-hooks` were false positives (Playwright's fixture callback is
+    named `use`; `test-utils/mock-navigation.ts` reads the jest mocks behind `useRouter`).
+    The rule is now off for `e2e/**` and `test-utils/**` — neither contains React.
+  - 6 × the new `Alert` ban firing on `__tests__/**`, which spy on native `Alert` *through*
+    the shim. Those are exempt, with the reasoning recorded in the config.
+  - **The 35 "auto-fixable" warnings are deliberately NOT fixed:** 28 are `import/first` in
+    test suites whose imports intentionally follow their `jest.mock(...)` blocks, and hoisting
+    them would break the mocks. `--fix` is not safe to run here.
+
+
 
 `epics/EMAIL_SERVICE_EPIC.md` (provider settled as Resend) is downstream of this domain and
 DNS work, and `api.boxops.dev` existing now unblocks part of it.

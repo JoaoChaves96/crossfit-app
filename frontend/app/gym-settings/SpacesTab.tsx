@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import { ActivityIndicator, Alert, TextInput, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, TextInput, TouchableOpacity, View } from 'react-native';
+import { showAlert, showConfirm, showError } from '@/utils/alert';
 import { createApiClient } from '@/utils/api-client';
 import { components } from '@/types/api.gen';
 import { Text, Icon, Button } from '@/components/cleanink';
@@ -189,11 +190,11 @@ function SpaceForm({ mode, initialName, initialCapacity, isSaving, onSave, onCan
     const trimmedName = name.trim();
     const parsedCapacity = parseInt(capacity, 10);
     if (!trimmedName) {
-      Alert.alert('Validation', 'Space name is required.');
+      showAlert('Validation', 'Space name is required.');
       return;
     }
     if (isNaN(parsedCapacity) || parsedCapacity < 1) {
-      Alert.alert('Validation', 'Base capacity must be a positive number.');
+      showAlert('Validation', 'Base capacity must be a positive number.');
       return;
     }
     onSave(trimmedName, parsedCapacity);
@@ -305,11 +306,13 @@ export function SpacesTab({ gymId, token, isMobile }: SpacesTabProps) {
   }, []);
 
   const handleDeletePress = useCallback((space: SpaceItem) => {
-    Alert.alert(
+    // `showConfirm`, never `Alert.alert`: react-native-web's Alert is a literal
+    // no-op (`static alert() {}`), so on web Delete silently did nothing.
+    showConfirm(
       'Delete Space',
       `Are you sure you want to delete "${space.name}"?`,
       [
-        { text: 'Cancel', style: 'cancel' },
+        { text: 'Cancel', style: 'cancel', onPress: () => {} },
         {
           text: 'Delete',
           style: 'destructive',
@@ -322,7 +325,7 @@ export function SpacesTab({ gymId, token, isMobile }: SpacesTabProps) {
               await fetchSpaces();
             } catch (err) {
               const msg = err instanceof Error ? err.message : 'Failed to delete space';
-              Alert.alert('Error', msg);
+              showError('Error', msg);
             }
           },
         },
@@ -352,7 +355,7 @@ export function SpacesTab({ gymId, token, isMobile }: SpacesTabProps) {
       await fetchSpaces();
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'Failed to save space';
-      Alert.alert('Error', msg);
+      showError('Error', msg);
     } finally {
       setIsSaving(false);
     }

@@ -1,7 +1,6 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import {
   ActivityIndicator,
-  Alert,
   ScrollView,
   TextInput,
   TouchableOpacity,
@@ -17,6 +16,7 @@ import { useSafeAreaTop } from '@/components/SafeScreen';
 import { Text, Icon, Button, SelectField } from '@/components/cleanink';
 import { Ink, Space, Status } from '@/constants/design';
 import { createApiClient } from '@/utils/api-client';
+import { showConfirm, showError } from '@/utils/alert';
 import { trimTime } from '@/utils/datetime';
 import { components } from '@/types/api.gen';
 import { ClassState, STATE_LABEL } from './class-management/classStates';
@@ -386,11 +386,13 @@ export default function EditClassScreen() {
   const handleDelete = useCallback(() => {
     if (!token || !currentGymId || !classId) return;
 
-    Alert.alert(
+    // `showConfirm`, never `Alert.alert`: react-native-web's Alert is a literal
+    // no-op (`static alert() {}`), so on web Delete Class silently did nothing.
+    showConfirm(
       'Delete Class',
       'Are you sure you want to delete this class? This action cannot be undone.',
       [
-        { text: 'Cancel', style: 'cancel' },
+        { text: 'Cancel', style: 'cancel', onPress: () => {} },
         {
           text: 'Delete',
           style: 'destructive',
@@ -404,7 +406,7 @@ export default function EditClassScreen() {
               router.push('/schedule-dashboard' as never);
             } catch (err: unknown) {
               const message = err instanceof Error ? err.message : 'Failed to delete class';
-              Alert.alert('Error', message);
+              showError('Error', message);
             } finally {
               setIsDeleting(false);
             }

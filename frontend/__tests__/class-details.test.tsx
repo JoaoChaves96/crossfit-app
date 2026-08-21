@@ -14,7 +14,6 @@
 
 import React from 'react';
 import { render, screen, fireEvent, waitFor, act } from '@testing-library/react-native';
-import { Alert } from 'react-native';
 import ClassDetailsScreen from '@/app/class-details';
 import { AuthContext, AuthContextType } from '@/context/AuthContext';
 import { GymContext } from '@/context/GymContext';

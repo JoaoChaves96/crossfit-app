@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import { ActivityIndicator, Alert, TextInput, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, TextInput, TouchableOpacity, View } from 'react-native';
+import { showAlert, showConfirm, showError } from '@/utils/alert';
 import { createApiClient } from '@/utils/api-client';
 import { components } from '@/types/api.gen';
 import { Text, Icon, Button, StatusChip } from '@/components/cleanink';
@@ -278,16 +279,16 @@ function PlanForm({ mode, initialPlan, classTypes, isSaving, onSave, onCancel }:
   function handleSave() {
     const trimmedName = name.trim();
     if (!trimmedName) {
-      Alert.alert('Validation', 'Plan name is required.');
+      showAlert('Validation', 'Plan name is required.');
       return;
     }
     const parsedPrice = parsePrice(price);
     if (isNaN(parsedPrice) || parsedPrice < 0) {
-      Alert.alert('Validation', 'Price must be a number.');
+      showAlert('Validation', 'Price must be a number.');
       return;
     }
     if (selectedClassTypeIds.length === 0) {
-      Alert.alert('Validation', 'Select at least one class type.');
+      showAlert('Validation', 'Select at least one class type.');
       return;
     }
     onSave({
@@ -459,13 +460,15 @@ export function PlansTab({ gymId, token, isMobile }: PlansTabProps) {
   }, []);
 
   const handleArchivePress = useCallback((plan: MembershipPlan) => {
-    Alert.alert(
+    // `showConfirm`, never `Alert.alert`: react-native-web's Alert is a literal
+    // no-op (`static alert() {}`), so on web Archive silently did nothing.
+    showConfirm(
       'Archive Plan',
       plan.subscriberCount > 0
         ? `You have ${plan.subscriberCount} members on this plan. They keep it until it expires, but nobody new can be assigned to it.`
         : `Archive "${plan.name}"? Nobody new can be assigned to it.`,
       [
-        { text: 'Cancel', style: 'cancel' },
+        { text: 'Cancel', style: 'cancel', onPress: () => {} },
         {
           text: 'Archive',
           style: 'destructive',
@@ -479,7 +482,7 @@ export function PlansTab({ gymId, token, isMobile }: PlansTabProps) {
               await fetchData();
             } catch (err) {
               const msg = err instanceof Error ? err.message : 'Failed to archive plan';
-              Alert.alert('Error', msg);
+              showError('Error', msg);
             }
           },
         },
@@ -510,7 +513,7 @@ export function PlansTab({ gymId, token, isMobile }: PlansTabProps) {
         await fetchData();
       } catch (err) {
         const msg = err instanceof Error ? err.message : 'Failed to save plan';
-        Alert.alert('Error', msg);
+        showError('Error', msg);
       } finally {
         setIsSaving(false);
       }

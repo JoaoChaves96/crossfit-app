@@ -1,7 +1,6 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import {
   ActivityIndicator,
-  Alert,
   Clipboard,
   Modal,
   ScrollView,
@@ -17,6 +16,7 @@ import { SafeScreen } from '@/components/SafeScreen';
 import { Text, Icon, Button, StatusChip } from '@/components/cleanink';
 import { Ink, Accent, Space, Status } from '@/constants/design';
 import { createApiClient } from '@/utils/api-client';
+import { showConfirm, showError } from '@/utils/alert';
 import { components } from '@/types/api.gen';
 import { OwnerSidebar, OWNER_NAV_ITEMS } from '@/components/OwnerSidebar';
 import { OwnerNavDrawer } from '@/components/OwnerNavDrawer';
@@ -47,11 +47,15 @@ function inviteLinkFor(inviteToken: string): string {
 }
 
 function confirmDeactivate(displayName: string, onConfirm: () => void) {
-  Alert.alert(
+  // `showConfirm`, never `Alert.alert`: react-native-web's Alert is a literal
+  // no-op (`static alert() {}`), so on web this confirm silently did nothing —
+  // no dialog, no request, no error. Reactivate calls through directly with no
+  // confirm, so an owner could enable a coach but never disable one.
+  showConfirm(
     'Deactivate Coach',
     `Are you sure you want to deactivate ${displayName}? They will no longer be assigned to new classes.`,
     [
-      { text: 'Cancel', style: 'cancel' },
+      { text: 'Cancel', style: 'cancel', onPress: () => {} },
       { text: 'Deactivate', style: 'destructive', onPress: onConfirm },
     ],
   );
@@ -79,9 +83,13 @@ interface ActionButtonProps {
   disabled: boolean;
 }
 
+// The testID is keyed off the variant rather than passed in, so the desktop
+// panel and the mobile card expose the same hook for the same action and a
+// journey can reach whichever register is mounted (see `visibleTestId`).
 function ActionButton({ label, onPress, variant, disabled }: ActionButtonProps) {
   return (
     <Button
+      testID={variant === 'deactivate' ? 'coach-disable-btn' : 'coach-enable-btn'}
       label={label}
       onPress={onPress}
       variant={variant === 'deactivate' ? 'danger' : 'quiet'}
@@ -606,7 +614,7 @@ export default function CoachesScreen() {
       await fetchCoaches();
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'Failed to update coach status.';
-      Alert.alert('Error', msg);
+      showError('Error', msg);
     } finally {
       setChangingStatusId(null);
     }
@@ -632,7 +640,7 @@ export default function CoachesScreen() {
       await fetchPendingInvites();
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'Failed to revoke invite.';
-      Alert.alert('Error', msg);
+      showError('Error', msg);
     } finally {
       setRevokingToken(null);
     }

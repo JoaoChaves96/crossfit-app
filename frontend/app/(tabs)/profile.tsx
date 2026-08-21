@@ -247,7 +247,7 @@ export default function ProfileScreen() {
       <View style={styles.notificationSection}>
         <Text size="label" weight="semibold" tone={Ink.faint} upper>NOTIFICATIONS</Text>
         <Text size="body" tone={Ink.muted} style={styles.notificationDescription}>
-          Choose which notifications you'd like to receive.
+          {"Choose which notifications you'd like to receive."}
         </Text>
         <View style={styles.notificationCard}>
           {NOTIFICATION_ITEMS.map((item, index) => (

@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import { ActivityIndicator, Alert, TextInput, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, TextInput, TouchableOpacity, View } from 'react-native';
 import { createApiClient } from '@/utils/api-client';
+import { showAlert, showConfirm, showError } from '@/utils/alert';
 import { components } from '@/types/api.gen';
 import { Text, Icon, Button, StatusChip } from '@/components/cleanink';
 import { Ink, Accent, Status } from '@/constants/design';
@@ -38,7 +39,7 @@ function EmptyClassTypes({ onAddPress }: EmptyClassTypesProps) {
       </View>
       <Text size="title" weight="semibold" tone="strong">No class types configured yet</Text>
       <Text size="meta" tone="muted" style={styles.emptyDesc}>
-        Add your first class type to start organizing your gym's programming.
+        {"Add your first class type to start organizing your gym's programming."}
       </Text>
       <View style={styles.emptyBtnWrap}>
         <Button testID="add-class-type-btn" label="Add Class Type" variant="primary" onPress={onAddPress} />
@@ -220,7 +221,7 @@ function ClassTypeForm({
   function handleSave() {
     const trimmedName = name.trim();
     if (!trimmedName) {
-      Alert.alert('Validation', 'Class type name is required.');
+      showAlert('Validation', 'Class type name is required.');
       return;
     }
     onSave(trimmedName, loggable, selectedMetric);
@@ -352,11 +353,13 @@ export function ClassTypesTab({ gymId, token, isMobile }: ClassTypesTabProps) {
 
   const handleDeletePress = useCallback(
     (classType: ClassTypeItem) => {
-      Alert.alert(
+      // `showConfirm`, never `Alert.alert`: react-native-web's Alert is a literal
+      // no-op (`static alert() {}`), so on web Delete silently did nothing.
+      showConfirm(
         'Delete Class Type',
         `Are you sure you want to delete "${classType.name}"?`,
         [
-          { text: 'Cancel', style: 'cancel' },
+          { text: 'Cancel', style: 'cancel', onPress: () => {} },
           {
             text: 'Delete',
             style: 'destructive',
@@ -374,7 +377,7 @@ export function ClassTypesTab({ gymId, token, isMobile }: ClassTypesTabProps) {
                 await fetchClassTypes();
               } catch (err) {
                 const msg = err instanceof Error ? err.message : 'Failed to delete class type';
-                Alert.alert('Error', msg);
+                showError('Error', msg);
               }
             },
           },
@@ -410,7 +413,7 @@ export function ClassTypesTab({ gymId, token, isMobile }: ClassTypesTabProps) {
         await fetchClassTypes();
       } catch (err) {
         const msg = err instanceof Error ? err.message : 'Failed to save class type';
-        Alert.alert('Error', msg);
+        showError('Error', msg);
       } finally {
         setIsSaving(false);
       }

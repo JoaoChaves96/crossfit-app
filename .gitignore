@@ -19,3 +19,6 @@ skills-lock.json
 # Playwright artefacts, if a run is started from the repo root rather than frontend/
 test-results/
 playwright-report/
+
+# Throwaway screenshots from live verification passes (browser-driven card sign-off)
+.verify-shots/

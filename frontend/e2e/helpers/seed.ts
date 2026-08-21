@@ -640,3 +640,71 @@ export async function findClassByDate(gym: SeededGym, date: CalendarDay): Promis
     return { id: row.id, date: row.day, time: row.time, capacity: row.capacity };
   });
 }
+
+// ── Destructive-outcome readers ───────────────────────────────────────────────
+//
+// Spaces and class types are SOFT-deleted (`deletedAt` is stamped, the row
+// stays), and a coach is disabled by flipping `gym_staff.status`. So "it is
+// gone" cannot be read as an absent row — these return the field that actually
+// moved, and `null` means the delete never happened.
+//
+// Why any of this exists: `react-native-web`'s `Alert` is an empty no-op, so
+// every destructive confirm in settings used to do literally nothing on web —
+// no dialog, no request, no error, and a UI that looked unchanged for the
+// honest reason that nothing had changed. An assertion on the row disappearing
+// from the list is not enough on its own to catch the reverse failure either,
+// which is why journey 17 reads the database as well.
+
+/** When the space was soft-deleted, or `null` if it is still live. */
+export async function readSpaceDeletedAt(spaceId: string): Promise<Date | null> {
+  return withDb(async (db) => {
+    const res = await db.query<{ deletedAt: Date | null }>(
+      `SELECT "deletedAt" FROM spaces WHERE id = $1`,
+      [spaceId],
+    );
+    if (res.rowCount !== 1) {
+      throw new Error(
+        `[seed] Expected space ${spaceId} to still exist as a row — delete is SOFT, so a ` +
+          `missing row means something removed it outright, not that the UI worked.`,
+      );
+    }
+    return res.rows[0].deletedAt;
+  });
+}
+
+/** When the class type was soft-deleted, or `null` if it is still live. */
+export async function readClassTypeDeletedAt(classTypeId: string): Promise<Date | null> {
+  return withDb(async (db) => {
+    const res = await db.query<{ deletedAt: Date | null }>(
+      `SELECT "deletedAt" FROM class_types WHERE id = $1`,
+      [classTypeId],
+    );
+    if (res.rowCount !== 1) {
+      throw new Error(
+        `[seed] Expected class type ${classTypeId} to still exist as a row — delete is SOFT.`,
+      );
+    }
+    return res.rows[0].deletedAt;
+  });
+}
+
+/**
+ * The coach's `gym_staff.status` for this gym — `'active'` or `'inactive'`.
+ *
+ * This is the exact field the dead-confirm bug left untouched: the owner clicked
+ * Disable, saw no dialog, and the coach stayed `active`.
+ */
+export async function readCoachStaffStatus(gym: SeededGym): Promise<string> {
+  return withDb(async (db) => {
+    const res = await db.query<{ status: string }>(
+      `SELECT status FROM gym_staff WHERE "gymId" = $1 AND "userId" = $2 AND role = 'coach'`,
+      [gym.id, gym.coach.id],
+    );
+    if (res.rowCount !== 1) {
+      throw new Error(
+        `[seed] Expected exactly one coach staff row in gym ${gym.id}, found ${res.rowCount}.`,
+      );
+    }
+    return res.rows[0].status;
+  });
+}

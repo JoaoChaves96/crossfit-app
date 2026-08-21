@@ -7,7 +7,8 @@
  * ground with muted ink and a quiet check. Data, handlers, and copy unchanged.
  */
 import React, { useCallback } from 'react';
-import { View, FlatList, TouchableOpacity, ActivityIndicator, Alert } from 'react-native';
+import { View, FlatList, TouchableOpacity, ActivityIndicator } from 'react-native';
+import { showConfirm } from '@/utils/alert';
 import { useRouter, useFocusEffect } from 'expo-router';
 import { useNotifications, type Notification, type NotificationType } from '@/hooks/useNotifications';
 import { Accent, Ink, Space } from '@/constants/design';
@@ -110,11 +111,13 @@ export default function NotificationsScreen() {
   const readCount = notifications.filter((n) => n.read).length;
 
   const handleClearRead = () => {
-    Alert.alert(
+    // `showConfirm`, never `Alert.alert`: react-native-web's Alert is a literal
+    // no-op (`static alert() {}`), so on web Clear silently did nothing.
+    showConfirm(
       'Clear read notifications',
       `Remove ${readCount} read notification${readCount === 1 ? '' : 's'}? This cannot be undone.`,
       [
-        { text: 'Cancel', style: 'cancel' },
+        { text: 'Cancel', style: 'cancel', onPress: () => {} },
         {
           text: 'Clear',
           style: 'destructive',

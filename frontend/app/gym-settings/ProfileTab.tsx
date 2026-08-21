@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import { ActivityIndicator, Alert, TextInput, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, TextInput, TouchableOpacity, View } from 'react-native';
+import { showError } from '@/utils/alert';
 import { createApiClient } from '@/utils/api-client';
 import { components } from '@/types/api.gen';
 import { Text, Button, StatusChip } from '@/components/cleanink';
@@ -78,7 +79,7 @@ export function ProfileTab({ gymId, token }: ProfileTabProps) {
       setLocation(updated.location);
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'Failed to save gym profile';
-      Alert.alert('Error', msg);
+      showError('Error', msg);
     } finally {
       setIsSaving(false);
     }
