@@ -186,6 +186,19 @@ Pages, proxied). `CORS_ORIGINS` is exactly `https://app.boxops.dev`, so the raw
   one app each and expire 2046 (Fly's 20-year default — flagged, not shortened). Nothing is
   blocked on account access.
 
+- ✅ **The e2e ports are env-overridable (2026-08-21).** `E2E_API_PORT` / `E2E_WEB_PORT` in
+  `frontend/e2e/env.ts` default to 3001/8082 and are read once at module load; the API URL, the
+  web URL and the spawned backend's `PORT` all follow. A non-port value throws rather than
+  falling back to the port the caller was escaping. **The database name is still a hard
+  constant** — that is the guard, and it stays unoverridable. Forced by a `kafka-rest-proxy`
+  container holding 8082, which made the journeys unrunnable with no safe workaround. Proven by
+  a real 15/15 run on 3101/8182; documented in `docs/LOCAL_DEV.md`.
+
+**Full baseline, all four suites measured 2026-08-21:** backend `tsc` clean, **523/523** unit
+(51 suites), **239/239** jest e2e (15 suites); frontend `tsc` clean, **419/419** unit (37
+suites), **15/15** Playwright journeys in 3.3 min. This supersedes the 520/399 figures recorded
+against Phases 1–3 above.
+
 `epics/EMAIL_SERVICE_EPIC.md` (provider settled as Resend) is downstream of this domain and
 DNS work, and `api.boxops.dev` existing now unblocks part of it.
 

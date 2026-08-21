@@ -45,7 +45,7 @@ describe('local target', () => {
     delete process.env.E2E_TARGET;
   });
 
-  it('uses the hard-coded constants, ignoring the environment', () => {
+  it("ignores a remote target's URLs and database name", () => {
     process.env.E2E_WEB_URL = 'https://app.boxops.dev';
     process.env.E2E_API_URL = 'https://api.boxops.dev';
     process.env.E2E_DB_NAME = 'boxops_staging';
@@ -59,6 +59,61 @@ describe('local target', () => {
     expect(() => assertE2eDatabase('crossfit_box_e2e')).not.toThrow();
     expect(() => assertE2eDatabase('crossfit_box_dev')).toThrow(/Refusing/);
     expect(() => assertE2eDatabase('boxops_staging')).toThrow(/Refusing/);
+  });
+});
+
+/**
+ * The ports resolve at module load, so each case has to re-import the module with
+ * the environment already set — the same way a real run sees it, since
+ * `playwright.config.ts` and the spawned backend both read the value once.
+ */
+describe('port overrides', () => {
+  function load(env: Record<string, string | undefined>) {
+    delete process.env.E2E_API_PORT;
+    delete process.env.E2E_WEB_PORT;
+    Object.assign(process.env, env);
+
+    let mod: typeof import('../e2e/env') | undefined;
+    jest.isolateModules(() => {
+      // A fresh module registry is the whole point; `import` is hoisted and would
+      // bind the values from before the environment was set.
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
+      mod = require('../e2e/env');
+    });
+    return mod!;
+  }
+
+  it('defaults to 3001/8082 when nothing is set', () => {
+    const env = load({});
+    expect(env.E2E_API_PORT).toBe(3001);
+    expect(env.E2E_WEB_PORT).toBe(8082);
+    expect(env.E2E_API_URL).toBe('http://localhost:3001');
+    expect(env.E2E_WEB_URL).toBe('http://localhost:8082');
+  });
+
+  it('takes both ports from the environment, URLs included', () => {
+    const env = load({ E2E_API_PORT: '3101', E2E_WEB_PORT: '8182' });
+    expect(env.E2E_API_URL).toBe('http://localhost:3101');
+    expect(env.E2E_WEB_URL).toBe('http://localhost:8182');
+  });
+
+  it('boots the backend on the overridden API port', () => {
+    const env = load({ E2E_API_PORT: '3101' });
+    expect(env.e2eBackendEnv()).toEqual(
+      expect.objectContaining({ PORT: '3101', DB_NAME: 'crossfit_box_e2e' }),
+    );
+  });
+
+  // Falling back here would land the run on the port the caller was escaping.
+  it.each(['0', '70000', 'abc', '8082.5', '-1'])(
+    'refuses %s rather than falling back',
+    (raw) => {
+      expect(() => load({ E2E_WEB_PORT: raw })).toThrow(/not a port number/);
+    },
+  );
+
+  it('treats an empty value as unset', () => {
+    expect(load({ E2E_WEB_PORT: '' }).E2E_WEB_PORT).toBe(8082);
   });
 });
 

@@ -8,6 +8,9 @@
  *   dev:  API :3000   web :8081   db crossfit_box_dev
  *   e2e:  API :3001   web :8082   db crossfit_box_e2e
  *
+ * The ports are defaults, overridable via `E2E_API_PORT`/`E2E_WEB_PORT` when
+ * something else on the machine holds one. The database is not: it is a constant.
+ *
  * Nothing here reads a `DB_NAME`/`PORT` already in the environment. That is
  * deliberate: an inherited value is exactly how this suite's predecessor came
  * to TRUNCATE 15 tables in `crossfit_box_dev`, which is where the hand-seeded
@@ -34,8 +37,43 @@ export const E2E_DB_NAME = 'crossfit_box_e2e';
  */
 export const E2E_TIMEZONE = 'America/New_York';
 
-export const E2E_API_PORT = 3001;
-export const E2E_WEB_PORT = 8082;
+/**
+ * Ports for this run's stack, overridable because a port is not ours to own.
+ *
+ * The database name above is a constant on purpose and stays one. Ports are a
+ * different kind of value: another process on the machine can hold one, and when
+ * it does the whole suite is unrunnable with no safe workaround. `kafka-rest-proxy`
+ * squatting 8082 is the case that forced this; Grafana on 3000 was the same class
+ * of collision one port over.
+ *
+ * Read ONCE at module load, not per call: the ports decide which process gets
+ * spawned by `playwright.config.ts` and which `PORT` the backend boots with, so a
+ * value that could change mid-run would mean the web server and the tests
+ * disagreeing about where the stack is.
+ *
+ * An override that is not a usable port number is an error rather than a silent
+ * fallback — falling back would put the run on the port the caller was trying to
+ * escape, which is the failure they came here to avoid.
+ */
+function port(name: 'E2E_API_PORT' | 'E2E_WEB_PORT', fallback: number): number {
+  // Nothing in e2e/ is bundled, so the rule guarding the bundler's static
+  // inlining has nothing to protect here. Same reasoning as requiredEnv() below.
+  // eslint-disable-next-line expo/no-dynamic-env-var
+  const raw = process.env[name];
+  if (raw === undefined || raw === '') return fallback;
+
+  const value = Number(raw);
+  if (!Number.isInteger(value) || value < 1 || value > 65535) {
+    throw new Error(
+      `[e2e] ${name}="${raw}" is not a port number. Expected an integer ` +
+        `1-65535, or leave it unset for ${fallback}.`,
+    );
+  }
+  return value;
+}
+
+export const E2E_API_PORT = port('E2E_API_PORT', 3001);
+export const E2E_WEB_PORT = port('E2E_WEB_PORT', 8082);
 
 export const E2E_API_URL = `http://localhost:${E2E_API_PORT}`;
 export const E2E_WEB_URL = `http://localhost:${E2E_WEB_PORT}`;

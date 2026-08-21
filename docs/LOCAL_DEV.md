@@ -83,6 +83,22 @@ against any other database (`backend/test/helpers/e2e-database.ts`,
 `frontend/e2e/env.ts`). A missing database fails loudly with the `CREATE DATABASE` command
 rather than falling back.
 
+### If something else holds an e2e port
+
+The journeys default to API `:3001` and web `:8082`, and another process on the machine can
+hold either — a `kafka-rest-proxy` container on 8082 made the suite unrunnable once. Move the
+run instead of killing the squatter:
+
+```bash
+cd frontend
+E2E_API_PORT=3101 E2E_WEB_PORT=8182 npm run test:e2e
+```
+
+Both are read once at module load in `frontend/e2e/env.ts`, and the API URL, the web URL and
+the backend's own `PORT` all follow. A value that is not a port number (`1`–`65535`) throws
+rather than falling back — a fallback would put the run back on the port you were escaping.
+The **database** name is not overridable and never will be; that constant is the guard.
+
 ## Backend Setup
 
 ### 1. Set environment variables
