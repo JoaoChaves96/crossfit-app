@@ -16,6 +16,7 @@ import { InviteEntity } from '../domain/invite/entities/invite.entity';
 import { NotificationEntity } from '../domain/notification/entities/notification.entity';
 import { PushTokenEntity } from '../domain/notification/entities/push-token.entity';
 import { ClassSeriesEntity } from '../domain/class-series/entities/class-series.entity';
+import { PasswordResetTokenEntity } from '../domain/auth/entities/password-reset-token.entity';
 
 /** The entity list, exported so `data-source.ts` cannot drift from the app. */
 export const entities = [
@@ -36,6 +37,7 @@ export const entities = [
   NotificationEntity,
   PushTokenEntity,
   ClassSeriesEntity,
+  PasswordResetTokenEntity,
 ];
 
 /**
