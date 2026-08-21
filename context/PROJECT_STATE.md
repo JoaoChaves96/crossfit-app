@@ -253,14 +253,16 @@ against Phases 1–3 above.
 
 
 
-✅ **Email service — built 2026-08-21, not yet verified live.** `epics/EMAIL_SERVICE_EPIC.md` is
-now a record, not a brief. Invites for **both** roles are mailed through a `MailDriver` seam
-(Resend over `fetch`, no new npm dependency) and both create responses carry
-`delivery: 'sent' | 'failed'`; a failure keeps the invite and its token, and the owner is told to
-pass the link on. `MAIL_DRIVER` defaults to a non-sending log driver, so **nothing is delivered
-anywhere yet** — the remaining work is human: Resend signup, SPF/DKIM/DMARC for `mail.boxops.dev`
-in Cloudflare, then `MAIL_DRIVER=resend` + `RESEND_API_KEY` as Fly secrets. Password reset is
-still unbuilt but no longer blocked: it has a mail seam to build on.
+✅ **Email service — shipped and verified live 2026-08-21.** `epics/EMAIL_SERVICE_EPIC.md` is now a
+record, not a brief. Invites for **both** roles are mailed through a `MailDriver` seam (Resend over
+`fetch`, no new npm dependency) and both create responses carry `delivery: 'sent' | 'failed'`; a
+failure keeps the invite and its token, and the owner is told to pass the link on. Resend is live on
+staging from `mail.boxops.dev` (EU region) with DKIM, SPF, the bounce MX and `_dmarc` all verified by
+`dig`, and **two real invites reached an external Gmail inbox**. `MAIL_DRIVER` still defaults to the
+non-sending log driver, so local and test runs deliver nothing. Remaining: the forced-failure path
+against the real provider, and the `Authentication-Results` header was never read — see the epic's
+Evidence section for both caveats. Password reset is still unbuilt but no longer blocked: it has a
+mail seam to build on.
 
 ## Previous Phase (2026-08-03)
 

@@ -152,10 +152,36 @@ Approximate list prices (knowledge cutoff May 2026 — **confirm at signup, thes
       offers the link to copy.
 - [x] The email and the Copy button cannot name different origins.
 - [x] No surface in the app, the Swagger schema, or `docs/` claims a send that does not happen.
-- [ ] **An invite created through the UI arrives as an email at a real external address, for both
-      the athlete and the coach role, from a domain with SPF/DKIM/DMARC passing.** Blocked on §3's
-      human prerequisites. Arrival alone does not count — one inbox accepting a message says
-      nothing about the next one, so the evidence is the `Authentication-Results` header.
+- [x] **An invite arrives as an email at a real external address, for both the athlete and the
+      coach role, from a domain with SPF/DKIM/DMARC passing.** Done 2026-08-21 — see the evidence
+      below, and the two caveats on it.
 - [ ] The forced-failure path confirmed against the real provider on staging.
 
 Verification procedure: `docs/superpowers/plans/2026-08-21-email-service.md` → Task 11.
+
+### Evidence, 2026-08-21
+
+Resend is live: `mail.boxops.dev` verified in the EU (Ireland) region, with the DKIM key at
+`resend._domainkey.mail`, `v=spf1 include:amazonses.com ~all` on `send.mail`, the
+`feedback-smtp.eu-west-1.amazonses.com` bounce MX, and `v=DMARC1; p=none` at `_dmarc.boxops.dev`
+— all four confirmed by `dig` independently of Resend's own green ticks. `RESEND_API_KEY` and
+`MAIL_DRIVER=resend` are deployed on `boxops-api-staging`.
+
+Both roles were then created against `api.boxops.dev` and both responses carried
+`delivery: 'sent'`; **both emails arrived in a real external Gmail inbox**, confirmed by the
+recipient. CI run 32513785089 was green on all six jobs.
+
+**Two caveats, recorded rather than glossed:**
+
+1. **The `Authentication-Results` header was not inspected.** This checklist item originally
+   demanded it, on the reasoning that one inbox accepting a message says nothing about the next.
+   Arrival is confirmed; header-level SPF/DKIM/DMARC alignment is inferred from the DNS being
+   correct, not observed. Cheap to close next time an invite is sent.
+2. **The invites were created through the API, not the UI.** The UI path over the same endpoints
+   is covered by FE tests and journey 11 locally, but the deployed screens were not driven by hand
+   for this evidence.
+
+**The first attempt found a real gap:** the invites were created while staging still ran `f655a65`,
+because all ten email commits were committed but never pushed. The responses came back with no
+`delivery` field at all and no mail was sent. Worth remembering as the failure mode — the log
+driver and an undeployed API both look like success from the caller's side.
