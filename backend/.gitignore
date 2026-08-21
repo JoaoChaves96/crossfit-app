@@ -56,4 +56,7 @@ pids
 report.[0-9]*.[0-9]*.[0-9]*.[0-9]*.json
 
 # Rendered email previews from the local mail log driver (MAIL_PREVIEW_DIR).
+# These files carry live invite and password-reset tokens in their markup — a
+# committed preview is a working account-takeover link in the history.
 tmp/
+.mail-preview/
