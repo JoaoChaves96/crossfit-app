@@ -7,7 +7,11 @@
  *   serif/sans stack is as close to Clean Ink as email gets.
  * - Hex values are hardcoded. A backend file importing the frontend's token
  *   module would be a new cross-boundary dependency for two colours.
- * - The accent appears exactly once (the Accept button). One Accent Rule.
+ * - The accent appears exactly once (the CTA button). One Accent Rule.
+ * - The CTA says "View invite", not "Accept invite". The link only opens the
+ *   invite screen in the app, where accepting is a separate, deliberate press.
+ *   A button that claims to accept would commit the reader to a gym by one
+ *   click from their inbox — a promise the link does not keep.
  */
 
 export interface InviteEmailInput {
@@ -73,7 +77,7 @@ function copyFor(input: InviteEmailInput): {
     intro: inviterName
       ? `${inviterName} invited you to join ${gymName}.`
       : `You've been invited to join ${gymName}.`,
-    detail: 'Accept your invite to book classes and log your results.',
+    detail: 'Accepting lets you book classes and log your results.',
   };
 }
 
@@ -87,7 +91,7 @@ export function renderInviteEmail(input: InviteEmailInput): RenderedEmail {
     '',
     detail,
     '',
-    'Accept your invite:',
+    'View your invite:',
     link,
     '',
     `This link expires on ${expiry} — 7 days from when it was sent.`,
@@ -130,7 +134,7 @@ export function renderInviteEmail(input: InviteEmailInput): RenderedEmail {
         <tr>
           <td style="padding:0 28px 24px 28px;">
             <a href="${escapeHtml(link)}" style="display:inline-block;background-color:${ACCENT};color:#FFFFFF;font-family:${SANS};font-size:15px;font-weight:600;text-decoration:none;padding:12px 22px;">
-              Accept invite
+              View invite
             </a>
           </td>
         </tr>

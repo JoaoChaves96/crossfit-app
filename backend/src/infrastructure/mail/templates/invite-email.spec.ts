@@ -50,7 +50,20 @@ describe('renderInviteEmail', () => {
     expect(html).not.toContain('undefined');
   });
 
-  // The One Accent Rule, enforced rather than trusted: the Accept button is
+  // The link opens the invite screen; accepting is a separate press there. A CTA
+  // reading "Accept" would promise an action the click does not perform.
+  it('offers to open the invite rather than claiming to accept it', () => {
+    for (const role of ['athlete', 'coach'] as const) {
+      const { html, text } = renderInviteEmail({ ...BASE, role });
+
+      expect(html).toContain('View invite');
+      expect(html).not.toContain('Accept invite');
+      expect(text).toContain('View your invite:');
+      expect(text).not.toContain('Accept your invite');
+    }
+  });
+
+  // The One Accent Rule, enforced rather than trusted: the CTA button is
   // the single crimson element in the message.
   it('uses the accent exactly once and never the danger red', () => {
     const { html } = renderInviteEmail({ ...BASE, role: 'athlete' });
