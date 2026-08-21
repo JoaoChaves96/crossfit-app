@@ -12,7 +12,8 @@
     "lint": "expo lint",
     "export:web": "expo export --platform web --clear && node ./scripts/relocate-vendor-assets.mjs",
     "generate:api-types": "openapi-typescript http://localhost:3000/api-docs-json -o types/api.gen.ts",
-    "test:e2e": "playwright test"
+    "test:e2e": "playwright test",
+    "test:smoke": "playwright test --config playwright.smoke.config.ts"
   },
   "dependencies": {
     "@expo/vector-icons": "^15.0.3",

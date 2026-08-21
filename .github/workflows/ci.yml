@@ -312,8 +312,76 @@ jobs:
       - name: Smoke the app
         # The second URL is the _redirects SPA fallback: without it, the one link
         # that must open for a stranger with no app installed returns 404.
+        #
+        # Both of these only prove something ANSWERED. Because `_redirects` ends
+        # in `/* /index.html 200`, a file that was never uploaded also returns
+        # 200 — with HTML. `staging-smoke` below is what actually checks the
+        # deployment; this is a cheap early exit if Pages is down outright.
         run: |
           set -euo pipefail
           curl -fsS -o /dev/null https://app.boxops.dev/
           curl -fsS -o /dev/null https://app.boxops.dev/invite/smoke-test-token
           echo "App and invite fallback both serve"
+
+  staging-smoke:
+    # Does the DEPLOYED app work? A real browser against the real Pages bundle,
+    # the real certificate and staging's own API.
+    #
+    # This is the assertion neither the unit tests nor the 15 local journeys can
+    # make: they never build or upload a bundle, so the entire deploy path — the
+    # Pages upload, the API origin inlined at build time, CORS, the certificate
+    # — is invisible to them. It was invisible when fonts silently failed to
+    # upload and the app served a blank page while CI stayed green.
+    #
+    # READ-ONLY and unauthenticated, which is what keeps it cheap and safe: it
+    # writes nothing, needs no seeded user, and opens no database connection, so
+    # it can point at staging's own API without going near `boxops_staging`'s
+    # hand-seeded demo data. The full write-path harness against an ephemeral
+    # database is Task 9 in
+    # docs/superpowers/plans/2026-08-21-staging-phases-4-6.md, deliberately
+    # deferred — see context/DECISION_LOG.md.
+    #
+    # Runs AFTER `deploy`, so it reports rather than prevents: a failure here
+    # means staging is already serving broken code. That is the accepted
+    # trade-off for testing the artifact that is actually deployed, and staging
+    # is where it is cheap to be wrong. Fix forward on the next push.
+    needs: [deploy]
+    if: github.ref == 'refs/heads/dev' && github.event_name == 'push'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - run: npm ci
+        working-directory: frontend
+
+      - name: Install Chromium
+        run: npx playwright install --with-deps chromium
+        working-directory: frontend
+
+      - name: Smoke the deployed app
+        run: npm run test:smoke
+        working-directory: frontend
+        env:
+          # The deployed origin, not a pages.dev hash URL: CORS_ORIGINS is
+          # exactly this host, so any other name is refused by design and the
+          # login check would fail for the wrong reason.
+          SMOKE_WEB_URL: https://app.boxops.dev
+
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          # Carries the failure screenshot and trace — for a blank page, the
+          # screenshot alone is usually the whole diagnosis.
+          name: playwright-report-smoke
+          path: |
+            frontend/playwright-report
+            frontend/test-results
+          retention-days: 7
