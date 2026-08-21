@@ -1,5 +1,5 @@
 import { StyleSheet } from 'react-native';
-import { Ground, Ink, Line, Radius, Space, Type } from '@/constants/design';
+import { Ground, Ink, Line, Measure, Radius, Space, Type } from '@/constants/design';
 
 /*
  * ─── Clean Ink · Register (restyle) ──────────────────────────────────────────
@@ -19,8 +19,13 @@ export const styles = StyleSheet.create({
   statusBar: {
     height: 62,
   },
+  // Brand, card and footer live inside this one wrapper, so capping it here
+  // keeps them aligned with each other and matches the login measure.
   content: {
     flex: 1,
+    width: '100%',
+    maxWidth: Measure.auth,
+    alignSelf: 'center',
     paddingHorizontal: Space.xl,
     paddingBottom: Space.jumbo,
   },

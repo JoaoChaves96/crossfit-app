@@ -1,5 +1,5 @@
 import { StyleSheet } from 'react-native';
-import { Ground, Line, Radius, Space, Status, Type } from '@/constants/design';
+import { Ground, Line, Measure, Radius, Space, Status, Type } from '@/constants/design';
 
 /*
  * ─── Clean Ink · Invite acceptance (restyle) ─────────────────────────────────
@@ -14,8 +14,13 @@ export const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: Ground.base,
   },
+  // Hero, gym card and the CTA section are siblings in here, so the cap goes on
+  // the shared container — same measure as the other signed-out screens.
   scroll: {
     flexGrow: 1,
+    width: '100%',
+    maxWidth: Measure.auth,
+    alignSelf: 'center',
   },
   loadingContainer: {
     flex: 1,

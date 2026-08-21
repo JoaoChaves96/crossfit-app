@@ -1,5 +1,5 @@
 import { StyleSheet } from 'react-native';
-import { Ground, Ink, Line, Radius, Space, Type } from '@/constants/design';
+import { Ground, Ink, Line, Measure, Radius, Space, Type } from '@/constants/design';
 
 /*
  * ─── Clean Ink · Reset password ──────────────────────────────────────────────
@@ -16,8 +16,13 @@ export const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: Ground.base,
   },
+  // Same capped, centred column as login and forgot-password — all three phases
+  // (form, invalid link, loading) sit on the same measure.
   scroll: {
     flexGrow: 1,
+    width: '100%',
+    maxWidth: Measure.auth,
+    alignSelf: 'center',
     paddingHorizontal: Space.xl,
     paddingBottom: Space.jumbo,
   },

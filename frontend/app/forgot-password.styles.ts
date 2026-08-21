@@ -1,5 +1,5 @@
 import { StyleSheet } from 'react-native';
-import { Ground, Ink, Line, Radius, Space, Type } from '@/constants/design';
+import { Ground, Ink, Line, Measure, Radius, Space, Type } from '@/constants/design';
 
 /*
  * ─── Clean Ink · Forgot password ─────────────────────────────────────────────
@@ -14,8 +14,13 @@ export const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: Ground.base,
   },
+  // Same capped, centred column as login — one step off that screen must not
+  // read as a different place, at any width.
   scroll: {
     flexGrow: 1,
+    width: '100%',
+    maxWidth: Measure.auth,
+    alignSelf: 'center',
     paddingHorizontal: Space.xl,
     paddingBottom: Space.jumbo,
   },

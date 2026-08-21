@@ -1,5 +1,5 @@
 import { StyleSheet } from 'react-native';
-import { Ground, Ink, Line, Radius, Space, Type } from '@/constants/design';
+import { Ground, Ink, Line, Measure, Radius, Space, Type } from '@/constants/design';
 
 /*
  * ─── Clean Ink · Login (restyle) ─────────────────────────────────────────────
@@ -13,8 +13,14 @@ export const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: Ground.base,
   },
+  // The whole column — brand, card, footer — is capped at one reading measure
+  // and centred, so a wide viewport gets a sign-in card and not a banner. On a
+  // phone the measure never binds and this is a plain full-width column.
   scroll: {
     flexGrow: 1,
+    width: '100%',
+    maxWidth: Measure.auth,
+    alignSelf: 'center',
     paddingHorizontal: Space.xl,
     paddingBottom: Space.jumbo,
   },

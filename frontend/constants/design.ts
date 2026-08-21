@@ -141,6 +141,19 @@ export const Space = {
   jumbo: 48,
 } as const;
 
+/**
+ * Reading measures for single-column content that must not stretch on a wide
+ * viewport. A measure caps a column; it never binds on a phone.
+ */
+export const Measure = {
+  /**
+   * Signed-out auth column — brand header, form card and footer link row share
+   * this cap so they stay optically aligned. 480 keeps the card at roughly the
+   * width of a large phone, which is the shape these screens were designed as.
+   */
+  auth: 480,
+} as const;
+
 /** Restrained elevation — a real offset + soft blur, never a flat halo. */
 export const Elevation = {
   card: {
@@ -160,4 +173,4 @@ export const Elevation = {
 } as const;
 
 /** Convenience bundle for imports that want one symbol. */
-export const CleanInk = { Ink, Ground, Line, Accent, Status, Type, Radius, Space, Elevation } as const;
+export const CleanInk = { Ink, Ground, Line, Accent, Status, Type, Radius, Space, Measure, Elevation } as const;
