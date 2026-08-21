@@ -19,8 +19,14 @@ primary_region = 'fra'
 # It overrides DATABASE_URL with the DIRECT Neon endpoint for the duration of
 # the command. DDL through PgBouncer (the pooled endpoint) is a class of failure
 # with no upside here.
+#
+# `migration:run:prod`, not `migration:run`: the latter is a ts-node entrypoint,
+# and ts-node/tsconfig-paths/typescript are all devDependencies that this image
+# deliberately does not install (NODE_ENV=production before `npm ci`). The prod
+# script drives the TypeORM CLI against dist/data-source.js instead, so no
+# TypeScript toolchain ships to production.
 [deploy]
-  release_command = "sh -c 'DATABASE_URL=\"$DATABASE_MIGRATION_URL\" npm run migration:run'"
+  release_command = "sh -c 'DATABASE_URL=\"$DATABASE_MIGRATION_URL\" npm run migration:run:prod'"
   strategy = 'immediate'
 
 [env]
