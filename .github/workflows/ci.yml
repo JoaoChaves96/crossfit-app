@@ -209,3 +209,111 @@ jobs:
             frontend/playwright-report
             frontend/test-results
           retention-days: 7
+
+  deploy:
+    # Staging deploys itself on every green push to `dev`.
+    #
+    # `needs` lists EVERY gate, the journeys included: a deploy that skipped
+    # them would ship on unit tests and a type check alone, which is precisely
+    # the class of breakage the journeys exist to catch. If any dependency fails
+    # or is skipped, this job never starts.
+    needs: [backend, frontend, image, e2e]
+    # Pull requests must not deploy, and neither must `main` — there is exactly
+    # one environment and `dev` owns it.
+    if: github.ref == 'refs/heads/dev' && github.event_name == 'push'
+    runs-on: ubuntu-latest
+    # One environment, one deploy at a time. NOT cancel-in-progress: killing a
+    # deploy midway through its release_command is how you get a migrated
+    # database serving old code.
+    concurrency:
+      group: deploy-staging
+      cancel-in-progress: false
+
+    steps:
+      - uses: actions/checkout@v4
+
+      # ---- API -----------------------------------------------------------
+      - uses: superfly/flyctl-actions/setup-flyctl@master
+
+      - name: Deploy the API
+        # fly.toml carries the release_command that runs migrations against the
+        # DIRECT Neon endpoint before any new machine takes traffic. A failed
+        # migration aborts the deploy rather than serving a half-migrated schema.
+        run: flyctl deploy --remote-only --app boxops-api-staging
+        working-directory: backend
+        env:
+          FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
+
+      - name: Smoke the API
+        # Against the real public origin, so DNS, the certificate and CORS
+        # config are all in the path — not just the fly.dev name.
+        run: |
+          set -euo pipefail
+          for i in $(seq 1 30); do
+            body="$(curl -fsS https://api.boxops.dev/health || true)"
+            if [ "$body" = '{"status":"ok","database":"up"}' ]; then
+              echo "API healthy: $body"; exit 0
+            fi
+            echo "attempt $i: $body"; sleep 5
+          done
+          echo "API did not become healthy"; exit 1
+
+      # ---- Frontend ------------------------------------------------------
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - run: npm ci
+        working-directory: frontend
+
+      - name: Build the web bundle
+        # EXPO_PUBLIC_* is inlined at BUILD time, so this value is baked into the
+        # bundle and cannot be changed by anything at runtime.
+        #
+        # export:web, not bare `expo export`: it chains
+        # scripts/relocate-vendor-assets.mjs, without which every package-owned
+        # asset lands under a node_modules path that Pages refuses to upload.
+        run: npm run export:web
+        working-directory: frontend
+        env:
+          EXPO_PUBLIC_API_BASE_URL: https://api.boxops.dev
+
+      - name: Assert no asset sits under a node_modules path
+        # Pages skips these silently and the SPA rewrite answers 200 with HTML,
+        # so this must fail the build rather than reach production.
+        run: test -z "$(find dist -path '*node_modules*')"
+        working-directory: frontend
+
+      - name: Assert the staging API URL was baked in
+        # Expo resolves EXPO_PUBLIC_* from .env FILES in preference to the
+        # environment (the behaviour that forced pinApiOrigin() to exist). No
+        # .env.local exists on a runner, so the export above is correct — but
+        # this asserts it rather than trusting it, because the failure mode is a
+        # deployed app quietly calling localhost.
+        run: |
+          set -euo pipefail
+          grep -rq "api.boxops.dev" dist/_expo
+          if grep -rq "localhost:3000" dist/_expo; then
+            echo "The bundle still points at localhost — an .env file won."; exit 1
+          fi
+          echo "Bundle targets https://api.boxops.dev"
+        working-directory: frontend
+
+      - name: Publish to Pages
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          workingDirectory: frontend
+          command: pages deploy dist --project-name boxops-app --branch dev
+
+      - name: Smoke the app
+        # The second URL is the _redirects SPA fallback: without it, the one link
+        # that must open for a stranger with no app installed returns 404.
+        run: |
+          set -euo pipefail
+          curl -fsS -o /dev/null https://app.boxops.dev/
+          curl -fsS -o /dev/null https://app.boxops.dev/invite/smoke-test-token
+          echo "App and invite fallback both serve"
