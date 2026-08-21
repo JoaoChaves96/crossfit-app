@@ -166,10 +166,19 @@ Pages, proxied). `CORS_ORIGINS` is exactly `https://app.boxops.dev`, so the raw
 - ⚠️ **Still not a gate: the CI Lint step is `continue-on-error: true`** (921 bare-`eslint` errors,
   253 of them not auto-fixable). Carried forward from Phase 3 unchanged; deploying staging did not
   change it, and it should not be mistaken for one of the four gates `deploy` waits on.
-- ⬜ **Remaining: Task 10 steps 5–6 — the live seed run and the survives-a-redeploy check.** Both
-  are [HUMAN]: they need the Neon DIRECT url for `boxops_staging`, which exists nowhere on disk
-  (Fly secrets are write-only). **Staging is deployed but has no demo data**, and the
-  survives-a-redeploy acceptance test is UNRUN. Task 9 deferred as above.
+- ✅ **Task 10 steps 5–6 — staging is seeded, and the seed survives a redeploy.** The seed run is
+  [HUMAN] by necessity (it needs the Neon DIRECT url for `boxops_staging`, which exists nowhere on
+  disk — Fly secrets are write-only), and the human ran it: users 0→8, every count identical to the
+  `seed_check` proof (8/1/3/2/2/2/6/6/54). Demo accounts are `owner@`, `coach@` and
+  `athlete1…6@demo.boxops.dev`, all `password123`; the gym is `BoxOps Demo Box`.
+  **The survives-a-redeploy acceptance test passed, and by the real pipeline rather than a hand
+  `fly deploy`** — which is the stronger proof, because the constraint is that no *pipeline* step
+  writes application data. Run 32491963969 on `d013294` was green on all six jobs and landed after
+  the seed; measured through the public API on both sides: classes 54→54, class types 3→3, members
+  6→6, gym name intact, `/health` `{"status":"ok","database":"up"}`.
+  **Verify staging data through the API, not `psql`** — no credential is needed to log in as the
+  demo owner and count `/schedule`, `/configuration/class-types` and `/members`, and unlike row
+  counts it proves the data is *reachable* end to end. Task 9 deferred as above.
 - ✅ **All six human gates are cleared.** `gh secret list` shows all five secrets
   (`FLY_API_TOKEN`, `FLY_API_TOKEN_E2E`, `CLOUDFLARE_ACCOUNT_ID`, `CLOUDFLARE_API_TOKEN`,
   `NEON_ADMIN_DATABASE_URL`); Fly app `boxops-api-e2e` exists and is `pending` with nothing
