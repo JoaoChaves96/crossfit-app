@@ -68,7 +68,7 @@ export function CoachSidebar({ activeItem, onNavigate }: CoachSidebarProps) {
         {isMobile ? (
           <>
             <Icon name="gym" size={20} tone="strong" />
-            <Text weight="bold" size="title" tone="strong">CrossFit Box</Text>
+            <Text weight="bold" size="title" tone="strong">BoxOps</Text>
           </>
         ) : (
           <GymMenu />

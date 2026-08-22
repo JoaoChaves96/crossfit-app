@@ -85,7 +85,7 @@ describe('invite acceptance — coach invites', () => {
     renderScreen();
 
     await waitFor(() => {
-      expect(screen.getByText(`Coach at ${coachInvite.gymName} on CrossFit Box`)).toBeTruthy();
+      expect(screen.getByText(`Coach at ${coachInvite.gymName} on BoxOps`)).toBeTruthy();
     });
     expect(screen.getByText('Accept & Join as Coach')).toBeTruthy();
   });
@@ -172,7 +172,7 @@ describe('invite acceptance — coach invites', () => {
     });
 
     renderScreen();
-    await waitFor(() => expect(screen.getByText('Join Box One on CrossFit Box')).toBeTruthy());
+    await waitFor(() => expect(screen.getByText('Join Box One on BoxOps')).toBeTruthy());
 
     fireEvent.press(screen.getByTestId('invite-join-btn'));
 

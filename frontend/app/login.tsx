@@ -97,7 +97,7 @@ export default function LoginScreen() {
             <Icon name="gym" size={26} tone={Ink.inverse} />
           </View>
           <Text size="screen" weight="bold" tracking="snug" style={styles.appName}>
-            CrossFit Box
+            BoxOps
           </Text>
           <Text size="body" tone={Ink.muted} style={styles.tagline}>
             Sign in to your account

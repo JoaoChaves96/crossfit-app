@@ -23,7 +23,7 @@ export function SettingsSidebar({ onNavigate }: SettingsSidebarProps) {
     <SafeScreen style={styles.sidebar} extraTopPadding={Space.lg}>
       <View style={styles.sidebarLogo}>
         <Icon name="gym" size={20} tone="strong" />
-        <Text weight="bold" size="title" tone="strong">CrossFit Box</Text>
+        <Text weight="bold" size="title" tone="strong">BoxOps</Text>
       </View>
       <View style={styles.navGroup}>
         {NAV_ITEMS.map((item) => {

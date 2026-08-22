@@ -70,7 +70,7 @@ describe('CoachSidebar', () => {
     // its menu live where the static brand line used to.
     expect(await screen.findByText('Box One')).toBeTruthy();
     expect(screen.getByTestId('gym-menu-trigger')).toBeTruthy();
-    expect(screen.queryByText('CrossFit Box')).toBeNull();
+    expect(screen.queryByText('BoxOps')).toBeNull();
   });
 
   it('leaves the menu to the screen header when it is inside the mobile drawer', async () => {
@@ -85,7 +85,7 @@ describe('CoachSidebar', () => {
     // that names the gym — coach-classes puts it in the header instead, so a
     // copy here would be a second trigger for the same menu.
     expect(screen.queryByTestId('gym-menu-trigger')).toBeNull();
-    expect(screen.getByText('CrossFit Box')).toBeTruthy();
+    expect(screen.getByText('BoxOps')).toBeTruthy();
   });
 
   it('offers no sign-out of its own', async () => {

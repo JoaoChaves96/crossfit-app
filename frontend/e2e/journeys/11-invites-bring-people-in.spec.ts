@@ -144,7 +144,7 @@ test('an invited stranger registers, accepts, and works as a coach', async ({ pa
 
     // Both facts came from the token alone: nothing else told this browser which
     // gym, which role, or which address.
-    await expect(coach.getByText(`Coach at ${gym.name} on CrossFit Box`)).toBeVisible({
+    await expect(coach.getByText(`Coach at ${gym.name} on BoxOps`)).toBeVisible({
       timeout: 20_000,
     });
     await expect(coach.getByText(inviteeEmail)).toBeVisible();

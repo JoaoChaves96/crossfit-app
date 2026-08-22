@@ -223,8 +223,8 @@ export default function InviteAcceptanceScreen() {
               title={isCoachInvite ? "You've been invited to coach" : undefined}
               subtitle={
                 isCoachInvite
-                  ? `Coach at ${invite.gymName} on CrossFit Box`
-                  : `Join ${invite.gymName} on CrossFit Box`
+                  ? `Coach at ${invite.gymName} on BoxOps`
+                  : `Join ${invite.gymName} on BoxOps`
               }
             />
             <GymCard invite={invite} />
@@ -288,8 +288,8 @@ export default function InviteAcceptanceScreen() {
             title={isCoachInvite ? "You've been invited to coach" : undefined}
             subtitle={
               isCoachInvite
-                ? `Coach at ${invite.gymName} on CrossFit Box`
-                : `Join ${invite.gymName} on CrossFit Box`
+                ? `Coach at ${invite.gymName} on BoxOps`
+                : `Join ${invite.gymName} on BoxOps`
             }
           />
           <GymCard invite={invite} />

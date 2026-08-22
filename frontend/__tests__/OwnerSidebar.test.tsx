@@ -46,7 +46,7 @@ describe('OwnerSidebar', () => {
     it('renders the logo and every nav label', () => {
       const utils = render(<OwnerSidebar activeItem="classes" />);
 
-      expect(utils.getByText('CrossFit Box')).toBeTruthy();
+      expect(utils.getByText('BoxOps')).toBeTruthy();
       OWNER_NAV_ITEMS.forEach((item) => {
         expect(utils.getByText(item.label)).toBeTruthy();
       });
