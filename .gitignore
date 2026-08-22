@@ -22,3 +22,6 @@ playwright-report/
 
 # Throwaway screenshots from live verification passes (browser-driven card sign-off)
 .verify-shots/
+
+# Local-only research notes. Never tracked.
+.research/

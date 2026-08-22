@@ -1,200 +1,119 @@
-# CLAUDE.md
+# BoxOps
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+**Class booking and gym management for functional fitness boxes.**
 
----
+BoxOps is a platform for independent gyms — the kind that run coached class sessions
+on a timetable rather than selling anonymous access to a room of machines. It gives a
+gym one place to run its schedule, and its members one place to book into it.
 
-## Repository Purpose
-
-This is a **product design repository** for a multi-tenant CrossFit fitness box management platform MVP. It contains authoritative product documentation, user journeys, screen designs, and data models—but **no source code**. All work here involves maintaining and evolving design specifications, not implementing code.
-
----
-
-## Document Hierarchy & Authority
-
-This repository uses a **tiered authority system** for all documents:
-
-### Tier 1: Authoritative Specifications (docs/)
-
-These documents define the MVP scope, rules, and constraints. They are read-only inputs to design decisions.
-
-- **PRODUCT.md** — Product vision, actors (Athlete, Gym Owner, Coach, Platform Admin), MVP scope, features, and class lifecycle states
-  - Start here to understand what the product does and who uses it
-  - Authority: Stakeholders and product requirements
-
-- **USER_JOURNEYS.md** — Primary user flows for each role (Athlete book→attend→log; Gym Owner configure→publish; Coach assign→mark attendance)
-  - Describes the happy path for core features
-  - Authority: Product design; derived from PRODUCT.md
-
-- **DATA_MODEL.md** — Domain entities (Gym, User, Class, Booking, etc.) and relationships required to support user journeys
-  - Enforces multi-tenant isolation, RBAC, and class lifecycle rules
-  - Authority: Product requirements; derived from USER_JOURNEYS.md
-
-- **MVP_SCREENS.md** — Consolidated screen list (32 MVP screens across all roles) with purposes, actions, and journey mappings
-  - Defines the minimal UI surface needed for MVP execution
-  - Authority: Design; derived from USER_JOURNEYS.md
-
-- **DECISIONS.md** — Resolutions to blocking questions and ambiguities (e.g., waitlist auto-promotion, result logging window)
-  - Overrides assumptions in earlier documents
-  - Authority: Product; created when questions block design/implementation
-
-### Tier 2: Working Documents (explore/)
-
-These are exploratory artifacts used as inputs to consolidation and decision-making. They are intentionally exhaustive or speculative and may be superseded.
-
-- **SCREENS_INVENTORY.md** — Exhaustive 50+ screen catalog (input to MVP screen consolidation)
-  - Not authoritative; a working document for design exploration
-
-### Tier 3: Agent Prompts (agents/)
-
-These define specialized roles for collaborative design work using Claude as a co-designer.
-
-- **MVP_SCREEN_CONSOLIDATION_AGENT.md** — Consolidates exhaustive screens into minimal MVP set
-- **UX_SCREEN_MAPPING_AGENT.md** — Maps screens to user journeys and validates coverage
-- **DATA_MODEL_AGENT.md** — Derives domain entities from journeys and scope
+It is built for the gym that currently does this with a spreadsheet, a WhatsApp group
+and a whiteboard.
 
 ---
 
-## How to Work with This Repository
+## The problem it solves
 
-### Reading & Understanding
+A box owner's day is made of small operational questions that are surprisingly hard to
+answer with general-purpose tools: *Who is coming to the 7am? Is it full? Who is on the
+waitlist, and who gets the spot when someone drops out? Is this member's plan even
+supposed to include Gymnastics? Who coached Tuesday, and did anyone log a score?*
 
-1. **To understand the product:** Read PRODUCT.md (vision, scope, actors, features)
-2. **To understand user workflows:** Read USER_JOURNEYS.md (core journeys for each role)
-3. **To understand data requirements:** Read DATA_MODEL.md (entities and relationships)
-4. **To see the UI plan:** Read MVP_SCREENS.md (screen inventory by role)
-5. **To resolve ambiguities:** Check DECISIONS.md for resolved blocking questions
-
-### Modifying Documentation
-
-**When to update existing Tier 1 documents:**
-
-- **PRODUCT.md:** Only when product scope or actor roles change (rare; high coordination cost)
-- **USER_JOURNEYS.md:** When discovering missing steps or new roles in core flows
-- **DATA_MODEL.md:** When journeys require new entities or relationship changes
-- **MVP_SCREENS.md:** When user journeys change or a screen is discovered to be missing
-- **DECISIONS.md:** When a blocking question is resolved or a decision needs revision
-
-**When to add new documents:**
-
-- Only add to Tier 1 if the artifact resolves a documented blocking question or clarifies an ambiguity in PRODUCT.md
-- New working documents should go in explore/ with clear lifecycle (e.g., "This is input to [TIER 1 doc]")
-
-### Workflow for Changes
-
-1. **Identify the change:** Is this a product scope change, a journey discovery, a data model fix, or a decision?
-2. **Start at the appropriate tier:** Changes cascade from Tier 1 down (e.g., product scope change → may require journey updates → may require data model updates → may require screen updates)
-3. **Update downstream documents:** When you change a Tier 1 doc, check if downstream docs need updates
-4. **Document the reason:** In commit message or a decision note, explain _why_ the change was needed
-
-### Multi-Agent Collaboration
-
-The agents in agents/ are prompts for using Claude as a co-designer. Typical workflow:
-
-1. **When consolidating screens:** Use MVP_SCREEN_CONSOLIDATION_AGENT with current PRODUCT.md, USER_JOURNEYS.md, and SCREENS_INVENTORY.md
-2. **When mapping screens to journeys:** Use UX_SCREEN_MAPPING_AGENT to validate that screens cover all journey steps
-3. **When deriving data model:** Use DATA_MODEL_AGENT with PRODUCT.md, USER_JOURNEYS.md, and MVP_SCREENS.md
-
-To invoke an agent, extract its prompt from agents/ and paste it into Claude Code (or via API) with the specified input documents.
+Answering those from a spreadsheet works until roughly the day it doesn't. BoxOps
+models the gym properly — classes, capacity, plans, memberships, coaches, results — so
+those questions have one answer instead of three.
 
 ---
 
-## Key Constraints & Rules
+## Who uses it
 
-### Multi-Tenant Isolation
+**Athletes** browse the timetable, book and cancel classes, join a waitlist when a class
+is full, read the workout their coach programmed, and log their result afterwards. An
+athlete can belong to more than one gym and switch between them.
 
-- Every entity except User is scoped to a single Gym
-- Users can hold multiple roles across multiple gyms
-- Query access control: `WHERE gym_id = :current_gym_id` on all domain queries
-- No cross-gym visibility at any layer
+**Gym owners** set the gym up and run it: class types, spaces and capacities, the
+timetable, membership plans, and the people. They invite coaches and members, see who
+is attending, and manage the schedule day to day.
 
-### Class Lifecycle (MVP)
+**Coaches** see the classes they are assigned to, write the programming for them, mark
+attendance, and see the results their athletes submitted. Coaches deliberately cannot
+touch billing or gym configuration.
 
-Classes follow a strict state machine: **Published → Booking Closed → In Progress → Completed → Archived**
-
-- **Published:** Bookings allowed, structure editable, visible to eligible athletes
-- **Booking Closed:** No new bookings (triggered at ~30min before class), structure still editable
-- **In Progress:** Attendance marked, structure locked, no athlete interaction
-- **Completed:** Results loggable (if class is loggable), view-only
-- **Archived:** Read-only historical record
-
-State transitions are automatic based on time or manual by gym owner/coach.
-
-### Role-Based Access
-
-- **Athlete:** Books classes, views own training history, logs results
-- **Coach:** Assigns to classes, creates programming, marks attendance, views class results
-- **Gym Owner:** Manages gym config, publishes schedules, manages staff and members
-- **Platform Admin:** (Minimal MVP) Approves/suspends gyms, views platform health
-
-Coaches do NOT manage payments, billing, or gym configuration.
-
-### Visibility Rule (MVP)
-
-Classes are only visible to an athlete if:
-
-1. Athlete belongs to the gym (has active GymMembership), AND
-2. Athlete's active membership plan grants access to the class type
-
-Ineligible classes are not shown at all.
+**Platform admins** have a deliberately minimal role — the platform hosts independent
+gyms, it does not operate them.
 
 ---
 
-## MCP Configuration
+## A few ideas worth knowing
 
-This repository includes a **Model Context Protocol (MCP)** server for reading project documentation.
+These three shape almost everything else in the product.
 
-**File:** `docs.mcp.json`
+**Each gym is its own world.** BoxOps is multi-tenant: a gym's classes, members,
+coaches and data belong to that gym and are never visible from another. This isn't a
+setting, it's enforced everywhere.
 
-**What it does:** Provides Claude Code with read-only access to the authoritative docs/ directory (PRODUCT.md, USER_JOURNEYS.md, DATA_MODEL.md, MVP_SCREENS.md, DECISIONS.md).
+**A membership plan decides what you can see.** An athlete sees a class only if they
+belong to the gym *and* their plan covers that class type. A CrossFit-only member
+doesn't see the Gymnastics sessions at all — not greyed out, not "upgrade to book",
+simply not there. It keeps the timetable honest about what's actually available to you.
 
-**How to use it:**
-
-In Claude Code or your IDE, reference the MCP server to fetch project documents during design conversations. This ensures Claude always has the latest authoritative specs without manual copy-paste.
-
----
-
-## Common Questions Resolved (See DECISIONS.md)
-
-- **Class Recurrence:** MVP supports single-session classes only; no recurring series
-- **Waitlist Promotion:** Automatic and immediate; no confirmation needed
-- **Result Logging Window:** Athletes can edit results until the class is archived
-
----
-
-## Glossary of MVP Terms
-
-- **Class:** A scheduled training session athletes can book and attend
-- **Class Type:** The nature of class (e.g., CrossFit, Gymnastics, Hyrox) that drives visibility and logging rules
-- **Programming:** Optional content (WOD, strength work, instructions) associated with a class
-- **Booking:** Athlete enrollment in a class (either confirmed or waitlisted)
-- **Waitlist Promotion:** Automatic upgrade from waitlist to confirmed booking when capacity opens
-- **Gym:** Multi-tenant root entity; independent fitness box or gym
-- **Membership Plan:** Definition of which class types an athlete can access and at what price
-- **GymMembership:** An athlete's enrollment in a gym (required for class visibility)
-- **GymStaff:** Coach or owner assigned to manage a gym
-- **Result:** Performance data logged by athlete for a completed class (e.g., time, reps, weight)
+**Classes move through a lifecycle.** A class goes from *Published* (open for booking)
+to *Booking Closed* shortly before it starts, then *In Progress*, *Completed* (results
+can be logged), and finally *Archived*. What you're allowed to do to a class depends on
+where it is in that sequence, which is why bookings close on their own and why you
+can't retroactively edit last month's session.
 
 ---
 
-## Things NOT in MVP (Explicitly Deferred)
+## Where the project is
 
-- Recurring series (recurrence: scheduled events only)
-- National marketplace or gym discovery
-- Social features (feeds, reviews, gamification)
-- Advanced analytics dashboards
-- Wearables integration
-- Nutrition tracking
-- Offline-first functionality
+**An MVP under active development.** The core loop works end to end today: a gym can be
+set up and configured, owners can invite coaches and members by email, classes can be
+created and published, athletes can book, cancel and join waitlists, coaches can
+program and mark attendance, athletes can log results, and everyone gets notified about
+the things that concern them. Accounts, invite-based onboarding and self-service
+password reset are all in place.
 
-See PRODUCT.md section "Explicitly Out of Scope" for full list.
+**Not built yet.** Payments and billing are the significant gap — membership plans
+exist and define access, but nothing charges anyone money. Also deliberately out of
+scope for the MVP: recurring class series, a public marketplace for discovering gyms,
+social features, deep analytics, wearables, and nutrition tracking.
 
 ---
 
-## Notes for Future Implementation Teams
+## Learning more
 
-- **Start with user journeys, not screens.** Every screen must map to a step in a user journey; screens without journeys are deferred
-- **Data model is not SQL schema.** It defines entities and relationships; normalize and optimize schema separately
-- **Class lifecycle is load-bearing.** Many features (visibility, editability, logging) depend on state transitions; don't simplify this away
-- **Multi-tenant isolation is non-negotiable.** Every query must enforce gym_id scoping; test for cross-gym leaks early
-- **Membership plan visibility is critical.** If an athlete doesn't belong to a gym or their plan doesn't include the class type, they must not see the class at all
+The thinking behind the product is written down rather than implied, and the documents
+are the source of truth over the code:
+
+| Document | What it answers |
+|---|---|
+| [`docs/PRODUCT.md`](docs/PRODUCT.md) | What the product is, who it's for, what's in and out of scope |
+| [`docs/USER_JOURNEYS.md`](docs/USER_JOURNEYS.md) | How each role actually moves through the app |
+| [`docs/DATA_MODEL.md`](docs/DATA_MODEL.md) | The domain — gyms, classes, bookings, plans and how they relate |
+| [`docs/MVP_SCREENS.md`](docs/MVP_SCREENS.md) | The screens that make up the MVP |
+| [`docs/DECISIONS.md`](docs/DECISIONS.md) | Questions that came up and how they were settled |
+| [`context/DECISION_LOG.md`](context/DECISION_LOG.md) | Engineering decisions and the reasoning behind them |
+| [`epics/`](epics/) | Feature-by-feature record of what was built and how it was verified |
+
+---
+
+## Running it
+
+A web app (React Native / Expo, so it also runs on iOS and Android) talking to a
+REST API (NestJS and PostgreSQL). Full setup instructions are in
+[`QUICKSTART.md`](QUICKSTART.md); the short version is Docker for the database, then
+the API and the app:
+
+```bash
+docker compose up -d          # PostgreSQL
+cd backend  && npm install && npm run start:dev    # API on :3000
+cd frontend && npm install && npm start            # app on :8081
+```
+
+The API documents itself at `http://localhost:3000/api-docs`.
+
+---
+
+<sub>BoxOps is an independent product and is not affiliated with, endorsed by, or
+sponsored by CrossFit, LLC. "CrossFit" is used here only descriptively, to refer to the
+style of training our users do.</sub>
