@@ -303,6 +303,27 @@ before delivering any value. Both a send log and retries are purely additive lat
 the seam already isolates the provider, and `delivery` is a response field, so
 adding persistence breaks no contract.
 
+## The Product Is Named BoxOps, Never CrossFit Box (2026-08-22)
+
+**Decision:** The user-facing wordmark is **BoxOps**. "CrossFit" never appears in
+the product name, on any screen, in any email, or in any domain. It remains
+perfectly fine as the *generic* noun for the kind of gym — "a community-driven
+CrossFit box" in a gym-description placeholder, or a `ClassType` named CrossFit,
+are descriptive uses and are deliberately left alone.
+
+**Rationale:** Two reasons, and the first is the binding one. **"CrossFit" is a
+registered trademark of CrossFit LLC**, and this is a public, commercial product
+with no affiliation — carrying the mark in our own name is a real exposure for
+zero benefit, which is why every competitor in box management avoids it too.
+Second, BoxOps was already the shipped brand everywhere it mattered: `boxops.dev`,
+`mail.boxops.dev`, `app.json`'s `name`, and the staging seed's `BoxOps Demo Box`.
+The wordmark was the last holdout, so this is a correction, not a rebrand.
+
+**Left as debt, knowingly:** Swagger's title is still `CrossFit Box API`
+(`backend/src/main.ts`). It is developer-facing only and renaming it churns the
+generated `api.gen.ts` header, so it waits for a commit that regenerates types
+anyway.
+
 ## Reset Tokens Are Stored Hashed, Unlike Invite Tokens (2026-08-22)
 
 **Decision:** `password_reset_tokens` stores only `sha256(token)`. The token itself
