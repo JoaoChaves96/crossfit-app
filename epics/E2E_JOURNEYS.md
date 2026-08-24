@@ -352,6 +352,25 @@ and `resolveGymContextFor` falling back to the default context instead of throwi
 backend wire spec (`refuses a gym the caller is not attached to → 403` returned 200), which is where
 that refusal is owned.
 
+### 18. Changing the password changes the login — ✅ DONE (2026-08-23)
+
+An athlete on `/profile` → SECURITY → wrong current password first (inline error, **still on
+`/profile`**, which is the assertion that the rejection is a 400 and not a 401 bouncing them to
+`/login`) → the real change → log out → the old password is refused → the new one lands. 8.8s.
+
+**The old password being refused is the journey.** Everything before it passes against a handler that
+returns 200 and writes nothing; only the rejected re-login proves the hash moved.
+
+Its own `expectLoginRejected` helper rather than `loginAs`: `loginAs` waits for the post-login
+redirect, so a *correct* rejection would surface as a timeout naming the wrong thing. The assertion
+is the URL plus a settle wait — `/login` does render "Wrong email or password." but has no error
+testID, and adding one to satisfy a journey is backwards. The e2e backend sets `MAIL_PREVIEW_DIR`,
+so the run also proves the notice mail: exactly **one** preview file (the rejected attempt sends
+none), with no link and no CTA.
+
+**Doc gap, not a defect:** journey 17 (`17-destructive-confirms-reach-the-server.spec.ts`) exists and
+runs but has no entry in this file. It was never written up; it needs one.
+
 ---
 
 ## Findings from Tier 3

@@ -30,9 +30,14 @@ constraint.
 - The navigation guard's public-route exemptions for both new routes
 
 ### Excluded
-- Change password while signed in (knows their current password)
-- Owner-triggered reset for a member
-- Set-password for invited users whose `passwordHash` is `null`
+- ✅ Change password while signed in (knows their current password) — **shipped separately
+  2026-08-23**: `POST /api/auth/change-password` and the SECURITY section on `/profile`. See
+  `context/PROJECT_STATE.md`.
+- Owner-triggered reset for a member — **dropped**, not deferred. Self-service reset covers the
+  need; an owner who can set a member's password is a new impersonation path.
+- Set-password for invited users whose `passwordHash` is `null` — **unreachable**, not deferred. An
+  invited user sets their password while accepting the invite, so no account that can reach the app
+  has a `null` hash. Nothing to build unless that changes.
 - Session revocation on reset
 - Global IP rate limiting
 - Expired-row cleanup

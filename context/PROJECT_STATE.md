@@ -290,9 +290,40 @@ deploy, latent because staging is UTC. The guard is the new `backend/test/passwo
 since a rendered preview contains a working link. Suites at close: backend 60/582, backend e2e
 16/246, frontend 40/445, `tsc` clean in both.
 
-Excluded and still unbuilt: change-password-while-signed-in, owner-triggered reset, set-password for
-invited users, global IP throttling (in-memory can't work across staging's two Fly machines),
-expired-row cleanup.
+Excluded and still unbuilt: owner-triggered reset, global IP throttling (in-memory can't work across
+staging's two Fly machines), expired-row cleanup. Change-password-while-signed-in was excluded here
+and has since shipped (below). Set-password for invited users is **unreachable, not deferred**: an
+invited user sets their password during acceptance, so no account can reach the app with a `null`
+`passwordHash`.
+
+✅ **Change password (signed in) — shipped and verified 2026-08-23.** `POST /api/auth/change-password`
+behind `JwtAuthGuard` only, plus a collapsed SECURITY section on `/profile`. Deliberately small:
+one `users.update`, an empty 200, **no** re-issued token, **no** session revocation, **no**
+`passwordChangedAt` column and therefore no migration. Shape decisions, settled and not to be
+re-litigated:
+
+- Its own `PasswordChangeService`, **not** a method on `AuthService` — `AuthService` is injected
+  across the app and would have gained a mailer dependency.
+- A wrong current password is **400, not 401** — 401 is reserved for missing or invalid *auth*, and
+  the session presenting the request is perfectly valid. Recorded in `context/DECISION_LOG.md`.
+- One `REJECTED_MESSAGE` covers missing user, `null` hash and wrong password, so nothing about the
+  account leaks back.
+- A **"your password was changed"** email is in scope, and carries **no link and no CTA** — a
+  click-to-secure link in a security email is phishing-shaped. Mail failures are swallowed: the
+  password is already changed.
+- Frontend checks same-password, mismatch and empty client-side, so the server's 400 has exactly one
+  meaning to report ("That current password is not right.").
+- `bcrypt` use was pulled into `domain/auth/password-hashing.ts` and `auth.service.ts` /
+  `password-reset.service.ts` now go through it.
+
+A latent bug was found on the way and fixed: `utils/api-client.ts` called `response.json()`
+unconditionally, which throws `SyntaxError` on an empty 200 body — invisible on forgot-password only
+because its catch treats every outcome alike. Verified live at 1280×832 **and** 390×844 plus
+Playwright journey 18 (`18-change-password-changes-the-login.spec.ts`): wrong current password →
+inline error in `Status.danger` and still on `/profile`, real change → quiet meta confirmation (no
+green — there is no success role), logout → old password rejected, new password lands, and exactly
+one preview email per successful change. Suites at close: backend 591 unit + 10 change-password e2e,
+frontend 457, `tsc` clean in both.
 
 ## Previous Phase (2026-08-03)
 

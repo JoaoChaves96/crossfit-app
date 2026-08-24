@@ -355,3 +355,37 @@ since MVP has no session list to show and no way to tell the user it worked. The
 hedge is that the fix is additive and cheap when it matters: a `passwordChangedAt`
 comparison in the guard, or bumping a claim. Accepted with eyes open, recorded here
 so the gap is a decision and not an oversight.
+
+## A Wrong Current Password Is 400, Not 401 (2026-08-23)
+
+**Decision:** `POST /api/auth/change-password` answers a wrong `currentPassword`
+with **400 Bad Request** and one generic message. 401 is reserved for a missing,
+malformed or expired bearer token — the guard's answer, never the handler's.
+
+**Rationale:** The caller here *is* authenticated; that is the whole premise of the
+endpoint. Returning 401 would say "your session is not valid", which is false, and
+on the frontend it is indistinguishable from the real thing — the api-client and the
+navigation guard treat a 401 as "signed out", so a typo in a password field would
+bounce the user to `/login` mid-form. This continues the rule set in `4a28c58`:
+authorization and identity failures are 401/403, a rejected *field value* is 400.
+The change-password screen depends on it: same-password, mismatch and empty are all
+checked client-side, so the server's 400 has exactly one meaning left to report.
+
+**Consequence, accepted:** 400 is the same status a DTO validation failure returns,
+so the two are only distinguishable by body. Fine here, because the client never
+sends a body that can fail validation (`@IsString()` `@MinLength(1)`, and empty is
+blocked before the request).
+
+## The "Your Password Was Changed" Email Carries No Link (2026-08-23)
+
+**Decision:** The confirmation email sent after a password change is plain notice:
+what happened, when, and what to do if it was not you (contact your gym). It has no
+link, no button, and no accent colour. Send failures are swallowed — the password is
+already changed and the caller has already been told 200.
+
+**Rationale:** A security email whose call to action is "click here to secure your
+account" is exactly the shape of the phishing it is meant to warn about, and it
+trains users to click that shape. There is also nothing honest to link *to*: with no
+session revocation (see "A Password Reset Revokes No Existing Sessions" above) and no session
+list in the MVP, a "secure my account" destination would be a lie. Notice is the
+whole product. Do not add a CTA to it later without solving revocation first.
