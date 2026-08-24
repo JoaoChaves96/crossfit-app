@@ -65,6 +65,7 @@ import { InviteCoachDto } from '../../commands/gym-configuration/dto/invite-coac
 import { InviteCoachResponseDto } from '../../commands/gym-configuration/dto/invite-coach-response.dto';
 import { ChangeCoachStatusCommand } from '../../commands/gym-configuration/change-coach-status.command';
 import { ChangeCoachStatusResponseDto } from '../../commands/gym-configuration/dto/change-coach-status-response.dto';
+import { ChangeCoachStatusRequestDto } from './dto/change-coach-status-request.dto';
 
 // Coaches Query
 import { CoachesQueryService } from '../../queries/gym-configuration/coaches.service';
@@ -722,13 +723,18 @@ export class GymConfigurationController {
     description: 'Coach status updated',
     type: ChangeCoachStatusResponseDto,
   })
+  @ApiBody({ type: ChangeCoachStatusRequestDto })
+  @ApiResponse({
+    status: 400,
+    description: 'status is missing or is not one of active, inactive',
+  })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   @ApiResponse({ status: 403, description: 'Forbidden - Owner role required' })
   async changeCoachStatus(
     @Param('gymId') gymId: string,
     @Param('coachUserId') coachUserId: string,
     @Body(ValidationPipe)
-    changeCoachStatusDto: { status: 'active' | 'inactive' },
+    changeCoachStatusDto: ChangeCoachStatusRequestDto,
     @CurrentUser() userId: string,
   ): Promise<ChangeCoachStatusResponseDto> {
     const command = new ChangeCoachStatusCommand(

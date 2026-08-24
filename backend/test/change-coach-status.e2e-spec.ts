@@ -79,6 +79,14 @@ describe('PATCH /api/gyms/:gymId/configuration/coaches/:coachUserId', () => {
     return rows[0]?.status;
   }
 
+  async function readStaffRole(staffId: string): Promise<string> {
+    const rows: Array<{ role: string }> = await dataSource.query(
+      `SELECT role FROM gym_staff WHERE id = $1`,
+      [staffId],
+    );
+    return rows[0]?.role;
+  }
+
   async function setStaffStatus(staffId: string, status: string) {
     await dataSource.query(`UPDATE gym_staff SET status = $1 WHERE id = $2`, [
       status,
@@ -247,6 +255,56 @@ describe('PATCH /api/gyms/:gymId/configuration/coaches/:coachUserId', () => {
         list.body.coaches as Array<{ userId: string; status: string }>
       ).find((c) => c.userId === coachUserId);
       expect(entry?.status).toBe('inactive');
+    });
+  });
+
+  /**
+   * Every authorization check in the codebase filters `status: 'active'`, so any
+   * value that is not `active` silently revokes access while the owner's coach
+   * list renders the raw string back. These assert the status code *and* the
+   * stored value: a 200 here also persisted, so the code alone would not prove
+   * the write was refused.
+   */
+  describe('the request body must name a real status', () => {
+    it('400s on a status outside the enum and writes nothing', async () => {
+      await request(app.getHttpServer())
+        .patch(endpoint(gymId, coachUserId))
+        .set('Authorization', `Bearer ${ownerToken}`)
+        .send({ status: 'banana' })
+        .expect(400);
+
+      await expect(readStaffStatus(coachStaffId)).resolves.toBe('active');
+    });
+
+    it('400s on a missing status rather than reporting success for a no-op', async () => {
+      await request(app.getHttpServer())
+        .patch(endpoint(gymId, coachUserId))
+        .set('Authorization', `Bearer ${ownerToken}`)
+        .send({})
+        .expect(400);
+
+      await expect(readStaffStatus(coachStaffId)).resolves.toBe('active');
+    });
+
+    it('400s on a null status', async () => {
+      await request(app.getHttpServer())
+        .patch(endpoint(gymId, coachUserId))
+        .set('Authorization', `Bearer ${ownerToken}`)
+        .send({ status: null })
+        .expect(400);
+
+      await expect(readStaffStatus(coachStaffId)).resolves.toBe('active');
+    });
+
+    it('ignores any other field in the body — a role cannot be smuggled in', async () => {
+      await request(app.getHttpServer())
+        .patch(endpoint(gymId, coachUserId))
+        .set('Authorization', `Bearer ${ownerToken}`)
+        .send({ status: 'inactive', role: 'owner' })
+        .expect(200);
+
+      await expect(readStaffStatus(coachStaffId)).resolves.toBe('inactive');
+      await expect(readStaffRole(coachStaffId)).resolves.toBe('coach');
     });
   });
 
