@@ -2,7 +2,6 @@ import React, { useContext, useEffect, useState } from 'react';
 import {
   ActivityIndicator,
   ScrollView,
-  TextInput,
   TouchableOpacity,
   View,
 } from 'react-native';
@@ -12,7 +11,7 @@ import { useKeyboardAwareScroll } from '@/hooks/useKeyboardAwareScroll';
 import { createApiClient, ApiError } from '@/utils/api-client';
 import { routeForRole } from '@/utils/routeForRole';
 import { Ink, Status } from '@/constants/design';
-import { Text, Icon, Button } from '@/components/cleanink';
+import { Text, Icon, Button, PasswordField } from '@/components/cleanink';
 import type { components } from '@/types/api.gen';
 import { styles } from './[token].styles';
 
@@ -175,48 +174,32 @@ export default function ResetPasswordScreen() {
           </Text>
 
           {/* New password */}
-          <View style={styles.field}>
-            <Text size="meta" weight="semibold">New password</Text>
-            <TextInput
-              testID="reset-password-input"
-              onFocus={kb.onInputFocus}
-              onBlur={kb.onInputBlur}
-              style={styles.input}
-              placeholder="••••••••"
-              placeholderTextColor={Ink.faint}
-              value={password}
-              onChangeText={(text) => {
-                setPassword(text);
-                if (error) setError(null);
-              }}
-              secureTextEntry
-              autoCapitalize="none"
-              autoCorrect={false}
-              editable={!isLoading}
-            />
-          </View>
+          <PasswordField
+            testID="reset-password-input"
+            label="New password"
+            value={password}
+            onChangeText={(text) => {
+              setPassword(text);
+              if (error) setError(null);
+            }}
+            editable={!isLoading}
+            onFocus={kb.onInputFocus}
+            onBlur={kb.onInputBlur}
+          />
 
           {/* Confirm */}
-          <View style={styles.field}>
-            <Text size="meta" weight="semibold">Confirm new password</Text>
-            <TextInput
-              testID="reset-confirm-input"
-              onFocus={kb.onInputFocus}
-              onBlur={kb.onInputBlur}
-              style={styles.input}
-              placeholder="••••••••"
-              placeholderTextColor={Ink.faint}
-              value={confirm}
-              onChangeText={(text) => {
-                setConfirm(text);
-                if (error) setError(null);
-              }}
-              secureTextEntry
-              autoCapitalize="none"
-              autoCorrect={false}
-              editable={!isLoading}
-            />
-          </View>
+          <PasswordField
+            testID="reset-confirm-input"
+            label="Confirm new password"
+            value={confirm}
+            onChangeText={(text) => {
+              setConfirm(text);
+              if (error) setError(null);
+            }}
+            editable={!isLoading}
+            onFocus={kb.onInputFocus}
+            onBlur={kb.onInputBlur}
+          />
 
           {/* Inline error — the deeper danger red, not the accent. */}
           {error !== null ? (

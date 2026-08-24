@@ -10,7 +10,7 @@ import { AuthContext } from '@/context/AuthContext';
 import { useKeyboardAwareScroll } from '@/hooks/useKeyboardAwareScroll';
 import { ApiError, createApiClient } from '@/utils/api-client';
 import { Ink, Status } from '@/constants/design';
-import { Text, Icon, Button } from '@/components/cleanink';
+import { Text, Icon, Button, PasswordField } from '@/components/cleanink';
 import { styles } from './register.styles';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -139,24 +139,16 @@ export default function RegisterScreen() {
             </View>
 
             {/* Password Field */}
-            <View style={styles.field}>
-              <Text size="meta" weight="semibold">Password</Text>
-              <TextInput
-                testID="register-password-input"
-                onFocus={kb.onInputFocus}
-                onBlur={kb.onInputBlur}
-                style={styles.input}
-                placeholder="••••••••"
-                placeholderTextColor={Ink.faint}
-                value={password}
-                onChangeText={setPassword}
-                secureTextEntry
-                autoCapitalize="none"
-                autoCorrect={false}
-                returnKeyType="done"
-                onSubmitEditing={handleRegister}
-              />
-            </View>
+            <PasswordField
+              testID="register-password-input"
+              label="Password"
+              value={password}
+              onChangeText={setPassword}
+              onFocus={kb.onInputFocus}
+              onBlur={kb.onInputBlur}
+              returnKeyType="done"
+              onSubmitEditing={handleRegister}
+            />
 
             {/* Inline error */}
             {error !== null ? (

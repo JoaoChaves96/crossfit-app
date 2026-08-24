@@ -12,7 +12,7 @@ import { useKeyboardAwareScroll } from '@/hooks/useKeyboardAwareScroll';
 import { createApiClient, ApiError } from '@/utils/api-client';
 import { routeForRole } from '@/utils/routeForRole';
 import { Ink, Status } from '@/constants/design';
-import { Text, Icon, Button } from '@/components/cleanink';
+import { Text, Icon, Button, PasswordField } from '@/components/cleanink';
 import { styles } from './login.styles';
 
 // ─── Local type for login response (not in Swagger schema) ────────────────────
@@ -130,26 +130,18 @@ export default function LoginScreen() {
           </View>
 
           {/* Password field */}
-          <View style={styles.field}>
-            <Text size="meta" weight="semibold">Password</Text>
-            <TextInput
-              testID="login-password-input"
-              onFocus={kb.onInputFocus}
-              onBlur={kb.onInputBlur}
-              style={styles.input}
-              placeholder="••••••••"
-              placeholderTextColor={Ink.faint}
-              value={password}
-              onChangeText={(text) => {
-                setPassword(text);
-                if (error) setError(null);
-              }}
-              secureTextEntry
-              autoCapitalize="none"
-              autoCorrect={false}
-              editable={!isLoading}
-            />
-          </View>
+          <PasswordField
+            testID="login-password-input"
+            label="Password"
+            value={password}
+            onChangeText={(text) => {
+              setPassword(text);
+              if (error) setError(null);
+            }}
+            editable={!isLoading}
+            onFocus={kb.onInputFocus}
+            onBlur={kb.onInputBlur}
+          />
 
           {/* Inline error */}
           {error !== null ? (

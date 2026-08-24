@@ -5,7 +5,7 @@
  * same screen. Every value references a design.ts role — no theme.ts, no raw hex.
  */
 import { StyleSheet } from 'react-native';
-import { Ground, Ink, Line, Space, Radius, Elevation, Type } from '@/constants/design';
+import { Ground, Line, Space, Radius, Elevation } from '@/constants/design';
 
 export const styles = StyleSheet.create({
   section: {
@@ -25,21 +25,10 @@ export const styles = StyleSheet.create({
     padding: Space.base,
     ...Elevation.card,
   },
+  // Row spacing only — the field itself is the PasswordField primitive, which
+  // owns the label, the box and the label→box gap.
   field: {
-    gap: Space.sm,
     paddingBottom: Space.md,
-  },
-  // TextInput can't route through the Text primitive; name the face explicitly.
-  input: {
-    height: 44,
-    borderRadius: Radius.control,
-    borderWidth: 1,
-    borderColor: Line.divider,
-    paddingHorizontal: Space.md,
-    backgroundColor: Ground.surface,
-    fontFamily: Type.family.regular,
-    fontSize: Type.size.body,
-    color: Ink.strong,
   },
   errorText: {
     paddingBottom: Space.md,

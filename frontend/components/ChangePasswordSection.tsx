@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
-import { TextInput, View } from 'react-native';
+import { View } from 'react-native';
 import { createApiClient, ApiError } from '@/utils/api-client';
 import { Ink, Status } from '@/constants/design';
-import { Text, Button } from '@/components/cleanink';
+import { Text, Button, PasswordField } from '@/components/cleanink';
 import type { components } from '@/types/api.gen';
 import { styles } from './ChangePasswordSection.styles';
 
@@ -117,6 +117,7 @@ export function ChangePasswordSection({ token }: { token: string | null }) {
               value={currentPassword}
               onChangeText={edit(setCurrentPassword)}
               editable={!isSaving}
+              style={styles.field}
             />
             <PasswordField
               testID="change-password-new-input"
@@ -124,6 +125,7 @@ export function ChangePasswordSection({ token }: { token: string | null }) {
               value={newPassword}
               onChangeText={edit(setNewPassword)}
               editable={!isSaving}
+              style={styles.field}
             />
             <PasswordField
               testID="change-password-confirm-input"
@@ -131,6 +133,7 @@ export function ChangePasswordSection({ token }: { token: string | null }) {
               value={confirm}
               onChangeText={edit(setConfirm)}
               editable={!isSaving}
+              style={styles.field}
             />
 
             {/* Inline, in the deeper danger red — never the accent. */}
@@ -184,38 +187,6 @@ export function ChangePasswordSection({ token }: { token: string | null }) {
           </>
         )}
       </View>
-    </View>
-  );
-}
-
-function PasswordField({
-  testID,
-  label,
-  value,
-  onChangeText,
-  editable,
-}: {
-  testID: string;
-  label: string;
-  value: string;
-  onChangeText: (value: string) => void;
-  editable: boolean;
-}) {
-  return (
-    <View style={styles.field}>
-      <Text size="meta" weight="semibold">{label}</Text>
-      <TextInput
-        testID={testID}
-        style={styles.input}
-        placeholder="••••••••"
-        placeholderTextColor={Ink.faint}
-        value={value}
-        onChangeText={onChangeText}
-        secureTextEntry
-        autoCapitalize="none"
-        autoCorrect={false}
-        editable={editable}
-      />
     </View>
   );
 }

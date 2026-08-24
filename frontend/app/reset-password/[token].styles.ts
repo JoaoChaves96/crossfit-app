@@ -66,21 +66,8 @@ export const styles = StyleSheet.create({
     gap: Space.base,
   },
 
-  // Field
-  field: {
-    gap: Space.sm,
-  },
-  input: {
-    height: 48,
-    borderRadius: Radius.control,
-    borderWidth: 1,
-    borderColor: Line.divider,
-    backgroundColor: Ground.surface,
-    paddingHorizontal: Space.base,
-    fontFamily: Type.family.regular,
-    fontSize: Type.size.body,
-    color: Ink.strong,
-  },
+  // Field metrics live in the PasswordField primitive — both of this screen's
+  // inputs are passwords, so nothing local is left to style.
   hint: {
     lineHeight: Type.lineHeight.relaxed,
   },
