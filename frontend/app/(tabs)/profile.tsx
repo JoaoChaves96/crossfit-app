@@ -25,6 +25,7 @@ import { useSafeAreaTop } from '@/components/SafeScreen';
 import { DesktopTopNav } from '@/components/DesktopTopNav';
 import { NotificationBell } from '@/components/NotificationBell';
 import { Text, Icon, Button } from '@/components/cleanink';
+import { ChangePasswordSection } from '@/components/ChangePasswordSection';
 import { styles, desktopStyles } from './profile.styles';
 
 type UserProfileDto = components['schemas']['UserProfileDto'];
@@ -301,6 +302,12 @@ export default function ProfileScreen() {
       <View style={styles.noteRow}>
         <Text size="meta" tone={Ink.faint}>Email cannot be changed</Text>
       </View>
+
+      {/* Security — change password. Below the details form and its Save on
+          purpose: Save belongs to the fields above it, and a section between the
+          two made the form's CTA and its "Email cannot be changed" note read as
+          if they belonged to the password fields. */}
+      <ChangePasswordSection token={token} />
 
       {/* Log out */}
       <View style={styles.logoutButtonWrap}>

@@ -43,7 +43,16 @@ export function createApiClient(options: ApiClientOptions) {
       throw new ApiError(response.status, await response.text());
     }
 
-    return response.json() as Promise<T>;
+    // An endpoint that answers 200 with no body is a success, not a parse
+    // failure. `response.json()` on an empty body throws a SyntaxError, which
+    // escapes as something that is not an ApiError — so a caller's catch block
+    // reports a generic failure for a request that actually worked.
+    const body = await response.text();
+    if (body === '') {
+      return undefined as T;
+    }
+
+    return JSON.parse(body) as T;
   }
 
   return {

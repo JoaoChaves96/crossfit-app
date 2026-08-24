@@ -1079,6 +1079,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/auth/change-password": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Change the signed-in user’s own password
+         * @description Scoped to the caller in the token; the body names no account. Returns an empty body — the existing session stays valid and no token is re-issued, because nothing is revoked. A wrong current password is a 400, not a 401: the authentication on this request is valid, and 401 here is reserved for a missing or invalid token. The account holder is emailed that the change happened, which is the only signal available if it was not them.
+         */
+        post: operations["AuthController_changePassword"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -3135,6 +3155,18 @@ export interface components {
              * @example secret123
              */
             password: string;
+        };
+        ChangePasswordDto: {
+            /**
+             * @description The password currently on the account
+             * @example secret123
+             */
+            currentPassword: string;
+            /**
+             * @description The new password (minimum 1 character)
+             * @example evenmoresecret456
+             */
+            newPassword: string;
         };
     };
     responses: never;
@@ -5866,6 +5898,42 @@ export interface operations {
             };
             /** @description The reset link is unknown, expired or already used — the three are deliberately indistinguishable. Also returned for validation errors. */
             400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    AuthController_changePassword: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ChangePasswordDto"];
+            };
+        };
+        responses: {
+            /** @description Password changed. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description The current password is wrong, or the new password matches the current one. Also returned for validation errors. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Unauthorized. */
+            401: {
                 headers: {
                     [name: string]: unknown;
                 };
