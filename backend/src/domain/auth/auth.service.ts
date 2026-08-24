@@ -7,11 +7,11 @@ import {
 import { JwtService } from '@nestjs/jwt';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import * as bcrypt from 'bcrypt';
 import { v4 as uuidv4 } from 'uuid';
 import { UserEntity } from '../user/entities/user.entity';
 import { GymStaffEntity } from '../gym-staff/entities/gym-staff.entity';
 import { GymMembershipEntity } from '../gym-membership/entities/gym-membership.entity';
+import { hashPassword, verifyPassword } from './password-hashing';
 
 @Injectable()
 export class AuthService {
@@ -35,7 +35,7 @@ export class AuthService {
       throw new ConflictException('Registration failed.');
     }
 
-    const passwordHash = await bcrypt.hash(password, 10);
+    const passwordHash = await hashPassword(password);
     const user = this.userRepository.create({
       id: uuidv4(),
       email,
@@ -62,7 +62,7 @@ export class AuthService {
       throw new UnauthorizedException('Invalid credentials');
     }
 
-    const passwordValid = await bcrypt.compare(password, user.passwordHash);
+    const passwordValid = await verifyPassword(password, user.passwordHash);
     if (!passwordValid) {
       throw new UnauthorizedException('Invalid credentials');
     }

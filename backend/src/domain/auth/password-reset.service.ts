@@ -3,11 +3,11 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { DataSource, MoreThan, Repository, IsNull } from 'typeorm';
 import { createHash, randomBytes } from 'crypto';
 import { v4 as uuid } from 'uuid';
-import * as bcrypt from 'bcrypt';
 import { PasswordResetTokenEntity } from './entities/password-reset-token.entity';
 import { UserEntity } from '../user/entities/user.entity';
 import { AuthService } from './auth.service';
 import { PasswordResetMailer } from '../../infrastructure/mail/password-reset-mailer';
+import { hashPassword } from './password-hashing';
 
 const TOKEN_BYTE_LENGTH = 32;
 const RESET_TOKEN_TTL_MINUTES = 60;
@@ -106,7 +106,7 @@ export class PasswordResetService {
       throw new BadRequestException(INVALID_TOKEN_MESSAGE);
     }
 
-    const passwordHash = await bcrypt.hash(newPassword, 10);
+    const passwordHash = await hashPassword(newPassword);
 
     // One transaction for both writes. Split, the failure between them leaves
     // the account on the new password with the token still unused — a

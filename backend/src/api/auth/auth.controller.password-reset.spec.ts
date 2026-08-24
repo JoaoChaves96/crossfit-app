@@ -2,6 +2,7 @@ import { Test } from '@nestjs/testing';
 import { AuthController } from './auth.controller';
 import { AuthService } from '../../domain/auth/auth.service';
 import { PasswordResetService } from '../../domain/auth/password-reset.service';
+import { PasswordChangeService } from '../../domain/auth/password-change.service';
 
 describe('AuthController — password reset', () => {
   let controller: AuthController;
@@ -20,6 +21,7 @@ describe('AuthController — password reset', () => {
       providers: [
         { provide: AuthService, useValue: {} },
         { provide: PasswordResetService, useValue: reset },
+        { provide: PasswordChangeService, useValue: {} },
       ],
     }).compile();
 

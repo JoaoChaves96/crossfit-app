@@ -19,8 +19,10 @@ import {
 } from '@nestjs/swagger';
 import { AuthService } from '../../domain/auth/auth.service';
 import { PasswordResetService } from '../../domain/auth/password-reset.service';
+import { PasswordChangeService } from '../../domain/auth/password-change.service';
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { CurrentUser } from '../../auth/decorators/current-user.decorator';
+import { ChangePasswordDto } from './dto/change-password.dto';
 import { ForgotPasswordDto } from './dto/forgot-password.dto';
 import { LoginDto } from './dto/login.dto';
 import { LoginResponseDto } from './dto/login-response.dto';
@@ -35,6 +37,7 @@ export class AuthController {
   constructor(
     private readonly authService: AuthService,
     private readonly passwordResetService: PasswordResetService,
+    private readonly passwordChangeService: PasswordChangeService,
   ) {}
 
   @Post('register')
@@ -186,5 +189,39 @@ export class AuthController {
       body.password,
     );
     return { accessToken };
+  }
+
+  @Post('change-password')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary: 'Change the signed-in user’s own password',
+    description:
+      'Scoped to the caller in the token; the body names no account. Returns an empty body — the existing session stays valid and no token is re-issued, because nothing is revoked. A wrong current password is a 400, not a 401: the authentication on this request is valid, and 401 here is reserved for a missing or invalid token. The account holder is emailed that the change happened, which is the only signal available if it was not them.',
+  })
+  @ApiBody({ type: ChangePasswordDto })
+  @ApiResponse({
+    status: 200,
+    description: 'Password changed.',
+  })
+  @ApiResponse({
+    status: 400,
+    description:
+      'The current password is wrong, or the new password matches the current one. Also returned for validation errors.',
+  })
+  @ApiResponse({
+    status: 401,
+    description: 'Unauthorized.',
+  })
+  async changePassword(
+    @CurrentUser() userId: string,
+    @Body(ValidationPipe) dto: ChangePasswordDto,
+  ): Promise<void> {
+    await this.passwordChangeService.changePassword(
+      userId,
+      dto.currentPassword,
+      dto.newPassword,
+    );
   }
 }

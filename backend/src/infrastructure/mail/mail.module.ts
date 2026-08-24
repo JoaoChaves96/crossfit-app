@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { createMailDriver } from './mail-driver.factory';
 import { InviteMailer } from './invite-mailer';
 import { PasswordResetMailer } from './password-reset-mailer';
+import { PasswordChangedMailer } from './password-changed-mailer';
 import { MAIL_DRIVER_TOKEN } from './mail.types';
 
 @Module({
@@ -12,7 +13,8 @@ import { MAIL_DRIVER_TOKEN } from './mail.types';
     },
     InviteMailer,
     PasswordResetMailer,
+    PasswordChangedMailer,
   ],
-  exports: [InviteMailer, PasswordResetMailer],
+  exports: [InviteMailer, PasswordResetMailer, PasswordChangedMailer],
 })
 export class MailModule {}

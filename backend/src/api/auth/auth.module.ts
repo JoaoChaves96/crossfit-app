@@ -4,6 +4,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { AuthController } from './auth.controller';
 import { AuthService } from '../../domain/auth/auth.service';
 import { PasswordResetService } from '../../domain/auth/password-reset.service';
+import { PasswordChangeService } from '../../domain/auth/password-change.service';
 import { PasswordResetTokenEntity } from '../../domain/auth/entities/password-reset-token.entity';
 import { UserEntity } from '../../domain/user/entities/user.entity';
 import { GymStaffEntity } from '../../domain/gym-staff/entities/gym-staff.entity';
@@ -25,7 +26,7 @@ import { MailModule } from '../../infrastructure/mail/mail.module';
     MailModule,
   ],
   controllers: [AuthController],
-  providers: [AuthService, PasswordResetService],
+  providers: [AuthService, PasswordResetService, PasswordChangeService],
   // Exported so CreateGymHandler can re-issue a token when a user's gym
   // context changes mid-session (see AuthService.issueTokenForUser).
   exports: [AuthService],
