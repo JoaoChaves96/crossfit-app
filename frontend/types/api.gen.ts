@@ -2346,6 +2346,14 @@ export interface components {
              */
             delivery: "sent" | "failed";
         };
+        ChangeCoachStatusRequestDto: {
+            /**
+             * @description Set inactive to cut the coach off from this gym, active to let them back in. Required — a body without it is a 400, not a no-op.
+             * @example inactive
+             * @enum {string}
+             */
+            status: "active" | "inactive";
+        };
         ChangeCoachStatusResponseDto: {
             /** @example uuid-gym-staff-id */
             id: string;
@@ -4632,7 +4640,11 @@ export interface operations {
             };
             cookie?: never;
         };
-        requestBody?: never;
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ChangeCoachStatusRequestDto"];
+            };
+        };
         responses: {
             /** @description Coach status updated */
             200: {
@@ -4642,6 +4654,13 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["ChangeCoachStatusResponseDto"];
                 };
+            };
+            /** @description status is missing or is not one of active, inactive */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
             /** @description Unauthorized */
             401: {
