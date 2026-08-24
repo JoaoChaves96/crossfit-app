@@ -325,6 +325,33 @@ green — there is no success role), logout → old password rejected, new passw
 one preview email per successful change. Suites at close: backend 591 unit + 10 change-password e2e,
 frontend 457, `tsc` clean in both.
 
+✅ **Owner schedule date range — shipped and verified 2026-08-24.** Trello Backlog card
+"GET /api/gyms/:gymId/schedule takes no date range". `startDate`/`endDate` are **optional**
+query params on the owner schedule read, so an absent range still returns the whole schedule
+and nothing that already called the endpoint changed. Scope was deliberately bounded to the
+owner path: the athlete and coach reads are untouched, and the per-class `countBookedBookings`
+N+1 was left alone on purpose (its own Backlog card).
+
+- The params live in a real DTO class (`api/gym-schedule/dto/get-gym-schedule-query.dto.ts`),
+  never an inline `@Query()` type literal — an inline literal validates nothing, which is the
+  same gap that let `status: "banana"` through on the coach PATCH.
+- Each bound carries **both** `@Matches(/^\d{4}-\d{2}-\d{2}$/)` **and**
+  `@IsDateString({ strict: true })`. The shape regex alone accepts `2099-99-99`, which reaches
+  Postgres and turns a 400 into a 500 on the cast to `date`.
+- Bounds stay **strings** all the way into the query (`Between` / `MoreThanOrEqual` /
+  `LessThanOrEqual`, `{}` when unbounded so the old query is byte-identical). Routing a
+  calendar day through `new Date()` lands on UTC midnight and shifts the window by a day.
+- `startDate > endDate` is a 400 from the service, compared lexicographically — no parsing.
+- Frontend: `schedule-dashboard.tsx` requests the visible week only and **refetches** when the
+  week is paged (`weekStart` is now a `fetchClasses` dep); it used to pull the entire schedule
+  once and page it purely in memory. The client-side week filter is kept on purpose.
+
+Verified: 634 backend unit + 12 gym-schedule e2e, frontend 461, `tsc` clean in both; both
+halves mutation-proved (neutering the range branch fails 1 repo spec + 2 e2e; dropping the
+query string or the `weekStart` dep fails 4 and 5 frontend tests). Live-checked as owner at
+1280×832 **and** 390×844: paging the week issues
+`?startDate=…&endDate=…` per week and renders that week's classes.
+
 ## Previous Phase (2026-08-03)
 
 **Tiered Audit — Phase 3: bug triage & fixes** (Trello board "Crossfit Application")
