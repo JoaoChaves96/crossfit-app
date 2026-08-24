@@ -378,6 +378,58 @@ count landing on the wrong row cannot pass. Mutation-proved: dropping `?? 0` fai
 tests, dropping `Number()` fails 3 repo tests + 1 e2e, dropping the status filter fails 1 repo
 test + 3 e2e, counting before the filters fails 9 service tests.
 
+✅ **Notifications Batch A — class-change events + reminder scheduler, shipped 2026-08-24.**
+`epics/NOTIFICATIONS_EPIC.md` had been marked COMPLETE since 2026-05-23, but three of its five
+events had **no producer**: the listener had handled `class.cancelled` and `class.modified`
+since May and nothing ever emitted them, because `EDIT_CLASS_EPIC.md` and
+`CLASS_LIFECYCLE_EPIC.md` each deferred "notify booked athletes" to a later epic nobody opened.
+Batch A closes the in-app feed. **Push is now explicitly out of MVP scope** — see the epic's
+Delivery Status table.
+
+- `delete-class.handler` emits `class.cancelled`, and only when the class has ≥1 booked
+  athlete. The event's date is `toCalendarDay(cls.scheduledDate)`, never a `new Date()` round
+  trip.
+- `edit-class.handler` emits `class.modified` for **material** changes only — date, time,
+  space, not coach or capacity, per the epic's event table. It snapshots `before` ahead of the
+  patch, because the patch mutates `cls` in place, and renders e.g.
+  `moved to 2026-06-08 at 18:30, location changed`.
+- Reminder scheduler: added `deletedAt IS NULL`, joined the class type explicitly, widened the
+  window to `[now, now + 30m]`, and de-duplicates through a new nullable
+  `classes.reminderSentAt` (migration `1787911200000-ClassReminderSentAt`). `edit-class` resets
+  it to `null` on a reschedule so the new start time earns its own reminder.
+- **A TypeORM QueryBuilder does not apply eager relations.** `classType` is eager on
+  `ClassEntity`, yet `createQueryBuilder(...).getMany()` left it undefined, so every reminder
+  body read "Class in 30 minutes". The old spec hid this by injecting `classType` into its
+  QueryBuilder mock; the new fake returns it only when `leftJoinAndSelect` was actually called.
+- **`classes.deletedAt` is a plain `@Column`, not a `@DeleteDateColumn`**, so nothing filters
+  soft-deleted rows anywhere. Every new query must add `deletedAt IS NULL` by hand. Do not
+  "fix" the column — that would silently change every query in the repo.
+- **Timezone fix found by the live walk.** The window bound `scheduledDate + scheduledTime::time`
+  — a naive timestamp — against `now.toISOString()`, so the comparison ran against UTC and the
+  whole window was displaced by the server's offset. Proven live at UTC+1: a class 25 minutes
+  away got **no** reminder, while one 39 minutes in the **past** got one. Bounds now go through
+  a new `toLocalTimestamp()` in `domain/shared/calendar-day.ts`, alongside the other two
+  functions that exist to keep naive DB columns off the UTC clock. Pre-existing — the old
+  one-minute window had the same bug — and it made "reminders work" untrue until fixed.
+- ⚠️ **The repo now holds two readings of the same columns, deliberately left alone.**
+  `class-lifecycle.scheduler.ts:buildScheduledStart` builds `new Date(\`${day}T${time}Z\`)`
+  and documents "both values are stored in UTC in the database"; the reminder window now
+  reads them as local wall clock. On a UTC server the two coincide, which is why nothing
+  breaks in staging — they diverge only off-UTC, as the dev machine is. The real answer is a
+  per-gym timezone on the gym entity, which is not in MVP scope. Filed, not fixed.
+- **Known gap, not fixed:** the reminder check treats `notificationPreferences.class_reminders`
+  as opt-in, so a user whose preferences JSON lacks the key gets nothing, even though the epic
+  says all preferences default to `true`. Users seeded before the key existed are in that state.
+
+Verified: 686 backend unit (66 suites) + 305 e2e green, `tsc --noEmit` clean,
+`npm run schema:check` in sync. Mutation-proved: every new test watched RED first; swapping
+`getHours()` for `getUTCHours()` in `toLocalTimestamp` fails 6 tests, and
+`relocated = cls.spaceId !== before.spaceId` → `command.spaceId !== undefined` correctly fails
+"should not emit when a material field is submitted unchanged". Live-walked against the running
+API: an owner time edit and an owner delete each land the right notification in the athlete's
+real feed, the reminder body names the class type, a second cron tick does **not** re-send, and
+after the timezone fix the 25-minutes-out class that previously got nothing is reminded.
+
 ## Previous Phase (2026-08-03)
 
 **Tiered Audit — Phase 3: bug triage & fixes** (Trello board "Crossfit Application")

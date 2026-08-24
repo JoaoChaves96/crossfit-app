@@ -1,11 +1,40 @@
 # Notifications Epic — Design Spec ✅
 
-**Status:** COMPLETE (2026-05-23)
+**Status:** COMPLETE for the in-app feed (2026-08-24). Push is deferred — see
+Delivery Status.
 
 **Implementation summary:**
-- Backend: entities, service, controller, push service, event listener, reminder scheduler (169 tests)
-- Frontend: useNotifications + usePushToken hooks, NotificationBell, notifications screen, preferences in profile (164 tests)
-- Designs: 3 frames in `designs/athlete-screens.pen` (Notifications List, Bell Badge, Preferences)
+- Backend: entities, service, controller, push service, event listener, reminder scheduler
+- Frontend: useNotifications hook, NotificationBell, notifications screen, preferences in profile
+- Designs: superseded — the notifications screen follows `frontend/DESIGN.md` (Clean Ink)
+
+## Delivery Status
+
+This epic was marked COMPLETE on 2026-05-23 while three of the five spec'd events had
+**no producer**: the listener had handled `class.cancelled` and `class.modified` since
+May, but nothing ever emitted them. `EDIT_CLASS_EPIC.md` and `CLASS_LIFECYCLE_EPIC.md`
+each deferred "notify booked athletes" to a later epic that was never opened. Closed
+2026-08-24.
+
+| Event | Producer | Status |
+|---|---|---|
+| `booking.created` → Booking confirmed | `book-class.handler` | ✅ shipped |
+| `waitlist.promoted` → Waitlist promoted | waitlist promotion | ✅ shipped |
+| `class.cancelled` → Class cancelled | `delete-class.handler` | ✅ shipped 2026-08-24 |
+| `class.modified` → Class changed | `edit-class.handler` | ✅ shipped 2026-08-24 |
+| Class reminder | `notification-reminder.scheduler` | ✅ shipped 2026-08-24 |
+
+**Push notifications are OUT OF MVP SCOPE (decided 2026-08-24).** `PushService` and the
+`usePushToken` hook both exist and are tested, but the hook is mounted nowhere, so no
+token is ever registered and `sendPushToUser` always short-circuits on zero tokens.
+Registering one requires a physical device plus an EAS build, which this web-first stack
+cannot verify. The in-app feed is the MVP delivery channel. Do not treat the push leg as
+working code.
+
+**Known gap:** the reminder check reads `notificationPreferences.class_reminders` as
+opt-in, so a user whose preferences JSON lacks the key gets no reminders even though this
+spec says all preferences default to `true`. Users seeded before the preference existed
+are in exactly that state.
 
 ## Overview
 
@@ -104,9 +133,19 @@ Action (book, promote, edit/cancel class)
 
 - Runs every minute (same pattern as lifecycle scheduler)
 - Single query: find classes starting within the reminder window that haven't been notified yet
-- Bulk-creates notification records + batch-sends push
-- Reminder window: gym-level configurable (default 30 min)
-- Marks classes as `reminder_sent = true` to prevent duplicates
+- Creates notification records + sends push per booked athlete
+- Reminder window: a fixed 30 minutes (`REMINDER_MINUTES_BEFORE`). Gym-level
+  configuration was spec'd but never built and is not in MVP scope
+- Marks classes with a `classes.reminderSentAt` timestamp to prevent duplicates. The
+  window spans `[now, now + 30m]` rather than only its last minute, so a missed or
+  delayed cron tick cannot skip a class forever — which makes the de-duplication column
+  load-bearing rather than an optimisation
+- Excludes soft-deleted classes explicitly: `classes.deletedAt` is a plain column, not a
+  `@DeleteDateColumn`, so nothing filters them automatically
+- Window bounds are **local wall-clock** strings, not ISO/UTC:
+  `scheduledDate + scheduledTime::time` is a naive timestamp, so binding a UTC instant
+  against it displaced the whole window by the server's offset (reminding about classes
+  that had already started, and staying silent for the next one)
 
 ## API Endpoints
 
@@ -162,6 +201,8 @@ Action (book, promote, edit/cancel class)
 
 ## Out of Scope
 
+- **Push notifications** (deferred 2026-08-24 — see Delivery Status)
+- Gym-level configuration of the reminder window
 - Email notifications
 - Coach/owner notifications (only athletes receive notifications in this epic)
 - Rich push content (images, action buttons)

@@ -1,5 +1,15 @@
 # Notifications Epic — Implementation Plan
 
+> **⚠️ SUPERSEDED (2026-08-24) — do not execute this plan.** The in-app notification
+> feed shipped, and the unticked checkboxes below are doc drift, not open work: the
+> boxes were simply never maintained while the epic was built. **The authoritative
+> record of what is and is not delivered is the Delivery Status table in
+> `NOTIFICATIONS_EPIC.md`.** In short: all five events now have producers, and the push
+> leg is deferred out of MVP scope. Every push-related task here is therefore NOT done
+> and is not meant to be picked up.
+>
+> Kept for the design rationale and file-by-file breakdown only.
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Add in-app notification feed + Expo push notifications so athletes receive timely updates about bookings, waitlist promotions, class changes, and upcoming classes.
