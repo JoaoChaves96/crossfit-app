@@ -745,7 +745,7 @@ export interface paths {
         };
         /**
          * Get gym schedule for owner
-         * @description Retrieve all classes in gym schedule for owner management. No membership filtering applied. Gym owners only.
+         * @description Retrieve classes in the gym schedule for owner management, optionally narrowed to an inclusive startDate/endDate calendar-day range. Omitting both bounds returns the whole schedule. No membership filtering applied. Gym owners only.
          */
         get: operations["GymScheduleController_getGymScheduleForOwner"];
         put?: never;
@@ -5273,7 +5273,12 @@ export interface operations {
     };
     GymScheduleController_getGymScheduleForOwner: {
         parameters: {
-            query?: never;
+            query?: {
+                /** @description Only return classes scheduled on or after this calendar day (inclusive, YYYY-MM-DD) */
+                startDate?: string;
+                /** @description Only return classes scheduled on or before this calendar day (inclusive, YYYY-MM-DD) */
+                endDate?: string;
+            };
             header?: never;
             path: {
                 /** @description Gym ID */
@@ -5291,6 +5296,13 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["GetClassScheduleResponseDto"];
                 };
+            };
+            /** @description Malformed startDate/endDate, or startDate later than endDate */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
             /** @description Unauthorized */
             401: {
