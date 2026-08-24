@@ -255,8 +255,12 @@ export default function ScheduleDashboard() {
 
     try {
       const client = createApiClient({ token });
+      // Only the visible week is requested; paging the week refetches, so the
+      // whole schedule is never pulled down to be filtered in memory.
+      const startDate = toDayKey(weekStart);
+      const endDate = toDayKey(addDays(weekStart, 6));
       const data = await client.get<ApiClassesResponse>(
-        `/api/gyms/${currentGymId}/schedule`
+        `/api/gyms/${currentGymId}/schedule?startDate=${startDate}&endDate=${endDate}`
       );
       setClasses(data.classes ?? []);
     } catch (err) {
@@ -265,7 +269,7 @@ export default function ScheduleDashboard() {
     } finally {
       setIsLoading(false);
     }
-  }, [token, currentGymId]);
+  }, [token, currentGymId, weekStart]);
 
   // On focus, not on mount. Create/edit-class return here with `router.back()`,
   // which leaves this screen mounted — a mount-only effect meant the owner came

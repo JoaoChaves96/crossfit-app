@@ -39,9 +39,11 @@ jest.mock('expo-router', () => ({
   useLocalSearchParams: jest.fn(() => ({})),
   useSegments: jest.fn(() => []),
   usePathname: jest.fn(() => '/schedule-dashboard'),
+  // Deps are [cb], not [] — the real hook re-runs when the callback identity
+  // changes, which is how paging the week refetches its date range.
   useFocusEffect: jest.fn((cb: () => void) => {
     // eslint-disable-next-line react-hooks/rules-of-hooks
-    require('react').useEffect(cb, []);
+    require('react').useEffect(cb, [cb]);
   }),
   Link: jest.fn(({ children }: { children: unknown }) => children),
   Redirect: jest.fn(() => null),
@@ -198,8 +200,9 @@ describe('ScheduleDashboard', () => {
       // Act
       fireEvent.press(screen.getByTestId('week-nav-next-btn'));
 
-      // Assert
-      expect(screen.getByText(expectedLabel)).toBeTruthy();
+      // Assert — the label flips immediately; the range refetch settles after
+      await waitFor(() => expect(screen.getByText(expectedLabel)).toBeTruthy());
+      await waitFor(() => expect(mockApi.get).toHaveBeenCalledTimes(2));
     });
 
     it('decrements the displayed week when the previous arrow is pressed', async () => {
@@ -220,7 +223,8 @@ describe('ScheduleDashboard', () => {
       fireEvent.press(screen.getByTestId('week-nav-prev-btn'));
 
       // Assert
-      expect(screen.getByText(expectedLabel)).toBeTruthy();
+      await waitFor(() => expect(screen.getByText(expectedLabel)).toBeTruthy());
+      await waitFor(() => expect(mockApi.get).toHaveBeenCalledTimes(2));
     });
 
     it('returns to the current week when next and then previous are pressed', async () => {
@@ -239,7 +243,8 @@ describe('ScheduleDashboard', () => {
       fireEvent.press(screen.getByTestId('week-nav-prev-btn'));
 
       // Assert
-      expect(screen.getByText(currentLabel)).toBeTruthy();
+      await waitFor(() => expect(screen.getByText(currentLabel)).toBeTruthy());
+      await waitFor(() => expect(mockApi.get.mock.calls.length).toBeGreaterThan(1));
     });
   });
 
@@ -483,6 +488,88 @@ describe('ScheduleDashboard', () => {
         expect(screen.getByText('Network error')).toBeTruthy();
         expect(screen.getByText('Retry')).toBeTruthy();
       });
+    });
+  });
+
+  // ── Date range requests ────────────────────────────────────────────────────
+
+  // The screen asks the backend for the visible week only, so paging the week
+  // has to refetch rather than re-filter a full schedule held in memory.
+  describe('date range requests', () => {
+    /** Pulls startDate/endDate off a `.../schedule?startDate=…&endDate=…` call. */
+    function rangeOf(url: string): { startDate: string | null; endDate: string | null } {
+      const query = new URLSearchParams(url.slice(url.indexOf('?') + 1));
+      return { startDate: query.get('startDate'), endDate: query.get('endDate') };
+    }
+
+    it('requests the visible week on first render', async () => {
+      // Arrange
+      const mockApi = createMockApiClient();
+      mockApi.get.mockResolvedValue(buildScheduleResponse([]));
+      const weekStart = getWeekStart(new Date());
+
+      // Act
+      renderScreen(mockApi);
+
+      // Assert
+      await waitFor(() => expect(mockApi.get).toHaveBeenCalled());
+      expect(rangeOf(mockApi.get.mock.calls[0][0])).toEqual({
+        startDate: toApiDate(weekStart),
+        endDate: toApiDate(addDays(weekStart, 6)),
+      });
+    });
+
+    it('refetches the shifted range when the next arrow is pressed', async () => {
+      // Arrange
+      const mockApi = createMockApiClient();
+      mockApi.get.mockResolvedValue(buildScheduleResponse([]));
+      renderScreen(mockApi);
+      await waitFor(() => expect(mockApi.get).toHaveBeenCalledTimes(1));
+
+      // Act
+      fireEvent.press(screen.getByTestId('week-nav-next-btn'));
+
+      // Assert
+      const nextWeekStart = addDays(getWeekStart(new Date()), 7);
+      await waitFor(() => expect(mockApi.get).toHaveBeenCalledTimes(2));
+      expect(rangeOf(mockApi.get.mock.calls[1][0])).toEqual({
+        startDate: toApiDate(nextWeekStart),
+        endDate: toApiDate(addDays(nextWeekStart, 6)),
+      });
+    });
+
+    it('refetches the shifted range when the previous arrow is pressed', async () => {
+      // Arrange
+      const mockApi = createMockApiClient();
+      mockApi.get.mockResolvedValue(buildScheduleResponse([]));
+      renderScreen(mockApi);
+      await waitFor(() => expect(mockApi.get).toHaveBeenCalledTimes(1));
+
+      // Act
+      fireEvent.press(screen.getByTestId('week-nav-prev-btn'));
+
+      // Assert
+      const prevWeekStart = addDays(getWeekStart(new Date()), -7);
+      await waitFor(() => expect(mockApi.get).toHaveBeenCalledTimes(2));
+      expect(rangeOf(mockApi.get.mock.calls[1][0])).toEqual({
+        startDate: toApiDate(prevWeekStart),
+        endDate: toApiDate(addDays(prevWeekStart, 6)),
+      });
+    });
+
+    it('requests a seven-day window ending six days after it starts', async () => {
+      // Arrange
+      const mockApi = createMockApiClient();
+      mockApi.get.mockResolvedValue(buildScheduleResponse([]));
+
+      // Act
+      renderScreen(mockApi);
+
+      // Assert — read the bounds back off the request, not off the local clock
+      await waitFor(() => expect(mockApi.get).toHaveBeenCalled());
+      const { startDate, endDate } = rangeOf(mockApi.get.mock.calls[0][0]);
+      expect(startDate).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+      expect(endDate).toBe(toApiDate(addDays(new Date(`${startDate}T00:00:00`), 6)));
     });
   });
 });
