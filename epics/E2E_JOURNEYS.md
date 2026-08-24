@@ -58,6 +58,10 @@ Tier 3 (12–15) was parked on 2026-08-12, taken up on 2026-08-13 in the order *
 (highest value first, so stopping early would still have got the good ones), and all four were
 kept.
 
+**Journeys 16–18 were added after the tiers**, each for its own reason rather than as part of a
+planned set: 16 for gym switching, 17 because a real bug had made every destructive confirm a no-op
+on web, 18 for the change-password feature. They are listed at the end of Tier 3.
+
 ---
 
 ## Tier 1 — the spine
@@ -352,6 +356,49 @@ and `resolveGymContextFor` falling back to the default context instead of throwi
 backend wire spec (`refuses a gym the caller is not attached to → 403` returned 200), which is where
 that refusal is owned.
 
+### 17. A destructive confirm is raised, and the answer is obeyed — ✅ DONE (2026-08-21)
+
+Written because of a bug: `react-native-web`'s `Alert` export is `class Alert { static alert() {} }`,
+an empty method. Every settings screen that guarded a destructive action with `Alert.alert(...)`
+therefore did **nothing at all** on web — no dialog, no request, no console error, and a list that
+looked unchanged for the honest reason that nothing had changed. An owner could not delete a space,
+delete a class type, archive a plan or disable a coach, and was told nothing about why. Fixed in
+`ec3ff05` by routing every confirm through `utils/alert`'s `showConfirm`.
+
+Nothing in the suite caught it. Journey 12 creates a space and a class type and follows each to the
+picker it should reach, but never deletes anything; the jest suites drive the confirm's `onPress`
+callback directly, which is the one part that was never broken. **The gap was not "no test for
+delete" — it was "no test that presses the button a person presses".**
+
+One test, deliberately narrow and behavioural: pressing a destructive control raises a real dialog,
+and the answer given to that dialog decides whether the server is called. Three properties, each of
+which the old code failed — a dialog is **RAISED** (`answerConfirm` fails if none appears, so a no-op
+Alert cannot pass by staying quiet); **DISMISS** means no (the row survives *and* the row is
+untouched in Postgres, which also rules out the opposite regression, a confirm wired to delete first
+and ask afterwards); **ACCEPT** means yes, and the write reaches the database. Owner → settings →
+spaces (dismiss, then accept) → class types (accept) → coaches (disable a coach).
+
+**Every outcome is read from Postgres**, never from the list alone. Spaces and class types are
+soft-deleted, so "gone" is `deletedAt` being stamped; a coach is disabled by flipping
+`gym_staff.status`. A disappearing row only proves the client re-rendered, which was never in doubt.
+The dialog's **message** is asserted too, not just its existence: a confirm that appears but names
+the wrong thing is its own bug, and the name is the only part of it the owner uses to decide.
+
+**Three screens, not one.** The six broken confirms were six independent copies of the same mistake,
+so one fixed screen is no evidence about another. The coach case is last and is the one the bug was
+found on: Enable calls `onChangeStatus` directly with **no confirm by design**, so on web an owner
+could re-enable a coach but never disable one — half the feature worked, which is why nobody read it
+as broken.
+
+Two harness notes. `answerConfirm` registers its `page.once('dialog')` listener **before** the press,
+because `window.confirm` blocks the page's JS until answered — attaching afterwards deadlocks — and
+removes it in a `finally` so a timeout cannot leave a stray handler to swallow the next assertion's
+dialog. Answering explicitly is not ceremony: Playwright **auto-dismisses** dialogs when no listener
+is attached, so a test that merely clicked Delete and expected the row to vanish would fail against
+correct code. And leaving the settings screen cannot use `openOwnerSection` — gym-settings ships its
+own copy of the shell (`SettingsSidebar`, `sidebar-nav-<key>`, a shorter item list), the duplicate
+noted in the Backlog.
+
 ### 18. Changing the password changes the login — ✅ DONE (2026-08-23)
 
 An athlete on `/profile` → SECURITY → wrong current password first (inline error, **still on
@@ -367,9 +414,6 @@ is the URL plus a settle wait — `/login` does render "Wrong email or password.
 testID, and adding one to satisfy a journey is backwards. The e2e backend sets `MAIL_PREVIEW_DIR`,
 so the run also proves the notice mail: exactly **one** preview file (the rejected attempt sends
 none), with no link and no CTA.
-
-**Doc gap, not a defect:** journey 17 (`17-destructive-confirms-reach-the-server.spec.ts`) exists and
-runs but has no entry in this file. It was never written up; it needs one.
 
 ---
 
