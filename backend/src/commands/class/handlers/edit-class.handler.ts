@@ -1,5 +1,6 @@
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { Inject } from '@nestjs/common';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 import { EditClassCommand } from '../edit-class.command';
 import { EditClassResponseDto } from '../dto/edit-class-response.dto';
 import { ClassRepository } from '../../../repositories/class.repository';
@@ -7,6 +8,8 @@ import { BookingRepository } from '../../../repositories/booking.repository';
 import { ClassTypeService } from '../../../domain/class-type/class-type.service';
 import { GymStaffService } from '../../../domain/gym-staff/gym-staff.service';
 import { SpaceService } from '../../../domain/space/space.service';
+import { ClassEntity } from '../../../domain/class/entities/class.entity';
+import { ClassModifiedEvent } from '../../../domain/notification/events/class-modified.event';
 import { notFound, invalidState } from '../../../http/exceptions';
 import {
   toCalendarDay,
@@ -24,6 +27,7 @@ export class EditClassHandler implements ICommandHandler<EditClassCommand> {
     @Inject(GymStaffService)
     private readonly gymStaffService: GymStaffService,
     @Inject(SpaceService) private readonly spaceService: SpaceService,
+    private readonly eventEmitter: EventEmitter2,
   ) {}
 
   async execute(command: EditClassCommand): Promise<EditClassResponseDto> {
@@ -33,12 +37,22 @@ export class EditClassHandler implements ICommandHandler<EditClassCommand> {
     );
 
     if (!cls) {
-      throw notFound(`Class ${command.classId} not found in gym ${command.gymId}`);
+      throw notFound(
+        `Class ${command.classId} not found in gym ${command.gymId}`,
+      );
     }
 
     if (cls.state !== 'published') {
       throw invalidState('Only published classes can be edited');
     }
+
+    // Captured before the patch is applied: a booked athlete is only notified
+    // when one of these three actually moves.
+    const before = {
+      scheduledDate: toCalendarDay(cls.scheduledDate),
+      scheduledTime: cls.scheduledTime,
+      spaceId: cls.spaceId,
+    };
 
     if (command.classTypeId !== undefined) {
       const classType = await this.classTypeService.getClassTypeById(
@@ -108,6 +122,16 @@ export class EditClassHandler implements ICommandHandler<EditClassCommand> {
       cls.duration = command.duration;
     }
 
+    const rescheduled =
+      toCalendarDay(cls.scheduledDate) !== before.scheduledDate ||
+      cls.scheduledTime !== before.scheduledTime;
+    const relocated = cls.spaceId !== before.spaceId;
+
+    if (rescheduled) {
+      // The old start time was already reminded about; the new one has not been.
+      cls.reminderSentAt = null;
+    }
+
     cls.lastModifiedAt = new Date();
 
     const saved = await this.classRepository.save(cls);
@@ -115,6 +139,8 @@ export class EditClassHandler implements ICommandHandler<EditClassCommand> {
     const bookedCount = await this.bookingRepository.countBookedBookings(
       saved.id,
     );
+
+    await this.notifyBookedAthletes(saved, { rescheduled, relocated });
 
     return {
       id: saved.id,
@@ -129,6 +155,49 @@ export class EditClassHandler implements ICommandHandler<EditClassCommand> {
       bookedCount,
       state: saved.state,
     };
+  }
+
+  /**
+   * Emits `class.modified` when a material field moved — the date, the time or
+   * the space. A coach or capacity edit changes nothing an athlete has to act
+   * on, so it stays silent (epics/NOTIFICATIONS_EPIC.md).
+   */
+  private async notifyBookedAthletes(
+    saved: ClassEntity,
+    { rescheduled, relocated }: { rescheduled: boolean; relocated: boolean },
+  ): Promise<void> {
+    if (!rescheduled && !relocated) {
+      return;
+    }
+
+    const changes: string[] = [];
+    if (rescheduled) {
+      changes.push(
+        `moved to ${this.formatDate(saved.scheduledDate)} at ${saved.scheduledTime}`,
+      );
+    }
+    if (relocated) {
+      changes.push('location changed');
+    }
+
+    const bookedUserIds = (
+      await this.bookingRepository.getBookedBookingsByClass(saved.id)
+    ).map((booking) => booking.userId);
+
+    if (bookedUserIds.length === 0) {
+      return;
+    }
+
+    this.eventEmitter.emit(
+      'class.modified',
+      new ClassModifiedEvent(
+        saved.gymId,
+        saved.id,
+        saved.classType?.name || 'Class',
+        changes.join(', '),
+        bookedUserIds,
+      ),
+    );
   }
 
   /**

@@ -83,6 +83,14 @@ export class ClassEntity {
   @Column('timestamp', { nullable: true })
   deletedAt: Date | null;
 
+  /**
+   * When the "starting soon" reminder went out for this class. De-duplicates the
+   * reminder scheduler, and is reset when the class is rescheduled so the new
+   * start time gets its own reminder.
+   */
+  @Column('timestamp', { nullable: true })
+  reminderSentAt: Date | null;
+
   // Relationships
   @ManyToOne(() => GymEntity, { eager: true })
   @JoinColumn({ name: 'gymId' })

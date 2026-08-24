@@ -1,4 +1,5 @@
 import { Test, TestingModule } from '@nestjs/testing';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 import { EditClassHandler } from './edit-class.handler';
 import { EditClassCommand } from '../edit-class.command';
 import { ClassRepository } from '../../../repositories/class.repository';
@@ -7,6 +8,8 @@ import { ClassTypeService } from '../../../domain/class-type/class-type.service'
 import { GymStaffService } from '../../../domain/gym-staff/gym-staff.service';
 import { SpaceService } from '../../../domain/space/space.service';
 import { ClassEntity } from '../../../domain/class/entities/class.entity';
+import { BookingEntity } from '../../../domain/booking/entities/booking.entity';
+import { ClassModifiedEvent } from '../../../domain/notification/events/class-modified.event';
 import { NotFoundException, BadRequestException } from '@nestjs/common';
 import { DateUtils } from 'typeorm/util/DateUtils';
 
@@ -17,6 +20,7 @@ describe('EditClassHandler', () => {
   let classTypeService: ClassTypeService;
   let gymStaffService: GymStaffService;
   let spaceService: SpaceService;
+  let eventEmitter: EventEmitter2;
 
   const mockGymId = 'gym-123';
   const mockClassId = 'class-123';
@@ -68,7 +72,12 @@ describe('EditClassHandler', () => {
           provide: BookingRepository,
           useValue: {
             countBookedBookings: jest.fn(),
+            getBookedBookingsByClass: jest.fn().mockResolvedValue([]),
           },
+        },
+        {
+          provide: EventEmitter2,
+          useValue: { emit: jest.fn() },
         },
         {
           provide: ClassTypeService,
@@ -97,6 +106,7 @@ describe('EditClassHandler', () => {
     classTypeService = module.get<ClassTypeService>(ClassTypeService);
     gymStaffService = module.get<GymStaffService>(GymStaffService);
     spaceService = module.get<SpaceService>(SpaceService);
+    eventEmitter = module.get<EventEmitter2>(EventEmitter2);
   });
 
   it('should be defined', () => {
@@ -492,6 +502,242 @@ describe('EditClassHandler', () => {
       );
 
       await expect(handler.execute(command)).rejects.toThrow(BadRequestException);
+    });
+  });
+
+  /**
+   * Only a material change — the date, the time or the space — reaches booked
+   * athletes. Coach and capacity edits are deliberately silent
+   * (epics/NOTIFICATIONS_EPIC.md, "Domain events emitted by existing handlers").
+   */
+  describe('class.modified notification event', () => {
+    const bookedAthletes = [
+      { userId: 'athlete-1', status: 'booked' },
+      { userId: 'athlete-2', status: 'booked' },
+    ] as BookingEntity[];
+
+    function arrange(cls: ClassEntity = buildPublishedClass()): ClassEntity {
+      jest.spyOn(classRepository, 'getClassById').mockResolvedValue(cls);
+      jest
+        .spyOn(classRepository, 'save')
+        .mockImplementation(async (entity) =>
+          buildSavedResponse(entity as ClassEntity),
+        );
+      jest.spyOn(bookingRepository, 'countBookedBookings').mockResolvedValue(2);
+      jest
+        .spyOn(bookingRepository, 'getBookedBookingsByClass')
+        .mockResolvedValue(bookedAthletes);
+      return cls;
+    }
+
+    function emittedEvent(): ClassModifiedEvent {
+      const call = (eventEmitter.emit as jest.Mock).mock.calls[0];
+      expect(call[0]).toBe('class.modified');
+      return call[1] as ClassModifiedEvent;
+    }
+
+    it('should emit when the scheduled time changes', async () => {
+      arrange();
+
+      await handler.execute(
+        new EditClassCommand(
+          mockGymId,
+          mockClassId,
+          undefined,
+          undefined,
+          undefined,
+          undefined,
+          '18:30',
+        ),
+      );
+
+      const event = emittedEvent();
+      expect(event.gymId).toBe(mockGymId);
+      expect(event.classId).toBe(mockClassId);
+      expect(event.classTypeName).toBe('WOD');
+      expect(event.changes).toBe('moved to 2026-06-01 at 18:30');
+      expect(event.bookedUserIds).toEqual(['athlete-1', 'athlete-2']);
+    });
+
+    it('should emit when the scheduled date changes', async () => {
+      arrange();
+
+      await handler.execute(
+        new EditClassCommand(
+          mockGymId,
+          mockClassId,
+          undefined,
+          undefined,
+          undefined,
+          '2026-06-08',
+        ),
+      );
+
+      expect(emittedEvent().changes).toBe('moved to 2026-06-08 at 09:00');
+    });
+
+    it('should emit when the space changes', async () => {
+      arrange();
+      jest
+        .spyOn(spaceService, 'getSpaceById')
+        .mockResolvedValue({ id: 'space-new', gymId: mockGymId } as any);
+
+      await handler.execute(
+        new EditClassCommand(
+          mockGymId,
+          mockClassId,
+          undefined,
+          undefined,
+          'space-new',
+        ),
+      );
+
+      expect(emittedEvent().changes).toBe('location changed');
+    });
+
+    it('should describe a combined date, time and space change in one event', async () => {
+      arrange();
+      jest
+        .spyOn(spaceService, 'getSpaceById')
+        .mockResolvedValue({ id: 'space-new', gymId: mockGymId } as any);
+
+      await handler.execute(
+        new EditClassCommand(
+          mockGymId,
+          mockClassId,
+          undefined,
+          undefined,
+          'space-new',
+          '2026-06-08',
+          '18:30',
+        ),
+      );
+
+      expect(eventEmitter.emit).toHaveBeenCalledTimes(1);
+      expect(emittedEvent().changes).toBe(
+        'moved to 2026-06-08 at 18:30, location changed',
+      );
+    });
+
+    it('should not emit for a coach-only change', async () => {
+      arrange();
+      jest
+        .spyOn(gymStaffService, 'getGymStaffByUserAndGym')
+        .mockResolvedValue({ role: 'coach', status: 'active' } as any);
+
+      await handler.execute(
+        new EditClassCommand(mockGymId, mockClassId, undefined, 'coach-new'),
+      );
+
+      expect(eventEmitter.emit).not.toHaveBeenCalled();
+    });
+
+    it('should not emit for a capacity-only change', async () => {
+      arrange();
+
+      await handler.execute(
+        new EditClassCommand(
+          mockGymId,
+          mockClassId,
+          undefined,
+          undefined,
+          undefined,
+          undefined,
+          undefined,
+          30,
+        ),
+      );
+
+      expect(eventEmitter.emit).not.toHaveBeenCalled();
+    });
+
+    it('should not emit when a material field is submitted unchanged', async () => {
+      arrange();
+      jest
+        .spyOn(spaceService, 'getSpaceById')
+        .mockResolvedValue({ id: 'space-original', gymId: mockGymId } as any);
+
+      await handler.execute(
+        new EditClassCommand(
+          mockGymId,
+          mockClassId,
+          undefined,
+          undefined,
+          'space-original',
+          '2026-06-01',
+          '09:00',
+        ),
+      );
+
+      expect(eventEmitter.emit).not.toHaveBeenCalled();
+    });
+
+    it('should clear reminderSentAt when the class is rescheduled', async () => {
+      const cls = buildPublishedClass();
+      cls.reminderSentAt = new Date('2026-05-31T08:30:00.000Z');
+      arrange(cls);
+
+      await handler.execute(
+        new EditClassCommand(
+          mockGymId,
+          mockClassId,
+          undefined,
+          undefined,
+          undefined,
+          undefined,
+          '18:30',
+        ),
+      );
+
+      // Otherwise the new start time would never get a "starting soon" reminder.
+      const saved = (classRepository.save as jest.Mock).mock
+        .calls[0][0] as ClassEntity;
+      expect(saved.reminderSentAt).toBeNull();
+    });
+
+    it('should keep reminderSentAt when only the space changes', async () => {
+      const alreadyReminded = new Date('2026-05-31T08:30:00.000Z');
+      const cls = buildPublishedClass();
+      cls.reminderSentAt = alreadyReminded;
+      arrange(cls);
+      jest
+        .spyOn(spaceService, 'getSpaceById')
+        .mockResolvedValue({ id: 'space-new', gymId: mockGymId } as any);
+
+      await handler.execute(
+        new EditClassCommand(
+          mockGymId,
+          mockClassId,
+          undefined,
+          undefined,
+          'space-new',
+        ),
+      );
+
+      const saved = (classRepository.save as jest.Mock).mock
+        .calls[0][0] as ClassEntity;
+      expect(saved.reminderSentAt).toBe(alreadyReminded);
+    });
+
+    it('should not emit when the class has no booked athletes', async () => {
+      arrange();
+      jest
+        .spyOn(bookingRepository, 'getBookedBookingsByClass')
+        .mockResolvedValue([]);
+
+      await handler.execute(
+        new EditClassCommand(
+          mockGymId,
+          mockClassId,
+          undefined,
+          undefined,
+          undefined,
+          undefined,
+          '18:30',
+        ),
+      );
+
+      expect(eventEmitter.emit).not.toHaveBeenCalled();
     });
   });
 });
