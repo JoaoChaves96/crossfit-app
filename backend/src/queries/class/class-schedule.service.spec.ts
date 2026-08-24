@@ -1,5 +1,5 @@
 import { Test } from '@nestjs/testing';
-import { ForbiddenException } from '@nestjs/common';
+import { BadRequestException, ForbiddenException } from '@nestjs/common';
 import { ClassScheduleService } from './class-schedule.service';
 import { ClassRepository } from '../../repositories/class.repository';
 import { BookingRepository } from '../../repositories/booking.repository';
@@ -411,5 +411,108 @@ describe('ClassScheduleService — plan expiry', () => {
 
     expect(result.planExpiresAt).toBeNull();
     expect(result.classes).toHaveLength(1);
+  });
+
+  /**
+   * The owner's date range. The narrowing itself belongs to SQL (asserted in
+   * class.repository.spec.ts and end to end in gym-schedule.e2e-spec.ts); what
+   * matters here is that the service hands the window down UNCHANGED rather than
+   * filtering in memory, and that a window which cannot match anything is
+   * refused instead of quietly returning [].
+   */
+  describe('owner schedule date range', () => {
+    it('passes the range straight through to the repository', async () => {
+      getClassesByGym.mockResolvedValue([buildClass()]);
+
+      await service.getClassScheduleForOwner('gym-1', {
+        startDate: '2026-08-10',
+        endDate: '2026-08-16',
+      });
+
+      expect(getClassesByGym).toHaveBeenCalledWith('gym-1', {
+        startDate: '2026-08-10',
+        endDate: '2026-08-16',
+      });
+    });
+
+    it('asks for the unbounded schedule when no range is given', async () => {
+      getClassesByGym.mockResolvedValue([buildClass()]);
+
+      await service.getClassScheduleForOwner('gym-1');
+
+      expect(getClassesByGym).toHaveBeenCalledWith('gym-1', undefined);
+    });
+
+    it('does not re-filter what the repository returned', async () => {
+      // The repository is the only thing that filters by date. If the service
+      // ever grew its own date filter too, a bound that disagreed with SQL would
+      // hide rows the query already paid for — so a row outside the window still
+      // comes back when the (mocked) repository hands it over.
+      getClassesByGym.mockResolvedValue([
+        buildClass({ id: 'outside-window', scheduledDate: '2027-01-01' }),
+      ]);
+
+      const result = await service.getClassScheduleForOwner('gym-1', {
+        startDate: '2026-08-10',
+        endDate: '2026-08-16',
+      });
+
+      expect(result.classes.map((cls) => cls.id)).toEqual(['outside-window']);
+    });
+
+    it('rejects an inverted range instead of returning an empty schedule', async () => {
+      await expect(
+        service.getClassScheduleForOwner('gym-1', {
+          startDate: '2026-08-16',
+          endDate: '2026-08-10',
+        }),
+      ).rejects.toThrow(BadRequestException);
+
+      expect(getClassesByGym).not.toHaveBeenCalled();
+    });
+
+    it('accepts a single-day range where both bounds are equal', async () => {
+      getClassesByGym.mockResolvedValue([
+        buildClass({ scheduledDate: '2026-08-10' }),
+      ]);
+
+      const result = await service.getClassScheduleForOwner('gym-1', {
+        startDate: '2026-08-10',
+        endDate: '2026-08-10',
+      });
+
+      expect(result.classes).toHaveLength(1);
+    });
+
+    it('does not treat a half-open range as inverted', async () => {
+      getClassesByGym.mockResolvedValue([buildClass()]);
+
+      await expect(
+        service.getClassScheduleForOwner('gym-1', { startDate: '2026-08-16' }),
+      ).resolves.toBeDefined();
+      await expect(
+        service.getClassScheduleForOwner('gym-1', { endDate: '2026-08-10' }),
+      ).resolves.toBeDefined();
+    });
+
+    it('still archives-filters inside the window', async () => {
+      // The range narrows in SQL; the archived exclusion is a separate rule and
+      // must survive alongside it.
+      getClassesByGym.mockResolvedValue([
+        buildClass({ id: 'live', scheduledDate: '2026-08-12' }),
+        buildClass({
+          id: 'archived',
+          scheduledDate: '2026-08-13',
+          state: 'archived',
+        }),
+      ]);
+
+      const result = await service.getClassScheduleForOwner('gym-1', {
+        startDate: '2026-08-10',
+        endDate: '2026-08-16',
+      });
+
+      expect(result.classes.map((cls) => cls.id)).toEqual(['live']);
+    });
   });
 });

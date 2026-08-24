@@ -1,8 +1,43 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { In, IsNull, Repository } from 'typeorm';
+import {
+  Between,
+  FindOptionsWhere,
+  In,
+  IsNull,
+  LessThanOrEqual,
+  MoreThanOrEqual,
+  Repository,
+} from 'typeorm';
 import { ClassEntity } from '../domain/class/entities/class.entity';
 import { toCalendarDay } from '../domain/shared/calendar-day';
+
+/**
+ * Build the `scheduledDate` constraint for an optional, inclusive calendar-day
+ * range. Each bound is independent, so a caller may bound one end only.
+ *
+ * Returns an EMPTY object when there is nothing to constrain, so the unbounded
+ * query stays byte-identical to what it was before the range existed.
+ */
+function scheduledDateWithin(range?: {
+  startDate?: string;
+  endDate?: string;
+}): Pick<FindOptionsWhere<ClassEntity>, 'scheduledDate'> {
+  const start = range?.startDate;
+  const end = range?.endDate;
+
+  // The casts are the `date`-column seam: the entity types scheduledDate as Date
+  // while the driver both accepts and returns 'YYYY-MM-DD'. Keeping the bound a
+  // string is deliberate — see the note on getClassesByGym.
+  const asBound = (day: string) => day as unknown as Date;
+
+  if (start && end) {
+    return { scheduledDate: Between(asBound(start), asBound(end)) };
+  }
+  if (start) return { scheduledDate: MoreThanOrEqual(asBound(start)) };
+  if (end) return { scheduledDate: LessThanOrEqual(asBound(end)) };
+  return {};
+}
 
 /**
  * ClassRepository: Pure persistence layer
@@ -49,11 +84,28 @@ export class ClassRepository {
   }
 
   /**
-   * Retrieve all classes for a gym (soft delete aware)
+   * Retrieve classes for a gym (soft delete aware), optionally narrowed to a
+   * calendar-day range.
+   *
+   * Both bounds are INCLUSIVE and independently optional: omitting the range
+   * entirely returns the gym's whole schedule, which is the long-standing
+   * behaviour every other caller relies on.
+   *
+   * Bounds are bare 'YYYY-MM-DD' strings compared against a `date` column, and
+   * they must stay strings all the way into the query. Re-parsing a calendar day
+   * with `new Date()` lands on UTC midnight, which west of UTC reads as the
+   * previous day — that would shift the whole window by one silently.
    */
-  async getClassesByGym(gymId: string): Promise<ClassEntity[]> {
+  async getClassesByGym(
+    gymId: string,
+    range?: { startDate?: string; endDate?: string },
+  ): Promise<ClassEntity[]> {
     return this.classRepository.find({
-      where: { gymId, deletedAt: IsNull() },
+      where: {
+        gymId,
+        deletedAt: IsNull(),
+        ...scheduledDateWithin(range),
+      },
       order: { scheduledDate: 'ASC', scheduledTime: 'ASC' },
     });
   }

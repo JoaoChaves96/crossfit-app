@@ -1,4 +1,9 @@
-import { Injectable, ForbiddenException, NotFoundException } from '@nestjs/common';
+import {
+  Injectable,
+  BadRequestException,
+  ForbiddenException,
+  NotFoundException,
+} from '@nestjs/common';
 import { ClassRepository } from '../../repositories/class.repository';
 import { BookingRepository } from '../../repositories/booking.repository';
 import { GymMembershipRepository } from '../../repositories/gym-membership.repository';
@@ -165,14 +170,31 @@ export class ClassScheduleService {
    * Get all non-archived classes for a gym, without membership filtering.
    * Intended for gym owner schedule management.
    *
+   * The optional range narrows the read in SQL — it is NOT re-applied here. The
+   * owner's dashboard shows one week at a time, and without a range every class
+   * the gym has ever scheduled is fetched and then given its own booking-count
+   * query, so the window has to reach the database to be worth anything.
+   *
    * @param gymId - The gym to fetch classes from
-   * @returns All non-archived classes in the gym sorted by date/time
+   * @param range - Optional inclusive 'YYYY-MM-DD' bounds; omit for the whole schedule
+   * @returns Non-archived classes in the range, sorted by date/time
+   * @throws BadRequestException if startDate is later than endDate
    */
   async getClassScheduleForOwner(
     gymId: string,
+    range?: { startDate?: string; endDate?: string },
   ): Promise<GetClassScheduleResponseDto> {
-    // Fetch all non-archived classes in the gym
-    const allClasses = await this.classRepository.getClassesByGym(gymId);
+    // An inverted window can never match a row. Refusing it beats answering with
+    // an empty schedule, which reads exactly like a gym with no classes.
+    // Lexicographic compare is exact for 'YYYY-MM-DD' — no parsing, no instants.
+    if (range?.startDate && range?.endDate && range.startDate > range.endDate) {
+      throw new BadRequestException(
+        'startDate must be on or before endDate',
+      );
+    }
+
+    // Fetch the gym's non-archived classes, narrowed to the range when given
+    const allClasses = await this.classRepository.getClassesByGym(gymId, range);
 
     const nonArchivedClasses = allClasses.filter(
       (cls) => cls.state !== 'archived',
