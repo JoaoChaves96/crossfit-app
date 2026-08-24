@@ -352,6 +352,32 @@ query string or the `weekStart` dep fails 4 and 5 frontend tests). Live-checked 
 1280×832 **and** 390×844: paging the week issues
 `?startDate=…&endDate=…` per week and renders that week's classes.
 
+✅ **Schedule booked-count N+1 — shipped 2026-08-24.** Trello Backlog card `yI2G7sOh`, the piece
+deliberately left out of the date-range work above. Every list read (owner schedule, athlete
+schedule, coach classes) mapped its rows through `countBookedBookings(cls.id)`, so a schedule of
+N classes issued N+1 queries. It is now one grouped aggregate,
+`BookingRepository.countBookedBookingsByClasses(classIds)`, joined onto the rows in memory.
+
+- The aggregate is asked only for the ids **about to be rendered** — after the archived filter,
+  and on the athlete path after plan-coverage filtering. Counting a class the athlete may not
+  see would be wasted work today and a leak the day the count is used for anything else.
+- A class with **no** booked bookings has no `GROUP BY` row, so it is absent from the map and
+  callers default to `?? 0`. Without the default `bookedCount` is `undefined`, which serialises
+  to a missing field and breaks the capacity display.
+- pg returns `COUNT(*)` as a **string**; the repository coerces with `Number()`. Left alone it
+  reaches the API as `"3"` and every capacity comparison in the app breaks.
+- `status = 'booked'` must stay identical to the per-class count: waitlisted and cancelled rows
+  live on the same class, so counting them overstates capacity.
+- An empty id list short-circuits without querying — `IN ()` is a Postgres syntax error.
+- `getClassDetail` keeps the per-class `countBookedBookings`: one class, already optimal.
+
+Verified: 661 backend unit + 305 e2e green, `tsc` and eslint clean on the touched files. Both
+e2e list reads now assert **distinct non-zero** counts from real booking rows (3 / 1 / 0 on the
+owner window, 2 / 1 on the coach list, with the other coach's 3 bookings proving no bleed), so a
+count landing on the wrong row cannot pass. Mutation-proved: dropping `?? 0` fails 3 service
+tests, dropping `Number()` fails 3 repo tests + 1 e2e, dropping the status filter fails 1 repo
+test + 3 e2e, counting before the filters fails 9 service tests.
+
 ## Previous Phase (2026-08-03)
 
 **Tiered Audit — Phase 3: bug triage & fixes** (Trello board "Crossfit Application")
