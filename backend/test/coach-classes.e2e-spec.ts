@@ -34,6 +34,7 @@ import { listenOnEphemeralPort } from './helpers/listen';
  * 1. Coach retrieves only their own assigned classes (happy path)
  * 2. Coach from another gym cannot see classes from this gym (cross-coach isolation)
  * 3. Non-coach user (athlete) is rejected with 403
+ * 4. bookedCount is the per-class booked total, from one grouped aggregate
  */
 describe('Coach Classes (e2e)', () => {
   let app: INestApplication;
@@ -48,6 +49,7 @@ describe('Coach Classes (e2e)', () => {
   const spaceId = uuidv4();
   const classTypeId = uuidv4();
   let coachClassId: string;
+  let secondCoachClassId: string;
   let otherCoachClassId: string;
 
   // JWTs for each actor
@@ -211,6 +213,28 @@ describe('Coach Classes (e2e)', () => {
       ],
     );
 
+    // 10b. A second class for the same coach, so the coach's list holds more
+    //      than one row and the booked counts have somewhere to land wrongly.
+    secondCoachClassId = uuidv4();
+    await dataSource.query(
+      `INSERT INTO classes (
+        id, "gymId", "classTypeId", "coachUserId", "spaceId",
+        "scheduledDate", "scheduledTime", capacity, state, loggable, "createdAt", "lastModifiedAt"
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, NOW(), NOW())`,
+      [
+        secondCoachClassId,
+        gymId,
+        classTypeId,
+        coachUserId,
+        spaceId,
+        dateStr,
+        '18:00:00',
+        12,
+        'published',
+        true,
+      ],
+    );
+
     // 11. Create a class assigned to otherCoachUserId in gymId
     //     (same gym, different coach — must NOT appear in coachUserId's results)
     otherCoachClassId = uuidv4();
@@ -232,13 +256,47 @@ describe('Coach Classes (e2e)', () => {
         true,
       ],
     );
+
+    // 12. Bookings. The coach's two classes get different booked totals (2 and
+    //     1) so a count landing on the wrong row shows up, and the OTHER coach's
+    //     class is loaded with 3 bookings that must never reach this coach's
+    //     rows. The waitlisted and cancelled rows on the first class are not
+    //     spots taken, so its count stays 2.
+    const bookingRows: [string, string, string][] = [
+      [coachClassId, athleteUserId, 'booked'],
+      [coachClassId, ownerUserId, 'booked'],
+      [coachClassId, otherCoachUserId, 'waitlisted'],
+      [coachClassId, coachUserId, 'cancelled'],
+      [secondCoachClassId, athleteUserId, 'booked'],
+      [otherCoachClassId, athleteUserId, 'booked'],
+      [otherCoachClassId, ownerUserId, 'booked'],
+      [otherCoachClassId, coachUserId, 'booked'],
+    ];
+    for (const [bookingClassId, userId, status] of bookingRows) {
+      await dataSource.query(
+        `INSERT INTO bookings (id, "classId", "userId", status, "bookedPosition", "createdAt")
+         VALUES ($1, $2, $3, $4, $5, NOW())`,
+        [
+          uuidv4(),
+          bookingClassId,
+          userId,
+          status,
+          status === 'waitlisted' ? 1 : null,
+        ],
+      );
+    }
   }
 
   async function cleanupTestData() {
     if (!dataSource) return;
     try {
-      await dataSource.query('DELETE FROM classes WHERE id IN ($1, $2)', [
+      await dataSource.query(
+        'DELETE FROM bookings WHERE "classId" IN ($1, $2, $3)',
+        [coachClassId, secondCoachClassId, otherCoachClassId],
+      );
+      await dataSource.query('DELETE FROM classes WHERE id IN ($1, $2, $3)', [
         coachClassId,
+        secondCoachClassId,
         otherCoachClassId,
       ]);
       await dataSource.query('DELETE FROM class_types WHERE id = $1', [
@@ -291,7 +349,7 @@ describe('Coach Classes (e2e)', () => {
       expect(found).toHaveProperty('spaceName', 'Main Box');
       expect(found).toHaveProperty('classTypeName', 'CrossFit WOD');
       expect(found).toHaveProperty('capacity', 15);
-      expect(found).toHaveProperty('bookedCount', 0);
+      expect(found).toHaveProperty('bookedCount', 2);
       expect(found).toHaveProperty('state', 'published');
 
       // The other coach's class must NOT appear
@@ -322,6 +380,38 @@ describe('Coach Classes (e2e)', () => {
         .get(`/api/gyms/${gymId}/coach/classes`)
         .set('Authorization', `Bearer ${athleteToken}`)
         .expect(403);
+    });
+  });
+
+  // ---------------------------------------------------------------------------
+  // Test 4: booked counts come from one grouped aggregate over the coach's list
+  // ---------------------------------------------------------------------------
+  describe('Test 4: booked counts per class', () => {
+    it('gives each of the coach’s classes its own booked total', async () => {
+      const response = await request(app.getHttpServer())
+        .get(`/api/gyms/${gymId}/coach/classes`)
+        .set('Authorization', `Bearer ${coachToken}`)
+        .expect(200);
+
+      const classes = (
+        response.body as { classes: { id: string; bookedCount: number }[] }
+      ).classes;
+      const counts = Object.fromEntries(
+        classes.map((cls) => [cls.id, cls.bookedCount]),
+      );
+
+      expect(counts).toEqual({
+        // Two booked; the waitlisted and cancelled rows are not spots taken.
+        [coachClassId]: 2,
+        [secondCoachClassId]: 1,
+      });
+      // The other coach's class carries 3 bookings. Its count must not have
+      // leaked onto either row above, and its row must not be here at all.
+      expect(counts[otherCoachClassId]).toBeUndefined();
+
+      for (const cls of classes) {
+        expect(typeof cls.bookedCount).toBe('number');
+      }
     });
   });
 });

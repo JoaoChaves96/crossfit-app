@@ -49,6 +49,7 @@ describe('ClassScheduleService — plan expiry', () => {
   const getClassesByGym = jest.fn();
   const getClassById = jest.fn();
   const countBookedBookings = jest.fn();
+  const countBookedBookingsByClasses = jest.fn();
   const getActiveGymMembershipByUserAndGym = jest.fn();
   const getActivePlanByGymMembership = jest.fn();
   const getGymById = jest.fn();
@@ -58,12 +59,14 @@ describe('ClassScheduleService — plan expiry', () => {
       getClassesByGym,
       getClassById,
       countBookedBookings,
+      countBookedBookingsByClasses,
       getActiveGymMembershipByUserAndGym,
       getActivePlanByGymMembership,
       getGymById,
     ].forEach((m) => m.mockReset());
 
     countBookedBookings.mockResolvedValue(0);
+    countBookedBookingsByClasses.mockResolvedValue(new Map());
     getGymById.mockResolvedValue({ id: 'gym-1', name: 'CrossFit Downtown' });
     getActiveGymMembershipByUserAndGym.mockResolvedValue({ id: 'gm-1' });
     // autoRoll true is the production default, so the unlimited baseline uses it:
@@ -91,7 +94,10 @@ describe('ClassScheduleService — plan expiry', () => {
           provide: ClassRepository,
           useValue: { getClassesByGym, getClassById },
         },
-        { provide: BookingRepository, useValue: { countBookedBookings } },
+        {
+          provide: BookingRepository,
+          useValue: { countBookedBookings, countBookedBookingsByClasses },
+        },
         {
           provide: GymMembershipRepository,
           useValue: { getActiveGymMembershipByUserAndGym },
@@ -249,14 +255,25 @@ describe('ClassScheduleService — plan expiry', () => {
         lapsedAutoRollPlan(new Date(NOW.getTime() - 60 * 1000)),
       );
       getClassesByGym.mockResolvedValue([
-        buildClass({ id: 'inside-next-cycle', scheduledDate: nyDate(2026, 8, 12) }),
-        buildClass({ id: 'past-next-cycle', scheduledDate: nyDate(2026, 9, 20) }),
+        buildClass({
+          id: 'inside-next-cycle',
+          scheduledDate: nyDate(2026, 8, 12),
+        }),
+        buildClass({
+          id: 'past-next-cycle',
+          scheduledDate: nyDate(2026, 9, 20),
+        }),
       ]);
 
-      const result = await service.getClassScheduleForAthlete('gym-1', 'user-1');
+      const result = await service.getClassScheduleForAthlete(
+        'gym-1',
+        'user-1',
+      );
 
       expect(result.planExpiresAt).toBe('2026-09-11');
-      expect(result.classes.map((cls) => cls.id)).toEqual(['inside-next-cycle']);
+      expect(result.classes.map((cls) => cls.id)).toEqual([
+        'inside-next-cycle',
+      ]);
     });
 
     it('derives the first FUTURE cycle for a plan overdue by several cycles', async () => {
@@ -268,7 +285,10 @@ describe('ClassScheduleService — plan expiry', () => {
       );
       getClassesByGym.mockResolvedValue([buildClass()]);
 
-      const result = await service.getClassScheduleForAthlete('gym-1', 'user-1');
+      const result = await service.getClassScheduleForAthlete(
+        'gym-1',
+        'user-1',
+      );
 
       // 2026-06-11 would be one cycle past the stale date and still in the past.
       expect(result.planExpiresAt).toBe('2026-09-11');
@@ -514,5 +534,227 @@ describe('ClassScheduleService — plan expiry', () => {
 
       expect(result.classes.map((cls) => cls.id)).toEqual(['live']);
     });
+  });
+});
+
+/**
+ * The booked count used to cost one query per class: every list read mapped its
+ * rows through `countBookedBookings(cls.id)`, so a schedule of N classes issued
+ * N+1 queries. It is now one grouped aggregate joined onto the rows in memory.
+ *
+ * The number itself is what these assertions protect. `bookedCount` drives the
+ * capacity display and the full/available state of every class in the app, so a
+ * count landing on the wrong row, arriving as a string, or quietly becoming
+ * `undefined` for an unbooked class is worse than the N+1 ever was.
+ */
+describe('ClassScheduleService — booked counts come from one grouped query', () => {
+  let service: ClassScheduleService;
+  const getClassesByGym = jest.fn();
+  const getClassesByGymAndCoach = jest.fn();
+  const getClassById = jest.fn();
+  const countBookedBookings = jest.fn();
+  const countBookedBookingsByClasses = jest.fn();
+  const getActiveGymMembershipByUserAndGym = jest.fn();
+  const getActivePlanByGymMembership = jest.fn();
+  const getGymById = jest.fn();
+  const isCoach = jest.fn();
+
+  /** Three classes, all eligible for every read path under test. */
+  const threeClasses = () => [
+    buildClass({ id: 'c1' }),
+    buildClass({ id: 'c2' }),
+    buildClass({ id: 'c3' }),
+  ];
+
+  beforeEach(async () => {
+    [
+      getClassesByGym,
+      getClassesByGymAndCoach,
+      getClassById,
+      countBookedBookings,
+      countBookedBookingsByClasses,
+      getActiveGymMembershipByUserAndGym,
+      getActivePlanByGymMembership,
+      getGymById,
+      isCoach,
+    ].forEach((m) => m.mockReset());
+
+    countBookedBookings.mockResolvedValue(0);
+    countBookedBookingsByClasses.mockResolvedValue(new Map());
+    getClassesByGym.mockResolvedValue([]);
+    getClassesByGymAndCoach.mockResolvedValue([]);
+    getGymById.mockResolvedValue({ id: 'gym-1', name: 'CrossFit Downtown' });
+    getActiveGymMembershipByUserAndGym.mockResolvedValue({ id: 'gm-1' });
+    getActivePlanByGymMembership.mockResolvedValue({
+      id: 'amp-1',
+      status: 'active',
+      expiresAt: null,
+      autoRoll: true,
+      membershipPlan: {
+        id: 'plan-1',
+        name: 'Unlimited',
+        classTypes: ['ct-1'],
+        billingCycle: 'monthly',
+      },
+    });
+    isCoach.mockResolvedValue(true);
+
+    const moduleRef = await Test.createTestingModule({
+      providers: [
+        ClassScheduleService,
+        {
+          provide: ClassRepository,
+          useValue: {
+            getClassesByGym,
+            getClassesByGymAndCoach,
+            getClassById,
+          },
+        },
+        {
+          provide: BookingRepository,
+          useValue: { countBookedBookings, countBookedBookingsByClasses },
+        },
+        {
+          provide: GymMembershipRepository,
+          useValue: { getActiveGymMembershipByUserAndGym },
+        },
+        {
+          provide: AthleteMembershipPlanRepository,
+          useValue: { getActivePlanByGymMembership },
+        },
+        { provide: GymStaffService, useValue: { isCoach } },
+        { provide: GymService, useValue: { getGymById } },
+      ],
+    }).compile();
+
+    service = moduleRef.get(ClassScheduleService);
+  });
+
+  describe.each([
+    [
+      'owner schedule',
+      () => service.getClassScheduleForOwner('gym-1'),
+      getClassesByGym,
+    ],
+    [
+      'athlete schedule',
+      () => service.getClassScheduleForAthlete('gym-1', 'user-1'),
+      getClassesByGym,
+    ],
+    [
+      'coach classes',
+      () => service.getCoachClasses('gym-1', 'coach-1'),
+      getClassesByGymAndCoach,
+    ],
+  ])('%s', (_label, read, classSource) => {
+    it('issues one aggregate for N classes, never one query per class', async () => {
+      classSource.mockResolvedValue(threeClasses());
+
+      await read();
+
+      expect(countBookedBookingsByClasses).toHaveBeenCalledTimes(1);
+      // The per-class count must not be reached at all on a list read — that is
+      // the N of the N+1.
+      expect(countBookedBookings).not.toHaveBeenCalled();
+    });
+
+    it('asks only for the classes it is about to render', async () => {
+      classSource.mockResolvedValue(threeClasses());
+
+      await read();
+
+      expect(countBookedBookingsByClasses).toHaveBeenCalledWith([
+        'c1',
+        'c2',
+        'c3',
+      ]);
+    });
+
+    it('lands each count on its own class', async () => {
+      classSource.mockResolvedValue(threeClasses());
+      countBookedBookingsByClasses.mockResolvedValue(
+        new Map([
+          ['c1', 5],
+          ['c2', 1],
+          ['c3', 12],
+        ]),
+      );
+
+      const result = await read();
+
+      const counts = Object.fromEntries(
+        result.classes.map((cls) => [cls.id, cls.bookedCount]),
+      );
+      expect(counts).toEqual({ c1: 5, c2: 1, c3: 12 });
+    });
+
+    it('reports 0 for a class the aggregate did not return', async () => {
+      // A class with no booked bookings has no GROUP BY row. It must render as
+      // 0, not undefined — undefined serialises to a missing field and the
+      // capacity display breaks.
+      classSource.mockResolvedValue(threeClasses());
+      countBookedBookingsByClasses.mockResolvedValue(new Map([['c2', 4]]));
+
+      const result = await read();
+
+      const counts = Object.fromEntries(
+        result.classes.map((cls) => [cls.id, cls.bookedCount]),
+      );
+      expect(counts).toEqual({ c1: 0, c2: 4, c3: 0 });
+      for (const cls of result.classes) {
+        expect(typeof cls.bookedCount).toBe('number');
+      }
+    });
+
+    it('excludes archived classes from the aggregate as well as the response', async () => {
+      // Counting a row that will not be rendered is wasted work, and it would
+      // also mask an archived-filter regression: the ids asked for are the ids
+      // returned.
+      classSource.mockResolvedValue([
+        buildClass({ id: 'live' }),
+        buildClass({ id: 'gone', state: 'archived' }),
+      ]);
+
+      const result = await read();
+
+      expect(countBookedBookingsByClasses).toHaveBeenCalledWith(['live']);
+      expect(result.classes.map((cls) => cls.id)).toEqual(['live']);
+    });
+
+    it('handles an empty schedule without inventing rows', async () => {
+      classSource.mockResolvedValue([]);
+
+      const result = await read();
+
+      expect(result.classes).toEqual([]);
+    });
+  });
+
+  it('hides ineligible class types from the athlete aggregate', async () => {
+    // The athlete read filters by plan coverage before counting. Asking for a
+    // class the athlete may not see would be a wasted count today and a leak
+    // the day the count is used for anything else.
+    getClassesByGym.mockResolvedValue([
+      buildClass({ id: 'allowed' }),
+      buildClass({ id: 'other-type', classTypeId: 'ct-99' }),
+    ]);
+
+    const result = await service.getClassScheduleForAthlete('gym-1', 'user-1');
+
+    expect(countBookedBookingsByClasses).toHaveBeenCalledWith(['allowed']);
+    expect(result.classes.map((cls) => cls.id)).toEqual(['allowed']);
+  });
+
+  it('still counts a single class directly on the detail read', async () => {
+    // getClassDetail reads one class, so the per-class count is already optimal
+    // and must not be routed through the aggregate.
+    getClassById.mockResolvedValue(buildClass({ id: 'c1' }));
+    countBookedBookings.mockResolvedValue(7);
+
+    const result = await service.getClassDetail('gym-1', 'c1');
+
+    expect(result.bookedCount).toBe(7);
+    expect(countBookedBookings).toHaveBeenCalledWith('c1');
+    expect(countBookedBookingsByClasses).not.toHaveBeenCalled();
   });
 });

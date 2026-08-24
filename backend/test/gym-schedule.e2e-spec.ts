@@ -36,6 +36,7 @@ import { listenOnEphemeralPort } from './helpers/listen';
  * 2. Non-owner (athlete) is rejected with 403
  * 3. Non-owner (coach) is rejected with 403
  * 4. Optional startDate/endDate narrow the schedule, inclusively, in real SQL
+ * 5. bookedCount is the per-class booked total, from one grouped aggregate
  */
 describe('Gym Owner Schedule (e2e)', () => {
   let app: INestApplication;
@@ -231,11 +232,45 @@ describe('Gym Owner Schedule (e2e)', () => {
         ],
       );
     }
+
+    // 10. Bookings across three of the range classes, so the booked count is
+    //     asserted against real rows rather than an empty table. The counts are
+    //     deliberately distinct (3 / 1 / 0) — an aggregate that lands a count on
+    //     the wrong class, or reuses one class's count for all of them, cannot
+    //     pass all three at once.
+    //
+    //     'middle' also carries a waitlisted and a cancelled booking: neither is
+    //     a spot taken, so its count must stay 1.
+    const bookingRows: [string, string, string][] = [
+      [rangeClassIds.startEdge, ownerUserId, 'booked'],
+      [rangeClassIds.startEdge, coachUserId, 'booked'],
+      [rangeClassIds.startEdge, athleteUserId, 'booked'],
+      [rangeClassIds.middle, athleteUserId, 'booked'],
+      [rangeClassIds.middle, coachUserId, 'waitlisted'],
+      [rangeClassIds.middle, ownerUserId, 'cancelled'],
+    ];
+    for (const [bookingClassId, userId, status] of bookingRows) {
+      await dataSource.query(
+        `INSERT INTO bookings (id, "classId", "userId", status, "bookedPosition", "createdAt")
+         VALUES ($1, $2, $3, $4, $5, NOW())`,
+        [
+          uuidv4(),
+          bookingClassId,
+          userId,
+          status,
+          status === 'waitlisted' ? 1 : null,
+        ],
+      );
+    }
   }
 
   async function cleanupTestData() {
     if (!dataSource) return;
     try {
+      await dataSource.query(
+        'DELETE FROM bookings WHERE "classId" IN (SELECT id FROM classes WHERE "gymId" = $1)',
+        [gymId],
+      );
       await dataSource.query('DELETE FROM classes WHERE "gymId" = $1', [gymId]);
       await dataSource.query('DELETE FROM class_types WHERE "gymId" = $1', [
         gymId,
@@ -423,6 +458,40 @@ describe('Gym Owner Schedule (e2e)', () => {
         )
         .set('Authorization', `Bearer ${ownerToken}`)
         .expect(400);
+    });
+
+    it('counts booked spots per class, from real booking rows', async () => {
+      // The counts come from one grouped aggregate over the whole window. This
+      // is the case that proves the grouping: three classes in one response,
+      // three different answers, each on its own row.
+      const response = await request(app.getHttpServer())
+        .get(
+          `/api/gyms/${gymId}/schedule?startDate=${RANGE_DAYS.startEdge}&endDate=${RANGE_DAYS.endEdge}`,
+        )
+        .set('Authorization', `Bearer ${ownerToken}`)
+        .expect(200);
+
+      const classes = (
+        response.body as { classes: { id: string; bookedCount: number }[] }
+      ).classes;
+      const counts = Object.fromEntries(
+        classes.map((cls) => [cls.id, cls.bookedCount]),
+      );
+
+      expect(counts).toEqual({
+        [rangeClassIds.startEdge]: 3,
+        // Waitlisted and cancelled bookings are not spots taken.
+        [rangeClassIds.middle]: 1,
+        // No booking rows at all: no GROUP BY row either, so this is the case
+        // that would come back undefined without the ?? 0 default.
+        [rangeClassIds.endEdge]: 0,
+      });
+
+      // A count that arrives as pg's raw string "3" would satisfy the shape of
+      // the response and break every capacity comparison downstream.
+      for (const cls of classes) {
+        expect(typeof cls.bookedCount).toBe('number');
+      }
     });
 
     it('still refuses a non-owner who supplies a valid range', async () => {

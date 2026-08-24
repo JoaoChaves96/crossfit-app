@@ -124,31 +124,31 @@ export class ClassScheduleService {
         this.isWithinPlanCoverage(cls.scheduledDate, planExpiresAt),
     );
 
-    // Step 6: Aggregate booking data and map to DTOs
-    const classItems: ClassScheduleItemDto[] = await Promise.all(
-      eligibleClasses.map(async (cls) => {
-        // Count booked (confirmed) spots only
-        const bookedCount = await this.bookingRepository.countBookedBookings(
-          cls.id,
-        );
+    // Step 6: Aggregate booking data and map to DTOs.
+    // One grouped count for the whole page — see countBookedBookingsByClasses.
+    // Only the classes that survived the eligibility filter are counted, so the
+    // aggregate never reaches a class this athlete may not see.
+    const bookedCounts =
+      await this.bookingRepository.countBookedBookingsByClasses(
+        eligibleClasses.map((cls) => cls.id),
+      );
 
-        return {
-          id: cls.id,
-          classTypeId: cls.classTypeId,
-          classTypeName: cls.classType?.name || 'Unknown',
-          scheduledDate: this.formatDate(cls.scheduledDate),
-          scheduledTime: cls.scheduledTime,
-          coachUserId: cls.coachUserId,
-          coachName: cls.coach?.name || 'Unknown Coach',
-          spaceId: cls.spaceId,
-          spaceName: cls.space?.name || 'Unknown Space',
-          capacity: cls.capacity,
-          duration: cls.duration,
-          bookedCount,
-          state: cls.state,
-        };
-      }),
-    );
+    const classItems: ClassScheduleItemDto[] = eligibleClasses.map((cls) => ({
+      id: cls.id,
+      classTypeId: cls.classTypeId,
+      classTypeName: cls.classType?.name || 'Unknown',
+      scheduledDate: this.formatDate(cls.scheduledDate),
+      scheduledTime: cls.scheduledTime,
+      coachUserId: cls.coachUserId,
+      coachName: cls.coach?.name || 'Unknown Coach',
+      spaceId: cls.spaceId,
+      spaceName: cls.space?.name || 'Unknown Space',
+      capacity: cls.capacity,
+      duration: cls.duration,
+      // A class with no booked bookings has no row in the aggregate.
+      bookedCount: bookedCounts.get(cls.id) ?? 0,
+      state: cls.state,
+    }));
 
     // Sort by scheduled date and time
     classItems.sort((a, b) => {
@@ -188,9 +188,7 @@ export class ClassScheduleService {
     // an empty schedule, which reads exactly like a gym with no classes.
     // Lexicographic compare is exact for 'YYYY-MM-DD' — no parsing, no instants.
     if (range?.startDate && range?.endDate && range.startDate > range.endDate) {
-      throw new BadRequestException(
-        'startDate must be on or before endDate',
-      );
+      throw new BadRequestException('startDate must be on or before endDate');
     }
 
     // Fetch the gym's non-archived classes, narrowed to the range when given
@@ -200,27 +198,27 @@ export class ClassScheduleService {
       (cls) => cls.state !== 'archived',
     );
 
-    const classItems: ClassScheduleItemDto[] = await Promise.all(
-      nonArchivedClasses.map(async (cls) => {
-        const bookedCount = await this.bookingRepository.countBookedBookings(
-          cls.id,
-        );
+    // One grouped count for the whole window, not one query per class.
+    const bookedCounts =
+      await this.bookingRepository.countBookedBookingsByClasses(
+        nonArchivedClasses.map((cls) => cls.id),
+      );
 
-        return {
-          id: cls.id,
-          classTypeId: cls.classTypeId,
-          classTypeName: cls.classType?.name || 'Unknown',
-          scheduledDate: this.formatDate(cls.scheduledDate),
-          scheduledTime: cls.scheduledTime,
-          coachUserId: cls.coachUserId,
-          coachName: cls.coach?.name || 'Unknown Coach',
-          spaceId: cls.spaceId,
-          spaceName: cls.space?.name || 'Unknown Space',
-          capacity: cls.capacity,
-          duration: cls.duration,
-          bookedCount,
-          state: cls.state,
-        };
+    const classItems: ClassScheduleItemDto[] = nonArchivedClasses.map(
+      (cls) => ({
+        id: cls.id,
+        classTypeId: cls.classTypeId,
+        classTypeName: cls.classType?.name || 'Unknown',
+        scheduledDate: this.formatDate(cls.scheduledDate),
+        scheduledTime: cls.scheduledTime,
+        coachUserId: cls.coachUserId,
+        coachName: cls.coach?.name || 'Unknown Coach',
+        spaceId: cls.spaceId,
+        spaceName: cls.space?.name || 'Unknown Space',
+        capacity: cls.capacity,
+        duration: cls.duration,
+        bookedCount: bookedCounts.get(cls.id) ?? 0,
+        state: cls.state,
       }),
     );
 
@@ -265,25 +263,23 @@ export class ClassScheduleService {
       (cls) => cls.state !== 'archived',
     );
 
-    const classItems: CoachClassItemDto[] = await Promise.all(
-      nonArchivedClasses.map(async (cls) => {
-        const bookedCount = await this.bookingRepository.countBookedBookings(
-          cls.id,
-        );
+    // One grouped count for the coach's whole list, not one query per class.
+    const bookedCounts =
+      await this.bookingRepository.countBookedBookingsByClasses(
+        nonArchivedClasses.map((cls) => cls.id),
+      );
 
-        return {
-          id: cls.id,
-          scheduledDate: this.formatDate(cls.scheduledDate),
-          scheduledTime: cls.scheduledTime,
-          spaceName: cls.space?.name || 'Unknown Space',
-          classTypeName: cls.classType?.name || 'Unknown',
-          capacity: cls.capacity,
-          duration: cls.duration,
-          bookedCount,
-          state: cls.state,
-        };
-      }),
-    );
+    const classItems: CoachClassItemDto[] = nonArchivedClasses.map((cls) => ({
+      id: cls.id,
+      scheduledDate: this.formatDate(cls.scheduledDate),
+      scheduledTime: cls.scheduledTime,
+      spaceName: cls.space?.name || 'Unknown Space',
+      classTypeName: cls.classType?.name || 'Unknown',
+      capacity: cls.capacity,
+      duration: cls.duration,
+      bookedCount: bookedCounts.get(cls.id) ?? 0,
+      state: cls.state,
+    }));
 
     return { classes: classItems };
   }
@@ -304,12 +300,12 @@ export class ClassScheduleService {
     const cls = await this.classRepository.getClassById(classId, gymId);
 
     if (!cls) {
-      throw new NotFoundException(
-        `Class ${classId} not found in gym ${gymId}`,
-      );
+      throw new NotFoundException(`Class ${classId} not found in gym ${gymId}`);
     }
 
-    const bookedCount = await this.bookingRepository.countBookedBookings(cls.id);
+    const bookedCount = await this.bookingRepository.countBookedBookings(
+      cls.id,
+    );
 
     return {
       id: cls.id,
