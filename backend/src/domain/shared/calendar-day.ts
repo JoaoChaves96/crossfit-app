@@ -51,6 +51,40 @@ export function toCalendarDay(value: Date | string | number): string {
 }
 
 /**
+ * An instant rendered as the 'YYYY-MM-DD HH:MM:SS' reading a LOCAL wall clock
+ * would show, for comparison against a naive timestamp in the database.
+ *
+ * `scheduledDate + scheduledTime::time` has no zone: it is the wall clock the
+ * owner typed. Binding an ISO string against it hands Postgres a UTC instant,
+ * which it silently strips the `Z` from and compares as a wall clock anyway — so
+ * the comparison is displaced by the server's UTC offset. That is how the
+ * reminder window came to select classes that had already started and skip the
+ * ones about to.
+ *
+ * The local calendar is the right one here for the same reason it is in
+ * `toCalendarDay`: it is the calendar the owner scheduled on and the athlete
+ * reads.
+ *
+ * @throws TypeError if the value is not a valid instant
+ */
+export function toLocalTimestamp(instant: Date): string {
+  if (Number.isNaN(instant.getTime())) {
+    throw new TypeError(
+      'Cannot format timestamp: invalid date value. Expected a valid Date.',
+    );
+  }
+
+  const pad = (value: number): string => String(value).padStart(2, '0');
+
+  const day = toCalendarDay(instant);
+  const time = `${pad(instant.getHours())}:${pad(instant.getMinutes())}:${pad(
+    instant.getSeconds(),
+  )}`;
+
+  return `${day} ${time}`;
+}
+
+/**
  * The value to ASSIGN to a `@Column('date')` field so the given calendar day is
  * the day that lands in the database.
  *

@@ -1,5 +1,9 @@
 import { DateUtils } from 'typeorm/util/DateUtils';
-import { toCalendarDay, toPersistedCalendarDay } from './calendar-day';
+import {
+  toCalendarDay,
+  toLocalTimestamp,
+  toPersistedCalendarDay,
+} from './calendar-day';
 
 /**
  * Every assertion here about the local calendar is only meaningful under a known,
@@ -61,9 +65,9 @@ describe('toCalendarDay', () => {
 
   describe('rejects what it cannot reduce to a day', () => {
     it('throws on a value that is neither Date, string nor number', () => {
-      expect(() =>
-        toCalendarDay(undefined as unknown as Date),
-      ).toThrow(TypeError);
+      expect(() => toCalendarDay(undefined as unknown as Date)).toThrow(
+        TypeError,
+      );
       expect(() => toCalendarDay(undefined as unknown as Date)).toThrow(
         /received undefined/,
       );
@@ -79,6 +83,38 @@ describe('toCalendarDay', () => {
     it('throws on an Invalid Date', () => {
       expect(() => toCalendarDay(new Date('nonsense'))).toThrow(TypeError);
     });
+  });
+});
+
+describe('toLocalTimestamp', () => {
+  it('reads the instant on the local clock, not on UTC', () => {
+    // 06:00Z is 02:00 in New York. A UTC-formatting implementation would return
+    // the 06:00 reading, which is the whole bug this function exists to prevent.
+    expect(toLocalTimestamp(new Date('2026-05-25T06:00:00.000Z'))).toBe(
+      '2026-05-25 02:00:00',
+    );
+  });
+
+  it('rolls back to the previous local day for an instant just after UTC midnight', () => {
+    expect(toLocalTimestamp(new Date('2026-05-25T01:30:00.000Z'))).toBe(
+      '2026-05-24 21:30:00',
+    );
+  });
+
+  it('zero-pads every field', () => {
+    expect(toLocalTimestamp(new Date('2026-01-05T09:08:07.000Z'))).toBe(
+      '2026-01-05 04:08:07',
+    );
+  });
+
+  it('drops sub-second precision rather than rounding it', () => {
+    expect(toLocalTimestamp(new Date('2026-05-25T06:00:00.999Z'))).toBe(
+      '2026-05-25 02:00:00',
+    );
+  });
+
+  it('throws on an Invalid Date', () => {
+    expect(() => toLocalTimestamp(new Date('nonsense'))).toThrow(TypeError);
   });
 });
 
